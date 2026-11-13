@@ -23,6 +23,8 @@ The default `NEXT_PUBLIC_API_BASE_URL=mock` runs the synthetic API. To use an ag
 
 The editable UTC range and desired step feed both **Load windows** and the job form. Editing these fields leaves the displayed result and its shared link unchanged until new results are opened. **Retry API request** repeats the failed request, including its retained job ID when present.
 
+Browser Back/Forward restores the comparison encoded in a shared URL, including its date range. A bare URL opens the default request and comparison. An imported release can be reused while it remains loaded; a link alone cannot recover a missing local file.
+
 The app opens a conspicuously labeled synthetic fixture. Switch between **Compare dates** and **Compare sites**, select an available window, and move the sample slider. `Find a later published match` searches only supplied assessments; it never treats unresolved earlier candidates as a confirmed first match. Missing observations remain missing. `Import data` validates a local JSON file up to 5 MiB; the file is not uploaded. API response reads are capped at 5 MiB and 15 seconds. A selection link contains IDs/settings/request range, not the imported dataset. Real job links also identify the completed job and depend on backend retention/access. A loopback link works only on the same computer.
 
 Read the [draft frontend contract](docs/FRONTEND_CONTRACT.md), [method and limits](docs/METHOD.md), [credits](docs/CREDITS.md) and [verification record](docs/FRONTEND_VERIFICATION.md). The data producer must review the contract before real-data integration. Next.js runtime hosting versus static export is still an integration decision; this task does not select a hosting provider.

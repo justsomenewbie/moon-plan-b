@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
@@ -29,6 +29,7 @@ export default function Navigator() {
   const fileInput = useRef<HTMLInputElement>(null);
   const loadGeneration = useRef(0);
   const loadFocus = useRef<Element | null>(null);
+  const lastLocation = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -40,9 +41,14 @@ export default function Navigator() {
     }
   }, [loading, error, importCompletion]);
 
+  function replaceUrl(url: string) {
+    window.history.replaceState(null, "", url);
+    lastLocation.current = window.location.pathname + window.location.search;
+  }
+
   function acceptDataset(next: Dataset, reset: boolean) {
     setData(next); setTick(0); setPlaying(false); setShareUrl("");
-    if (reset) window.history.replaceState(null, "", window.location.pathname);
+    if (reset) replaceUrl(window.location.pathname);
     try {
       setSelection(readSelection(new URLSearchParams(window.location.search), next)); setError("");
     } catch (e) {
@@ -70,20 +76,38 @@ export default function Navigator() {
     } finally { if (generation === loadGeneration.current) setLoading(false); }
   }
 
-  useEffect(() => {
+  const restoreLocation = useEffectEvent(() => {
+    const location = window.location.pathname + window.location.search;
+    if (location === lastLocation.current) return;
+    lastLocation.current = location;
+    loadGeneration.current++;
+    loadFocus.current = null;
+    setRetryLoad(null); setSelection(null); setTick(0); setPlaying(false); setShareUrl(""); setMessage(""); setError("");
     const params = new URLSearchParams(window.location.search);
     try {
       for (const key of ["from", "to", "resolutionSeconds", "job"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
       const request = ["from", "to", "resolutionSeconds"].some((key) => params.has(key)) ? validateWindow({ from: params.get("from") ?? "", to: params.get("to") ?? "", resolutionSeconds: Number(params.get("resolutionSeconds")) }) : defaultWindow;
       const jobId = params.get("job") ?? "";
       if (jobId && !/^[a-zA-Z0-9._-]{1,100}$/.test(jobId)) throw new Error("The shared job ID is invalid.");
-      void loadDemo(false, request, jobId);
+      if (data && params.get("v") === data.datasetId && jobId === sharedJobId && Date.parse(request.from) === Date.parse(requestWindow.from) && Date.parse(request.to) === Date.parse(requestWindow.to) && request.resolutionSeconds === requestWindow.resolutionSeconds) {
+        setSelection(readSelection(params, data)); setLoading(false);
+      } else {
+        void loadDemo(false, request, jobId);
+        // Browser history owns focus/scroll; a request must not move it to results.
+        loadFocus.current = null;
+      }
     } catch (e) { setLoading(false); setError(e instanceof Error ? e.message : "Invalid shared request range."); }
+  });
+
+  useEffect(() => {
+    restoreLocation();
+    const restore = () => { loadFocus.current = null; restoreLocation(); };
+    window.addEventListener("popstate", restore);
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const change = () => { setReducedMotion(preference.matches); if (preference.matches) setPlaying(false); };
     change(); preference.addEventListener("change", change);
-    return () => { loadGeneration.current++; void queryClient.cancelQueries({ queryKey: ["dataset"] }); preference.removeEventListener("change", change); };
-    // Initial load and OS motion preference are external subscriptions.
+    return () => { lastLocation.current = null; loadGeneration.current++; void queryClient.cancelQueries({ queryKey: ["dataset"] }); window.removeEventListener("popstate", restore); preference.removeEventListener("change", change); };
+    // Initial load, browser history and OS motion preference are external subscriptions.
   }, []);
 
   const a = data?.scenarios.find((s) => s.id === selection?.a);
@@ -126,7 +150,7 @@ export default function Navigator() {
     const compatible = alternatives(data, nextA, mode);
     setSelection({ ...selection, mode, a: nextA.id, b: compatible.find((s) => s.id === nextB)?.id ?? compatible[0]?.id ?? "" });
     setTick(0); setPlaying(false); setShareUrl(""); setMessage(""); setError("");
-    window.history.replaceState(null, "", window.location.pathname);
+    replaceUrl(window.location.pathname);
   }
 
   async function share() {
@@ -135,7 +159,7 @@ export default function Navigator() {
     url.search = selectionParams(data, selection).toString(); url.hash = "";
     for (const key of ["from", "to", "resolutionSeconds"] as const) url.searchParams.set(key, String(requestWindow[key]));
     if (sharedJobId) url.searchParams.set("job", sharedJobId);
-    setShareUrl(url.href); window.history.replaceState(null, "", url.href);
+    setShareUrl(url.href); replaceUrl(url.href);
     try {
       await navigator.clipboard.writeText(url.href);
       setMessage("Selection link copied. Imported datasets must be supplied separately; a localhost link opens only on this computer.");
@@ -181,7 +205,7 @@ export default function Navigator() {
         <label className="field">Primary window<select value={a.id} onChange={(e) => choose(data.scenarios.find((s) => s.id === e.target.value)!, selection.mode)}>{data.scenarios.filter((s) => s.siteId === a.siteId).map((s) => <option key={s.id} value={s.id}>{formatUtc(s.startUtc)} · {durationHours(s)} h{s.coverage !== "complete" ? ` · ${s.coverage}` : ""}</option>)}</select></label>
         <label className="field">{selection.mode === "dates" ? "Compare with" : "Alternative site"}<select value={selection.b} disabled={alternatives(data, a, selection.mode).length === 0} onChange={(e) => choose(a, selection.mode, e.target.value)}>{alternatives(data, a, selection.mode).length === 0 ? <option value="">No compatible window</option> : alternatives(data, a, selection.mode).map((s) => <option key={s.id} value={s.id}>{selection.mode === "dates" ? formatUtc(s.startUtc) : data.sites.find((site) => site.id === s.siteId)?.name}{s.coverage !== "complete" ? ` · ${s.coverage}` : ""}</option>)}</select></label>
         <div className="field">Window<p className="fixed-value">{durationHours(a)} hours <span className="muted text-sm">from the dataset</span></p></div>
-        <label className="field">Joint-window criterion<select value={selection.h} onChange={(e) => { setSelection({ ...selection, h: Number(e.target.value) }); setShareUrl(""); window.history.replaceState(null, "", window.location.pathname); }}>{data.criteriaHours.map((h) => <option value={h} key={h}>{h} hours</option>)}</select></label>
+        <label className="field">Joint-window criterion<select value={selection.h} onChange={(e) => { setSelection({ ...selection, h: Number(e.target.value) }); setShareUrl(""); replaceUrl(window.location.pathname); }}>{data.criteriaHours.map((h) => <option value={h} key={h}>{h} hours</option>)}</select></label>
         {selection.mode === "dates" ? <button className="text-button find-match" onClick={findMatch}>Find a later published match</button> : null}
         <div className="control-actions"><button className="button primary" disabled={!b} onClick={() => void share()}>Share comparison</button><button className="button outline" onClick={printReport}>Print report</button></div>
         {shareUrl ? <label className="field share-field">Selection link<input readOnly value={shareUrl} onFocus={(e) => e.target.select()} /></label> : null}
