@@ -16,6 +16,6 @@ Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/fronte
 
 ## Ownership and publication
 
-Root Codex is the sole local editor; independent reviewers finished. Inspect Git before taking ownership. Remote `main` was rechecked at `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; product changes are local and not pushed/deployed. Product cloud checkout/SHA is unestablished. Preparation files were not changed; no preparation sync is required for this product-only task.
+Root Codex completed editing; independent reviewers finished. Inspect Git before taking ownership. Sơn authorized publishing the review branch. Implementation commit `b9f2ead54cacb118f29bf064871a86c53a2243f2` was pushed to `codex/frontend-kickoff` and verified against the remote ref; the contract blob was read back through GitHub and matched. This follow-up handoff records that publication. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission occurred. Product cloud checkout/SHA is unestablished. Preparation files were not changed; no preparation sync is required for this product-only task.
 
 Next action under two minutes: review the draft endpoint/schema table with Chung and request his agreed OpenAPI plus a small sourced Colab export. Do not publish or integrate it as an agreed contract before that review.
