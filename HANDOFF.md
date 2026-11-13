@@ -20,6 +20,6 @@ Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/fronte
 
 ## Ownership and publication
 
-Root Codex and read-only reviewer finished the bounded rendering follow-ups. Sky-gap commit `7590bc9` and the memoization follow-up are local, not published. Last verified remote review branch: `76fd327efbf927f2be3c325cb4b7ae5c07bc4e19`, including implementation `b9f2ead54cacb118f29bf064871a86c53a2243f2`. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were not changed; no preparation sync is required. Inspect Git before taking ownership.
+Root Codex and read-only reviewer finished the rendering follow-ups. Sky-gap commit `7590bc9` and memoization commit `c9cd7ac287ca0d968751c0e70090500f5505297a` were published to the existing authorized review branch. Its remote ref was verified; both corrected source-file blob hashes read back through GitHub match local Git. This handoff records that publication. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were not changed; no preparation sync is required. Inspect Git before taking ownership.
 
 Next action under two minutes: review the draft endpoint/schema table with Chung and request his agreed OpenAPI plus a small sourced Colab export. Do not publish or integrate it as an agreed contract before that review.
