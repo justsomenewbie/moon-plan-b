@@ -19,3 +19,18 @@ The application uses published npm packages through their normal distribution, p
 Swagger assets are copied locally during preparation, with their license; online validation is disabled. Install with `npm ci --ignore-scripts` to avoid dependency lifecycle telemetry, then run the explicit project generation/build commands. MSW's generated service worker retains its upstream notice. The OpenAPI proposal, mock behavior and generated-type integration were AI-assisted. API conventions came from Chung's rules supplied by Sơn; the exact endpoints and payload remain an unagreed frontend proposal.
 
 No external image, lunar texture/model, web font, soundtrack or copied UI component is included. System fonts are used. The project-level license is still a team decision; public GitHub visibility is not permission to reuse team code. Hosting and final release require the corresponding license/submission checks.
+
+### Notice recovery check — 14 November 2026
+
+Ten installed package entries lack package-root license/notice files. The notice file now retains five upstream repository license texts covering six of those entries: `@next/env` and `@next/swc-darwin-arm64` 16.4.6, `@redocly/openapi-core` 1.34.24, `@tailwindcss/oxide-wasm32-wasi` 4.3.5, `@napi-rs/wasm-runtime` 1.2.2 and `change-case` 5.4.4. Each supplement records its exact source commit, Git blob hash and package-version association. Registry `gitHead` identifies three sources; Next.js and Tailwind use resolved official version tags. These are upstream supplements, not files found in the npm installation. Original retained notices are unchanged.
+
+Four entries still lack complete retained notices:
+
+| Package | Verified source and remaining gap |
+| --- | --- |
+| `@img/sharp-libvips-darwin-arm64@1.3.4` | Its installed README's library/license table is retained verbatim. The [exact upstream README](https://github.com/lovell/sharp-libvips/blob/ebb95f8add54eee8bed840e3fb587e4cbec857d7/README.md) distinguishes Apache-2.0 packaging scripts from the libraries' various licenses. Copying that repository's Apache license would not resolve the native binary's full notices or corresponding-source requirements. |
+| `@tybys/wasm-util@0.10.3` | [Exact npm gitHead package metadata](https://github.com/toyobayashi/wasm-util/blob/efb17cc128a30fb16b58127738f09c8871a3f7d1/package.json) declares MIT. The installed package and complete upstream tree contain no license/notice file; no full version-matched notice was recovered. |
+| `client-only@0.0.1` | [Exact npm metadata](https://registry.npmjs.org/client-only/0.0.1) declares MIT but supplies no repository or gitHead. Its three-file archive contains no license/copyright notice. No parent-project copyright was assumed. |
+| `is-node-process@1.2.0` | [Exact tagged source](https://github.com/mswjs/is-node-process/blob/8a6152c795d8705be97166bd5167e70ac6efc67c/package.json) declares MIT; shipped source maps match that source. Neither the seven-file archive nor the complete tagged tree contains a license/notice file. |
+
+This check records evidence, not a completed release-license audit. The supplements do not establish notice coverage for every dependency compiled into native or JavaScript bundles. Before distributing a runnable release, inspect the actual target-platform artifact, retain its required notices/source arrangements and resolve the remaining gaps. No dependencies were removed or upgraded, no generic copyright was invented, and no maintainer was contacted. External evidence is listed in `FRONTEND_VERIFICATION.md`.
