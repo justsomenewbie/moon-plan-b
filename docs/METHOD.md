@@ -1,0 +1,13 @@
+# Display method and scientific limits
+
+The current app is a tested frontend with invented demonstration data. It has **not** used NASA data to produce a validated lunar result. The fixture has fictitious sites with no coordinates; its simple angles and precomputed intervals exist to exercise interactions and missing-data behavior.
+
+The intended source is JPL Horizons, selected in the reviewed preparation plan. The [Horizons observer-table documentation](https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table) describes azimuth/elevation quantities. A future producer must confirm the actual target, observer, body-fixed location/frame, airless apparent-angle definition, UTC conversion and source coverage before integration. The frontend's draft conventions are recorded in [the contract](FRONTEND_CONTRACT.md), not assumed to match an unseen response.
+
+For the proposed ideal-horizon center model, elevation greater than 0° denotes a center above the local ideal horizon. Exactly 0° is the boundary. The producer supplies all intervals, total durations, longest simultaneous duration and criterion assessments. Structural agreement between these fields is checked at import; it is not independent scientific validation. The frontend only selects, compares, plots and presents supplied values.
+
+The chart joins observed samples with straight segments for display. It does not create new samples or use that drawing to calculate results. Gaps and null values break the line. The cursor selects actual common sample offsets. The sky chart plots azimuth horizontally and elevation vertically; it is a schematic, not terrain or a perspective camera view. Sample tables preserve supplied numeric values; summary durations and angle readouts are explicitly rounded for readability.
+
+Terrain obstruction, crater/mountain shadows, disk edges, eclipses, electrical generation/storage/load, antenna configuration, ground stations and radio link budgets are not modeled by this frontend draft. Earth above an ideal horizon does not establish communication. Sun above it does not establish usable power. No displayed result establishes landing safety or a best landing site. Cadence can hide short events; interpolation or agreement between two numeric summaries cannot establish physical accuracy.
+
+No realistic lunar 3D/ground-level view is included: it requires licensed, compatible terrain/location/elevation data and a validated core first. The responsive chart/table experience remains usable without WebGL. Backend integration, producer/scientific review and actual-device acceptance remain outstanding.

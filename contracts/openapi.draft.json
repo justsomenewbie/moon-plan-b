@@ -1,0 +1,1847 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Moon Plan B — DRAFT, NOT AGREED WITH BACKEND",
+    "version": "0.0.1-draft",
+    "description": "AI-assisted frontend proposal based on Chung's rules, not a supplied backend specification. All examples are explicitly synthetic. Dates are UTC ISO8601 with Z; angles degrees clockwise from north; durations hours; percentages 0–100. FE displays supplied physics only. Proposed request limit 31 days, pending backend agreement."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/api/v1/dataset": {
+      "get": {
+        "operationId": "getDataset",
+        "summary": "Read a bounded release window",
+        "description": "from/to/resolutionSeconds are mandatory. Proposed maximum range 31 days. Only scenarios fully inside the requested window are returned. Native sample cadence may be coarser than requested; sampleStepSeconds reports actual cadence. Empty scenarios is a successful empty result. The frontend proposal rejects requests needing more than 10,000 samples per series at the requested resolution; increase resolutionSeconds or shorten the range.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+            }
+          },
+          {
+            "name": "resolutionSeconds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 86400
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft response; producer agreement pending.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                },
+                "example": {
+                  "schemaVersion": "frontend-draft-2",
+                  "datasetId": "synthetic-ui-v2",
+                  "evidence": "synthetic-fixture",
+                  "model": {
+                    "id": "ideal-horizon-center-v1",
+                    "label": "Ideal horizon · body centers",
+                    "definition": "A body center is above an ideal local horizon when elevation is greater than 0°. These particular angles, sites, intervals and assessments are invented UI test fixtures, not ephemerides.",
+                    "limits": [
+                      "Terrain, craters and mountains are not modeled.",
+                      "No disk-edge, eclipse, power-system, antenna or radio-link calculation.",
+                      "No landing safety conclusion. Sample spacing can hide short events.",
+                      "Computed ephemerides and this draft contract still require producer and science review."
+                    ]
+                  },
+                  "criteriaHours": [
+                    6,
+                    9,
+                    12
+                  ],
+                  "sites": [
+                    {
+                      "id": "ridge",
+                      "name": "Demo ridge A",
+                      "location": null,
+                      "sourceIds": []
+                    },
+                    {
+                      "id": "basin",
+                      "name": "Demo basin B",
+                      "location": null,
+                      "sourceIds": []
+                    }
+                  ],
+                  "scenarios": [
+                    {
+                      "id": "ridge-1",
+                      "siteId": "ridge",
+                      "startUtc": "2026-11-14T00:00:00Z",
+                      "endUtc": "2026-11-15T00:00:00Z",
+                      "coverage": "complete",
+                      "samples": [
+                        {
+                          "utc": "2026-11-14T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 350,
+                            "elevationDeg": -30
+                          },
+                          "earth": {
+                            "azimuthDeg": 20,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T03:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 14,
+                            "elevationDeg": -15
+                          },
+                          "earth": {
+                            "azimuthDeg": 29,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T06:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T09:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 62,
+                            "elevationDeg": 15
+                          },
+                          "earth": {
+                            "azimuthDeg": 47,
+                            "elevationDeg": 40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T12:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 86,
+                            "elevationDeg": 30
+                          },
+                          "earth": {
+                            "azimuthDeg": 56,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T15:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 110,
+                            "elevationDeg": 15
+                          },
+                          "earth": {
+                            "azimuthDeg": 65,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T18:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 134,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 74,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T21:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 158,
+                            "elevationDeg": -15
+                          },
+                          "earth": {
+                            "azimuthDeg": 83,
+                            "elevationDeg": -40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 182,
+                            "elevationDeg": -30
+                          },
+                          "earth": {
+                            "azimuthDeg": 92,
+                            "elevationDeg": -20
+                          }
+                        }
+                      ],
+                      "intervals": {
+                        "sun": [
+                          {
+                            "startUtc": "2026-11-14T06:00:00Z",
+                            "endUtc": "2026-11-14T18:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "earth": [
+                          {
+                            "startUtc": "2026-11-14T03:00:00Z",
+                            "endUtc": "2026-11-14T15:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "simultaneous": [
+                          {
+                            "startUtc": "2026-11-14T06:00:00Z",
+                            "endUtc": "2026-11-14T15:00:00Z",
+                            "endClipped": false
+                          }
+                        ]
+                      },
+                      "metrics": {
+                        "sunAboveHours": 12,
+                        "earthAboveHours": 12,
+                        "simultaneousLongestHours": 9
+                      },
+                      "criteria": [
+                        {
+                          "minimumHours": 6,
+                          "result": "meets",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        },
+                        {
+                          "minimumHours": 9,
+                          "result": "borderline",
+                          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+                        },
+                        {
+                          "minimumHours": 12,
+                          "result": "below",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        }
+                      ],
+                      "sourceIds": [],
+                      "evidenceUrl": null,
+                      "sampleStepSeconds": 10800,
+                      "horizonCurve": [
+                        {
+                          "azimuthDeg": 0,
+                          "elevationDeg": 0
+                        },
+                        {
+                          "azimuthDeg": 360,
+                          "elevationDeg": 0
+                        }
+                      ]
+                    },
+                    {
+                      "id": "ridge-2",
+                      "siteId": "ridge",
+                      "startUtc": "2026-11-15T00:00:00Z",
+                      "endUtc": "2026-11-16T00:00:00Z",
+                      "coverage": "complete",
+                      "samples": [
+                        {
+                          "utc": "2026-11-15T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 350,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 20,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T03:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 14,
+                            "elevationDeg": 15
+                          },
+                          "earth": {
+                            "azimuthDeg": 29,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T06:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 30
+                          },
+                          "earth": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T09:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 62,
+                            "elevationDeg": 15
+                          },
+                          "earth": {
+                            "azimuthDeg": 47,
+                            "elevationDeg": 40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T12:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 86,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 56,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T15:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 110,
+                            "elevationDeg": -15
+                          },
+                          "earth": {
+                            "azimuthDeg": 65,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T18:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 134,
+                            "elevationDeg": -30
+                          },
+                          "earth": {
+                            "azimuthDeg": 74,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T21:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 158,
+                            "elevationDeg": -15
+                          },
+                          "earth": {
+                            "azimuthDeg": 83,
+                            "elevationDeg": -40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 182,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 92,
+                            "elevationDeg": -20
+                          }
+                        }
+                      ],
+                      "intervals": {
+                        "sun": [
+                          {
+                            "startUtc": "2026-11-15T00:00:00Z",
+                            "endUtc": "2026-11-15T12:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "earth": [
+                          {
+                            "startUtc": "2026-11-15T03:00:00Z",
+                            "endUtc": "2026-11-15T15:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "simultaneous": [
+                          {
+                            "startUtc": "2026-11-15T03:00:00Z",
+                            "endUtc": "2026-11-15T12:00:00Z",
+                            "endClipped": false
+                          }
+                        ]
+                      },
+                      "metrics": {
+                        "sunAboveHours": 12,
+                        "earthAboveHours": 12,
+                        "simultaneousLongestHours": 9
+                      },
+                      "criteria": [
+                        {
+                          "minimumHours": 6,
+                          "result": "meets",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        },
+                        {
+                          "minimumHours": 9,
+                          "result": "borderline",
+                          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+                        },
+                        {
+                          "minimumHours": 12,
+                          "result": "below",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        }
+                      ],
+                      "sourceIds": [],
+                      "evidenceUrl": null,
+                      "sampleStepSeconds": 10800,
+                      "horizonCurve": [
+                        {
+                          "azimuthDeg": 0,
+                          "elevationDeg": 0
+                        },
+                        {
+                          "azimuthDeg": 360,
+                          "elevationDeg": 0
+                        }
+                      ]
+                    },
+                    {
+                      "id": "basin-1",
+                      "siteId": "basin",
+                      "startUtc": "2026-11-14T00:00:00Z",
+                      "endUtc": "2026-11-15T00:00:00Z",
+                      "coverage": "complete",
+                      "samples": [
+                        {
+                          "utc": "2026-11-14T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 350,
+                            "elevationDeg": -30
+                          },
+                          "earth": {
+                            "azimuthDeg": 20,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T03:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 14,
+                            "elevationDeg": -20
+                          },
+                          "earth": {
+                            "azimuthDeg": 29,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T06:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": -10
+                          },
+                          "earth": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T09:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 62,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 47,
+                            "elevationDeg": 40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T12:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 86,
+                            "elevationDeg": 10
+                          },
+                          "earth": {
+                            "azimuthDeg": 56,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T15:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 110,
+                            "elevationDeg": 20
+                          },
+                          "earth": {
+                            "azimuthDeg": 65,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T18:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 134,
+                            "elevationDeg": 10
+                          },
+                          "earth": {
+                            "azimuthDeg": 74,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-14T21:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 158,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 83,
+                            "elevationDeg": -40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 182,
+                            "elevationDeg": -10
+                          },
+                          "earth": {
+                            "azimuthDeg": 92,
+                            "elevationDeg": -20
+                          }
+                        }
+                      ],
+                      "intervals": {
+                        "sun": [
+                          {
+                            "startUtc": "2026-11-14T09:00:00Z",
+                            "endUtc": "2026-11-14T21:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "earth": [
+                          {
+                            "startUtc": "2026-11-14T03:00:00Z",
+                            "endUtc": "2026-11-14T15:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "simultaneous": [
+                          {
+                            "startUtc": "2026-11-14T09:00:00Z",
+                            "endUtc": "2026-11-14T15:00:00Z",
+                            "endClipped": false
+                          }
+                        ]
+                      },
+                      "metrics": {
+                        "sunAboveHours": 12,
+                        "earthAboveHours": 12,
+                        "simultaneousLongestHours": 6
+                      },
+                      "criteria": [
+                        {
+                          "minimumHours": 6,
+                          "result": "borderline",
+                          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+                        },
+                        {
+                          "minimumHours": 9,
+                          "result": "below",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        },
+                        {
+                          "minimumHours": 12,
+                          "result": "below",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        }
+                      ],
+                      "sourceIds": [],
+                      "evidenceUrl": null,
+                      "sampleStepSeconds": 10800,
+                      "horizonCurve": [
+                        {
+                          "azimuthDeg": 0,
+                          "elevationDeg": 0
+                        },
+                        {
+                          "azimuthDeg": 360,
+                          "elevationDeg": 0
+                        }
+                      ]
+                    },
+                    {
+                      "id": "basin-2",
+                      "siteId": "basin",
+                      "startUtc": "2026-11-15T00:00:00Z",
+                      "endUtc": "2026-11-16T00:00:00Z",
+                      "coverage": "complete",
+                      "samples": [
+                        {
+                          "utc": "2026-11-15T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 350,
+                            "elevationDeg": -30
+                          },
+                          "earth": {
+                            "azimuthDeg": 20,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T03:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 14,
+                            "elevationDeg": -20
+                          },
+                          "earth": {
+                            "azimuthDeg": 29,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T06:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": -10
+                          },
+                          "earth": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T09:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 62,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 47,
+                            "elevationDeg": 40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T12:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 86,
+                            "elevationDeg": 10
+                          },
+                          "earth": {
+                            "azimuthDeg": 56,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T15:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 110,
+                            "elevationDeg": 20
+                          },
+                          "earth": {
+                            "azimuthDeg": 65,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T18:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 134,
+                            "elevationDeg": 10
+                          },
+                          "earth": {
+                            "azimuthDeg": 74,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-15T21:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 158,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 83,
+                            "elevationDeg": -40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 182,
+                            "elevationDeg": -10
+                          },
+                          "earth": {
+                            "azimuthDeg": 92,
+                            "elevationDeg": -20
+                          }
+                        }
+                      ],
+                      "intervals": {
+                        "sun": [
+                          {
+                            "startUtc": "2026-11-15T09:00:00Z",
+                            "endUtc": "2026-11-15T21:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "earth": [
+                          {
+                            "startUtc": "2026-11-15T03:00:00Z",
+                            "endUtc": "2026-11-15T15:00:00Z",
+                            "endClipped": false
+                          }
+                        ],
+                        "simultaneous": [
+                          {
+                            "startUtc": "2026-11-15T09:00:00Z",
+                            "endUtc": "2026-11-15T15:00:00Z",
+                            "endClipped": false
+                          }
+                        ]
+                      },
+                      "metrics": {
+                        "sunAboveHours": 12,
+                        "earthAboveHours": 12,
+                        "simultaneousLongestHours": 6
+                      },
+                      "criteria": [
+                        {
+                          "minimumHours": 6,
+                          "result": "borderline",
+                          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+                        },
+                        {
+                          "minimumHours": 9,
+                          "result": "below",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        },
+                        {
+                          "minimumHours": 12,
+                          "result": "below",
+                          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+                        }
+                      ],
+                      "sourceIds": [],
+                      "evidenceUrl": null,
+                      "sampleStepSeconds": 10800,
+                      "horizonCurve": [
+                        {
+                          "azimuthDeg": 0,
+                          "elevationDeg": 0
+                        },
+                        {
+                          "azimuthDeg": 360,
+                          "elevationDeg": 0
+                        }
+                      ]
+                    },
+                    {
+                      "id": "ridge-3",
+                      "siteId": "ridge",
+                      "startUtc": "2026-11-16T00:00:00Z",
+                      "endUtc": "2026-11-17T00:00:00Z",
+                      "coverage": "partial",
+                      "samples": [
+                        {
+                          "utc": "2026-11-16T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 350,
+                            "elevationDeg": -30
+                          },
+                          "earth": {
+                            "azimuthDeg": 20,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T03:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 14,
+                            "elevationDeg": -15
+                          },
+                          "earth": {
+                            "azimuthDeg": 29,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T06:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 38,
+                            "elevationDeg": 20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T09:00:00Z",
+                          "sun": null,
+                          "earth": {
+                            "azimuthDeg": 47,
+                            "elevationDeg": 40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T12:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 86,
+                            "elevationDeg": 30
+                          },
+                          "earth": null
+                        },
+                        {
+                          "utc": "2026-11-16T15:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 110,
+                            "elevationDeg": 15
+                          },
+                          "earth": {
+                            "azimuthDeg": 65,
+                            "elevationDeg": 0
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T18:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 134,
+                            "elevationDeg": 0
+                          },
+                          "earth": {
+                            "azimuthDeg": 74,
+                            "elevationDeg": -20
+                          }
+                        },
+                        {
+                          "utc": "2026-11-16T21:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 158,
+                            "elevationDeg": -15
+                          },
+                          "earth": {
+                            "azimuthDeg": 83,
+                            "elevationDeg": -40
+                          }
+                        },
+                        {
+                          "utc": "2026-11-17T00:00:00Z",
+                          "sun": {
+                            "azimuthDeg": 182,
+                            "elevationDeg": -30
+                          },
+                          "earth": {
+                            "azimuthDeg": 92,
+                            "elevationDeg": -20
+                          }
+                        }
+                      ],
+                      "intervals": null,
+                      "metrics": null,
+                      "criteria": [
+                        {
+                          "minimumHours": 6,
+                          "result": "unknown",
+                          "reason": "Missing fixture observations; totals and threshold status cannot be evaluated."
+                        },
+                        {
+                          "minimumHours": 9,
+                          "result": "unknown",
+                          "reason": "Missing fixture observations; totals and threshold status cannot be evaluated."
+                        },
+                        {
+                          "minimumHours": 12,
+                          "result": "unknown",
+                          "reason": "Missing fixture observations; totals and threshold status cannot be evaluated."
+                        }
+                      ],
+                      "sourceIds": [],
+                      "evidenceUrl": null,
+                      "sampleStepSeconds": 10800,
+                      "horizonCurve": [
+                        {
+                          "azimuthDeg": 0,
+                          "elevationDeg": 0
+                        },
+                        {
+                          "azimuthDeg": 360,
+                          "elevationDeg": 0
+                        }
+                      ]
+                    },
+                    {
+                      "id": "ridge-4",
+                      "siteId": "ridge",
+                      "startUtc": "2026-11-17T00:00:00Z",
+                      "endUtc": "2026-11-18T00:00:00Z",
+                      "coverage": "missing",
+                      "samples": [],
+                      "intervals": null,
+                      "metrics": null,
+                      "criteria": [
+                        {
+                          "minimumHours": 6,
+                          "result": "unknown",
+                          "reason": "No observations are available for this synthetic scenario."
+                        },
+                        {
+                          "minimumHours": 9,
+                          "result": "unknown",
+                          "reason": "No observations are available for this synthetic scenario."
+                        },
+                        {
+                          "minimumHours": 12,
+                          "result": "unknown",
+                          "reason": "No observations are available for this synthetic scenario."
+                        }
+                      ],
+                      "sourceIds": [],
+                      "evidenceUrl": null,
+                      "sampleStepSeconds": 10800,
+                      "horizonCurve": [
+                        {
+                          "azimuthDeg": 0,
+                          "elevationDeg": 0
+                        },
+                        {
+                          "azimuthDeg": 360,
+                          "elevationDeg": 0
+                        }
+                      ]
+                    }
+                  ],
+                  "sources": [],
+                  "attribution": "AI-assisted synthetic UI fixture. All sites, angles, intervals and assessments are invented; no scientific measurements."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs": {
+      "post": {
+        "operationId": "createJob",
+        "summary": "Request supplied-coordinate observations",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Draft response; producer agreement pending.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                },
+                "example": {
+                  "jobId": "mock-job"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{id}": {
+      "get": {
+        "operationId": "getJob",
+        "summary": "Poll a job every 1–2 seconds until terminal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft response; producer agreement pending.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                },
+                "example": {
+                  "jobId": "mock-job",
+                  "status": "queued",
+                  "progressPct": 0,
+                  "result": null,
+                  "problem": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Consistent problem response.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/openapi.json": {
+      "get": {
+        "operationId": "getOpenApi",
+        "summary": "Read this draft contract",
+        "responses": {
+          "200": {
+            "description": "Draft response; producer agreement pending.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Angles": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "azimuthDeg": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 360,
+            "description": "Clockwise from north; north=0, east=90."
+          },
+          "elevationDeg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          }
+        },
+        "required": [
+          "azimuthDeg",
+          "elevationDeg"
+        ]
+      },
+      "HorizonPoint": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "azimuthDeg": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 360
+          },
+          "elevationDeg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          }
+        },
+        "required": [
+          "azimuthDeg",
+          "elevationDeg"
+        ]
+      },
+      "Sample": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "utc": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "sun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Angles"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "earth": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Angles"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "utc",
+          "sun",
+          "earth"
+        ]
+      },
+      "Interval": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "startUtc": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "endUtc": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "endClipped": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "startUtc",
+          "endUtc",
+          "endClipped"
+        ]
+      },
+      "Intervals": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sun": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interval"
+            },
+            "maxItems": 10000
+          },
+          "earth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interval"
+            },
+            "maxItems": 10000
+          },
+          "simultaneous": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interval"
+            },
+            "maxItems": 10000
+          }
+        },
+        "required": [
+          "sun",
+          "earth",
+          "simultaneous"
+        ]
+      },
+      "Metrics": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sunAboveHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "earthAboveHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "simultaneousLongestHours": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          }
+        },
+        "required": [
+          "sunAboveHours",
+          "earthAboveHours",
+          "simultaneousLongestHours"
+        ]
+      },
+      "Criterion": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "minimumHours": {
+            "type": "number",
+            "minimum": 0.001,
+            "maximum": 100000
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "meets",
+              "below",
+              "borderline",
+              "unknown"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "minimumHours",
+          "result",
+          "reason"
+        ]
+      },
+      "Location": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "latitudeDeg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitudeEastDeg": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "elevationKm": {
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "frame": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "elevationDatum": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "latitudeDeg",
+          "longitudeEastDeg",
+          "elevationKm",
+          "frame",
+          "elevationDatum"
+        ]
+      },
+      "Site": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Location"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+            },
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "location",
+          "sourceIds"
+        ]
+      },
+      "Source": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP(S) without credentials."
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "retrievedAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "rawSha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "url",
+          "version",
+          "retrievedAtUtc",
+          "rawSha256"
+        ]
+      },
+      "Scenario": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+          },
+          "siteId": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+          },
+          "startUtc": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "endUtc": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial",
+              "missing"
+            ]
+          },
+          "sampleStepSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 31557600
+          },
+          "horizonCurve": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HorizonPoint"
+            },
+            "maxItems": 361
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Sample"
+            },
+            "maxItems": 10000
+          },
+          "intervals": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Intervals"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Metrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Criterion"
+            },
+            "maxItems": 30
+          },
+          "sourceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+            },
+            "maxItems": 200
+          },
+          "evidenceUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          }
+        },
+        "required": [
+          "id",
+          "siteId",
+          "startUtc",
+          "endUtc",
+          "coverage",
+          "sampleStepSeconds",
+          "horizonCurve",
+          "samples",
+          "intervals",
+          "metrics",
+          "criteria",
+          "sourceIds",
+          "evidenceUrl"
+        ]
+      },
+      "Dataset": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "enum": [
+              "frontend-draft-2"
+            ]
+          },
+          "datasetId": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+          },
+          "evidence": {
+            "type": "string",
+            "enum": [
+              "synthetic-fixture",
+              "computed-ephemeris"
+            ]
+          },
+          "attribution": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "model": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "definition": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              "limits": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                },
+                "maxItems": 30
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "definition",
+              "limits"
+            ]
+          },
+          "criteriaHours": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0.001,
+              "maximum": 100000
+            },
+            "maxItems": 30
+          },
+          "sites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Site"
+            },
+            "maxItems": 100
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Scenario"
+            },
+            "maxItems": 500
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "datasetId",
+          "evidence",
+          "attribution",
+          "model",
+          "criteriaHours",
+          "sites",
+          "scenarios",
+          "sources"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "instance": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail"
+        ]
+      },
+      "JobRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(\\.\\d{3})?Z$"
+          },
+          "resolutionSeconds": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 86400
+          }
+        },
+        "required": [
+          "location",
+          "from",
+          "to",
+          "resolutionSeconds"
+        ]
+      },
+      "JobAccepted": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+          }
+        },
+        "required": [
+          "jobId"
+        ]
+      },
+      "Job": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "jobId",
+              "status",
+              "progressPct",
+              "result",
+              "problem"
+            ],
+            "properties": {
+              "jobId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "queued"
+              },
+              "progressPct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "result": {
+                "type": "null"
+              },
+              "problem": {
+                "type": "null"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "jobId",
+              "status",
+              "progressPct",
+              "result",
+              "problem"
+            ],
+            "properties": {
+              "jobId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "running"
+              },
+              "progressPct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "result": {
+                "type": "null"
+              },
+              "problem": {
+                "type": "null"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "jobId",
+              "status",
+              "progressPct",
+              "result",
+              "problem"
+            ],
+            "properties": {
+              "jobId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "done"
+              },
+              "progressPct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "const": 100
+              },
+              "result": {
+                "$ref": "#/components/schemas/Dataset"
+              },
+              "problem": {
+                "type": "null"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "jobId",
+              "status",
+              "progressPct",
+              "result",
+              "problem"
+            ],
+            "properties": {
+              "jobId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9._-]{1,100}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "failed"
+              },
+              "progressPct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "result": {
+                "type": "null"
+              },
+              "problem": {
+                "$ref": "#/components/schemas/Problem"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "x-contract-status": "frontend-proposal-not-agreed",
+  "x-ai-attribution": "Draft contract authored with OpenAI Codex; no real scientific dataset supplied."
+}

@@ -4,7 +4,7 @@
 
 Repository: `justsomenewbie/moon-plan-b`, public, base branch `main`. This is the single shared product repository for frontend, backend/data scripts, tests and English product documentation. Keep private evidence, historical chats and unrelated practice outside it. Preparation sync permissions apply to the preparation repository, not automatic product publication, deployment, purchases or access changes.
 
-Before work, read HANDOFF, inspect actual time/runtime, `git status --short --branch` and the full existing diff. Preserve other work. This setup task created only administrative documents; do not infer that implementation has started. A task needs a goal, allowed files, inputs/outputs, acceptance examples and exact checks.
+Before work, read HANDOFF, inspect actual time/runtime, `git status --short --branch` and the full existing diff. Preserve other work. Implementation began after the event start; use HANDOFF for the current checkout state. A task needs a goal, allowed files, inputs/outputs, acceptance examples and exact checks.
 
 The reviewed preparation checkpoint is [5abda55a6d83bf89d6dd762fa6ceddfc3d265920](https://github.com/justsomenewbie/space-apps-2026-preparation/tree/5abda55a6d83bf89d6dd762fa6ceddfc3d265920). Read its COMPETITION_RUNBOOK, KE_HOACH_NHOM, FRONTEND_HANDOFF, DATA_PREPARATION, SECURITY_PREPARATION and tool checklist as applicable; later instructions supersede this dated copy. Confirm actual available tools on each host; Mac paths/runtimes do not transfer through Git.
 
@@ -27,6 +27,16 @@ Moon Plan B retains sourced site/date comparisons and Sun/Earth timeline before 
 For each scientific input/result, retain URL/version/retrieval date, request/raw-response identity, target/observer, reference frame, coordinates/elevation, units, time scale/UTC interval, coverage, conversion, assumption and independent sample checks. Keep measured data, model assumptions and educational thresholds distinct. Sun above an ideal horizon is not terrain-resolved illumination/power; Earth visibility is not a validated radio link. Unknown/missing data must stay unknown. Agree a small versioned response example including errors, units and dates before connecting frontend and backend; never fabricate “real” results.
 
 ## Ownership, checks and security
+
+### Mandatory frontend coordination — 14 November
+
+Sơn supplied [Chung's frontend rules](https://docs.google.com/document/d/1zMhsmy7-DbHzEO5nvosaNp5A9ztQ_J_97vTxCzoAXxE/edit) as mandatory; read on 14 November Hanoi, source last modified 13 November 17:52:39.975 UTC. Sơn confirmed that no agreed OpenAPI file exists yet and authorized a **clearly marked draft**. `contracts/openapi.draft.json` is a frontend proposal, never evidence of backend agreement. Preserve that status until Chung reviews it.
+
+Agree OpenAPI before integrating the real backend; regenerate types with openapi-typescript and use openapi-fetch. Change the contract first and notify the integration owner; do not silently invent endpoints. Keep requests and common problem handling in `frontend/lib/api/`, with TanStack Query cache/retries and 1–2 second job polling. Components must not call fetch directly. Use MSW or Prism for mocks and one documented environment switch; proxy live `/api/*` through Next.js rewrites, with a single public origin. Never put credentials in `NEXT_PUBLIC_*` values.
+
+API timestamps are UTC ISO 8601 ending in Z; angles degrees, azimuth clockwise from north; percentages 0–100; durations hours; fields camelCase with units. Errors use application/problem+json. Backend supplies horizon curves, Sun/Earth tracks, visibility intervals and scientific assessments; frontend only displays them. Bound time-series requests with from/to/resolution. Long calculations return HTTP 202/jobId, followed by queued/running/done/failed status and progress. Provide loading/empty/error states, shareable scenarios, visible sources/assumptions, and Swagger/Scalar documentation. Chung's promised Colab export has not been supplied: keep synthetic fixtures conspicuously labeled.
+
+Coordinate a short contract review with the team; this instruction does not authorize automatically messaging people or scheduling meetings.
 
 One editor per checkout. Reviewers read only; concurrent writers require separate worktrees/checkouts, branches and file ownership, with a real base commit first. Branches alone do not isolate files. Initially keep at most two implementation streams. Integration owner reviews shared types/units/contracts/dependencies/config and combined behavior. A reviewer reads the full diff and independently reruns acceptance checks; worker reports are not proof. Preserve error handling, trust-boundary validation, accessibility and data. After two failed review rounds narrow/reassign; after three failed fixes stop and name the doubtful assumption.
 

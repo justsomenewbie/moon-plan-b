@@ -1,0 +1,877 @@
+{
+  "schemaVersion": "frontend-draft-2",
+  "datasetId": "synthetic-ui-v2",
+  "evidence": "synthetic-fixture",
+  "model": {
+    "id": "ideal-horizon-center-v1",
+    "label": "Ideal horizon · body centers",
+    "definition": "A body center is above an ideal local horizon when elevation is greater than 0°. These particular angles, sites, intervals and assessments are invented UI test fixtures, not ephemerides.",
+    "limits": [
+      "Terrain, craters and mountains are not modeled.",
+      "No disk-edge, eclipse, power-system, antenna or radio-link calculation.",
+      "No landing safety conclusion. Sample spacing can hide short events.",
+      "Computed ephemerides and this draft contract still require producer and science review."
+    ]
+  },
+  "criteriaHours": [
+    6,
+    9,
+    12
+  ],
+  "sites": [
+    {
+      "id": "ridge",
+      "name": "Demo ridge A",
+      "location": null,
+      "sourceIds": []
+    },
+    {
+      "id": "basin",
+      "name": "Demo basin B",
+      "location": null,
+      "sourceIds": []
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ridge-1",
+      "siteId": "ridge",
+      "startUtc": "2026-11-14T00:00:00Z",
+      "endUtc": "2026-11-15T00:00:00Z",
+      "coverage": "complete",
+      "samples": [
+        {
+          "utc": "2026-11-14T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 350,
+            "elevationDeg": -30
+          },
+          "earth": {
+            "azimuthDeg": 20,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-14T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 14,
+            "elevationDeg": -15
+          },
+          "earth": {
+            "azimuthDeg": 29,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-14T06:00:00Z",
+          "sun": {
+            "azimuthDeg": 38,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 38,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-14T09:00:00Z",
+          "sun": {
+            "azimuthDeg": 62,
+            "elevationDeg": 15
+          },
+          "earth": {
+            "azimuthDeg": 47,
+            "elevationDeg": 40
+          }
+        },
+        {
+          "utc": "2026-11-14T12:00:00Z",
+          "sun": {
+            "azimuthDeg": 86,
+            "elevationDeg": 30
+          },
+          "earth": {
+            "azimuthDeg": 56,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-14T15:00:00Z",
+          "sun": {
+            "azimuthDeg": 110,
+            "elevationDeg": 15
+          },
+          "earth": {
+            "azimuthDeg": 65,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-14T18:00:00Z",
+          "sun": {
+            "azimuthDeg": 134,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 74,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-14T21:00:00Z",
+          "sun": {
+            "azimuthDeg": 158,
+            "elevationDeg": -15
+          },
+          "earth": {
+            "azimuthDeg": 83,
+            "elevationDeg": -40
+          }
+        },
+        {
+          "utc": "2026-11-15T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 182,
+            "elevationDeg": -30
+          },
+          "earth": {
+            "azimuthDeg": 92,
+            "elevationDeg": -20
+          }
+        }
+      ],
+      "intervals": {
+        "sun": [
+          {
+            "startUtc": "2026-11-14T06:00:00Z",
+            "endUtc": "2026-11-14T18:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "earth": [
+          {
+            "startUtc": "2026-11-14T03:00:00Z",
+            "endUtc": "2026-11-14T15:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "simultaneous": [
+          {
+            "startUtc": "2026-11-14T06:00:00Z",
+            "endUtc": "2026-11-14T15:00:00Z",
+            "endClipped": false
+          }
+        ]
+      },
+      "metrics": {
+        "sunAboveHours": 12,
+        "earthAboveHours": 12,
+        "simultaneousLongestHours": 9
+      },
+      "criteria": [
+        {
+          "minimumHours": 6,
+          "result": "meets",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        },
+        {
+          "minimumHours": 9,
+          "result": "borderline",
+          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+        },
+        {
+          "minimumHours": 12,
+          "result": "below",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null,
+      "sampleStepSeconds": 10800,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ]
+    },
+    {
+      "id": "ridge-2",
+      "siteId": "ridge",
+      "startUtc": "2026-11-15T00:00:00Z",
+      "endUtc": "2026-11-16T00:00:00Z",
+      "coverage": "complete",
+      "samples": [
+        {
+          "utc": "2026-11-15T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 350,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 20,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-15T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 14,
+            "elevationDeg": 15
+          },
+          "earth": {
+            "azimuthDeg": 29,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-15T06:00:00Z",
+          "sun": {
+            "azimuthDeg": 38,
+            "elevationDeg": 30
+          },
+          "earth": {
+            "azimuthDeg": 38,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-15T09:00:00Z",
+          "sun": {
+            "azimuthDeg": 62,
+            "elevationDeg": 15
+          },
+          "earth": {
+            "azimuthDeg": 47,
+            "elevationDeg": 40
+          }
+        },
+        {
+          "utc": "2026-11-15T12:00:00Z",
+          "sun": {
+            "azimuthDeg": 86,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 56,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-15T15:00:00Z",
+          "sun": {
+            "azimuthDeg": 110,
+            "elevationDeg": -15
+          },
+          "earth": {
+            "azimuthDeg": 65,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-15T18:00:00Z",
+          "sun": {
+            "azimuthDeg": 134,
+            "elevationDeg": -30
+          },
+          "earth": {
+            "azimuthDeg": 74,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-15T21:00:00Z",
+          "sun": {
+            "azimuthDeg": 158,
+            "elevationDeg": -15
+          },
+          "earth": {
+            "azimuthDeg": 83,
+            "elevationDeg": -40
+          }
+        },
+        {
+          "utc": "2026-11-16T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 182,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 92,
+            "elevationDeg": -20
+          }
+        }
+      ],
+      "intervals": {
+        "sun": [
+          {
+            "startUtc": "2026-11-15T00:00:00Z",
+            "endUtc": "2026-11-15T12:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "earth": [
+          {
+            "startUtc": "2026-11-15T03:00:00Z",
+            "endUtc": "2026-11-15T15:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "simultaneous": [
+          {
+            "startUtc": "2026-11-15T03:00:00Z",
+            "endUtc": "2026-11-15T12:00:00Z",
+            "endClipped": false
+          }
+        ]
+      },
+      "metrics": {
+        "sunAboveHours": 12,
+        "earthAboveHours": 12,
+        "simultaneousLongestHours": 9
+      },
+      "criteria": [
+        {
+          "minimumHours": 6,
+          "result": "meets",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        },
+        {
+          "minimumHours": 9,
+          "result": "borderline",
+          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+        },
+        {
+          "minimumHours": 12,
+          "result": "below",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null,
+      "sampleStepSeconds": 10800,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ]
+    },
+    {
+      "id": "basin-1",
+      "siteId": "basin",
+      "startUtc": "2026-11-14T00:00:00Z",
+      "endUtc": "2026-11-15T00:00:00Z",
+      "coverage": "complete",
+      "samples": [
+        {
+          "utc": "2026-11-14T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 350,
+            "elevationDeg": -30
+          },
+          "earth": {
+            "azimuthDeg": 20,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-14T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 14,
+            "elevationDeg": -20
+          },
+          "earth": {
+            "azimuthDeg": 29,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-14T06:00:00Z",
+          "sun": {
+            "azimuthDeg": 38,
+            "elevationDeg": -10
+          },
+          "earth": {
+            "azimuthDeg": 38,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-14T09:00:00Z",
+          "sun": {
+            "azimuthDeg": 62,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 47,
+            "elevationDeg": 40
+          }
+        },
+        {
+          "utc": "2026-11-14T12:00:00Z",
+          "sun": {
+            "azimuthDeg": 86,
+            "elevationDeg": 10
+          },
+          "earth": {
+            "azimuthDeg": 56,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-14T15:00:00Z",
+          "sun": {
+            "azimuthDeg": 110,
+            "elevationDeg": 20
+          },
+          "earth": {
+            "azimuthDeg": 65,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-14T18:00:00Z",
+          "sun": {
+            "azimuthDeg": 134,
+            "elevationDeg": 10
+          },
+          "earth": {
+            "azimuthDeg": 74,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-14T21:00:00Z",
+          "sun": {
+            "azimuthDeg": 158,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 83,
+            "elevationDeg": -40
+          }
+        },
+        {
+          "utc": "2026-11-15T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 182,
+            "elevationDeg": -10
+          },
+          "earth": {
+            "azimuthDeg": 92,
+            "elevationDeg": -20
+          }
+        }
+      ],
+      "intervals": {
+        "sun": [
+          {
+            "startUtc": "2026-11-14T09:00:00Z",
+            "endUtc": "2026-11-14T21:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "earth": [
+          {
+            "startUtc": "2026-11-14T03:00:00Z",
+            "endUtc": "2026-11-14T15:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "simultaneous": [
+          {
+            "startUtc": "2026-11-14T09:00:00Z",
+            "endUtc": "2026-11-14T15:00:00Z",
+            "endClipped": false
+          }
+        ]
+      },
+      "metrics": {
+        "sunAboveHours": 12,
+        "earthAboveHours": 12,
+        "simultaneousLongestHours": 6
+      },
+      "criteria": [
+        {
+          "minimumHours": 6,
+          "result": "borderline",
+          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+        },
+        {
+          "minimumHours": 9,
+          "result": "below",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        },
+        {
+          "minimumHours": 12,
+          "result": "below",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null,
+      "sampleStepSeconds": 10800,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ]
+    },
+    {
+      "id": "basin-2",
+      "siteId": "basin",
+      "startUtc": "2026-11-15T00:00:00Z",
+      "endUtc": "2026-11-16T00:00:00Z",
+      "coverage": "complete",
+      "samples": [
+        {
+          "utc": "2026-11-15T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 350,
+            "elevationDeg": -30
+          },
+          "earth": {
+            "azimuthDeg": 20,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-15T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 14,
+            "elevationDeg": -20
+          },
+          "earth": {
+            "azimuthDeg": 29,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-15T06:00:00Z",
+          "sun": {
+            "azimuthDeg": 38,
+            "elevationDeg": -10
+          },
+          "earth": {
+            "azimuthDeg": 38,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-15T09:00:00Z",
+          "sun": {
+            "azimuthDeg": 62,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 47,
+            "elevationDeg": 40
+          }
+        },
+        {
+          "utc": "2026-11-15T12:00:00Z",
+          "sun": {
+            "azimuthDeg": 86,
+            "elevationDeg": 10
+          },
+          "earth": {
+            "azimuthDeg": 56,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-15T15:00:00Z",
+          "sun": {
+            "azimuthDeg": 110,
+            "elevationDeg": 20
+          },
+          "earth": {
+            "azimuthDeg": 65,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-15T18:00:00Z",
+          "sun": {
+            "azimuthDeg": 134,
+            "elevationDeg": 10
+          },
+          "earth": {
+            "azimuthDeg": 74,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-15T21:00:00Z",
+          "sun": {
+            "azimuthDeg": 158,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 83,
+            "elevationDeg": -40
+          }
+        },
+        {
+          "utc": "2026-11-16T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 182,
+            "elevationDeg": -10
+          },
+          "earth": {
+            "azimuthDeg": 92,
+            "elevationDeg": -20
+          }
+        }
+      ],
+      "intervals": {
+        "sun": [
+          {
+            "startUtc": "2026-11-15T09:00:00Z",
+            "endUtc": "2026-11-15T21:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "earth": [
+          {
+            "startUtc": "2026-11-15T03:00:00Z",
+            "endUtc": "2026-11-15T15:00:00Z",
+            "endClipped": false
+          }
+        ],
+        "simultaneous": [
+          {
+            "startUtc": "2026-11-15T09:00:00Z",
+            "endUtc": "2026-11-15T15:00:00Z",
+            "endClipped": false
+          }
+        ]
+      },
+      "metrics": {
+        "sunAboveHours": 12,
+        "earthAboveHours": 12,
+        "simultaneousLongestHours": 6
+      },
+      "criteria": [
+        {
+          "minimumHours": 6,
+          "result": "borderline",
+          "reason": "Synthetic test assessment; not a lunar prediction. Equality is deliberately marked borderline to exercise the UI."
+        },
+        {
+          "minimumHours": 9,
+          "result": "below",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        },
+        {
+          "minimumHours": 12,
+          "result": "below",
+          "reason": "Hand-authored synthetic test assessment, not a lunar prediction."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null,
+      "sampleStepSeconds": 10800,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ]
+    },
+    {
+      "id": "ridge-3",
+      "siteId": "ridge",
+      "startUtc": "2026-11-16T00:00:00Z",
+      "endUtc": "2026-11-17T00:00:00Z",
+      "coverage": "partial",
+      "samples": [
+        {
+          "utc": "2026-11-16T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 350,
+            "elevationDeg": -30
+          },
+          "earth": {
+            "azimuthDeg": 20,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-16T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 14,
+            "elevationDeg": -15
+          },
+          "earth": {
+            "azimuthDeg": 29,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-16T06:00:00Z",
+          "sun": {
+            "azimuthDeg": 38,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 38,
+            "elevationDeg": 20
+          }
+        },
+        {
+          "utc": "2026-11-16T09:00:00Z",
+          "sun": null,
+          "earth": {
+            "azimuthDeg": 47,
+            "elevationDeg": 40
+          }
+        },
+        {
+          "utc": "2026-11-16T12:00:00Z",
+          "sun": {
+            "azimuthDeg": 86,
+            "elevationDeg": 30
+          },
+          "earth": null
+        },
+        {
+          "utc": "2026-11-16T15:00:00Z",
+          "sun": {
+            "azimuthDeg": 110,
+            "elevationDeg": 15
+          },
+          "earth": {
+            "azimuthDeg": 65,
+            "elevationDeg": 0
+          }
+        },
+        {
+          "utc": "2026-11-16T18:00:00Z",
+          "sun": {
+            "azimuthDeg": 134,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 74,
+            "elevationDeg": -20
+          }
+        },
+        {
+          "utc": "2026-11-16T21:00:00Z",
+          "sun": {
+            "azimuthDeg": 158,
+            "elevationDeg": -15
+          },
+          "earth": {
+            "azimuthDeg": 83,
+            "elevationDeg": -40
+          }
+        },
+        {
+          "utc": "2026-11-17T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 182,
+            "elevationDeg": -30
+          },
+          "earth": {
+            "azimuthDeg": 92,
+            "elevationDeg": -20
+          }
+        }
+      ],
+      "intervals": null,
+      "metrics": null,
+      "criteria": [
+        {
+          "minimumHours": 6,
+          "result": "unknown",
+          "reason": "Missing fixture observations; totals and threshold status cannot be evaluated."
+        },
+        {
+          "minimumHours": 9,
+          "result": "unknown",
+          "reason": "Missing fixture observations; totals and threshold status cannot be evaluated."
+        },
+        {
+          "minimumHours": 12,
+          "result": "unknown",
+          "reason": "Missing fixture observations; totals and threshold status cannot be evaluated."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null,
+      "sampleStepSeconds": 10800,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ]
+    },
+    {
+      "id": "ridge-4",
+      "siteId": "ridge",
+      "startUtc": "2026-11-17T00:00:00Z",
+      "endUtc": "2026-11-18T00:00:00Z",
+      "coverage": "missing",
+      "samples": [],
+      "intervals": null,
+      "metrics": null,
+      "criteria": [
+        {
+          "minimumHours": 6,
+          "result": "unknown",
+          "reason": "No observations are available for this synthetic scenario."
+        },
+        {
+          "minimumHours": 9,
+          "result": "unknown",
+          "reason": "No observations are available for this synthetic scenario."
+        },
+        {
+          "minimumHours": 12,
+          "result": "unknown",
+          "reason": "No observations are available for this synthetic scenario."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null,
+      "sampleStepSeconds": 10800,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ]
+    }
+  ],
+  "sources": [],
+  "attribution": "AI-assisted synthetic UI fixture. All sites, angles, intervals and assessments are invented; no scientific measurements."
+}
