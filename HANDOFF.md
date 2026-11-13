@@ -16,12 +16,12 @@ Native Safari on `76fd327` passed mode switching, share reopening, empty-range r
 
 Earlier accepted-size check: memoization reduced median renderer JavaScript per step from 75.200 to 24.367 ms in five local CDP samples. The 20,000-row synthetic PDF retained every timestamp/angle across 873 pages, with seven visually sampled. Initial DOM remains large; native large-report printing and device performance are unverified.
 
-Six empty duplicate `@types` directories caused a build failure; moved intact into external evidence, then the unchanged strict type check passed. Their origin is unverified.
+Dependency notice review retained five pinned upstream license texts for six package entries; four gaps remain in [credits](docs/CREDITS.md#notice-recovery-check--14-november-2026). Original notice bytes are preserved, independently verified. This documentation-only update passed secret scanning; app/build checks were not repeated. Full target-platform binary notice coverage remains unresolved.
 
 Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`; not automatically available elsewhere. Private chat evidence and generated design raster are excluded. Prepared source remains [5abda55a6d83bf89d6dd762fa6ceddfc3d265920](https://github.com/justsomenewbie/space-apps-2026-preparation/tree/5abda55a6d83bf89d6dd762fa6ceddfc3d265920).
 
 ## Ownership and publication
 
-Root Codex completed the import-focus follow-up with independent review. Code commit `738e9b2c464ed07f441fa5d22811a387c156343c` is published on the authorized review branch; its remote SHA and both changed source/verification-file blob hashes read back through GitHub match local Git. This handoff records publication. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were unchanged; no preparation sync is required. Inspect Git before taking ownership.
+Root Codex completed notice recovery with independent review. Documentation commit `13ee61556a71f3c1bbcb6d0bd7448e324adb61fa` is published on the authorized review branch; its remote SHA and all three changed-file blob hashes read back through GitHub match local Git. This handoff records publication. Frontend code remains `738e9b2c464ed07f441fa5d22811a387c156343c`; `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were unchanged; no preparation sync is required. Ownership released; inspect Git before editing.
 
 Next action under two minutes: review the draft endpoint/schema table with Chung and request his agreed OpenAPI plus a small sourced Colab export. Do not publish or integrate it as an agreed contract before that review.
