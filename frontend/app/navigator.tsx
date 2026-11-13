@@ -18,6 +18,7 @@ export default function Navigator() {
   const [data, setData] = useState<Dataset | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [loading, setLoading] = useState(true);
+  const [importCompletion, setImportCompletion] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [shareUrl, setShareUrl] = useState("");
@@ -36,7 +37,7 @@ export default function Navigator() {
     if (initiator && (document.activeElement === initiator || document.activeElement === document.body)) {
       document.getElementById(error ? "data-error" : "workspace")?.focus();
     }
-  }, [loading, error]);
+  }, [loading, error, importCompletion]);
 
   function acceptDataset(next: Dataset, reset: boolean) {
     setData(next); setTick(0); setPlaying(false); setShareUrl("");
@@ -98,6 +99,7 @@ export default function Navigator() {
   async function importFile(file?: File) {
     if (!file) return;
     const generation = ++loadGeneration.current;
+    loadFocus.current = document.activeElement;
     setLoading(true); setPlaying(false); setMessage("");
     try {
       if (file.size > MAX_FILE_BYTES) throw new Error("Choose a JSON dataset smaller than 5 MB.");
@@ -109,7 +111,13 @@ export default function Navigator() {
       }
     } catch (e) {
       if (generation === loadGeneration.current) setError(`Import rejected: ${e instanceof Error ? e.message : "Invalid JSON."} The previous dataset has not changed.`);
-    } finally { if (generation === loadGeneration.current) setLoading(false); }
+    } finally {
+      if (generation === loadGeneration.current) {
+        setLoading(false);
+        // Repeated size rejections can leave loading and error unchanged.
+        setImportCompletion(generation);
+      }
+    }
   }
 
   function choose(nextA: Scenario, mode: Mode, nextB?: string) {
