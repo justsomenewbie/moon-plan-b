@@ -14,9 +14,9 @@ Clean install, generated types and previous Chromium/API/deadline/proxy/advisory
 
 Native Safari follow-up on published `76fd327` passed mode switching, share reopening, empty-range recovery and four-page A4 thumbnail inspection. Import stayed disabled; exact responsive breakpoint and window closure remain unverified after native automation timeouts. Existing user tabs were not edited. In-app browser evidence is not a Safari pass. Real science/backend/devices remain unverified.
 
-Accepted-size check: a valid 2.49 MB synthetic import with 20,000 samples exposed repeated table/marker work. Memoization preserves all rows and markers; median renderer JavaScript per slider step measured 75.200 → 24.367 ms in five local CDP samples. Replacement data/mode changes, 18 tests and build pass. Initial DOM remains large; physical-device performance and full large-table printing are unverified.
+Accepted-size check: a 2.49 MB synthetic import with 20,000 samples exposed repeated table/marker work. Memoization preserves all values; median renderer JavaScript per slider step measured 75.200 → 24.367 ms in five local CDP samples. Replacement/mode checks, 18 tests and build pass. Full in-app PDF export produced 873 A4 pages (43.4 MB); all 20,000 timestamp/angle rows match, seven pages visually sampled. Native large-report printing and device performance remain unverified; initial DOM remains large.
 
-Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`; it is not automatically available elsewhere. Product source, notices and documentation are the intended local change set. No private chat evidence or generated design raster is included. Prepared source remains [5abda55a6d83bf89d6dd762fa6ceddfc3d265920](https://github.com/justsomenewbie/space-apps-2026-preparation/tree/5abda55a6d83bf89d6dd762fa6ceddfc3d265920).
+Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`; not automatically available elsewhere. Private chat evidence and generated design raster are excluded. Prepared source remains [5abda55a6d83bf89d6dd762fa6ceddfc3d265920](https://github.com/justsomenewbie/space-apps-2026-preparation/tree/5abda55a6d83bf89d6dd762fa6ceddfc3d265920).
 
 ## Ownership and publication
 
