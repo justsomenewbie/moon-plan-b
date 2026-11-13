@@ -10,7 +10,7 @@ The frontend has site/date comparisons, tracks, supplied visibility bands and ho
 
 ## Checks and evidence
 
-See [verification](docs/FRONTEND_VERIFICATION.md) for earlier API/security and browser evidence. Current accessibility changes improve focus contrast/restoration, result announcements, named scroll regions and exact Sun/Earth/joint interval text. **21 tests and production build/TypeScript pass**, with independent source/test review. In-app checks cover keyboard controls, delayed responses without stealing moved focus, errors/recovery, reduced motion and 320px layout. The expanded demo PDF retains all text in four visually checked pages. No contract, dependency or production-fixture changes. The formal security scan remains the earlier pre-API snapshot.
+See [verification](docs/FRONTEND_VERIFICATION.md) for detailed checks. **21 tests and production build/TypeScript pass**, with independent review. In-app checks cover API/import focus, repeated oversized-file rejection, retained data/selections, shared-release recovery, reduced motion and 320px layout. The exact-interval demo PDF retains all text in four reviewed pages. No contract, dependency or production-fixture changes. Native picker cancellation was not exercised. The formal security scan remains the earlier pre-API snapshot.
 
 Native Safari on `76fd327` passed mode switching, share reopening, empty-range recovery and four-page A4 thumbnail inspection. Import, exact responsive breakpoint and window closure remain unresolved after automation timeouts. Existing user tabs were not edited. In-app checks do not establish Safari or assistive-technology behavior.
 
@@ -22,6 +22,6 @@ Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/fronte
 
 ## Ownership and publication
 
-Root Codex completed this accessibility follow-up with independent review. Code commit `5463e5e8729baf5ea09c1a292d90351deff60d1e` is published on the authorized review branch; its remote SHA and six changed code/test/verification-file blob hashes read back through GitHub match local Git. This handoff records publication. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were unchanged; no preparation sync is required. Inspect Git before taking ownership.
+Root Codex completed the import-focus follow-up with independent review. Code commit `738e9b2c464ed07f441fa5d22811a387c156343c` is published on the authorized review branch; its remote SHA and both changed source/verification-file blob hashes read back through GitHub match local Git. This handoff records publication. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were unchanged; no preparation sync is required. Inspect Git before taking ownership.
 
 Next action under two minutes: review the draft endpoint/schema table with Chung and request his agreed OpenAPI plus a small sourced Colab export. Do not publish or integrate it as an agreed contract before that review.
