@@ -22,6 +22,6 @@ Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/fronte
 
 ## Ownership and publication
 
-Root Codex owns this accessibility follow-up; independent review is complete. Latest verified remote checkpoint before these changes: `4447d3684f0360bd1944b7afc3d83d8dc9649479` on the authorized review branch. Publication of this follow-up is pending. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were unchanged; no preparation sync is required. Inspect Git before taking ownership.
+Root Codex completed this accessibility follow-up with independent review. Code commit `5463e5e8729baf5ea09c1a292d90351deff60d1e` is published on the authorized review branch; its remote SHA and six changed code/test/verification-file blob hashes read back through GitHub match local Git. This handoff records publication. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were unchanged; no preparation sync is required. Inspect Git before taking ownership.
 
 Next action under two minutes: review the draft endpoint/schema table with Chung and request his agreed OpenAPI plus a small sourced Colab export. Do not publish or integrate it as an agreed contract before that review.
