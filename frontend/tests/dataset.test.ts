@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { alternatives, chartPath, commonOffsets, initialSelection, laterMatch, readSelection, sampleAt, selectionParams, utcMillis, validateDataset } from "../lib/dataset.ts";
+import { alternatives, chartPath, commonOffsets, initialSelection, laterMatch, readSelection, sampleAt, selectionParams, skyPath, utcMillis, validateDataset } from "../lib/dataset.ts";
 import type { Dataset } from "../lib/dataset.ts";
 
 const fixture = () => JSON.parse(readFileSync(new URL("../public/data/demo.json", import.meta.url), "utf8")) as Dataset;
@@ -123,6 +123,20 @@ test("charts break paths on nulls; cursor uses actual shared samples only", () =
   const gap = fixture(); gap.scenarios[0].samples.splice(3, 1);
   assert.throws(() => validateDataset(gap), /Complete coverage/);
   assert.equal((chartPath(gap.scenarios[0], "sun").match(/M/g) ?? []).length, 2);
+});
+
+test("sky tracks break time gaps and nulls while preserving cadence and north-wrap behavior", () => {
+  const d = fixture(), s = d.scenarios[0];
+  assert.match(skyPath(s, "sun"), /M350,120 M14,105 L38,90 L62,75 L86,60/);
+  s.coverage = "partial"; s.metrics = null; s.intervals = null;
+  s.criteria.forEach((c) => { c.result = "unknown"; });
+  s.samples.splice(3, 1);
+  validateDataset(d);
+  assert.match(skyPath(s, "sun"), /L38,90 M86,60/);
+  s.samples[1].earth = null;
+  validateDataset(d);
+  assert.match(skyPath(s, "earth"), /M20,110\s+M38,70/);
+  assert.equal(skyPath(d.scenarios[5], "sun"), "");
 });
 
 test("an empty release remains valid and has no fabricated default selection", () => {

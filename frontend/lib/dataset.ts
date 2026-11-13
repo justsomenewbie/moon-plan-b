@@ -229,6 +229,18 @@ export function commonOffsets(a: Scenario, b?: Scenario): number[] {
 export function sampleAt(s: Scenario, offset: number): Sample | undefined {
   return s.samples.find((v) => Date.parse(v.utc) - Date.parse(s.startUtc) === offset);
 }
+export function skyPath(s: Scenario, body: "sun" | "earth"): string {
+  let previousAzimuth: number | null = null;
+  let previousTime = 0;
+  return s.samples.map((sample) => {
+    const value = sample[body];
+    if (!value) { previousAzimuth = null; return ""; }
+    const time = Date.parse(sample.utc);
+    const move = previousAzimuth === null || time - previousTime > s.sampleStepSeconds * 1000 || Math.abs(value.azimuthDeg - previousAzimuth) > 180;
+    previousAzimuth = value.azimuthDeg; previousTime = time;
+    return `${move ? "M" : "L"}${value.azimuthDeg},${90 - value.elevationDeg}`;
+  }).join(" ");
+}
 export function chartPath(s: Scenario, body: "sun" | "earth", width = 800, height = 240): string {
   let open = false;
   let previous = Date.parse(s.startUtc);

@@ -1,4 +1,4 @@
-import { chartPath, durationHours, sampleAt } from "../lib/dataset";
+import { chartPath, durationHours, sampleAt, skyPath } from "../lib/dataset";
 import type { Dataset, Mode, Scenario } from "../lib/dataset";
 
 export const formatUtc = (utc: string) => new Intl.DateTimeFormat("en-GB", {
@@ -40,10 +40,6 @@ export function Timeline({ a, b, mode, offset }: { a: Scenario; b?: Scenario; mo
 
 export function SkyPosition({ scenario, offset }: { scenario: Scenario; offset: number }) {
   const sample = sampleAt(scenario, offset);
-  const track = (body: "sun" | "earth") => {
-    let previous: number | null = null;
-    return scenario.samples.map((s) => { const p = s[body]; if (!p) { previous = null; return ""; } const move = previous === null || Math.abs(p.azimuthDeg - previous) > 180; previous = p.azimuthDeg; return `${move ? "M" : "L"}${p.azimuthDeg},${90 - p.elevationDeg}`; }).join(" ");
-  };
   return <section className="sky" aria-labelledby="sky-title">
     <h3 id="sky-title">Sky positions</h3>
     <p className="muted text-sm">Primary sample · schematic, no terrain</p>
@@ -52,7 +48,7 @@ export function SkyPosition({ scenario, offset }: { scenario: Scenario; offset: 
       <rect x="0" y="90" width="360" height="90" className="below-horizon" />
       {[0, 90, 180, 270, 360].map((x, i) => <g key={x}><line x1={x} x2={x} y1="0" y2="180" className="grid-line" /><text x={x} y="-2" textAnchor="middle" className="axis-label">{["N", "E", "S", "W", "N"][i]}</text></g>)}
       <polyline points={scenario.horizonCurve.map((p) => `${p.azimuthDeg},${90 - p.elevationDeg}`).join(" ")} fill="none" className="horizon-line" />
-      {(["sun", "earth"] as const).map((body) => <path key={body} d={track(body)} fill="none" className={`plot-line ${body}`} opacity=".45" />)}
+      {(["sun", "earth"] as const).map((body) => <path key={body} d={skyPath(scenario, body)} fill="none" className={`plot-line ${body}`} opacity=".45" />)}
       {(["sun", "earth"] as const).map((body) => sample?.[body] ? <g key={body} className={body}>
         {body === "sun" ? <circle cx={sample[body].azimuthDeg} cy={90 - sample[body].elevationDeg} r="6" fill="currentColor" /> : <rect x={sample[body].azimuthDeg - 5} y={85 - sample[body].elevationDeg} width="10" height="10" fill="currentColor" />}
       </g> : null)}
@@ -60,7 +56,7 @@ export function SkyPosition({ scenario, offset }: { scenario: Scenario; offset: 
     <dl className="angle-readout">
       {(["sun", "earth"] as const).map((body) => <div key={body}><dt className={body}>{body === "sun" ? "Sun" : "Earth"}</dt><dd>El {angle(sample?.[body]?.elevationDeg)} <span>Az {angle(sample?.[body]?.azimuthDeg)}</span></dd></div>)}
     </dl>
-    <p className="muted text-xs">Circle: Sun. Square: Earth. Shading is below the supplied ideal horizon. Lines join supplied samples, breaking at the north wrap. Azimuth: N 0° → E 90° → S 180° → W 270°. This is not a perspective view.</p>
+    <p className="muted text-xs">Circle: Sun. Square: Earth. Shading is below the supplied ideal horizon. Lines join supplied samples, breaking at gaps and the north wrap. Azimuth: N 0° → E 90° → S 180° → W 270°. This is not a perspective view.</p>
   </section>;
 }
 
