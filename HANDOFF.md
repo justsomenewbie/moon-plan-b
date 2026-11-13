@@ -14,10 +14,12 @@ Clean install, generated types and previous Chromium/API/deadline/proxy/advisory
 
 Native Safari follow-up on published `76fd327` passed mode switching, share reopening, empty-range recovery and four-page A4 thumbnail inspection. Import stayed disabled; exact responsive breakpoint and window closure remain unverified after native automation timeouts. Existing user tabs were not edited. In-app browser evidence is not a Safari pass. Real science/backend/devices remain unverified.
 
+Accepted-size check: a valid 2.49 MB synthetic import with 20,000 samples exposed repeated table/marker work. Memoization preserves all rows and markers; median renderer JavaScript per slider step measured 75.200 → 24.367 ms in five local CDP samples. Replacement data/mode changes, 18 tests and build pass. Initial DOM remains large; physical-device performance and full large-table printing are unverified.
+
 Raw evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`; it is not automatically available elsewhere. Product source, notices and documentation are the intended local change set. No private chat evidence or generated design raster is included. Prepared source remains [5abda55a6d83bf89d6dd762fa6ceddfc3d265920](https://github.com/justsomenewbie/space-apps-2026-preparation/tree/5abda55a6d83bf89d6dd762fa6ceddfc3d265920).
 
 ## Ownership and publication
 
-Root Codex owns the bounded sky-gap follow-up; reviewer is read-only. The correction is local, not published. Last verified remote review branch: `76fd327efbf927f2be3c325cb4b7ae5c07bc4e19`, including implementation `b9f2ead54cacb118f29bf064871a86c53a2243f2`. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were not changed; no preparation sync is required. Inspect Git before taking ownership.
+Root Codex and read-only reviewer finished the bounded rendering follow-ups. Sky-gap commit `7590bc9` and the memoization follow-up are local, not published. Last verified remote review branch: `76fd327efbf927f2be3c325cb4b7ae5c07bc4e19`, including implementation `b9f2ead54cacb118f29bf064871a86c53a2243f2`. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`. No merge/deployment/submission. Product cloud checkout/SHA is unestablished. Preparation files were not changed; no preparation sync is required. Inspect Git before taking ownership.
 
 Next action under two minutes: review the draft endpoint/schema table with Chung and request his agreed OpenAPI plus a small sourced Colab export. Do not publish or integrate it as an agreed contract before that review.

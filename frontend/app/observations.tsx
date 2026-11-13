@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { chartPath, durationHours, sampleAt, skyPath } from "../lib/dataset";
 import type { Dataset, Mode, Scenario } from "../lib/dataset";
 
@@ -7,6 +8,14 @@ export const formatUtc = (utc: string) => new Intl.DateTimeFormat("en-GB", {
 const angle = (n: number | undefined) => n === undefined ? "Unavailable" : `${n.toFixed(1)}°`;
 const exactAngle = (n: number | undefined) => n === undefined ? "Unavailable" : `${n}°`;
 const hours = (n: number | undefined) => n === undefined ? "Unavailable" : `${n.toFixed(1)} h`;
+
+const SampleMarkers = memo(function SampleMarkers({ a, b }: { a: Scenario; b?: Scenario }) {
+  return <svg className="plot-markers" aria-hidden="true">{[a, b].map((s, i) => s ? s.samples.flatMap((sample) => (["sun", "earth"] as const).map((body) => {
+    const value = sample[body]; if (!value) return null;
+    const x = `${(Date.parse(sample.utc) - Date.parse(s.startUtc)) / (durationHours(s) * 3600000) * 100}%`, y = `${(90 - value.elevationDeg) / 180 * 100}%`;
+    return body === "sun" ? <circle key={`${s.id}-${sample.utc}-${body}`} cx={x} cy={y} r="3.5" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" /> : <rect key={`${s.id}-${sample.utc}-${body}`} x={x} y={y} width="7" height="7" transform="translate(-3.5 -3.5)" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" />;
+  })) : null)}</svg>;
+});
 
 export function Timeline({ a, b, mode, offset }: { a: Scenario; b?: Scenario; mode: Mode; offset: number }) {
   const width = 800, height = 240;
@@ -24,11 +33,7 @@ export function Timeline({ a, b, mode, offset }: { a: Scenario; b?: Scenario; mo
       {[a, b].map((s, i) => s ? ["sun", "earth"].map((body) => <path key={`${s.id}-${body}`} d={chartPath(s, body as "sun" | "earth", width, height)} fill="none" className={`plot-line ${body}`} strokeDasharray={i ? "7 6" : undefined} opacity={i ? 0.65 : 1} />) : null)}
       {a.samples.length > 0 ? <line x1={cursor} x2={cursor} y1="0" y2={height} className="cursor-line" /> : null}
     </svg>
-    <svg className="plot-markers" aria-hidden="true">{[a, b].map((s, i) => s ? s.samples.flatMap((sample) => (["sun", "earth"] as const).map((body) => {
-      const value = sample[body]; if (!value) return null;
-      const x = `${(Date.parse(sample.utc) - Date.parse(s.startUtc)) / (durationHours(s) * 3600000) * 100}%`, y = `${(90 - value.elevationDeg) / 180 * 100}%`;
-      return body === "sun" ? <circle key={`${s.id}-${sample.utc}-${body}`} cx={x} cy={y} r="3.5" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" /> : <rect key={`${s.id}-${sample.utc}-${body}`} x={x} y={y} width="7" height="7" transform="translate(-3.5 -3.5)" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" />;
-    })) : null)}</svg></div>
+    <SampleMarkers a={a} b={b} /></div>
     <div className="x-ticks" aria-hidden="true">{[0, .25, .5, .75, 1].map((v) => {
       const time = new Date(Date.parse(a.startUtc) + durationHours(a) * v * 3600000);
       return <span key={v}>{mode === "dates" ? `${Number((durationHours(a) * v).toFixed(2))} h` : <><span>{new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", timeZone: "UTC" }).format(time)}</span><span>{time.toISOString().slice(11, 16)}</span></>}</span>;
@@ -75,11 +80,11 @@ export function Comparison({ a, b, h }: { a: Scenario; b?: Scenario; h: number }
   </section>;
 }
 
-export function SampleTable({ a, b }: { a: Scenario; b?: Scenario }) {
+export const SampleTable = memo(function SampleTable({ a, b }: { a: Scenario; b?: Scenario }) {
   return <details className="details-section"><summary>Inspect exact samples</summary><p className="muted text-sm">Angles in degrees. Null observations remain unavailable. The right endpoint supports boundary evaluation and adds no extra duration.</p>
     {[a, b].map((s, i) => s ? <div key={s.id} className="table-scroll sample-table"><table><caption>{i ? "Alternative" : "Primary"} · {s.id} · {s.coverage} coverage · nominal step {s.sampleStepSeconds} s</caption><thead><tr><th scope="col">UTC</th><th scope="col">Sun elevation</th><th scope="col">Sun azimuth</th><th scope="col">Earth elevation</th><th scope="col">Earth azimuth</th></tr></thead><tbody>{s.samples.length ? s.samples.map((sample) => <tr key={sample.utc}><th scope="row">{sample.utc}</th><td>{exactAngle(sample.sun?.elevationDeg)}</td><td>{exactAngle(sample.sun?.azimuthDeg)}</td><td>{exactAngle(sample.earth?.elevationDeg)}</td><td>{exactAngle(sample.earth?.azimuthDeg)}</td></tr>) : <tr><td colSpan={5}>No observations in this window.</td></tr>}</tbody></table></div> : null)}
   </details>;
-}
+});
 
 export function Windows({ a, b }: { a: Scenario; b?: Scenario }) {
   return <details className="details-section"><summary>Inspect joint visibility intervals</summary>

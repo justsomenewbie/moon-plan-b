@@ -51,4 +51,14 @@ All **18 unit/API test groups** and the production build, including TypeScript, 
 
 Evidence outside the repository: `sky-gap-before.json`, `sky-gap-fixture.json`, `sky-gap-after.jpg`, `sky-gap-after-320.jpg` and `sky-gap-verification.json` in the local evidence directory above. No contract, package, production fixture or scientific-source change was needed.
 
+## Accepted-size interaction check
+
+A structurally valid synthetic import with two 10,000-sample scenarios occupies 2,490,113 bytes, below the existing 5 MiB limit. The comparison renders 20,000 exact-sample rows and 40,000 chart markers, even while the table is collapsed. `SampleTable` and the unchanged marker subtree now use React's default memoization, so timeline ticks reuse their output while changed scenario references update it. No rows, markers or observations are removed; the initial DOM remains large.
+
+In the CUA in-app browser on this Mac, five matched keyboard-slider steps after one warm-up produced median CDP `ScriptDuration` deltas of **75.200 ms before / 24.367 ms after**, a 67.6% reduction in measured renderer JavaScript work. Median total renderer task time was 267.214 / 210.042 ms. DevTools command time was approximately 162 / 161 ms, explaining why end-to-end automation timing overstated application work. These are bounded local measurements, not mobile-device performance or input-to-paint guarantees.
+
+All 18 tests and the pinned-runtime production build/TypeScript passed; an independent reviewer reran the tests and checked ten server-rendered markup cases. Browser checks confirmed a replacement dataset with reused scenario IDs updates both table values and markers; switching to a mode with no compatible alternative removes the alternative rows/markers, and switching back restores them. Captured error/warning logs were empty. Complete rows remain mounted, but printing the full 20,000-row dataset was not executed. The temporary test tab and CDP metrics collection were closed.
+
+Local evidence: `synthetic-size-check-20000.json`, `scale-before.json`, `scale-renderer-before.json`, `scale-renderer-final.json`, `scale-ui-results.json`, `scale-replacement.jpg` and `scale-verification.json`. React guidance, CUA/CDP and independent review were used; no package, contract or production fixture changed.
+
 Real source accuracy, backend contract agreement, retained job access/expiry, deployment exposure, accessibility with assistive technology and production load remain unverified. Third-party notices retain package files from the local installation snapshot; ten entries in that inventory lack root notice files. This is not a completed binary-distribution license audit. A team project license and the recorded AI-origin submission question still need resolution before release.
