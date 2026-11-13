@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiError, createJob, getJob, isMock, jobPollInterval, validateWindow } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
@@ -7,8 +7,11 @@ import type { Dataset } from "../lib/dataset";
 
 export function ApiControls({ request, loading, onLoad }: { request: WindowRequest; loading: boolean; onLoad: (request: WindowRequest) => void }) {
   const [error, setError] = useState("");
+  const form = useRef<HTMLFormElement>(null);
+  // Update request defaults without replacing a field the user has focused.
+  useEffect(() => { form.current?.reset(); }, [request]);
   return <details className="request-panel"><summary>Request observation windows</summary><p className="muted">UTC throughout. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.</p>
-    <form key={JSON.stringify(request)} className="request-fields" onSubmit={(event) => {
+    <form ref={form} className="request-fields" onSubmit={(event) => {
       event.preventDefault(); const fields = new FormData(event.currentTarget);
       try { const next = validateWindow({ from: `${fields.get("from")}:00Z`, to: `${fields.get("to")}:00Z`, resolutionSeconds: Number(fields.get("resolution")) }); setError(""); onLoad(next); } catch (e) { setError(e instanceof Error ? e.message : "Invalid request."); }
     }}>

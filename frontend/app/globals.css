@@ -39,7 +39,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .mode-switch { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--text); border-radius: 4px; overflow: hidden; margin-bottom: 24px; }
 .mode-switch button { padding: 10px 5px; min-height: 44px; font-size: .85rem; font-weight: 600; border: 0; background: transparent; color: var(--text); }
 .mode-switch button[aria-pressed="true"] { background: var(--sun); color: #151821; }
-.mode-switch button:focus-visible { outline-offset: -4px; }
+.mode-switch button:focus-visible { outline-offset: -4px; outline-color: currentColor; }
 .field { display: block; margin: 0 0 20px; font-weight: 600; font-size: .95rem; }
 .field select, .field input, .fixed-value { margin-top: 7px; width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: 4px; background: #131720; color: var(--text); padding: 10px 11px; font-size: .9rem; font-weight: 400; }
 select option { background: var(--bg); color: var(--text); }
@@ -162,6 +162,7 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media print {
   .request-panel { display: none; }
+  .app-footer { display: block; padding: 8px 0; }
   .meets { color: #245c2e; }
   .detail-row { display: grid; }
   h2, h3 { break-after: avoid; }

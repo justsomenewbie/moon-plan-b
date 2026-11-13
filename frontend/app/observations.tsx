@@ -82,13 +82,20 @@ export function Comparison({ a, b, h }: { a: Scenario; b?: Scenario; h: number }
 
 export const SampleTable = memo(function SampleTable({ a, b }: { a: Scenario; b?: Scenario }) {
   return <details className="details-section"><summary>Inspect exact samples</summary><p className="muted text-sm">Angles in degrees. Null observations remain unavailable. The right endpoint supports boundary evaluation and adds no extra duration.</p>
-    {[a, b].map((s, i) => s ? <div key={s.id} className="table-scroll sample-table"><table><caption>{i ? "Alternative" : "Primary"} · {s.id} · {s.coverage} coverage · nominal step {s.sampleStepSeconds} s</caption><thead><tr><th scope="col">UTC</th><th scope="col">Sun elevation</th><th scope="col">Sun azimuth</th><th scope="col">Earth elevation</th><th scope="col">Earth azimuth</th></tr></thead><tbody>{s.samples.length ? s.samples.map((sample) => <tr key={sample.utc}><th scope="row">{sample.utc}</th><td>{exactAngle(sample.sun?.elevationDeg)}</td><td>{exactAngle(sample.sun?.azimuthDeg)}</td><td>{exactAngle(sample.earth?.elevationDeg)}</td><td>{exactAngle(sample.earth?.azimuthDeg)}</td></tr>) : <tr><td colSpan={5}>No observations in this window.</td></tr>}</tbody></table></div> : null)}
+    {[a, b].map((s, i) => s ? <div key={s.id} className="table-scroll sample-table" tabIndex={0} role="region" aria-labelledby={`sample-caption-${i}`}><table><caption id={`sample-caption-${i}`}>{i ? "Alternative" : "Primary"} · {s.id} · {s.coverage} coverage · nominal step {s.sampleStepSeconds} s</caption><thead><tr><th scope="col">UTC</th><th scope="col">Sun elevation</th><th scope="col">Sun azimuth</th><th scope="col">Earth elevation</th><th scope="col">Earth azimuth</th></tr></thead><tbody>{s.samples.length ? s.samples.map((sample) => <tr key={sample.utc}><th scope="row">{sample.utc}</th><td>{exactAngle(sample.sun?.elevationDeg)}</td><td>{exactAngle(sample.sun?.azimuthDeg)}</td><td>{exactAngle(sample.earth?.elevationDeg)}</td><td>{exactAngle(sample.earth?.azimuthDeg)}</td></tr>) : <tr><td colSpan={5}>No observations in this window.</td></tr>}</tbody></table></div> : null)}
   </details>;
 });
 
 export function Windows({ a, b }: { a: Scenario; b?: Scenario }) {
-  return <details className="details-section"><summary>Inspect joint visibility intervals</summary>
-    {[a, b].map((s, i) => s ? <div key={s.id}><h3 className="mt-4">{i ? "Alternative" : "Primary"}</h3>{s.intervals === null ? <p>Intervals unavailable because coverage is incomplete.</p> : s.intervals.simultaneous.length === 0 ? <p>No joint interval in this window.</p> : <ul className="interval-list">{s.intervals.simultaneous.map((v) => <li key={v.startUtc}><span>{formatUtc(v.startUtc)} → {formatUtc(v.endUtc)}</span>{v.endClipped ? <strong>Clipped at window end; setting time is unknown.</strong> : null}</li>)}</ul>}</div> : null)}
+  return <details className="details-section"><summary>Inspect visibility intervals</summary><p className="muted text-sm">Exact supplied boundaries in UTC, including seconds.</p>
+    {[a, b].map((s, i) => {
+      if (!s) return null;
+      const intervals = s.intervals;
+      return <div key={s.id}><h3 className="mt-4">{i ? "Alternative" : "Primary"}</h3>{intervals === null ? <p>Intervals unavailable because coverage is incomplete.</p> : (["sun", "earth", "simultaneous"] as const).map((body) => <div key={body}>
+        <h4 className="mt-3 font-semibold">{{ sun: "Sun", earth: "Earth", simultaneous: "Sun and Earth together" }[body]}</h4>
+        {intervals[body].length === 0 ? <p>No supplied interval in this window.</p> : <ul className="interval-list">{intervals[body].map((v) => <li key={v.startUtc}><span>{v.startUtc} → {v.endUtc}</span>{v.endClipped ? <strong>Clipped at window end; interval end is unknown.</strong> : null}</li>)}</ul>}
+      </div>)}</div>;
+    })}
   </details>;
 }
 

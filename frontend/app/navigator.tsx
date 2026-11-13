@@ -26,6 +26,17 @@ export default function Navigator() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const loadGeneration = useRef(0);
+  const loadFocus = useRef<Element | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    const initiator = loadFocus.current;
+    loadFocus.current = null;
+    // Restore focus lost during loading without taking it from another control.
+    if (initiator && (document.activeElement === initiator || document.activeElement === document.body)) {
+      document.getElementById(error ? "data-error" : "workspace")?.focus();
+    }
+  }, [loading, error]);
 
   function acceptDataset(next: Dataset, reset: boolean) {
     setData(next); setTick(0); setPlaying(false); setShareUrl("");
@@ -39,6 +50,7 @@ export default function Navigator() {
 
   async function loadDemo(reset = false, request: WindowRequest = requestWindow, jobId = "") {
     const generation = ++loadGeneration.current;
+    loadFocus.current = document.activeElement?.closest("button, form") ? document.activeElement : null;
     setLoading(true); setError(""); setMessage(""); setPlaying(false);
     try {
       const next = await queryClient.fetchQuery({ queryKey: ["dataset", request, jobId], queryFn: async ({ signal }) => {
@@ -47,7 +59,10 @@ export default function Navigator() {
         if (job.status !== "done") throw new Error(job.status === "failed" ? job.problem.detail : "The shared job has not completed. Retry when its result is ready.");
         return job.result;
       }, staleTime: reset ? 0 : 60000 });
-      if (generation === loadGeneration.current) { setSharedJobId(jobId); setRequestWindow(request); acceptDataset(next, reset); }
+      if (generation === loadGeneration.current) {
+        setSharedJobId(jobId); setRequestWindow(request); acceptDataset(next, reset);
+        setMessage(next.scenarios.length ? `Loaded ${next.scenarios.length} observation windows.` : "No observation windows in this UTC range.");
+      }
     } catch (e) {
       if (generation === loadGeneration.current) setError(e instanceof Error ? e.message : "Data could not load.");
     } finally { if (generation === loadGeneration.current) setLoading(false); }
@@ -148,7 +163,7 @@ export default function Navigator() {
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} />
     <JobForm request={requestWindow} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
-    {error ? <div role="alert" className="error-state"><h2>We could not use that data or selection.</h2><p>{error}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>Use loaded dataset</button> : null}<button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? "Reset to demonstration" : "Retry API request"}</button><button className="button outline" onClick={() => fileInput.current?.click()}>Import the correct dataset</button></div></div> : null}
+    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>We could not use that data or selection.</h2><p>{error}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>Use loaded dataset</button> : null}<button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? "Reset to demonstration" : "Retry API request"}</button><button className="button outline" onClick={() => fileInput.current?.click()}>Import the correct dataset</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? "Loading dataset…" : message}</div>
 
     {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>Opening the dataset</h2><p className="muted">Checking the schema, UTC windows and coverage before displaying results.</p></main> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
@@ -177,7 +192,7 @@ export default function Navigator() {
         <div className="detail-row"><SkyPosition scenario={a} offset={offsets.length ? offset : -1} /><Comparison a={a} b={b} h={selection.h} /></div>
         <SampleTable a={a} b={b} /><Windows a={a} b={b} />
       </div>
-    </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state"><h2>No observation windows in this dataset</h2><p>{isMock ? "Import a release containing scenarios, or explore the clearly labeled demonstration." : "Request another UTC range above, or import a release containing scenarios."}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? "Explore demonstration" : "Load default date range"}</button></main> : null}
+    </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>No observation windows in this dataset</h2><p>{isMock ? "Import a release containing scenarios, or explore the clearly labeled demonstration." : "Request another UTC range above, or import a release containing scenarios."}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? "Explore demonstration" : "Load default date range"}</button></main> : null}
     {data && !loading ? <Sources data={data} a={a} b={b} /> : null}
     <footer className="app-footer"><p>Ideal horizon only. Terrain, power and radio links are not modeled.</p><p>Frontend draft · AI-assisted implementation · <a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">Project repository</a></p></footer>
   </div>;
