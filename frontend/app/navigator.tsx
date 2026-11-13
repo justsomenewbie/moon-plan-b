@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
-import { ApiControls, JobForm } from "./requests";
+import { ApiControls } from "./requests";
 import { alternatives, commonOffsets, durationHours, laterMatch, readSelection, selectionParams, validateDataset } from "../lib/dataset";
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
 import { Comparison, formatUtc, SampleTable, SkyPosition, Sources, Timeline, Windows } from "./observations";
@@ -20,6 +20,7 @@ export default function Navigator() {
   const [loading, setLoading] = useState(true);
   const [importCompletion, setImportCompletion] = useState(0);
   const [error, setError] = useState("");
+  const [retryLoad, setRetryLoad] = useState<{ request: WindowRequest; jobId: string; reset: boolean } | null>(null);
   const [message, setMessage] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [tick, setTick] = useState(0);
@@ -52,11 +53,11 @@ export default function Navigator() {
   async function loadDemo(reset = false, request: WindowRequest = requestWindow, jobId = "") {
     const generation = ++loadGeneration.current;
     loadFocus.current = document.activeElement?.closest("button, form") ? document.activeElement : null;
-    setLoading(true); setError(""); setMessage(""); setPlaying(false);
+    setLoading(true); setError(""); setRetryLoad(null); setMessage(""); setPlaying(false);
     try {
       const next = await queryClient.fetchQuery({ queryKey: ["dataset", request, jobId], queryFn: async ({ signal }) => {
         if (!jobId) return getDataset(request, signal);
-        const job = await getJob(jobId, signal);
+        const job = await getJob(jobId, request, signal);
         if (job.status !== "done") throw new Error(job.status === "failed" ? job.problem.detail : "The shared job has not completed. Retry when its result is ready.");
         return job.result;
       }, staleTime: reset ? 0 : 60000 });
@@ -65,7 +66,7 @@ export default function Navigator() {
         setMessage(next.scenarios.length ? `Loaded ${next.scenarios.length} observation windows.` : "No observation windows in this UTC range.");
       }
     } catch (e) {
-      if (generation === loadGeneration.current) setError(e instanceof Error ? e.message : "Data could not load.");
+      if (generation === loadGeneration.current) { setError(e instanceof Error ? e.message : "Data could not load."); setRetryLoad({ request, jobId, reset }); }
     } finally { if (generation === loadGeneration.current) setLoading(false); }
   }
 
@@ -100,7 +101,7 @@ export default function Navigator() {
     if (!file) return;
     const generation = ++loadGeneration.current;
     loadFocus.current = document.activeElement;
-    setLoading(true); setPlaying(false); setMessage("");
+    setLoading(true); setPlaying(false); setMessage(""); setRetryLoad(null);
     try {
       if (file.size > MAX_FILE_BYTES) throw new Error("Choose a JSON dataset smaller than 5 MB.");
       const next = validateDataset(JSON.parse(await file.text()));
@@ -169,9 +170,8 @@ export default function Navigator() {
       <p className="data-notice">{!data ? isMock ? "No scientific dataset connected. Use the demonstration or import a release." : "Waiting for a valid API dataset. You can also import a release." : data.evidence === "synthetic-fixture" ? "Demonstration data — fictional sites and values. Not for mission planning." : "Supplied data — scientific validity has not been independently verified. Not for mission planning."}</p>
     </section>
 
-    <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} />
-    <JobForm request={requestWindow} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
-    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>We could not use that data or selection.</h2><p>{error}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>Use loaded dataset</button> : null}<button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? "Reset to demonstration" : "Retry API request"}</button><button className="button outline" onClick={() => fileInput.current?.click()}>Import the correct dataset</button></div></div> : null}
+    <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
+    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>We could not use that data or selection.</h2><p>{error}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>Use loaded dataset</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId)}>Retry API request</button> : null}{isMock || !retryLoad ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? "Reset to demonstration" : "Retry API request"}</button> : null}<button className="button outline" onClick={() => fileInput.current?.click()}>Import the correct dataset</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? "Loading dataset…" : message}</div>
 
     {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>Opening the dataset</h2><p className="muted">Checking the schema, UTC windows and coverage before displaying results.</p></main> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>

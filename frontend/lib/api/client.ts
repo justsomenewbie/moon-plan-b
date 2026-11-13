@@ -2,6 +2,7 @@
 import createClient from "openapi-fetch";
 import type { components, paths } from "./schema";
 import { utcMillis, validateDataset } from "../dataset.ts";
+import type { Dataset } from "../dataset.ts";
 
 export const isMock = (process.env.NEXT_PUBLIC_API_BASE_URL || "mock") === "mock";
 let mockReady: Promise<void> | undefined;
@@ -50,13 +51,22 @@ export function validateWindow(request: WindowRequest) {
   if (!Number.isInteger(request.resolutionSeconds) || request.resolutionSeconds < 60 || request.resolutionSeconds > 86400 || Math.ceil(span / (request.resolutionSeconds * 1000)) + 1 > 10000) throw new ApiError("Choose 60–86400 seconds per sample and at most 10,000 requested samples per series.", 422);
   return request;
 }
+export function windowFromInputs(from: string, to: string, resolution: string) {
+  const utc = (value: string) => {
+    const timestamp = value.length === 16 ? `${value}:00` : value;
+    return `${timestamp.replace(/\.(\d{1,2})$/, (_, fraction: string) => `.${fraction.padEnd(3, "0")}`)}Z`;
+  };
+  return validateWindow({ from: utc(from), to: utc(to), resolutionSeconds: Number(resolution) });
+}
+function withinRequestedWindow(dataset: Dataset, request: WindowRequest) {
+  if (dataset.scenarios.some((s) => Date.parse(s.startUtc) < Date.parse(request.from) || Date.parse(s.endUtc) > Date.parse(request.to))) throw new ApiError("The server returned observations outside the requested UTC range.", 502);
+  return dataset;
+}
 export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   validateWindow(request);
   const { data, error, response } = await api.GET("/api/v1/dataset", { params: { query: request }, signal });
   if (!response.ok) throw apiError(error, response.status);
-  const dataset = validateDataset(data);
-  if (dataset.scenarios.some((s) => Date.parse(s.startUtc) < Date.parse(request.from) || Date.parse(s.endUtc) > Date.parse(request.to))) throw new ApiError("The server returned observations outside the requested UTC range.", 502);
-  return dataset;
+  return withinRequestedWindow(validateDataset(data), request);
 }
 export function validateJobRequest(request: JobRequest) {
   validateWindow(request);
@@ -79,11 +89,13 @@ export function validateJob(value: unknown): Job {
   } else if (j.result !== null || (j.status === "failed" ? !j.problem || typeof j.problem.detail !== "string" || typeof j.problem.title !== "string" || typeof j.problem.type !== "string" || !Number.isInteger(j.problem.status) || j.problem.status < 400 || j.problem.status > 599 : j.problem !== null)) throw new ApiError("The job result is inconsistent with its status.", 502);
   return j;
 }
-export async function getJob(id: string, signal?: AbortSignal) {
+export async function getJob(id: string, request: WindowRequest, signal?: AbortSignal) {
+  validateWindow(request);
   const { data, error, response } = await api.GET("/api/v1/jobs/{id}", { params: { path: { id } }, signal });
   if (!response.ok) throw apiError(error, response.status);
   const job = validateJob(data);
   if (job.jobId !== id) throw new ApiError("The server returned a different job.", 502);
+  if (job.status === "done") withinRequestedWindow(job.result, request);
   return job;
 }
 export const jobPollInterval = (job?: Job) => job?.status === "done" || job?.status === "failed" ? false : 1500;
