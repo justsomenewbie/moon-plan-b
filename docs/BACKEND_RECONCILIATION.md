@@ -115,17 +115,11 @@ The aggregate schema and two bounded responses have been checked. The production
 
 Opening the form fetches `GET /api/v1/capabilities` and checks the custom-site job type, SPICE, PGDA, ray marching and hourly sampling. The form uses the selected UTC range, planetocentric latitude, east-positive longitude and observer height above the surface in metres. `POST /api/v1/jobs` returns a job receipt. The client accepts 202 for queued or running work and 200 for an already completed matching job. It polls the same job ID every 1.5 seconds. A null percentage is shown as indeterminate. Failed and cancelled jobs have separate terminal states. A successful job identifies the resulting site and run. Opening the result performs a bounded aggregate GET for that one site, and its permalink retains the site ID, run ID and UTC range. Once the backend expires the run, the link may become unavailable.
 
-## AI planning assistant — proposed addition
+## Astronaut assistant and producer API
 
-The frontend now answers the structured version using **Compare sites**. A visitor selects a published UTC interval and threshold. The view lists producer-supplied results, reasons and available source references for that release. Free-text questions and model-generated explanations still depend on the backend contract below.
+The team backend supplies terrain geometry and visibility results. Its `spice` provider computes ephemerides. The Next.js application separately handles free-text questions at `POST /guide/chat` so they do not enter the `/api/*` proxy. The server uses a fixed loopback Ollama model to classify questions. A limited response schema identifies the topic, metric and relevant rows. The application reads the reported hours, UTC bounds and source IDs from the selected comparison. Missing totals and fictional data retain their labels.
 
-Desired interaction: “For this UTC interval, which published sites fit my chosen criteria?” The backend plan has no LLM provider/model or assistant endpoint. Its `provider: spice` means ephemeris computation; an optional jobs API key is not an AI-provider integration.
-
-Propose a backend-owned assistant after the owner agrees its contract. The model should explain backend-produced comparisons, identify the release, actual UTC interval, chosen criteria and supporting scenario/source IDs, and preserve ties, missing coverage and uncertainty. “Best” needs a declared objective; no landing-safety conclusion follows from a visibility score. Dates beyond available data must return an explicit inability to answer. Natural-language local dates need an explicit timezone and confirmation of the interpreted UTC range.
-
-Keep provider credentials server-side, outside public environment variables, URLs, browser storage and bundles. Use the existing API client and a mutation without automatic POST retries. The backend needs input/output limits, rate/cost limits and safe text rendering. Do not add a local Next `/api` handler without revisiting the existing live proxy, which forwards that path to the backend. Attribute model output to the model, preserve source links, and do not imply NASA review or endorsement.
-
-This is a proposal, not a new endpoint promise or a simulated chatbot presented as AI. Provider/model, payload, grounding, runtime and key configuration remain undecided. No key is needed in chat.
+Question text and imported labels are untrusted. The model has no tools, external destinations or ability to change the page. The client displays plain text and offers explicit controls for supported navigation and comparison modes. A user must choose a suggested control. The chat has no instrument feed or landing-safety model. See the [local runtime and data flow](../README.md#ask-the-astronaut).
 
 ## Open feature path
 

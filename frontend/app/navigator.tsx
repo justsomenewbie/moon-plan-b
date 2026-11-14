@@ -10,6 +10,7 @@ import type { TerrainTarget, WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
 import { LunarResources, SiteFooter, SiteHeader, SkyBackground } from "./site-chrome";
 import AstronautGuide from "./astronaut-guide";
+import { workspaceGuideContext } from "../lib/api/guide-chat";
 import MoonGlobe from "./moon-globe";
 import LocalSky from "./local-sky";
 import ImportDialog from "./import-dialog";
@@ -209,6 +210,17 @@ export default function Navigator() {
   const a = data?.scenarios.find((s) => s.id === selection?.a);
   const b = data?.scenarios.find((s) => s.id === selection?.b);
   const comparisonHref = loading || a || terrain || data?.scenarios.length === 0 ? "#workspace" : "#data-error";
+  const guideContext = useMemo(() => workspaceGuideContext(loading ? null : terrain, loading ? null : data, a, b, terrainView.siteIndex),
+    [loading, terrain, data, a, b, terrainView.siteIndex]);
+  function guideMode(mode: Mode) {
+    if (loading) return undefined;
+    if (terrain) {
+      if (mode === "sites") return terrain.sites.length >= 2 ? "#workspace" : undefined;
+      return terrain.sites.length === 2 && terrainView.link ? "#terrain-dates" : undefined;
+    }
+    if (!a || !data || !selection || !alternatives(data, a, mode).length) return undefined;
+    return () => { choose(a, mode); document.getElementById("workspace")?.focus(); };
+  }
   const windows = useMemo(() => data ? publishedWindows(data.scenarios) : [], [data]);
   const siteWindow = useMemo(() => windows.find(group => group.some(s => s.id === a?.id)), [windows, a]);
   const compatible = data && a && selection ? alternatives(data, a, selection.mode) : [];
@@ -405,7 +417,10 @@ export default function Navigator() {
       </div>
     </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>{t("No observation windows in this dataset")}</h2><p>{isMock ? t("Import a release containing scenarios, or explore the clearly labeled demonstration.") : t("Request another UTC range above, or import a release containing scenarios.")}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? t("Explore demonstration") : t("Load default date range")}</button></main> : null}
     {data && !loading ? <Sources data={data} a={a} b={b} /> : null}
-    <AstronautGuide savedResult={savedResult} terrain={loading || error ? null : terrain} />
+    <AstronautGuide savedResult={savedResult} terrain={loading || error ? null : terrain} onSaved={chooseSavedResult}
+      workspace={guideContext} workspaceActions={{ workspace: comparisonHref, saved: "#observed-week",
+        sources: !loading && (data || terrain) ? "#sources" : undefined,
+        compareSites: guideMode("sites"), compareDates: guideMode("dates") }} />
     <LunarResources />
     <SiteFooter />
   </div>;
