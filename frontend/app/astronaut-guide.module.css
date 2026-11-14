@@ -49,8 +49,37 @@
   line-height: 1.45;
 }
 
-.header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-.header h2 { font-size: 1.15rem; }
+/* Keep the face in view while the visitor uses the chat form lower in the panel. */
+.header {
+  position: sticky;
+  top: -.8rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--surface);
+}
+.header h2 { flex: 1; font-size: 1.15rem; }
+.portrait {
+  position: relative;
+  flex: 0 0 60px;
+  height: 70px;
+  background: url("/images/guide-visor-rest.webp") left center / 100% 100% no-repeat;
+}
+.portrait::before, .portrait::after {
+  position: absolute;
+  inset: 0;
+  background: left center / auto 100% no-repeat;
+}
+.portrait::before {
+  content: "";
+  background-image: url("/images/guide-greet-still.webp");
+}
+.panel:has([data-guide-pending]) .portrait::before { visibility: hidden; }
+.panel:has([data-guide-pending]) .portrait::after {
+  content: "";
+  background-image: url("/images/guide-think-still.webp");
+}
 .close { min-width: 2.75rem; min-height: 2.75rem; color: var(--muted); font-size: 1.55rem; }
 .greeting { margin-bottom: .65rem; color: var(--muted); }
 .sample { margin-bottom: .65rem; }
@@ -73,6 +102,19 @@
   :global(body:has(#pause-sky-drift:checked)) .launcher .animated {
     animation: none;
     object-position: left center;
+  }
+  /* A hidden greeting finishes underneath the thinking pose, so it only plays on opening. */
+  :global(body:not(:has(#pause-sky-drift:checked))) .portrait::before {
+    background-image: url("/images/guide-greet-strip.webp");
+    animation: eyeFrames .88s steps(11, end) both;
+  }
+  :global(body:not(:has(#pause-sky-drift:checked))) .panel:has([data-guide-pending]) .portrait::after {
+    background-image: url("/images/guide-think-strip.webp");
+    animation: eyeFrames 2.76s steps(23, end) infinite;
+  }
+  @keyframes eyeFrames {
+    from { background-position-x: 0%; }
+    to { background-position-x: 100%; }
   }
   /* The first 2.27 seconds play the 34 rendered poses. The last pose is the resting figure. */
   @keyframes wave {

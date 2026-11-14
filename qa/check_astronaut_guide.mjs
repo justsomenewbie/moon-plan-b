@@ -77,10 +77,20 @@ try {
   const source = panel.getByRole("combobox", { name: "Use data from" });
   assert.equal(await source.inputValue(), "saved");
   const request = page.waitForRequest(req => new URL(req.url()).pathname === "/guide/chat");
-  await page.route("**/guide/chat", route => route.fulfill({ json: { answer: "OK", action: null } }));
+  const responseGate = Promise.withResolvers();
+  await page.route("**/guide/chat", async route => {
+    await responseGate.promise;
+    await route.fulfill({ json: { answer: "OK", action: null } });
+  });
   await panel.getByRole("textbox").fill("Which result am I viewing?");
   await panel.getByRole("button", { name: "Send", exact: true }).click();
   const { context } = (await request).postDataJSON();
+  const face = panel.locator("header [aria-hidden=true]");
+  await panel.getByRole("status").getByText("The astronaut is thinking…").waitFor();
+  assert.ok((await face.evaluate(el => getComputedStyle(el, "::after").backgroundImage)).includes("guide-think-strip.webp"));
+  responseGate.resolve();
+  await panel.getByText("OK", { exact: false }).waitFor();
+  assert.equal(await face.evaluate(el => getComputedStyle(el, "::after").content), "none");
   assert.equal(context.kind, "saved");
   assert.deepEqual(context.rows.map(row => [row.site, row.bothHours]), [["Athena · IM-2", 139], ["Athena · IM-2", 168]]);
   await source.selectOption("workspace");
