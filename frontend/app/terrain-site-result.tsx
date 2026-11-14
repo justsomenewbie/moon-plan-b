@@ -31,11 +31,11 @@ export function SiteResult({ site }: { site: TerrainSummary["sites"][number] }) 
     </dl> : <p className="data-notice my-4">{t("Coverage is incomplete. The total and longest overlap for the evaluated range are unknown.")}</p>}
     {criteria && criteria.length > 0 && <section className="my-4" aria-label={t("Continuous Sun and Earth visibility requirements")}>
       <h4 className="font-semibold">{t("Continuous Sun and Earth visibility requirements")}</h4>
-      <p className="muted text-sm">{t("Longest overlap in the evaluated range: {hours} h", { hours: criteria[0].value_h })}</p>
+      <p className="muted text-sm">{t(complete ? "Longest overlap in the evaluated range: {hours} h" : "Longest observed overlap: {hours} h", { hours: criteria[0].value_h })}</p>
       {criteria[0].value_clipped && <p className="muted text-sm">{t("A boundary clips the longest overlap. It may continue outside the evaluated range.")}</p>}
       <ul className="mt-2">{criteria.map(criterion => <li key={criterion.minimum_hours} className="break-inside-avoid">
-        <details><summary>{t("At least {hours} h", { hours: criterion.minimum_hours })} · <span className={criterion.result}>{t(criterionLabels[criterion.result])}</span></summary>
-          <p className="muted text-sm">{criterion.reason}</p>
+        <details><summary>{t("At least {hours} h", { hours: criterion.minimum_hours })} · {complete || criterion.result === "meets" ? <span className={criterion.result}>{t(criterionLabels[criterion.result])}</span> : t("Unknown across observation gaps")}</summary>
+          <p className="muted text-sm">{!complete && <strong>{t("Assessment of the observed intervals")} · </strong>}{criterion.reason}</p>
         </details>
       </li>)}</ul>
     </section>}
