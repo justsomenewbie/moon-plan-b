@@ -4,7 +4,7 @@ import { ApiProblemText, useRetryCountdown, useProblemFields } from "./api-probl
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ExtraField } from "../lib/planner-source";
-import { findAltDates, landingDelayHours, landingGridBounds, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates";
+import { findAltDates, landingDelayHours, landingGridBounds, noVisibilityForObjective, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 import { TimeRange } from "./terrain-site-result";
@@ -45,6 +45,21 @@ function candidateLink(candidate: AltDatesResponse["candidates"][number], search
   }) + (long ? "#workspace" : "#terrain-observations");
 }
 
+function LandingWindows({ search, earliest }: { search: AltDatesResponse; earliest: string }) {
+  const { t } = useLanguage();
+  return <ol className="interval-list list-decimal space-y-3">
+    {search.candidates.map(candidate => {
+      const link = candidateLink(candidate, search);
+      return <li key={candidate.rank} value={candidate.rank} className="break-inside-avoid">
+        <TimeRange start={candidate.landing_utc} end={candidate.mission_end_utc} />
+        <p className="muted text-sm">{t("{hours} h after the earliest landing time", { hours: Number(landingDelayHours(candidate.landing_utc, earliest).toFixed(6)) })}</p>
+        <p>{t("Sun visible")} {candidate.sun_pct}% · {t("Earth visible")} {candidate.earth_pct}% · {t("Both visible")} {candidate.both_pct}%</p>
+        {link && <a className="print:hidden" href={link} target="_blank" rel="noreferrer">{t("Inspect this mission window")}</a>}
+      </li>;
+    })}
+  </ol>;
+}
+
 type SearchSite = { id: string; name: string };
 export type LandingSearchProps = {
   runId: string; sites: readonly SearchSite[]; initialSiteId?: string;
@@ -55,7 +70,7 @@ export type LandingSearchProps = {
 };
 
 export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, to, coverageStart, coverageEnd, initialMissionHours, initialObjective, initialEarliest, initialLatest, initialExtras, initialSunAtLanding, initialEarthAtLanding, planner }: LandingSearchProps) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const stepHours = stepSeconds / 3600;
   const defaultHours = Math.min((Date.parse(to) - Date.parse(from)) / 3600000, Math.max(1, Math.floor(24 / stepHours)) * stepHours);
   const duration = initialMissionHours ?? defaultHours;
@@ -65,6 +80,7 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
   const gridStart = coverageStart ?? from;
   const [completed, setCompleted] = useState<{ request: AltDatesRequest; search: AltDatesResponse }>();
   const search = completed?.search;
+  const zeroVisibility = search && noVisibilityForObjective(search);
   const request = completed?.request;
   const grid = request && landingGridBounds(request.earliest, request.latest, stepSeconds, gridStart);
   const showGrid = request && grid && grid.first <= grid.last
@@ -168,7 +184,9 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
     {error && <p role="alert"><ApiProblemText error={error} fieldPrefix={prefix} /></p>}
     {search && request && <section data-landing-results={planner ? "" : undefined} aria-label={t("Landing search results")}>
       {planner && <h3>{sites.find(site => site.id === search.site_id)?.name}</h3>}
-      <p role="status">{t("{feasible} of {evaluated} landing times meet the constraints. Showing {count}.", {
+      <p role="status">{zeroVisibility
+        ? locale === "vi" ? `${search.n_feasible}/${search.n_evaluated} giờ hạ cánh đáp ứng các điều kiện đã nhập.` : `${search.n_feasible} of ${search.n_evaluated} landing times meet the entered constraints.`
+        : t("{feasible} of {evaluated} landing times meet the constraints. Showing {count}.", {
         feasible: search.n_feasible, evaluated: search.n_evaluated, count: search.candidates.length,
       })}</p>
       <p className="muted text-sm">{t("Requested landing window (inclusive)")} · <TimeRange start={request.earliest} end={request.latest} /><br />
@@ -183,17 +201,14 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
           {search.constraints.max_dark_gap_h !== null && <li>{t("Maximum dark gap (h)")} · {search.constraints.max_dark_gap_h}</li>}
           {search.constraints.max_comms_gap_h !== null && <li>{t("Maximum Earth visibility gap (h)")} · {search.constraints.max_comms_gap_h}</li>}
         </ul>}
-      {search.candidates.length > 0 && <ol className="interval-list list-decimal space-y-3">
-        {search.candidates.map(candidate => {
-          const link = candidateLink(candidate, search);
-          return <li key={candidate.rank} value={candidate.rank} className="break-inside-avoid">
-            <TimeRange start={candidate.landing_utc} end={candidate.mission_end_utc} />
-            <p className="muted text-sm">{t("{hours} h after the earliest landing time", { hours: Number(landingDelayHours(candidate.landing_utc, request.earliest).toFixed(6)) })}</p>
-            <p>{t("Sun visible")} {candidate.sun_pct}% · {t("Earth visible")} {candidate.earth_pct}% · {t("Both visible")} {candidate.both_pct}%</p>
-            {link && <a className="print:hidden" href={link} target="_blank" rel="noreferrer">{t("Inspect this mission window")}</a>}
-          </li>;
-        })}
-      </ol>}
+      {zeroVisibility ? <>
+        <p role="status" className="data-notice">{locale === "vi"
+          ? "Các khoảng nhiệm vụ được trả về đều có 0% thời gian quan sát theo ưu tiên đã chọn. Không có giờ hạ cánh nào được đề xuất."
+          : "Every returned mission window has 0% visibility for your selected priority. No landing time is recommended."}</p>
+        <details><summary>{locale === "vi" ? "Xem các khoảng có 0% thời gian quan sát" : "Inspect the zero-visibility windows"}</summary>
+          <LandingWindows search={search} earliest={request.earliest} />
+        </details>
+      </> : search.candidates.length > 0 && <LandingWindows search={search} earliest={request.earliest} />}
       {Object.values(search.rejected_by).some(count => count > 0) && <details className="mt-3">
         <summary>{t("Why landing times were rejected")}</summary>
         <p className="muted text-sm">{t("One landing time can fail more than one constraint.")}</p>
