@@ -12,6 +12,7 @@ import { savedGuideContext, type GuideContext } from "../lib/api/guide-chat";
 const messages = {
   en: {
     title: "Astronaut guide",
+    help: "Help",
     close: "Close astronaut guide",
     greeting: "What can I help you explore?",
     measurementNote: "I don’t have live measurements from the Moon.",
@@ -30,6 +31,7 @@ const messages = {
   },
   vi: {
     title: "Hướng dẫn của phi hành gia",
+    help: "Trợ giúp",
     close: "Đóng hướng dẫn của phi hành gia",
     greeting: "Bạn muốn mình giúp tìm hiểu điều gì?",
     measurementNote: "Mình chưa có số liệu đo trực tiếp từ Mặt Trăng.",
@@ -56,7 +58,12 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
   const copy = messages[locale];
   const id = useId();
   const [open, setOpen] = useState(false);
+  const [imageMode, setImageMode] = useState<"motion" | "still" | "text">("motion");
   const [now, setNow] = useState<number | null>(null);
+  function recoverImage(image: HTMLImageElement) {
+    if (image.currentSrc.endsWith("/guide-copper-wave.webp")) setImageMode("still");
+    else if (image.currentSrc.endsWith("/guide-copper-rest.webp")) setImageMode("text");
+  }
   const [guideChoice, setGuideChoice] = useState<GuideScope | null>(null);
   useEffect(() => {
     if (!open) return;
@@ -91,7 +98,16 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
   };
   return <>
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
-      <span className={styles.astronaut} aria-hidden="true" />
+      {imageMode === "text" ? <span className={styles.helpLabel}>{copy.help}</span> : <picture>
+        {imageMode === "motion" && <source media="screen and (prefers-reduced-motion: no-preference) and (forced-colors: none)"
+          srcSet="/images/guide-copper-wave.webp" />}
+        <img className={imageMode === "motion" ? styles.animated : undefined} src="/images/guide-copper-rest.webp"
+          alt="" width="60" height="70" onError={event => recoverImage(event.currentTarget)}
+          ref={image => {
+            // The browser can finish a failed image request before hydration attaches onError.
+            if (image?.complete && !image.naturalWidth) recoverImage(image);
+          }} />
+      </picture>}
     </button>
     <aside id={id} popover="auto" onToggle={event => setOpen(event.newState === "open")} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
