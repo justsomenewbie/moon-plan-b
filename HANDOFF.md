@@ -2,11 +2,9 @@
 
 Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. Site names open the saved report or hourly live observations. The original homepage and quick guide return; the [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Integration combines the site-detail work from `8196406` and landing advice from `e2972c1`. Previous verified main: `1a1b3e2`. Review: [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
 
-## Mission Survival & Horizon Clearance Studio
+## Live comparison
 
-The clearance control spans 0–10° in 0.1° steps with 0/2/5° educational presets. The ribbon keeps four known states plus explicit unavailable UTC intervals, shows hours and percentages, and never turns a null or cadence gap into blackout. Educational darkness endurance uses 24/100/150-hour assumptions; a boundary-clipped dark span stays unresolved unless its observed duration already exceeds the selected reference. Producer intervals remain unchanged and separately labeled.
-
-The HUD and plots label the simulated clearance. Solar visibility is not power; Earth visibility is not a radio-link budget. [Clearance QA](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram).
+The comparison results link to the current run’s lunar globe and local 3D sky. Observations share the selected site and UTC across the globe, tracks, timeline, sky, polar plot and exact-sample table. The 0°/2°/5° controls, ribbon and direction diagrams use the returned angles. Terrain visibility uses the producer flags. Missing directions stay unavailable. [Live regression](qa/check_terrain_sky.mjs), [clearance QA](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram). Last verified main before integration: `b6b76a2`. Owner: comparison integration.
 
 ## Current product, backend and QA state
 
@@ -30,4 +28,4 @@ The [original CSV URLs passed](docs/BACKEND_RECONCILIATION.md). Planner forms re
 
 ## Pending
 
-Release licensing, science sign-off, three usability sessions and screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Stashes retain backend-QA and pre-sync work. Next: open the saved B2 November 14–21 ranking.
+Release licensing, science sign-off, three usability sessions and screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Stashes retain backend-QA and pre-sync work. Next: open `/compare#local-sky` and switch between Odysseus and Athena.

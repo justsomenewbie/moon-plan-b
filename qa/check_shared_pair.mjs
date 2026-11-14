@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 
-// Run B integration check. Uses bounded dataset/catalog GETs and the read-only comparison POST.
+// Terrain integration check. Uses bounded dataset/catalog GETs and the read-only comparison POST.
 const origin = new URL(process.argv[2]).origin;
-const run = "B_spice_pgda_bruteforce_2026_2030", from = "2026-11-14T00:00:00Z", to = "2026-11-15T00:00:00Z";
+const run = process.argv[3] || "B2_spice_pgda_bruteforce_2026_2030_fix676af9d";
+const from = "2026-11-14T00:00:00Z", to = "2026-11-15T00:00:00Z";
 const requested = ["a3_haworth", "apollo11"]; // The producer ranks Apollo first here.
 const bounds = { run_id: run, from, to, resolutionSeconds: "3600" };
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
@@ -36,7 +37,8 @@ try {
   const cards = ranks(entry).locator("article");
   assert.match(await cards.nth(0).innerText(), /0\.67416° latitude · 23\.47314° east longitude/);
   assert.match(await cards.nth(1).innerText(), /-86\.752966° latitude · 336\.328186° east longitude/);
-  assert.match(await cards.nth(1).innerText(), /representative point/);
+  if (run === "B_spice_pgda_bruteforce_2026_2030")
+    assert.match(await cards.nth(1).innerText(), /representative point/);
   for (const [index, longitude, latitude] of [[0, "23.47314", "0.67416"], [1, "336.328186", "-86.752966"]]) {
     const imagery = new URL(await cards.nth(index).getByRole("link", { name: "View this site in LROC imagery ↗" }).getAttribute("href"));
     assert.equal(imagery.host, "data.lroc.im-ldi.com");
@@ -88,7 +90,7 @@ try {
   assert.equal(new URL(await translated.getAttribute("href"), shared.url()).href, url.href);
   await shared.locator(".language-switch select").first().selectOption("en");
 
-  const selector = shared.locator("#terrain-observations select");
+  const selector = shared.getByRole("combobox", { name: "Observation site", exact: true });
   await selector.selectOption(requested[1]);
   const observation = shared.getByRole("link", { name: "Open selected observation in a new tab" });
   const obsUrl = new URL(await observation.getAttribute("href"), shared.url());
@@ -97,7 +99,7 @@ try {
   assert.equal(obsUrl.hash, "#terrain-observations");
   const [view] = await Promise.all([context.waitForEvent("page"), observation.click()]);
   await view.locator("#terrain-sample-utc").waitFor();
-  assert.equal(await view.locator("#terrain-observations select").inputValue(), requested[1]);
+  assert.equal(await view.getByRole("combobox", { name: "Observation site", exact: true }).inputValue(), requested[1]);
   assert.equal(await ranks(view).count(), 0);
   assert.equal(pairs.length, 3);
 

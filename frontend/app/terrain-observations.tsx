@@ -1,4 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
+import { terrainSkyScenario } from "../lib/terrain-sky";
+import LocalSky from "./local-sky";
+import { SampleTable, SkyPosition, Timeline } from "./observations";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 import TerrainInstant from "./terrain-instant";
@@ -98,23 +101,14 @@ function VisibilityBands({ site, range, selected }: { site: Site; range: Range; 
   </section>;
 }
 
-function SiteObservations({ site, range, sample, onSample }: {
-  site: Site; range: Range; sample: number; onSample: (sample: number) => void;
-}) {
+function SiteObservations({ site, range, sample }: { site: Site; range: Range; sample: number }) {
   const { t } = useLanguage();
-  const series = site.series, count = series?.t.length ?? 0;
-  const selected = series?.t[sample];
+  const series = site.series, selected = series?.t[sample];
   return <>
     <p className={styles.printSite}>{site.name}</p>
     <SkyTracks site={site} sample={sample} sourceStep={range.step_s} />
     <VisibilityBands site={site} range={range} selected={selected} />
     {series && selected ? <section className={styles.inspector}><h4>{t("Selected observation")}</h4>
-      <p className="muted text-sm">{t("{count} returned samples · regular spacing {step} s", { count, step: series.step_s })}
-        {series.decimated && <> · {t("Downsampled with transition samples retained")}</>}</p>
-      <label className={styles.control}><span>{t("Observation sample")}</span>
-        <input type="range" min="0" max={count - 1} step="1" value={sample} disabled={count < 2} aria-valuetext={utc(selected)}
-          onChange={event => onSample(Number(event.target.value))} /></label>
-      <time id="terrain-sample-utc" className="mono" dateTime={selected}>{utc(selected)}</time>
       <div className="table-scroll"><table aria-label={t("Selected observation")}>
         <thead><tr>{["Body", "Azimuth", "Elevation angle", "Visibility"].map(key => <th key={key} scope="col">{t(key)}</th>)}</tr></thead>
         <tbody>{bodies.map(body => <tr key={body}><th scope="row">{t(labels[body])}</th>
@@ -126,21 +120,72 @@ function SiteObservations({ site, range, sample, onSample }: {
   </>;
 }
 
-export default function TerrainObservations({ result, siteIndex, sample, onSelect, live }: {
-  result: TerrainSummary; siteIndex: number; sample: number; live: boolean; onSelect: (siteIndex: number, sample: number) => void;
+export default function TerrainObservations({ result, siteIndex, sample, onSelect, live, reducedMotion }: {
+  result: TerrainSummary; siteIndex: number; sample: number; live: boolean; reducedMotion: boolean;
+  onSelect: (siteIndex: number, sample: number) => void;
 }) {
   const { t } = useLanguage();
+  const [clearance, setClearance] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const site = result.sites[siteIndex];
+  const count = site?.series?.t.length ?? 0;
+  const at = site?.series?.t[sample];
+  // A ranked pair keeps stable A/B identities. Larger catalogs render only the selected site's tracks.
+  const indices = useMemo(() => result.sites.length === 2 ? [0, 1] : [siteIndex], [result, siteIndex]);
+  const views = useMemo(() => indices.flatMap(index => {
+    const sky = terrainSkyScenario(result, result.sites[index]);
+    return sky ? [{ index, sky }] : [];
+  }), [result, indices]);
+  const current = views.find(view => view.index === siteIndex);
+  const a = views[0]?.sky, b = views[1]?.sky;
+  const offset = at && a ? Date.parse(at) - Date.parse(a.startUtc) : undefined;
+  const advance = useEffectEvent(() => onSelect(siteIndex, sample + 1));
+  useEffect(() => {
+    if (!playing) return;
+    if (reducedMotion || sample + 1 >= count) { setPlaying(false); return; }
+    const timer = window.setTimeout(advance, 900);
+    return () => window.clearTimeout(timer);
+  }, [playing, reducedMotion, siteIndex, sample, count]);
   if (!site) return null;
+  function chooseSite(index: number) {
+    setPlaying(false);
+    const matchingSample = at ? result.sites[index].series?.t.indexOf(at) : undefined;
+    onSelect(index, Math.max(0, matchingSample ?? 0));
+  }
   return <section id="terrain-observations" className={styles.observations} aria-labelledby="terrain-observations-title">
     <h3 id="terrain-observations-title">{t("Sky observations and visibility")}</h3>
     {result.sites.length > 1 ? <label className={`field ${styles.control}`}>{t("Observation site")}
-      <select value={site.id} onChange={event => onSelect(event.currentTarget.selectedIndex, 0)}>
+      <select value={site.id} onChange={event => { setPlaying(false); onSelect(event.currentTarget.selectedIndex, 0); }}>
         {result.sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
       </select></label> : <p className={styles.screenSite}>{site.name}</p>}
-    <SiteObservations site={site} range={result.range} sample={sample} onSample={next => onSelect(siteIndex, next)} />
+    {a && current && at && offset !== undefined ? <>
+      <div className="print:hidden">
+        <Timeline a={a} b={b} mode="sites" offset={offset} clearanceDeg={clearance} angularOnly />
+      </div>
+      <p className="muted text-sm">{t("{count} returned samples · regular spacing {step} s", { count, step: site.series!.step_s })}
+        {site.series!.decimated && <> · {t("Downsampled with transition samples retained")}</>}</p>
+      <div className="playback print:hidden">
+        <button className="button outline" type="button" disabled={count < 2 || reducedMotion} onClick={() => {
+          if (!playing && sample + 1 === count) onSelect(siteIndex, 0);
+          setPlaying(!playing);
+        }}>{t(playing ? "Pause timeline" : "Play timeline")}</button>
+        <label className="slider-label"><span className="sr-only">{t("Observation sample")}</span>
+          <input type="range" min="0" max={count - 1} step="1" value={sample} disabled={count < 2}
+            aria-valuetext={utc(at)} onChange={event => { setPlaying(false); onSelect(siteIndex, Number(event.target.value)); }} /></label>
+      </div>
+      <time id="terrain-sample-utc" className="mono" dateTime={at}>{utc(at)}</time>
+      <div className="print:hidden">
+        <LocalSky sites={result.sites} source={result.run.run_id} terrainVisibility={{ sun: site.series!.sun_visible[sample], earth: site.series!.earth_visible[sample] }}
+          a={a} b={b} offset={offset}
+          alternative={current === views[1]} setAlternative={useSecond => chooseSite(views[useSecond ? 1 : 0].index)}
+          clearanceDeg={clearance} setClearanceDeg={setClearance} />
+        <SkyPosition scenario={current.sky} offset={offset} clearanceDeg={clearance} siteName={site.name} />
+        <SampleTable a={a} b={b} terrain />
+      </div>
+    </> : result.sites.some(entry => entry.series?.t.length) && <p id="local-sky" tabIndex={-1}>{t("Choose a site with angular samples to view its 3D sky.")}</p>}
+    <SiteObservations site={site} range={result.range} sample={sample} />
     {live && site.coverage_in_range !== "missing" && <TerrainInstant
       key={JSON.stringify([result.dataset_id, result.run.run_id, site.id, result.range.start, result.range.end])}
-      runId={result.run.run_id} site={site} range={result.range} initialUtc={site.series?.t[sample] ?? result.range.start} />}
+      runId={result.run.run_id} site={site} range={result.range} initialUtc={at ?? result.range.start} />}
   </section>;
 }

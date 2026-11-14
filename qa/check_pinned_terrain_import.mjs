@@ -61,7 +61,7 @@ try {
   const sample = page.locator("#terrain-sample-utc");
   await sample.waitFor();
   assert.equal(await sample.getAttribute("datetime"), bounds.at);
-  assert.equal(await page.locator("#terrain-observations select").inputValue(), site);
+  assert.equal(await page.getByRole("combobox", { name: "Observation site", exact: true }).inputValue(), site);
   assert.equal(page.url(), pinned.href);
   assert.equal(await error.count(), 0);
   assert.equal(await page.locator("#alternative-dates").count(), 0);

@@ -86,7 +86,7 @@ export function computeLanderHud(sample: Sample | undefined, clearanceDeg = 0): 
 }
 
 export function analyzeScenarioClearance(
-  scenario: Scenario,
+  scenario: Pick<Scenario, "startUtc" | "endUtc" | "samples" | "coverage" | "sampleStepSeconds">,
   clearanceDeg = 0,
   batteryLimitHours = 12,
 ): ScenarioClearanceSummary {

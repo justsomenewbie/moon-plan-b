@@ -6,6 +6,12 @@ export const savedLocale = (value: string | null): Locale => value === "vi" ? "v
 
 // Translate interface text only; producer evidence is rendered verbatim.
 export const vietnamese: Record<string, string> = {
+  "Estimated interval between sample times: {start} to {end}. The terrain visibility totals use the evaluated UTC range.": "Khoảng ước tính giữa các mốc lấy mẫu: từ {start} đến {end}. Tổng thời gian nhìn thấy theo địa hình dùng khoảng UTC đã tính.",
+  "Above the ideal horizon": "Trên chân trời lý tưởng",
+  "Below the ideal horizon": "Dưới chân trời lý tưởng",
+  "On the ideal horizon": "Ngang chân trời lý tưởng",
+  "Terrain model": "Mô hình địa hình",
+  "Choose a site with angular samples to view its 3D sky.": "Chọn địa điểm có mẫu phương vị và góc cao để xem bầu trời 3D.",
   "AI-assisted implementation ·": "Triển khai có AI hỗ trợ ·",
   "At the landing site": "Tại điểm đáp",
   "See the sky from this site": "Xem bầu trời tại điểm đáp",

@@ -180,7 +180,7 @@ export function validateDataset(input: unknown): Dataset {
   return input as Dataset;
 }
 
-export const durationHours = (s: Scenario) => (Date.parse(s.endUtc) - Date.parse(s.startUtc)) / 3600000;
+export const durationHours = (s: Pick<Scenario, "startUtc" | "endUtc">) => (Date.parse(s.endUtc) - Date.parse(s.startUtc)) / 3600000;
 export type Mode = "dates" | "sites";
 export type Selection = { mode: Mode; a: string; b: string; h: number; tick: number };
 export function publishedWindows(scenarios: Scenario[]): Scenario[][] {
@@ -255,8 +255,9 @@ export function commonOffsets(a: Scenario, b?: Scenario): number[] {
   const other = new Set(b.samples.map((s) => Date.parse(s.utc) - Date.parse(b.startUtc)));
   return offsets.filter((n) => other.has(n));
 }
-export function sampleAt(s: Scenario, offset: number): Sample | undefined {
-  return s.samples.find((v) => Date.parse(v.utc) - Date.parse(s.startUtc) === offset);
+export function sampleAt(s: Pick<Scenario, "samples" | "startUtc">, offset: number): Sample | undefined {
+  const utc = Date.parse(s.startUtc) + offset;
+  return s.samples.find(v => Date.parse(v.utc) === utc);
 }
 export function skyPath(s: Scenario, body: "sun" | "earth"): string {
   let previousAzimuth: number | null = null;
@@ -270,15 +271,16 @@ export function skyPath(s: Scenario, body: "sun" | "earth"): string {
     return `${move ? "M" : "L"}${value.azimuthDeg},${90 - value.elevationDeg}`;
   }).join(" ");
 }
-export function chartPath(s: Scenario, body: "sun" | "earth", width = 800, height = 240): string {
+export function chartPath(s: Pick<Scenario, "samples" | "sampleStepSeconds" | "startUtc" | "endUtc">, body: "sun" | "earth", width = 800, height = 240): string {
   let open = false;
-  let previous = Date.parse(s.startUtc);
+  const start = Date.parse(s.startUtc), span = Date.parse(s.endUtc) - start;
+  let previous = start;
   return s.samples.map((sample) => {
     const time = Date.parse(sample.utc);
     if (time - previous > s.sampleStepSeconds * 1000) open = false;
     previous = time;
     if (sample[body] === null) { open = false; return ""; }
-    const x = (Date.parse(sample.utc) - Date.parse(s.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * width;
+    const x = span > 0 ? (time - start) / span * width : width / 2;
     const y = (90 - sample[body].elevationDeg) / 180 * height;
     const result = `${open ? "L" : "M"}${x.toFixed(2)},${y.toFixed(2)}`;
     open = true; return result;

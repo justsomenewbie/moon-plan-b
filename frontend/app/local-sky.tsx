@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import { sampleAt } from "../lib/dataset";
-import type { Dataset, Scenario } from "../lib/dataset";
+import type { SkyScenario } from "../lib/terrain-sky";
 import { skyPoint } from "../lib/local-sky";
 import { analyzeScenarioClearance, clampClearanceDeg, computeLanderHud } from "../lib/mission-studio";
 import type { MissionOpState } from "../lib/mission-studio";
@@ -54,7 +54,9 @@ function sideElevationPoint(elevationDeg: number, length = 46) {
 }
 
 export default function LocalSky({
-  data,
+  sites,
+  source,
+  terrainVisibility,
   a,
   b,
   offset,
@@ -63,9 +65,11 @@ export default function LocalSky({
   clearanceDeg: externalClearance,
   setClearanceDeg: setExternalClearance,
 }: {
-  data: Dataset;
-  a: Scenario;
-  b?: Scenario;
+  sites: { id: string; name: string }[];
+  source: string;
+  terrainVisibility?: { sun: boolean; earth: boolean };
+  a: SkyScenario;
+  b?: SkyScenario;
   offset?: number;
   alternative: boolean;
   setAlternative: (useAlternative: boolean) => void;
@@ -77,7 +81,7 @@ export default function LocalSky({
   const [openIntervals, setOpenIntervals] = useState<string | null>(null);
   const [orbit, setOrbit] = useState(0);
   const [overlay, setOverlay] = useState(false);
-  const [inspected, setInspected] = useState<{ scenario: Scenario; body: "sun" | "earth" } | null>(null);
+  const [inspected, setInspected] = useState<{ scenario: SkyScenario; body: "sun" | "earth" } | null>(null);
   const [internalClearance, setInternalClearance] = useState(0);
   const [referenceHours, setReferenceHours] = useState(24);
   const clearanceDeg = clampClearanceDeg(externalClearance ?? internalClearance);
@@ -116,7 +120,7 @@ export default function LocalSky({
     analyzeScenarioClearance(scenario, clearanceDeg, referenceHours)), [a, b, clearanceDeg, referenceHours]);
   const observations = (b ? [a, b] : [a]).map((scenario, index) => ({
     scenario,
-    site: data.sites.find(site => site.id === scenario.siteId)!,
+    site: sites.find(site => site.id === scenario.siteId)!,
     sample: offset === undefined ? undefined : sampleAt(scenario, offset),
     label: index === 0 ? "A" : "B",
     summary: summaries[index],
@@ -191,12 +195,14 @@ export default function LocalSky({
       </svg>
       <div className="sky-info" aria-label={t("Selected observation")}>
         <strong>{showBoth && `${observations[selected].label} · `}{site.name}</strong>
-        <p className="muted text-sm">{t(data.evidence === "synthetic-fixture" ? "Synthetic release" : "Dataset")} · {scenario.id}</p>
+        <p className="muted text-sm">{source} · {scenario.id}</p>
         {sample ? <time dateTime={sample.utc}>{sample.utc}</time> : <p>{t("No shared samples")}</p>}
         <dl id="sky-body-readings">{bodies.map(([key, name]) => {
           const v = sample?.[key];
           return <div key={key} data-selected={selectedBody === key || undefined}><dt className={key}>{t(name)}{selectedBody === key && <span className="sky-selected-label"> · {t("Selected marker")}</span>}</dt>
-            <dd>{v ? <>{t(v.elevationDeg < 0 ? "Below horizon" : v.elevationDeg > 0 ? "Above horizon" : "On horizon")}
+            <dd>{v ? <>{terrainVisibility
+              ? <>{t(v.elevationDeg < 0 ? "Below the ideal horizon" : v.elevationDeg > 0 ? "Above the ideal horizon" : "On the ideal horizon")} · {t("Terrain model")}: {t(terrainVisibility[key] ? "Visible" : "Hidden")}</>
+              : t(v.elevationDeg < 0 ? "Below horizon" : v.elevationDeg > 0 ? "Above horizon" : "On horizon")}
               {clearanceDeg > 0 && <> · <span>{t(v.elevationDeg > clearanceDeg ? "Above threshold" : "At or below threshold")}</span></>}<br/>
               <span>{t("Az")} {v.azimuthDeg}° · {t("El")} {v.elevationDeg}°</span></> : t("Unavailable")}</dd></div>;
         })}</dl>
@@ -215,6 +221,7 @@ export default function LocalSky({
       <p className="muted text-xs">
         {t("The ribbon estimates when each body’s elevation is strictly above the selected angle. It assumes elevation changes linearly between adjacent valid samples. Hatched spans lack data. The timeline bands show the original intervals supplied with the dataset.")}
       </p>
+      {terrainVisibility && <p className="muted text-xs">{t("Estimated interval between sample times: {start} to {end}. The terrain visibility totals use the evaluated UTC range.", { start: a.startUtc, end: a.endUtc })}</p>}
       <p className="clearance-caveat">{t("Uniform educational sensitivity test — not an azimuth-dependent local terrain model.")}</p>
 
       <div className="clearance-controls">

@@ -10,10 +10,10 @@ import TerrainPair, { type DisplayedPair } from "./terrain-pair";
 import AlternativeDates from "./alternative-dates";
 import { ComparisonDownload, RunDownloads } from "./terrain-downloads";
 
-export default function TerrainResult({ result, view, onSelect, onPrint, liveWindow, printingPair, replayPair, onDisplayedPair }: {
+export default function TerrainResult({ reducedMotion, result, view, onSelect, onPrint, liveWindow, printingPair, replayPair, onDisplayedPair }: {
   onDisplayedPair: (pair: DisplayedPair | null) => void;
   liveWindow?: { from: string; to: string; resolutionSeconds: number }; replayPair: boolean; printingPair: boolean;
-  result: TerrainSummary; view: { siteIndex: number; sample: number; link: string };
+  reducedMotion: boolean; result: TerrainSummary; view: { siteIndex: number; sample: number; link: string };
   onSelect: (siteIndex: number, sample: number) => void; onPrint: () => void;
 }) {
   const { t } = useLanguage();
@@ -55,7 +55,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     {liveWindow && <TerrainPair replay={replayPair} resolutionSeconds={liveWindow.resolutionSeconds} onDisplayedPair={onDisplayedPair} key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}
     {liveWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={liveWindow} />}
 
-    {!result.summaryOnly && result.sites.length > 0 && <TerrainObservations live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
+    {!result.summaryOnly && result.sites.length > 0 && <TerrainObservations reducedMotion={reducedMotion} live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
 
     {view.link && observationSite && <AlternativeDates key={result.dataset_id + "/" + observationSite.id} result={result} site={observationSite} />}
 
