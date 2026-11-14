@@ -10,6 +10,12 @@
 .trail, .dots { stroke: currentColor; stroke-width: 1.5; }
 .dots { stroke-width: 2.5; stroke-linecap: round; }
 .printSite { display: none; }
+@media screen and (max-width: 480px) {
+  .inspector th, .inspector td { padding-inline: 4px; font-size: .8rem; }
+  .inspector th, .inspector td:last-child { overflow-wrap: normal; }
+  .inspector th:first-child { white-space: nowrap; }
+  .inspector td:last-child { white-space: normal; }
+}
 @media print {
   .control, .screenSite { display: none; }
   .printSite { display: block; font-weight: 600; }
