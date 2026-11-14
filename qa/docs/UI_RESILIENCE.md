@@ -108,7 +108,7 @@ Replay with `node qa/check_globe_recovery.mjs <frontend-origin>` against a runni
 
 Source inspection is only a first check. On a fresh browser session, capture requests while loading, importing all valid fixtures, comparing sites/timelines, retrying failed requests, opening API docs and exercising live jobs if enabled. Inspect automatic requests to `ssd.jpl.nasa.gov`, `ssd-api.jpl.nasa.gov`, Horizons endpoints and any proxy destination. Ordinary user navigation to source documentation is distinct from browser ephemeris queries.
 
-For the requested static-only architecture, also verify the tested build reads only released static JSON for data; the existing same-origin job/API mode does not by itself meet that requirement. State the exercised mode and pending architecture decision. Browser isolation from JPL does not prove a server proxy respects the offline design.
+Record which data path the trace exercises. For a saved comparison, check that observations come from the selected file. For a live comparison, inspect the same-origin producer request described in the [frontend contract](../../docs/FRONTEND_CONTRACT.md). A browser trace only covers requests made by the browser.
 
 Record observed domains, request initiator and count, cache/service-worker state, errors and retry behavior. Preserve a redacted HAR/screenshot outside public sources when it contains cookies or machine/account information; publish only reviewed minimal evidence. Zero calls in one trace covers only the paths actually exercised. Do not mark compliance from a grep result alone.
 

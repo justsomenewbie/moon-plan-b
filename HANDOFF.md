@@ -20,7 +20,7 @@ Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sit
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gap navigation at 320px and 200% Chromium zoom. Home globe focus is visible. Reload reopens linked sources.
 
-[Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
+[Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
 The astronaut offers help, labels modeled readings, pauses its wave and opens pair/date controls for saved or displayed results. Saved joint visibility: Odysseus 33 h, Athena 139 h, with UTC and source. [Local Ollama](README.md#ask-the-astronaut).
 

@@ -37,8 +37,14 @@ With `NEXT_PUBLIC_API_BASE_URL=mock`, `npm test` passed all 82 frontend tests, `
 
 ## Contract and limits
 
-The existing product is Next.js + Tailwind with `frontend-draft-2` and a proposed same-origin API. This differs from the new mission brief's React/Vite/static-only architecture. This task adds an offline QA package and records the unresolved integration decision; it does not migrate or certify the existing product architecture. Chung/Son/Trang must accept an integration contract before production use.
+The offline Horizons validator uses the saved-file format `frontend-draft-2`. The live frontend uses Chung’s [producer contract](../docs/FRONTEND_CONTRACT.md) and can also import its JSON exports.
 
 The Python validator consumes `contracts/openapi.draft.json` directly. It implements only the vocabulary reachable from its Dataset schema, rejects unknown keywords and adds semantic checks. It is not a general JSON Schema validator. The unchanged frontend's actual validator is also tested. Raw metadata lives in a sidecar because the dataset schema forbids new properties.
 
-See [contract](docs/CONTRACT.md), [runbook](docs/RUNBOOK.md), [resilience](docs/UI_RESILIENCE.md) and [compliance](docs/COMPLIANCE.md). Real Horizons exports, full build, browser evidence and user sessions remain separate acceptance gates.
+See the [QA sidecar contract](docs/CONTRACT.md), [release checklist](docs/RUNBOOK.md), [resilience checks](docs/UI_RESILIENCE.md) and [compliance record](docs/COMPLIANCE.md).
+
+## Frontend integration retest
+
+On 14 November 2026, OpenAI Codex built [`b8d3a60`](https://github.com/justsomenewbie/moon-plan-b/commit/b8d3a604704bfd08bc366a7eb040b7ed0e1505dc) with the [selected Next.js and Tailwind stack](../AGENTS.md). Chromium opened `/compare` and received HTTP 200 from the same-origin `/api/v1/dataset`. The `lunarnav-dataset-1` response and rendered result included Odysseus and Athena. The [integration record](../docs/BACKEND_RECONCILIATION.md#aggregate-update-on-14-november) gives the bounded request.
+
+The [Horizons replay](evidence/odysseus-hour-gap/check.mjs), run with `--compare-sites`, imported a copy with only Athena’s 02:00 UTC sample removed. With each site selected as primary, both UTC labels stepped from 01:00 to 03:00 and back to 01:00. Both Athena curves broke at the gap, both Odysseus curves stayed continuous, and the marker coordinates matched the remaining observations.
