@@ -2,6 +2,7 @@ import { utcMillis } from "../dataset.ts";
 import { ApiError, apiError, producer } from "./client.ts";
 import type { components } from "./producer";
 
+type RetainedVisibility = Pick<components["schemas"]["DatasetSeries"], "t" | "sun_visible" | "earth_visible" | "both_visible">;
 type Instant = components["schemas"]["InstantResponse"];
 type Body = Pick<Instant["sun"], "az_deg" | "el_deg" | "horizon_el_deg" | "clearance_deg" | "visible">;
 export type SiteInstant = Pick<Instant, "run_id" | "site_id" | "t" | "sample_utc" | "sample_index" | "step_s" | "precision_h" | "both_visible"> & {
@@ -28,7 +29,10 @@ function readBody(body: Body): Body {
   return { az_deg, el_deg, horizon_el_deg, clearance_deg, visible };
 }
 
-export async function getSiteInstant(runId: string, siteId: string, at: string, stepSeconds: number, gridStart: string, signal?: AbortSignal): Promise<SiteInstant> {
+export async function getSiteInstant(
+  runId: string, siteId: string, at: string, stepSeconds: number, gridStart: string,
+  signal?: AbortSignal, series?: RetainedVisibility | null,
+): Promise<SiteInstant> {
   if (!/^[A-Za-z0-9_.-]{1,64}$/.test(runId) || !/^[A-Za-z0-9_.:-]{1,64}$/.test(siteId) ||
       !Number.isSafeInteger(stepSeconds) || stepSeconds <= 0)
     throw new ApiError("Invalid run, site or model step for the site instant.", 422);
@@ -49,6 +53,11 @@ export async function getSiteInstant(runId: string, siteId: string, at: string, 
   check(sample <= requested && (requested - sample) / 1000 < stepSeconds && ((sample - grid) / 1000) % stepSeconds === 0);
   const sun = readBody(data.sun), earth = readBody(data.earth);
   check(data.both_visible === (sun.visible && earth.visible));
+  if (series) {
+    const index = series.t.indexOf(data.sample_utc);
+    if (index >= 0) check(sun.visible === series.sun_visible[index] && earth.visible === series.earth_visible[index] &&
+      data.both_visible === series.both_visible[index]);
+  }
   return { run_id: runId, site_id: siteId, t, sample_utc: data.sample_utc, sample_index: data.sample_index,
     step_s: stepSeconds, precision_h: data.precision_h, both_visible: data.both_visible, sun, earth };
 }

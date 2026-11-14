@@ -79,3 +79,20 @@ test("invalid inputs and abort avoid the request; producer rejections retain the
     e instanceof ApiError && e.status === 422 && e.code === "OUT_OF_RANGE" && e.message === "Pick a time in this run");
   assert.equal(calls, 1);
 });
+
+test("rejects conflicting visibility at the retained model sample and skips unsupplied samples", async t => {
+  const hiddenEarth = { ...earth, visible: false };
+  let reply = { ...sample, earth: hiddenEarth, both_visible: false };
+  t.mock.method(globalThis, "fetch", async () => Response.json(reply));
+  const series = { t: [time], sun_visible: [true], earth_visible: [false], both_visible: [false] };
+  const read = (retained = series) => getSiteInstant(run, site, inside, 3600, time, undefined, retained);
+  const mismatch = (e: unknown) => e instanceof ApiError && e.status === 502;
+
+  assert.equal((await read()).sun.visible, true);
+  // The joint flag stays false, so a Sun-only disagreement must still be detected.
+  reply = { ...reply, sun: { ...sample.sun, visible: false } };
+  await assert.rejects(read(), mismatch);
+  assert.equal((await read({ ...series, t: ["2026-11-19T14:00:00Z"] })).sun.visible, false);
+  reply = { ...sample, earth: hiddenEarth, both_visible: false };
+  await assert.rejects(read({ ...series, earth_visible: [true], both_visible: [true] }), mismatch);
+});
