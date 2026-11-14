@@ -19,13 +19,15 @@ const messages = {
     close: "Close astronaut guide",
     greeting: "What can I help you explore?",
     measurementNote: "I don’t have live measurements from the Moon.",
+    currentQuestion: "Can I see what’s happening now?",
+    unavailable: "The selected data has no model sample available for the current UTC time.",
+    otherSites: "Other sites",
     savedSample: "Saved model sample · interval boundaries ±1 h",
     terrainSample: "Loaded terrain model sample",
     states: { both: "Sun and Earth visible", sun: "Sun visible, Earth out of view", earth: "Earth visible, Sun out of view", neither: "Sun and Earth both out of view", outsideJoint: "Outside the joint visibility window" },
     source: "Model and sources",
     questions: [
       ["How do I compare sites or dates?", "In the saved results, choose a week to compare Odysseus with Athena. Choose a site to compare its two weeks. Each bar shows when the model places both the Sun and Earth above that site’s horizon."],
-      ["Can I see what’s happening now?", "Check the UTC window on the result. The saved weeks show modeled conditions for those dates. This guide has no live feed."],
       ["Does seeing Earth guarantee a radio link?", "Earth visibility tells you whether Earth is in view. Signal strength also depends on the radio equipment and the link conditions. The comparison gives no signal-strength estimate."],
     ],
     saved: "Go to saved comparisons",
@@ -38,13 +40,15 @@ const messages = {
     close: "Đóng hướng dẫn của phi hành gia",
     greeting: "Bạn muốn mình giúp tìm hiểu điều gì?",
     measurementNote: "Mình chưa có số liệu đo trực tiếp từ Mặt Trăng.",
+    currentQuestion: "Tôi xem được tình hình hiện tại không?",
+    unavailable: "Dữ liệu đang chọn chưa có kết quả mô hình cho thời điểm UTC hiện tại.",
+    otherSites: "Các địa điểm khác",
     savedSample: "Mốc mô hình đã lưu · sai số ranh giới ±1 giờ",
     terrainSample: "Mốc mô hình địa hình đã tải",
     states: { both: "Thấy cả Mặt Trời và Trái Đất", sun: "Thấy Mặt Trời, không thấy Trái Đất", earth: "Thấy Trái Đất, không thấy Mặt Trời", neither: "Không thấy Mặt Trời và Trái Đất", outsideJoint: "Ngoài khoảng nhìn thấy đồng thời" },
     source: "Mô hình và nguồn dữ liệu",
     questions: [
       ["Làm sao so sánh địa điểm hoặc thời gian?", "Trong phần kết quả đã lưu, chọn một tuần để so sánh Odysseus với Athena. Chọn một địa điểm để so sánh hai tuần tại đó. Mỗi thanh biểu thị khoảng thời gian mà theo mô hình, cả Mặt Trời và Trái Đất đều ở phía trên đường chân trời tại địa điểm đó."],
-      ["Tôi xem được tình hình hiện tại không?", "Hãy xem khoảng thời gian UTC ghi trên kết quả. Các tuần đã lưu cho biết điều kiện theo mô hình trong những ngày đó. Hướng dẫn này không có dữ liệu trực tiếp."],
       ["Nhìn thấy Trái Đất có bảo đảm liên lạc vô tuyến không?", "Ngay cả khi nhìn thấy Trái Đất từ điểm hạ cánh, cường độ tín hiệu vẫn phụ thuộc vào thiết bị vô tuyến và điều kiện đường truyền. Công cụ so sánh không ước tính cường độ tín hiệu."],
     ],
     saved: "Đến phần so sánh kết quả đã lưu",
@@ -72,6 +76,10 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
   const copy = messages[locale];
   const id = useId();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    // The native launcher can already have opened the popover while the page scripts were loading.
+    if (document.getElementById(id)?.matches(":popover-open")) setOpen(true);
+  }, [id]);
   const [imageMode, setImageMode] = useState<"motion" | "still" | "text">("motion");
   const [now, setNow] = useState<number | null>(null);
   function recoverImage(image: HTMLImageElement) {
@@ -108,6 +116,7 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
     };
   }, [open, sampleSource]);
   const reading = !open || now === null ? null : guideObservation(now, sampleSource);
+  const siteStatuses = reading?.readings.map(row => <li key={row.name}>{row.name} · {copy.states[row.visibility]}</li>) ?? [];
   const sourceAnchor = scope === "pair" ? "#terrain-pair" : scope === "workspace" ? "#sources" : "#saved-model-source";
   const rows = snapshot.weeks.flatMap(week => week.sites
     .filter(site => week.startUtc === savedResult || site.id === savedResult)
@@ -134,21 +143,32 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
           }} />
       </picture>}
     </button>
-    <aside id={id} popover="auto" onToggle={event => setOpen(event.newState === "open")} className={styles.panel} aria-labelledby={id + "-title"}>
+    <aside id={id} popover="auto" onToggle={event => {
+      const opening = event.newState === "open";
+      if (opening) event.currentTarget.scrollTop = 0;
+      setOpen(opening);
+    }} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
         {open && <span className={styles.portrait} aria-hidden="true" />}
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
       <p className={styles.greeting}>{copy.greeting}<br />{copy.measurementNote}</p>
+      {open && <details open={Boolean(reading)}>
+        <summary>{copy.currentQuestion}</summary>
+        {reading ? <section className={styles.sample}>
+          <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
+          <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>
+          <ul>{siteStatuses.slice(0, 2)}</ul>
+          {siteStatuses.length > 2 && <details>
+            <summary>{copy.otherSites} ({siteStatuses.length - 2})</summary>
+            <ul>{siteStatuses.slice(2)}</ul>
+          </details>}
+          <a href={comparisonPath + sourceAnchor} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
+          <small>{reading.source}</small>
+        </section> : <p>{copy.unavailable}</p>}
+      </details>}
       {open && <GuideChat planningSource={planningSource} scope={scope} savedPlanning={scope === "saved" && (guideChoice === "saved" || onSavedRoute)} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
-      {reading && <section className={styles.sample}>
-        <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
-        <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>
-        <ul>{reading.readings.map((row, index) => <li key={index}>{row.name} · {copy.states[row.visibility]}</li>)}</ul>
-        <a href={comparisonPath + sourceAnchor} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
-        <small>{reading.source}</small>
-      </section>}
       {copy.questions.map(([question, answer], index) =>
         <details key={index} name={id}>
           <summary>{question}</summary>

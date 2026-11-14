@@ -41,10 +41,10 @@ try {
   await panel.getByText("Athena · IM-2 · Sun and Earth visible").waitFor();
   await panel.getByText("Odysseus · IM-1 · Outside the joint visibility window").waitFor();
   const questions = panel.locator("details[name] > summary");
-  assert.equal(await questions.count(), 4);
-  for (const [index, expected] of ["choose a week", "no live feed", "no signal-strength estimate"].entries()) {
+  assert.equal(await questions.count(), 3);
+  for (const [index, expected] of ["choose a week", "no signal-strength estimate"].entries()) {
     await questions.nth(index).click();
-    const answer = panel.locator("details[open] p");
+    const answer = panel.locator("details[name][open] p");
     assert.equal(await answer.count(), 1);
     assert.ok((await answer.textContent()).includes(expected));
   }
@@ -59,7 +59,7 @@ try {
     await button.click();
     const summary = panel.getByText(question, { exact: true });
     if (!await summary.evaluate(el => el.parentElement.open)) await summary.click();
-    const list = panel.locator("details[open] li");
+    const list = panel.locator("details[name][open] li");
     assert.deepEqual(await list.allInnerTexts(), expected);
     await page.keyboard.press("Escape");
     await panel.waitFor({ state: "hidden" });
@@ -122,6 +122,8 @@ try {
   await panel.getByText("Hỏi phi hành gia", { exact: true }).waitFor();
   await checkGreeting("vi");
   assert.equal(await panel.locator("time").count(), 0);
+  await panel.getByText("Tôi xem được tình hình hiện tại không?", { exact: true }).click();
+  await panel.getByText("Dữ liệu đang chọn chưa có kết quả mô hình cho thời điểm UTC hiện tại.").waitFor();
   await questions.first().click();
   const box = await panel.boundingBox();
   assert.ok(box && box.x >= 0 && box.x + box.width <= 320 && box.y >= 0 && box.y + box.height <= 568);
@@ -166,6 +168,50 @@ try {
     else assert.equal(await sample.count(), 0);
   }
   await comparison.close();
+  const mobile = await browser.newPage({ reducedMotion: "reduce" });
+  await mobile.clock.setFixedTime(new Date("2026-11-15T05:37:00Z"));
+  await mobile.addInitScript(() => localStorage.setItem("moon-plan-b-language", "vi"));
+  await mobile.goto(origin);
+  const openGuide = mobile.getByRole("button", { name: "Hướng dẫn của phi hành gia", exact: true });
+  const mobileGuide = mobile.locator("aside:popover-open");
+  const current = mobileGuide.locator("details").filter({ has: mobile.getByText("Tôi xem được tình hình hiện tại không?", { exact: true }) });
+  for (const [width, height] of [[375, 667], [320, 568]]) {
+    await mobile.setViewportSize({ width, height });
+    await openGuide.click();
+    await current.getByText("Athena · IM-2 · Thấy cả Mặt Trời và Trái Đất").waitFor();
+    assert.equal(await current.locator("time").getAttribute("datetime"), "2026-11-15T05:00:00.000Z");
+    const visible = await current.evaluate(el => {
+      const panel = el.closest("aside"), header = panel.querySelector("header").getBoundingClientRect();
+      const bottom = Math.min(panel.getBoundingClientRect().bottom, window.innerHeight);
+      return [...el.querySelectorAll("time, li")].every(row => {
+        const rect = row.getBoundingClientRect();
+        return rect.height > 0 && rect.top >= header.bottom && rect.bottom <= bottom;
+      });
+    });
+    assert.ok(visible, `Sample UTC and both site states should be visible on opening at ${width}×${height}`);
+    await current.locator("summary").click();
+    assert.equal(await current.locator("time").isVisible(), false);
+    await current.locator("summary").click();
+    await current.getByText("Odysseus · IM-1 · Ngoài khoảng nhìn thấy đồng thời").waitFor();
+    await mobileGuide.getByRole("textbox").focus();
+    await mobile.keyboard.press("Escape");
+  }
+  await mobile.close();
+  const early = await browser.newPage({ reducedMotion: "reduce" });
+  await early.clock.setFixedTime(new Date("2026-11-15T05:37:00Z"));
+  const scripts = Promise.withResolvers();
+  await early.route("**/_next/static/chunks/*.js", async route => {
+    await scripts.promise;
+    await route.continue();
+  });
+  await early.goto(origin, { waitUntil: "commit" });
+  await early.getByRole("button", { name: "Astronaut guide", exact: true }).click();
+  const earlyGuide = early.locator("aside:popover-open");
+  assert.equal(await earlyGuide.count(), 1);
+  scripts.resolve();
+  await earlyGuide.getByText("Athena · IM-2 · Sun and Earth visible").waitFor();
+  await earlyGuide.getByRole("textbox").waitFor();
+  await early.close();
   const fallback = await browser.newPage({ reducedMotion: "no-preference" });
   await fallback.addInitScript(() => localStorage.setItem("moon-plan-b-language", "vi"));
   await fallback.route("**/images/guide-visor-wave.webp", route => route.fulfill({ status: 404 }));
