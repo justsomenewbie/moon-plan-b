@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lunarnav"
+version = "0.1.0"
+description = "Lunar Landing Site Navigator - computation backend (Sun/Earth visibility over LOLA terrain)"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "requests>=2.28",
+  "spiceypy>=6.0",
+  "rasterio>=1.3",
+  "pyproj>=3.5",
+  "astropy>=5.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+# notebooks/lunar_navigator_colab.ipynb (sanity plots) and its local smoke test (nbclient)
+notebook = ["matplotlib>=3.7", "nbclient>=0.8", "nbformat>=5.7", "ipykernel>=6"]
+
+[project.scripts]
+lunarnav = "lunarnav.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["lunarnav*"]
+
+[tool.setuptools.package-data]
+lunarnav = ["catalog/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "network: needs internet (Horizons API, NAIF, PGDA). Run with -m network or skip with -m 'not network'",
+  "slow: takes more than ~30 s",
+]

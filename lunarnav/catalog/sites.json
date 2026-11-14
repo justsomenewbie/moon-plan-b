@@ -1,0 +1,1111 @@
+{
+  "schema_version": 1,
+  "title": "Lunar Landing Site Navigator - site catalog",
+  "generated_utc": "2026-11-13",
+  "frame": "MOON_ME (mean Earth / polar axis, DE421 realisation) - the LOLA/LROC/IAU Gazetteer frame",
+  "conventions": "lat_deg: planetocentric latitude, deg, [-90, 90]; lon_deg: EAST longitude, deg, [0, 360); height_m: metres above the 1737.4 km sphere or null (read from DEM); Site.origin is 'catalog' for every entry; extra.accuracy.kind tells landed point vs region centre.",
+  "pgda_sampling_note": "extra.pgda_avg_illumination_at_point = value of the NASA GSFC PGDA / LOLA PDS average-solar-illumination map (18.6-yr hourly average, observer at the surface) at the catalog point: 'pixel_pct' = containing pixel, 'max3x3_pct' = max of the 3x3 neighbourhood; the 60 m/px product (AVGVISIB_85S_060M, a +-151.7 km polar-stereographic square) where it covers the point, else the 120 m/px AVGVISIB_75S_120M; sampled 2026-11-13. Independent second-method reference only.",
+  "sites": [
+    {
+      "id": "a3_peak_near_cabeus_b",
+      "name": "Artemis III region: Peak near Cabeus B",
+      "group": "south_pole",
+      "lat_deg": -83.6195,
+      "lon_deg": 291.3677,
+      "source": "NASA Artemis III candidate region map (Oct 2024; George et al., LPSC 2026, NTRS 20250011660), centre measured after georeferencing to Bertone et al. 2026 region centres",
+      "note": "APPROXIMATE centre of an extended candidate region measured on NASA's map; regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://ntrs.nasa.gov/citations/20250011660",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://zenodo.org/records/17954508"
+        ],
+        "frame": "MOON_ME assumed: positions measured on NASA's 9-region map (LRO WAC mosaic) after georeferencing it to LOLA-frame region centres; frame of the map itself is LOLA-controlled",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": 2000.0,
+          "description": "Centre of the region box drawn on NASA's 2024 map, measured by georeferencing the map (estimated error <= 2 km). Box size ~21.3 x 21.9 km. NASA has not published numeric coordinates for this region; not a landing site."
+        },
+        "region_corners_latlon": [
+          [
+            -83.171,
+            293.07
+          ],
+          [
+            -83.794,
+            295.538
+          ],
+          [
+            -84.061,
+            289.409
+          ],
+          [
+            -83.413,
+            287.439
+          ]
+        ],
+        "position_method": "Centre and corners measured on the region map published with NASA's Oct 2024 update (image 1 of George et al., LPSC 2026, NTRS 20250011660; same map as the NASA news release). The map was georeferenced with a 4-parameter similarity transform fitted to the centres of the 5 regions that also appear in the 2022 list (Bertone et al. 2026, Zenodo 17954508): residuals 0.2-1.3 km; the 'South Pole' star maps 0.6 km from the pole; 1 px = 0.56 km. Plausibility: IAU crater Cabeus B (82.259 S, 305.415 E) lies ~65 km north of the box.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_75S_120M_201608": {
+            "pixel_pct": 53.6,
+            "max3x3_pct": 68.4
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_haworth",
+      "name": "Artemis III region: Haworth",
+      "group": "south_pole",
+      "lat_deg": -86.752966,
+      "lon_deg": 336.328186,
+      "source": "Bertone, S. et al. (2026), Enhanced Topography Models for Selected Lunar South Pole Regions with Shape-from-Shading, PSJ; data: Zenodo doi:10.5281/zenodo.17954508 (region table); region list: NASA release 24-136 (2024-10-28)",
+      "note": "Centre of an extended candidate region (~20-50 km); use for regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://zenodo.org/records/17954508",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://pgda.gsfc.nasa.gov/products/104"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": null,
+          "description": "Representative point = midpoint of the published lon/lat bounding box of the 2022 region 'Haworth' (not a polygon centroid, not a landing site). The region spans lat -87.394..-86.112, lon 325.018..347.638 E. Actual Artemis landing sites inside the region are not public."
+        },
+        "region_bbox_lonlat_published": [
+          -34.981846,
+          -87.393534,
+          -12.361782,
+          -86.112398
+        ],
+        "region_corners_latlon": [
+          [
+            -87.393534,
+            325.018154
+          ],
+          [
+            -87.393534,
+            347.638218
+          ],
+          [
+            -86.112398,
+            347.638218
+          ],
+          [
+            -86.112398,
+            325.018154
+          ]
+        ],
+        "position_method": "Bertone et al. 2026 (PSJ, doi:10.3847/PSJ/ae5b70) Zenodo README, region table (centre = bbox midpoint). Region kept unchanged in the Oct 2024 list; the georeferenced 2024 NASA map agrees within 1.3 km.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 32.6,
+            "max3x3_pct": 32.7
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_malapert_massif",
+      "name": "Artemis III region: Malapert Massif",
+      "group": "south_pole",
+      "lat_deg": -85.979917,
+      "lon_deg": 359.744201,
+      "source": "Bertone, S. et al. (2026), Enhanced Topography Models for Selected Lunar South Pole Regions with Shape-from-Shading, PSJ; data: Zenodo doi:10.5281/zenodo.17954508 (region table); region list: NASA release 24-136 (2024-10-28)",
+      "note": "Centre of an extended candidate region (~20-50 km); use for regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://zenodo.org/records/17954508",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://pgda.gsfc.nasa.gov/products/104"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": null,
+          "description": "Representative point = midpoint of the published lon/lat bounding box of the 2022 region 'Malapert Massif' (not a polygon centroid, not a landing site). The region spans lat -86.326..-85.634, lon 354.341..5.148 E. Actual Artemis landing sites inside the region are not public."
+        },
+        "region_bbox_lonlat_published": [
+          -5.659482,
+          -86.325889,
+          5.147885,
+          -85.633944
+        ],
+        "region_corners_latlon": [
+          [
+            -86.325889,
+            354.340518
+          ],
+          [
+            -86.325889,
+            5.147885
+          ],
+          [
+            -85.633944,
+            5.147885
+          ],
+          [
+            -85.633944,
+            354.340518
+          ]
+        ],
+        "position_method": "Bertone et al. 2026 (PSJ, doi:10.3847/PSJ/ae5b70) Zenodo README, region table (centre = bbox midpoint). Region kept unchanged in the Oct 2024 list; the georeferenced 2024 NASA map agrees within 1.3 km.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 38.4,
+            "max3x3_pct": 51.7
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_mons_mouton_plateau",
+      "name": "Artemis III region: Mons Mouton Plateau",
+      "group": "south_pole",
+      "lat_deg": -84.3162,
+      "lon_deg": 30.3933,
+      "source": "NASA Artemis III candidate region map (Oct 2024; George et al., LPSC 2026, NTRS 20250011660), centre measured after georeferencing to Bertone et al. 2026 region centres",
+      "note": "APPROXIMATE centre of an extended candidate region measured on NASA's map; regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://ntrs.nasa.gov/citations/20250011660",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://zenodo.org/records/17954508"
+        ],
+        "frame": "MOON_ME assumed: positions measured on NASA's 9-region map (LRO WAC mosaic) after georeferencing it to LOLA-frame region centres; frame of the map itself is LOLA-controlled",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": 2000.0,
+          "description": "Centre of the region box drawn on NASA's 2024 map, measured by georeferencing the map (estimated error <= 2 km). Box size ~78.5 x 58.9 km. NASA has not published numeric coordinates for this region; not a landing site."
+        },
+        "region_corners_latlon": [
+          [
+            -83.923,
+            15.188
+          ],
+          [
+            -82.814,
+            35.368
+          ],
+          [
+            -84.271,
+            46.548
+          ],
+          [
+            -85.747,
+            21.961
+          ]
+        ],
+        "position_method": "Centre and corners measured on the region map published with NASA's Oct 2024 update (image 1 of George et al., LPSC 2026, NTRS 20250011660; same map as the NASA news release). The map was georeferenced with a 4-parameter similarity transform fitted to the centres of the 5 regions that also appear in the 2022 list (Bertone et al. 2026, Zenodo 17954508): residuals 0.2-1.3 km; the 'South Pole' star maps 0.6 km from the pole; 1 px = 0.56 km. Plausibility: the IM-2 Athena landing point (84.7906 S, 29.1957 E) falls inside this box.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 26.4,
+            "max3x3_pct": 28.9
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_mons_mouton",
+      "name": "Artemis III region: Mons Mouton",
+      "group": "south_pole",
+      "lat_deg": -85.425819,
+      "lon_deg": 31.827284,
+      "source": "Bertone, S. et al. (2026), Enhanced Topography Models for Selected Lunar South Pole Regions with Shape-from-Shading, PSJ; data: Zenodo doi:10.5281/zenodo.17954508 (region table); region list: NASA release 24-136 (2024-10-28)",
+      "note": "Centre of an extended candidate region (~20-50 km); use for regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://zenodo.org/records/17954508",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://pgda.gsfc.nasa.gov/products/104"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": null,
+          "description": "Representative point = midpoint of the published lon/lat bounding box of the 2022 region 'Leibnitz Beta Plateau' (not a polygon centroid, not a landing site). The region spans lat -85.788..-85.063, lon 27.288..36.367 E. Actual Artemis landing sites inside the region are not public."
+        },
+        "region_bbox_lonlat_published": [
+          27.287988,
+          -85.788335,
+          36.36658,
+          -85.063304
+        ],
+        "region_corners_latlon": [
+          [
+            -85.788335,
+            27.287988
+          ],
+          [
+            -85.788335,
+            36.36658
+          ],
+          [
+            -85.063304,
+            36.36658
+          ],
+          [
+            -85.063304,
+            27.287988
+          ]
+        ],
+        "position_method": "Bertone et al. 2026 (PSJ, doi:10.3847/PSJ/ae5b70) Zenodo README, region table (centre = bbox midpoint). Region kept unchanged in the Oct 2024 list; the georeferenced 2024 NASA map agrees within 1.3 km. The 2024 'Mons Mouton' box coincides (0.6 km) with the 2022 region 'Leibnitz Beta Plateau' (Leibnitz Beta was renamed Mons Mouton by the IAU in 2022); the 2022 centre is used. Map-measured 2024 centre: 85.4290 S, 31.7286 E.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 28.5,
+            "max3x3_pct": 37.7
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_nobile_rim_1",
+      "name": "Artemis III region: Nobile Rim 1",
+      "group": "south_pole",
+      "lat_deg": -85.43775,
+      "lon_deg": 37.444641,
+      "source": "Bertone, S. et al. (2026), Enhanced Topography Models for Selected Lunar South Pole Regions with Shape-from-Shading, PSJ; data: Zenodo doi:10.5281/zenodo.17954508 (region table); region list: NASA release 24-136 (2024-10-28)",
+      "note": "Centre of an extended candidate region (~20-50 km); use for regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://zenodo.org/records/17954508",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://pgda.gsfc.nasa.gov/products/104"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": null,
+          "description": "Representative point = midpoint of the published lon/lat bounding box of the 2022 region 'Nobile Rim 1' (not a polygon centroid, not a landing site). The region spans lat -85.899..-84.976, lon 31.661..43.229 E. Actual Artemis landing sites inside the region are not public."
+        },
+        "region_bbox_lonlat_published": [
+          31.660751,
+          -85.899218,
+          43.22853,
+          -84.976283
+        ],
+        "region_corners_latlon": [
+          [
+            -85.899218,
+            31.660751
+          ],
+          [
+            -85.899218,
+            43.22853
+          ],
+          [
+            -84.976283,
+            43.22853
+          ],
+          [
+            -84.976283,
+            31.660751
+          ]
+        ],
+        "position_method": "Bertone et al. 2026 (PSJ, doi:10.3847/PSJ/ae5b70) Zenodo README, region table (centre = bbox midpoint). Region kept unchanged in the Oct 2024 list; the georeferenced 2024 NASA map agrees within 1.3 km.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 28.0,
+            "max3x3_pct": 31.3
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_nobile_rim_2",
+      "name": "Artemis III region: Nobile Rim 2",
+      "group": "south_pole",
+      "lat_deg": -83.953082,
+      "lon_deg": 58.743523,
+      "source": "Bertone, S. et al. (2026), Enhanced Topography Models for Selected Lunar South Pole Regions with Shape-from-Shading, PSJ; data: Zenodo doi:10.5281/zenodo.17954508 (region table); region list: NASA release 24-136 (2024-10-28)",
+      "note": "Centre of an extended candidate region (~20-50 km); use for regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://zenodo.org/records/17954508",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://pgda.gsfc.nasa.gov/products/104"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": null,
+          "description": "Representative point = midpoint of the published lon/lat bounding box of the 2022 region 'Nobile Rim 2' (not a polygon centroid, not a landing site). The region spans lat -84.405..-83.502, lon 54.462..63.025 E. Actual Artemis landing sites inside the region are not public."
+        },
+        "region_bbox_lonlat_published": [
+          54.462322,
+          -84.404616,
+          63.024724,
+          -83.501549
+        ],
+        "region_corners_latlon": [
+          [
+            -84.404616,
+            54.462322
+          ],
+          [
+            -84.404616,
+            63.024724
+          ],
+          [
+            -83.501549,
+            63.024724
+          ],
+          [
+            -83.501549,
+            54.462322
+          ]
+        ],
+        "position_method": "Bertone et al. 2026 (PSJ, doi:10.3847/PSJ/ae5b70) Zenodo README, region table (centre = bbox midpoint). Region kept unchanged in the Oct 2024 list; the georeferenced 2024 NASA map agrees within 1.3 km.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_75S_120M_201608": {
+            "pixel_pct": 36.3,
+            "max3x3_pct": 40.8
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_de_gerlache_rim_2",
+      "name": "Artemis III region: de Gerlache Rim 2",
+      "group": "south_pole",
+      "lat_deg": -88.222637,
+      "lon_deg": 296.565051,
+      "source": "Bertone, S. et al. (2026), Enhanced Topography Models for Selected Lunar South Pole Regions with Shape-from-Shading, PSJ; data: Zenodo doi:10.5281/zenodo.17954508 (region table); region list: NASA release 24-136 (2024-10-28)",
+      "note": "Centre of an extended candidate region (~20-50 km); use for regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://zenodo.org/records/17954508",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://pgda.gsfc.nasa.gov/products/104"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": null,
+          "description": "Representative point = midpoint of the published lon/lat bounding box of the 2022 region 'de Gerlache Rim 2' (not a polygon centroid, not a landing site). The region spans lat -88.660..-87.785, lon 282.529..310.601 E. Actual Artemis landing sites inside the region are not public."
+        },
+        "region_bbox_lonlat_published": [
+          -77.471192,
+          -88.659986,
+          -49.398705,
+          -87.785288
+        ],
+        "region_corners_latlon": [
+          [
+            -88.659986,
+            282.528808
+          ],
+          [
+            -88.659986,
+            310.601295
+          ],
+          [
+            -87.785288,
+            310.601295
+          ],
+          [
+            -87.785288,
+            282.528808
+          ]
+        ],
+        "position_method": "Bertone et al. 2026 (PSJ, doi:10.3847/PSJ/ae5b70) Zenodo README, region table (centre = bbox midpoint). Region kept unchanged in the Oct 2024 list; the georeferenced 2024 NASA map agrees within 1.3 km.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 37.9,
+            "max3x3_pct": 39.2
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "a3_slater_plain",
+      "name": "Artemis III region: Slater Plain",
+      "group": "south_pole",
+      "lat_deg": -87.1777,
+      "lon_deg": 125.5346,
+      "source": "NASA Artemis III candidate region map (Oct 2024; George et al., LPSC 2026, NTRS 20250011660), centre measured after georeferencing to Bertone et al. 2026 region centres",
+      "note": "APPROXIMATE centre of an extended candidate region measured on NASA's map; regional comparison only.",
+      "extra": {
+        "kind": "artemis3_candidate_region",
+        "source_url": "https://ntrs.nasa.gov/citations/20250011660",
+        "secondary_urls": [
+          "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+          "https://zenodo.org/records/17954508"
+        ],
+        "frame": "MOON_ME assumed: positions measured on NASA's 9-region map (LRO WAC mosaic) after georeferencing it to LOLA-frame region centres; frame of the map itself is LOLA-controlled",
+        "accuracy": {
+          "kind": "region_centre",
+          "horizontal_m": 2000.0,
+          "description": "Centre of the region box drawn on NASA's 2024 map, measured by georeferencing the map (estimated error <= 2 km). Box size ~21.3 x 21.9 km. NASA has not published numeric coordinates for this region; not a landing site."
+        },
+        "region_corners_latlon": [
+          [
+            -87.658,
+            123.389
+          ],
+          [
+            -87.063,
+            116.037
+          ],
+          [
+            -86.694,
+            127.054
+          ],
+          [
+            -87.21,
+            135.539
+          ]
+        ],
+        "position_method": "Centre and corners measured on the region map published with NASA's Oct 2024 update (image 1 of George et al., LPSC 2026, NTRS 20250011660; same map as the NASA news release). The map was georeferenced with a 4-parameter similarity transform fitted to the centres of the 5 regions that also appear in the 2022 list (Bertone et al. 2026, Zenodo 17954508): residuals 0.2-1.3 km; the 'South Pole' star maps 0.6 km from the pole; 1 px = 0.56 km. Plausibility: IAU crater Slater (88.079 S, 111.288 E) lies ~35 km from the box centre.",
+        "artemis3_region_list": "NASA, 28 Oct 2024 (9 regions, no priority order); restated by George et al., LPSC 2026",
+        "artemis3_region_list_url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 6.3,
+            "max3x3_pct": 7.1
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "im2_athena",
+      "name": "IM-2 Athena (Intuitive Machines, landed 2025-03-06)",
+      "group": "south_pole",
+      "lat_deg": -84.7906,
+      "lon_deg": 29.1957,
+      "source": "LROC (NASA/GSFC/ASU) featured image 'IM-2 Athena Seen Obliquely' (2025): Athena at 84.7906 S, 29.1957 E",
+      "note": "Landed point (lander on its side in a ~20 m crater on Mons Mouton). Intended site 84.78 S, 29.13 E (LROC).",
+      "extra": {
+        "kind": "landed",
+        "mission": "IM-2 (NASA CLPS)",
+        "landing_date_utc": "2025-03-06",
+        "source_url": "https://www.lroc.asu.edu/images/1408",
+        "secondary_urls": [
+          "https://www.lroc.asu.edu/images/1401"
+        ],
+        "frame": "MOON_ME (DE421 mean-Earth/polar-axis), planetocentric; LROC/LOLA-controlled coordinates",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 30.0,
+          "description": "Lander position measured on LROC NAC images (4 decimals); NAC geolocation typically tens of m."
+        },
+        "intended_site_latlon": [
+          -84.78,
+          29.13
+        ],
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 45.1,
+            "max3x3_pct": 46.9
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "im1_odysseus",
+      "name": "IM-1 Odysseus (Intuitive Machines, landed 2024-02-22)",
+      "group": "south_pole",
+      "lat_deg": -80.13,
+      "lon_deg": 1.44,
+      "source": "LROC featured image 'Intuitive Machines IM-1 On The Moon!' (2024): Odysseus at 80.13 S, 1.44 E, 2579 m",
+      "note": "Landed point near Malapert A; coordinates published to 0.01 deg only.",
+      "extra": {
+        "kind": "landed",
+        "mission": "IM-1 (NASA CLPS)",
+        "landing_time_utc": "2024-02-22T23:23:53",
+        "published_elevation_m": 2579.0,
+        "source_url": "https://www.lroc.asu.edu/images/1360",
+        "secondary_urls": [
+          "https://www.lroc.asu.edu/images/1321"
+        ],
+        "frame": "MOON_ME (DE421 mean-Earth/polar-axis), planetocentric; LROC/LOLA-controlled coordinates",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 300.0,
+          "description": "Published with 2 decimals: rounding alone is up to 0.005 deg = 150 m in latitude."
+        },
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_75S_120M_201608": {
+            "pixel_pct": 35.6,
+            "max3x3_pct": 40.3
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "chandrayaan3_vikram",
+      "name": "Chandrayaan-3 Vikram (Statio Shiv Shakti, landed 2023-08-23)",
+      "group": "south_pole",
+      "lat_deg": -69.3734,
+      "lon_deg": 32.3198,
+      "source": "IAU/USGS Gazetteer 'Statio Shiv Shakti' (69.3734 S, 32.3198 E, approved 2024-03-19); LROC independently: 69.3741 S, 32.32 E, 532 m",
+      "note": "Landed point. High southern latitude but not polar: Sun and Earth rise well above the horizon.",
+      "extra": {
+        "kind": "landed",
+        "mission": "Chandrayaan-3 (ISRO)",
+        "landing_date_utc": "2023-08-23",
+        "published_elevation_m": 532.0,
+        "source_url": "https://planetarynames.wr.usgs.gov/Feature/16272",
+        "secondary_urls": [
+          "https://www.lroc.asu.edu/images/1314"
+        ],
+        "lroc_latlon": [
+          -69.3741,
+          32.32
+        ],
+        "frame": "MOON_ME (IAU/USGS Gazetteer of Planetary Nomenclature, LOLA-controlled), planetocentric",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 50.0,
+          "description": "IAU and LROC positions agree to 0.0007 deg (21 m) in latitude and 0.0002 deg in longitude."
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "ref_connecting_ridge_c1",
+      "name": "Shackleton-de Gerlache connecting ridge, point C1",
+      "group": "reference",
+      "lat_deg": -89.4505,
+      "lon_deg": 222.84,
+      "source": "Glaser, P. et al. (2018) Illumination conditions at the lunar poles: implications for future exploration, Planet. Space Sci. 162, 170-178, Table 1 (Connecting Ridge C1, surface level, 2017-2037): 76.0%",
+      "note": "Mazarico et al. (2011) 'Site 1' (89.45 S, 222.69 E; 89.0% on a 240 m DEM) is the same ridge point. Published illumination depends strongly on DEM resolution, period and observer height (same point: 76% at 20 m/px vs 89% at 240 m/px); compare with tolerance ~10 percentage points.",
+      "extra": {
+        "kind": "high_illumination_reference",
+        "source_url": "https://ntrs.nasa.gov/citations/20170007365",
+        "secondary_urls": [
+          "https://ntrs.nasa.gov/citations/20205009660",
+          "https://pgda.gsfc.nasa.gov/products/69"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "reference_point",
+          "horizontal_m": 20.0,
+          "description": "Point of maximum average illumination in a 20 m/px LOLA DTM (one pixel)."
+        },
+        "reference_illumination_pct": 76.0,
+        "reference_illumination": [
+          {
+            "pct": 76.0,
+            "lat": -89.4505,
+            "lon": 222.84,
+            "observer_height_m": 0.0,
+            "period": "2017-01-01/2037-01-01, hourly",
+            "dem": "LOLA 20 m/px",
+            "solar_visibility_pct": 81.3,
+            "max_shadow_h": 268,
+            "source": "Glaser et al. 2018 Table 1 (this study)"
+          },
+          {
+            "pct": 89.0,
+            "lat": -89.45,
+            "lon": 222.69,
+            "observer_height_m": 0.0,
+            "period": "18.6 yr, hourly",
+            "dem": "LOLA 240 m/px",
+            "solar_visibility_pct": 92.7,
+            "source": "Mazarico et al. 2011 (Icarus 211, 1066) Site 1, as tabulated in Glaser et al. 2018 Table 1"
+          },
+          {
+            "pct": 64.2,
+            "lat": -89.418,
+            "lon": 221.3,
+            "observer_height_m": 0.0,
+            "period": "1 yr",
+            "dem": "LROC WAC images 100 m/px",
+            "max_shadow_h": 308,
+            "source": "Speyerer & Robinson 2013 (Icarus 222, 122), as tabulated in Glaser et al. 2018 Table 1"
+          },
+          {
+            "pct": 88.0,
+            "lat": -89.4398,
+            "lon": 222.83,
+            "observer_height_m": 2.0,
+            "period": "2017-01-01/2037-01-01, hourly",
+            "dem": "LOLA 20 m/px",
+            "solar_visibility_pct": 92.1,
+            "source": "Glaser et al. 2018 Table 2 (2 m above ground; different pixel ~1 km from the surface-level point)"
+          }
+        ],
+        "barker2021_site": "Site 1 (Barker et al. 2021, PSS 203, 105119: ridge RoI centroids at X=-11.6..-10.2 km, Y=-12.6..-11.6 km)",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 86.4,
+            "max3x3_pct": 86.4
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "ref_connecting_ridge_c2",
+      "name": "Connecting ridge, point C2",
+      "group": "reference",
+      "lat_deg": -89.3157,
+      "lon_deg": 245.94,
+      "source": "Glaser et al. (2018) PSS 162, Table 1 (Connecting Ridge C2, surface level, 2017-2037): 75.6%",
+      "note": "Published illumination depends strongly on DEM resolution, period and observer height (same point: 76% at 20 m/px vs 89% at 240 m/px); compare with tolerance ~10 percentage points.",
+      "extra": {
+        "kind": "high_illumination_reference",
+        "source_url": "https://ntrs.nasa.gov/citations/20170007365",
+        "secondary_urls": [
+          "https://pgda.gsfc.nasa.gov/products/69"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "reference_point",
+          "horizontal_m": 20.0,
+          "description": "One 20 m/px DTM pixel."
+        },
+        "reference_illumination_pct": 75.6,
+        "reference_illumination": [
+          {
+            "pct": 75.6,
+            "lat": -89.3157,
+            "lon": 245.94,
+            "observer_height_m": 0.0,
+            "period": "2017-01-01/2037-01-01, hourly",
+            "dem": "LOLA 20 m/px",
+            "solar_visibility_pct": 80.6,
+            "max_shadow_h": 166,
+            "source": "Glaser et al. 2018 Table 1"
+          },
+          {
+            "pct": 78.1,
+            "lat": -89.313,
+            "lon": 245.98,
+            "observer_height_m": 2.0,
+            "period": "2017-01-01/2037-01-01, hourly",
+            "dem": "LOLA 20 m/px",
+            "solar_visibility_pct": 82.0,
+            "source": "Glaser et al. 2018 Table 2"
+          }
+        ],
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 74.9,
+            "max3x3_pct": 79.4
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "ref_shackleton_rim",
+      "name": "Shackleton crater rim, point S",
+      "group": "reference",
+      "lat_deg": -89.7849,
+      "lon_deg": 203.97,
+      "source": "Glaser et al. (2018) PSS 162, Table 1 (Shackleton S, surface level, 2017-2037): 81.0%",
+      "note": "Mazarico et al. (2011): 86.7% at 89.78 S, 204.27 E (240 m DEM). Published illumination depends strongly on DEM resolution, period and observer height (same point: 76% at 20 m/px vs 89% at 240 m/px); compare with tolerance ~10 percentage points.",
+      "extra": {
+        "kind": "high_illumination_reference",
+        "source_url": "https://ntrs.nasa.gov/citations/20170007365",
+        "secondary_urls": [
+          "https://pgda.gsfc.nasa.gov/products/69"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "reference_point",
+          "horizontal_m": 20.0,
+          "description": "One 20 m/px DTM pixel."
+        },
+        "reference_illumination_pct": 81.0,
+        "reference_illumination": [
+          {
+            "pct": 81.0,
+            "lat": -89.7849,
+            "lon": 203.97,
+            "observer_height_m": 0.0,
+            "period": "2017-01-01/2037-01-01, hourly",
+            "dem": "LOLA 20 m/px",
+            "solar_visibility_pct": 85.5,
+            "max_shadow_h": 221,
+            "source": "Glaser et al. 2018 Table 1"
+          },
+          {
+            "pct": 86.7,
+            "lat": -89.78,
+            "lon": 204.27,
+            "observer_height_m": 0.0,
+            "period": "18.6 yr, hourly",
+            "dem": "LOLA 240 m/px",
+            "solar_visibility_pct": 90.5,
+            "source": "Mazarico et al. 2011, as tabulated in Glaser et al. 2018 Table 1"
+          },
+          {
+            "pct": 71.6,
+            "lat": -89.74,
+            "lon": 201.2,
+            "observer_height_m": 0.0,
+            "period": "1 yr",
+            "dem": "LROC WAC images 100 m/px",
+            "max_shadow_h": 145,
+            "source": "Speyerer & Robinson 2013, as tabulated in Glaser et al. 2018 Table 1"
+          },
+          {
+            "pct": 85.5,
+            "lat": -89.6866,
+            "lon": 197.19,
+            "observer_height_m": 2.0,
+            "period": "2017-01-01/2037-01-01, hourly",
+            "dem": "LOLA 20 m/px",
+            "solar_visibility_pct": 89.4,
+            "source": "Glaser et al. 2018 Table 2 (2 m; near the ridge/rim junction imaged by LROC at 89.684 S, 196.739 E)"
+          }
+        ],
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 85.5,
+            "max3x3_pct": 85.5
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "ref_de_gerlache_rim",
+      "name": "de Gerlache crater rim, max-illumination pixel",
+      "group": "reference",
+      "lat_deg": -88.6646,
+      "lon_deg": 291.6044,
+      "source": "NASA GSFC PGDA / LOLA PDS product AVGVISIB_85S_060M_201608 (Mazarico et al. 2011 method; 18.6-yr hourly average, 60 m/px): maximum on the de Gerlache rim (annulus 10-22 km from the IAU crater centre) = 82.7%",
+      "note": "Point selected by us as the brightest 60 m pixel on the de Gerlache rim; it lies inside NASA's 2022 'de Gerlache Rim' region (Barker et al. 2021 'Site 11' is on this rim but its numeric coordinates were not available to us). Published illumination depends strongly on DEM resolution, period and observer height (same point: 76% at 20 m/px vs 89% at 240 m/px); compare with tolerance ~10 percentage points.",
+      "extra": {
+        "kind": "high_illumination_reference",
+        "source_url": "https://pgda.gsfc.nasa.gov/products/69",
+        "secondary_urls": [
+          "https://ntrs.nasa.gov/citations/20205009660",
+          "https://zenodo.org/records/17954508"
+        ],
+        "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+        "accuracy": {
+          "kind": "reference_point",
+          "horizontal_m": 60.0,
+          "description": "One 60 m/px pixel of the PGDA map."
+        },
+        "reference_illumination_pct": 82.7,
+        "reference_illumination": [
+          {
+            "pct": 82.7,
+            "lat": -88.6646,
+            "lon": 291.6044,
+            "observer_height_m": 0.0,
+            "period": "18.6 yr (lunar nodal cycle), hourly",
+            "dem": "LOLA 60 m/px",
+            "source": "PGDA AVGVISIB_85S_060M_201608 pixel value (sampled 2026-11-13)"
+          }
+        ],
+        "selection_method": "argmax of AVGVISIB_85S_060M_201608 within 10-22 km of de Gerlache centre (IAU 88.4849 S, 271.6553 E)",
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 82.7,
+            "max3x3_pct": 82.7
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "psr_shackleton_floor",
+      "name": "Shackleton crater floor (PSR)",
+      "group": "reference",
+      "lat_deg": -89.67,
+      "lon_deg": 129.78,
+      "source": "IAU/USGS Gazetteer crater centre 'Shackleton' (89.67 S, 129.78 E, D=20.9 km); floor permanently shadowed: Zuber et al. 2012 Nature 486, 378; Mazarico et al. 2011 PSR map (PGDA LPSR_85S_060M_201608 = 1 here)",
+      "note": "Crater-centre point on the ~6.6 km flat floor; every 60 m pixel within +-120 m is PSR in the PGDA map.",
+      "extra": {
+        "kind": "permanent_shadow_reference",
+        "source_url": "https://planetarynames.wr.usgs.gov/Feature/5450",
+        "secondary_urls": [
+          "https://pgda.gsfc.nasa.gov/products/69"
+        ],
+        "frame": "MOON_ME (IAU/USGS Gazetteer of Planetary Nomenclature, LOLA-controlled), planetocentric",
+        "accuracy": {
+          "kind": "feature_centre",
+          "horizontal_m": 500.0,
+          "description": "Gazetteer crater centre (2 decimals); any point within ~2 km lies on the shadowed floor."
+        },
+        "reference_illumination_pct": 0.0,
+        "reference_illumination": [
+          {
+            "pct": 0.0,
+            "observer_height_m": 0.0,
+            "period": "18.6 yr",
+            "dem": "LOLA 60 m/px",
+            "source": "PGDA AVGVISIB_85S_060M_201608 = 0 and LPSR_85S_060M_201608 = 1 in the 5x5 pixel window (sampled 2026-11-13)"
+          }
+        ],
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 0.0,
+            "max3x3_pct": 0.0
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "psr_haworth_floor",
+      "name": "Haworth crater floor (PSR)",
+      "group": "reference",
+      "lat_deg": -87.45,
+      "lon_deg": 354.83,
+      "source": "IAU/USGS Gazetteer crater centre 'Haworth' (87.45 S, 354.83 E, D=51.4 km); permanently shadowed per PGDA LPSR_85S_060M_201608 (Mazarico et al. 2011 method)",
+      "note": "Crater-centre point on the shadowed floor; every 60 m pixel within +-120 m is PSR in the PGDA map.",
+      "extra": {
+        "kind": "permanent_shadow_reference",
+        "source_url": "https://planetarynames.wr.usgs.gov/Feature/14502",
+        "secondary_urls": [
+          "https://pgda.gsfc.nasa.gov/products/69"
+        ],
+        "frame": "MOON_ME (IAU/USGS Gazetteer of Planetary Nomenclature, LOLA-controlled), planetocentric",
+        "accuracy": {
+          "kind": "feature_centre",
+          "horizontal_m": 500.0,
+          "description": "Gazetteer crater centre (2 decimals)."
+        },
+        "reference_illumination_pct": 0.0,
+        "reference_illumination": [
+          {
+            "pct": 0.0,
+            "observer_height_m": 0.0,
+            "period": "18.6 yr",
+            "dem": "LOLA 60 m/px",
+            "source": "PGDA AVGVISIB_85S_060M_201608 = 0 and LPSR_85S_060M_201608 = 1 in the 5x5 pixel window (sampled 2026-11-13)"
+          }
+        ],
+        "pgda_avg_illumination_at_point": {
+          "pgda:AVGVISIB_85S_060M_201608": {
+            "pixel_pct": 0.0,
+            "max3x3_pct": 0.0
+          }
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "apollo11",
+      "name": "Apollo 11 LM Eagle (Tranquility Base)",
+      "group": "apollo",
+      "lat_deg": 0.67416,
+      "lon_deg": 23.47314,
+      "source": "NASA NSSDCA Master Catalog 1969-059C (LM landing site from LRO images, DE421 mean Earth/polar axis frame)",
+      "note": "Landed point; landing time 1969-07-20T20:17:40 UTC (NSSDCA).",
+      "extra": {
+        "kind": "landed",
+        "mission": "Apollo 11",
+        "landing_time_utc": "1969-07-20T20:17:40",
+        "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C",
+        "frame": "MOON_ME (DE421 mean-Earth/polar-axis), from LRO images, as stated by NSSDCA",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 20.0,
+          "description": "Lunar Module descent stage located on LROC NAC images (NSSDCA, DE421 ME frame)."
+        },
+        "secondary_urls": [
+          "https://planetarynames.wr.usgs.gov/Feature/5684"
+        ],
+        "iau_statio_latlon": [
+          0.6741,
+          23.4732
+        ]
+      },
+      "height_m": null
+    },
+    {
+      "id": "apollo15",
+      "name": "Apollo 15 LM Falcon (Hadley-Apennine)",
+      "group": "apollo",
+      "lat_deg": 26.13239,
+      "lon_deg": 3.6333,
+      "source": "NASA NSSDCA Master Catalog 1971-063C (LM landing site from LRO images, DE421 mean Earth/polar axis frame)",
+      "note": "Landed point; landing time 1971-07-30T22:16:29 UTC (NSSDCA).",
+      "extra": {
+        "kind": "landed",
+        "mission": "Apollo 15",
+        "landing_time_utc": "1971-07-30T22:16:29",
+        "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+        "frame": "MOON_ME (DE421 mean-Earth/polar-axis), from LRO images, as stated by NSSDCA",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 20.0,
+          "description": "Lunar Module descent stage located on LROC NAC images (NSSDCA, DE421 ME frame)."
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "apollo17",
+      "name": "Apollo 17 LM Challenger (Taurus-Littrow)",
+      "group": "apollo",
+      "lat_deg": 20.1911,
+      "lon_deg": 30.7723,
+      "source": "NASA NSSDCA Master Catalog 1972-096C (LM landing site from LRO images, DE421 mean Earth/polar axis frame)",
+      "note": "Landed point; landing time 1972-12-11T19:54:57 UTC (NSSDCA).",
+      "extra": {
+        "kind": "landed",
+        "mission": "Apollo 17",
+        "landing_time_utc": "1972-12-11T19:54:57",
+        "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1972-096C",
+        "frame": "MOON_ME (DE421 mean-Earth/polar-axis), from LRO images, as stated by NSSDCA",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 20.0,
+          "description": "Lunar Module descent stage located on LROC NAC images (NSSDCA, DE421 ME frame)."
+        }
+      },
+      "height_m": null
+    },
+    {
+      "id": "change6",
+      "name": "Chang'e-6 lander (Statio Tianjiang, Apollo basin)",
+      "group": "far_side",
+      "lat_deg": -41.6385,
+      "lon_deg": 206.0148,
+      "source": "LROC featured image 'First Look: Chang'e 6' (2024): 41.6385 S, 206.0148 E (+-30 m), -5256 m",
+      "note": "Landed point on the far side (= 153.9852 W). Earth is never above the geometric horizon.",
+      "extra": {
+        "kind": "landed",
+        "mission": "Chang'e-6 (CNSA)",
+        "landing_date_utc": "2024-06-01",
+        "published_elevation_m": -5256.0,
+        "source_url": "https://www.lroc.asu.edu/images/1374",
+        "secondary_urls": [
+          "https://planetarynames.wr.usgs.gov/Feature/16328"
+        ],
+        "iau_statio_latlon": [
+          -41.63,
+          206.02
+        ],
+        "frame": "MOON_ME (DE421 mean-Earth/polar-axis), planetocentric; LROC/LOLA-controlled coordinates",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 30.0,
+          "description": "LROC estimate +-30 m."
+        },
+        "earth_never_visible": true
+      },
+      "height_m": null
+    },
+    {
+      "id": "change4",
+      "name": "Chang'e-4 lander (Statio Tianhe, Von Karman crater)",
+      "group": "far_side",
+      "lat_deg": -45.457,
+      "lon_deg": 177.589,
+      "source": "LROC featured image 'Chang'e 4 Lander Coordinates' (2019): 45.457 S, 177.589 E (+-20 m)",
+      "note": "Landed point on the far side. Earth is never above the geometric horizon.",
+      "extra": {
+        "kind": "landed",
+        "mission": "Chang'e-4 (CNSA)",
+        "landing_date_utc": "2019-01-03",
+        "source_url": "https://www.lroc.asu.edu/images/1087",
+        "secondary_urls": [
+          "https://planetarynames.wr.usgs.gov/Feature/15781"
+        ],
+        "iau_statio_latlon": [
+          -45.45,
+          177.6
+        ],
+        "frame": "MOON_ME (DE421 mean-Earth/polar-axis), planetocentric; LROC/LOLA-controlled coordinates",
+        "accuracy": {
+          "kind": "landed_point",
+          "horizontal_m": 20.0,
+          "description": "LROC estimate +-20 m."
+        },
+        "earth_never_visible": true
+      },
+      "height_m": null
+    }
+  ],
+  "validation_facts": [
+    {
+      "id": "apollo11_sun_elevation_at_landing",
+      "site_id": "apollo11",
+      "description": "Sun elevation above the local horizon at the Apollo 11 LM touchdown",
+      "time_utc": "1969-07-20T20:17:40",
+      "sun_elevation_deg": 10.8,
+      "tolerance_deg": 0.5,
+      "tolerance_rationale": "10.8 deg is the commonly quoted mission value (stated in the project brief); NASA documents give consistent but coarser numbers: Armstrong 'about 10 degrees Sun angle' ~30 min after landing (ALSJ, GET 103:12:44) and 'sun angle ranged from 14.5 to 16 deg' during the EVA (Apollo 11 Mission Report MSC-00171, sec. on EVA), i.e. ~6.5-9 h later at ~0.5 deg/h. JPL Horizons (airless apparent, sphere zenith) gives 10.70 deg. +-0.5 deg covers the quoting precision and local-slope effects.",
+      "horizons_crosscheck_deg": 10.7,
+      "source": "Apollo 11 Mission Report MSC-00171 (NTRS 19710015566), EVA sun angle 14.5-16 deg; Apollo Lunar Surface Journal post-landing transcript (Armstrong: 'about 10 degrees Sun angle'); landing time NSSDCA 1969-059C",
+      "source_url": "https://ntrs.nasa.gov/citations/19710015566",
+      "secondary_urls": [
+        "https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.postland.html",
+        "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C"
+      ]
+    },
+    {
+      "id": "apollo11_eva_sun_elevation_range",
+      "site_id": "apollo11",
+      "description": "Sun elevation during the Apollo 11 EVA (approx. 1969-07-21T02:39 to 05:11 UTC)",
+      "time_start_utc": "1969-07-21T02:39:00",
+      "time_end_utc": "1969-07-21T05:11:00",
+      "sun_elevation_min_deg": 14.5,
+      "sun_elevation_max_deg": 16.0,
+      "tolerance_deg": 1.0,
+      "tolerance_rationale": "Mission report rounds to 0.5 deg and the EVA start/end times are approximate (+-several min).",
+      "source": "Apollo 11 Mission Report MSC-00171 (NTRS 19710015566): 'During the extravehicular activity, the sun angle ranged from 14.5 to 16 deg'",
+      "source_url": "https://ntrs.nasa.gov/citations/19710015566"
+    },
+    {
+      "id": "far_side_earth_never_visible",
+      "description": "At Chang'e-4 and Chang'e-6 the Earth centre never rises above the geometric horizon: both sites are >130 deg from the mean sub-Earth point, while libration (<~8 deg), topocentric parallax (~1 deg) and Earth's angular radius (~1 deg) total < 11 deg beyond 90 deg.",
+      "site_ids": [
+        "change4",
+        "change6"
+      ],
+      "max_earth_elevation_deg": 0.0,
+      "source": "Geometry; far-side status per LROC/CNSA landing reports",
+      "source_url": "https://www.lroc.asu.edu/images/1374"
+    },
+    {
+      "id": "psr_zero_illumination",
+      "description": "Permanently shadowed floor points must receive no direct sunlight over multi-year simulations.",
+      "site_ids": [
+        "psr_shackleton_floor",
+        "psr_haworth_floor"
+      ],
+      "max_illumination_pct": 0.0,
+      "source": "PGDA LPSR_85S_060M_201608 / AVGVISIB_85S_060M_201608 (Mazarico et al. 2011 method)",
+      "source_url": "https://pgda.gsfc.nasa.gov/products/69"
+    }
+  ]
+}
