@@ -16,9 +16,9 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Home hides numbered globe pins and direction buttons. EN/VI mobile checks covered the team contact footer, imports, site selection, UTC, clearance and API status.
 
-Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks every site ID and both selected scores. Apollo 11’s live and imported horizons use a smooth sphere. Six CSVs matched source bytes. FE preserves the fractional end sample pending backend confirmation. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks every site ID and both selected scores. Apollo 11’s live and imported horizons use a smooth sphere. Six CSVs matched bytewise. FE preserves the fractional end sample pending backend confirmation. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom. Home globe keyboard focus is visible.
 
 [Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
