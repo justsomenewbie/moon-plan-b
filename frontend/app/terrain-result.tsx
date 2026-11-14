@@ -5,6 +5,7 @@ import { RunSourceLinks, SiteResult, TimeRange } from "./terrain-site-result";
 import TerrainDates from "./terrain-dates";
 import TerrainPair, { type DisplayedPair } from "./terrain-pair";
 import AlternativeDates from "./alternative-dates";
+import { ComparisonDownload, RunDownloads } from "./terrain-downloads";
 
 export default function TerrainResult({ result, view, onSelect, onPrint, liveWindow, replayPair, onDisplayedPair }: {
   onDisplayedPair: (pair: DisplayedPair | null) => void;
@@ -21,6 +22,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
       <h2 id="terrain-title">{t("Sun and Earth visibility above the site horizon")}</h2>
       <div className="terrain-print flex flex-wrap items-center gap-3">
         {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t("Open selected observation in a new tab")}</a>}
+        {liveWindow && <ComparisonDownload result={result} />}
         <button type="button" className="button outline terrain-print" onClick={onPrint}>{t("Print report")}</button>
       </div>
     </div>
@@ -69,7 +71,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
           </dl>
           <p>{t("Manifest path on the source server")} · <code>{run.manifest_url}</code></p>
           <code className="hash">SHA-256 {run.manifest_sha256}</code>
-          {view.link && <RunSourceLinks run={run} />}
+          {view.link && <><RunSourceLinks run={run} /><RunDownloads key={run.run_id + run.manifest_sha256} run={run} /></>}
         </div>
       </div>
       <h3>{t("Data sources")}</h3>

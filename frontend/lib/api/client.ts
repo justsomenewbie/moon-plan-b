@@ -39,7 +39,7 @@ export function jobReceiptUncertain(error: unknown): boolean {
 }
 export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && (error.status === 0 || error.status >= 500);
 const baseUrl = typeof window === "undefined" ? "http://localhost" : "";
-async function boundedFetch(request: Request) {
+async function boundedFetch(request: Request, retainBytes?: (bytes: Uint8Array<ArrayBuffer>) => void) {
   await ensureMock();
   // The producer can spend 30 seconds on its synchronous alternative-date search.
   const dateSearch = request.method === "POST" && new URL(request.url).pathname === "/api/v1/alt-dates";
@@ -57,11 +57,12 @@ async function boundedFetch(request: Request) {
     }
     const bytes = new Uint8Array(size); let offset = 0;
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    if (response.ok) retainBytes?.(bytes);
     return new Response(bytes, { status: response.status, statusText: response.statusText, headers: response.headers });
   } catch (error) { if (request.signal.aborted) throw error; if (deadline.aborted) throw new ApiError(dateSearch ? "The date search did not respond within 35 seconds. Please retry." : "The API did not respond within 15 seconds. Please retry.", 504); throw apiError(error); }
 }
-const api = createClient<paths>({ baseUrl, fetch: boundedFetch });
-export const producer = createClient<ProducerPaths>({ baseUrl, fetch: boundedFetch });
+const api = createClient<paths>({ baseUrl, fetch: request => boundedFetch(request) });
+export const producer = createClient<ProducerPaths>({ baseUrl, fetch: request => boundedFetch(request) });
 
 export type WindowRequest = NonNullable<paths["/api/v1/dataset"]["get"]["parameters"]["query"]>;
 export type JobRequest = components["schemas"]["JobRequest"];
@@ -124,7 +125,10 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
   if (endSecond === "9999-12-31T23:59:59Z" && /\.\d*[1-9]\d*Z$/.test(request.to))
     throw new ApiError("End UTC exceeds the supported four-digit year.", 422);
   const sections = withObservations ? ["horizon", "series", "windows", "metrics", "criteria"] : ["windows", "metrics", "criteria"];
-  const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
+  let file: Blob | undefined;
+  const { data, error, response } = await producer.GET("/api/v1/dataset", {
+    ...(withObservations ? { fetch: (request: Request) => boundedFetch(request, bytes => { file = new Blob([bytes], { type: "application/json" }); }) } : {}),
+    signal, params: { query: {
     run_id: runId, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
     ...(withObservations ? { horizon_step_deg: 0.5, max_points: 10000 } : {}),
     include: sections.join(","), criteria_hours: terrainCriteriaHours.join(","),
@@ -141,6 +145,7 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
   if (runId && result.run.run_id !== runId) throw new ApiError("The returned model run differs from the shared link.", 502);
   if (result.sites.map(site => site.id).join(",") !== siteIds)
     throw new ApiError("The returned sites do not match the requested comparison.", 502);
+  if (file) result.exportFile = file;
   return result;
 }
 

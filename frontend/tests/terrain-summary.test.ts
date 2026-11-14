@@ -94,6 +94,26 @@ test("requires the requested sections on a live response and accepts a covered r
   assert.equal(result.sites[0].series, null);
 });
 
+test("keeps original producer bytes for offline reimport after full validation in one request", async t => {
+  const d = example(), sample = d.sites[0];
+  const criteria_hours = [24, 72, 168];
+  const data = { ...d, include: ["horizon", "series", "windows", "metrics", "criteria"], criteria_hours,
+    sites: [{ ...sample, coverage: "missing", coverage_in_range: "missing", windows: { sun: [], earth: [], both: [] },
+      metrics: null, criteria: [], producer_note: "Định dạng nguyên bản" }] };
+  const original = JSON.stringify(data, null, 2) + "\r\n";
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async () => { calls++; return new Response(original, { headers: { "content-type": "application/json" } }); });
+  const request = { from: d.range.start, to: d.range.end, resolutionSeconds: 3600 };
+  const { exportFile, ...summary } = await getTerrainWindow(request, undefined, { run_id: d.run.run_id, site_id: sample.id });
+  assert.ok(exportFile);
+  assert.equal(exportFile.type, "application/json");
+  assert.deepEqual(new Uint8Array(await exportFile.arrayBuffer()), new TextEncoder().encode(original));
+  assert.deepEqual(parseTerrainSummary(JSON.parse(await exportFile.text()), request), summary);
+  assert.equal(calls, 1);
+  assert.equal((await getTerrainAggregate(request, sample.id, d.run.run_id, false)).exportFile, undefined);
+  assert.equal(calls, 2);
+});
+
 test("reads one run-pinned full aggregate for two sites in source order and bounds it as a catalog comparison", async t => {
   const d = example(), site = d.sites[0];
   const sites = [site.id, "second"];

@@ -1963,6 +1963,104 @@
           }
         }
       }
+    },
+    "/api/v1/export/summary.csv": {
+      "get": {
+        "operationId": "exportSummaryCsv",
+        "summary": "Download summary.csv of a run (all sites, sorted by rank)",
+        "tags": [
+          "export"
+        ],
+        "description": "Same columns and values as the summary.csv of the precompute run (docs/OUTPUT_SPEC.md 3.7).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "example": "pf_21c3f3f6dc56b1e1",
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "description": "Run to read; default = the run flagged is_default (GET /api/v1/runs)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "summary.csv of the run (docs/OUTPUT_SPEC.md 3.7), sorted by rank",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "examples": [
+                    "rank,site_id,name,group,lat_deg,lon_deg,surface_height_m,score,pct_sun,pct_earth,pct_both\n1,ref_connecting_ridge_c1,\"Shackleton-de Gerlache connecting ridge, point C1\",reference,-89.4505,222.84,1957.291,71.162037,98.564815,53.611111,52.175926\n"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
