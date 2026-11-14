@@ -13,7 +13,7 @@ Compare how long the **Sun** and **Earth** are visible from a lunar landing site
 
 ## What it does
 
-The homepage opens with a Moon globe, a saved comparison and a quick guide. The planner shows the flat lunar map above the full ranking table. Open a site name in the table for its data. For the interactive orbit presentation, open `/orbit`. Choose Athena or Odysseus, switch weeks, then look toward the Sun or Earth from the selected site. The four site-level views and both weekly comparisons work without the live API. The instant inspector on the comparison page can also show modeled rise/set times and coverage limits.
+The homepage opens with a Moon globe, a saved comparison and a quick guide. Planner results open on a rotatable globe above the ranking table. Switch to **Flat map** for the same sites and selection. Open **Site details** or a site name in the table to inspect its data. For the interactive orbit presentation, open `/orbit`. Choose Athena or Odysseus, switch weeks, then look toward the Sun or Earth from the selected site. The four site-level views and both weekly comparisons work without the live API. The instant inspector on the comparison page can also show modeled rise/set times and coverage limits.
 
 - **Compare sites or dates:** % of time with sunlight, with Earth in view, and with both, for 23 sites, every hour of 2026–2030.
 - **See the sky:** the Sun and Earth against the site’s modeled horizon, in 2D tracks and a 3D sky view, on an interactive globe.
