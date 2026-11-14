@@ -138,7 +138,7 @@ test("accepts snapped client input and run clamping, rejects wrong request, reve
   assert.throws(() => parseTerrainSummary(single, { from: "2026-01-01T00:30:00Z", to: "2026-01-01T00:10:00Z" }), /requested UTC range/);
 });
 
-test("sends fractional exclusive dataset ends on the next whole second and checks the original bounds", async t => {
+test("sends the exact fractional exclusive dataset end and checks the containing model grid", async t => {
   const d = example();
   const criteria_hours = [24, 72, 168];
   const site = { ...d.sites[0], criteria: criteria_hours.map(minimum_hours => ({
@@ -152,15 +152,13 @@ test("sends fractional exclusive dataset ends on the next whole second and check
   });
   const from = stamp(0).replace("Z", ".500Z");
   const read = (to: string) => getTerrainAggregate({ from, to, resolutionSeconds: 3600 }, site.id, d.run.run_id, false);
-  for (const [input, wire] of [
-    [stamp(7).replace("Z", ".001Z"), "2026-01-01T07:00:01Z"],
-    [stamp(7).replace("Z", ".000000001Z"), "2026-01-01T07:00:01Z"],
-    ["2026-01-01T07:59:59.999Z", stamp(8)],
-    [stamp(8), stamp(8)], [stamp(8).replace("Z", ".000Z"), stamp(8).replace("Z", ".000Z")],
+  for (const input of [
+    stamp(7).replace("Z", ".001Z"), stamp(7).replace("Z", ".000001Z"), stamp(7).replace("Z", ".000000001Z"),
+    "2026-01-01T07:59:59.999Z", stamp(8), stamp(8).replace("Z", ".000Z"),
   ]) {
     const result = await read(input);
     assert.equal(sent.at(-1)?.get("start"), from);
-    assert.equal(sent.at(-1)?.get("end"), wire);
+    assert.equal(sent.at(-1)?.get("end"), input);
     assert.equal(result.range.end, stamp(8));
   }
   await assert.rejects(read(stamp(8).replace("Z", ".001Z")), /different requested UTC range/);

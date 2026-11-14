@@ -110,21 +110,14 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
 export { defaultTerrainSites, type TerrainTarget } from "../terrain-target.ts";
 const terrainCriteriaHours = [24, 72, 168];
 
-function producerExclusiveEnd(end: string) {
-  const fraction = /\.(\d{1,9})Z$/.exec(end);
-  const seconds = fraction ? end.slice(0, fraction.index) + "Z" : end;
-  const milliseconds = utcMillis(seconds, "End UTC");
-  if (!fraction || !/[1-9]/.test(fraction[1])) return end;
-  // Preserve sub-millisecond ends when the producer snaps to its whole-second grid.
-  const next = new Date(milliseconds + 1000);
-  if (next.getUTCFullYear() > 9999) throw new ApiError("End UTC exceeds the supported four-digit year.", 422);
-  return next.toISOString().replace(".000Z", "Z");
-}
-
 export async function getTerrainAggregate(request: WindowRequest, siteIds: string, runId: string | undefined, withObservations: boolean, signal?: AbortSignal) {
+  const endSecond = request.to.replace(/\.\d{1,9}Z$/, "Z");
+  utcMillis(endSecond, "End UTC");
+  if (endSecond === "9999-12-31T23:59:59Z" && /\.\d*[1-9]\d*Z$/.test(request.to))
+    throw new ApiError("End UTC exceeds the supported four-digit year.", 422);
   const sections = withObservations ? ["horizon", "series", "windows", "metrics", "criteria"] : ["windows", "metrics", "criteria"];
   const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
-    run_id: runId, site_ids: siteIds, start: request.from, end: producerExclusiveEnd(request.to), step_s: request.resolutionSeconds,
+    run_id: runId, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
     ...(withObservations ? { horizon_step_deg: 0.5, max_points: 10000 } : {}),
     include: sections.join(","), criteria_hours: terrainCriteriaHours.join(","),
   } } }).catch(error => {
