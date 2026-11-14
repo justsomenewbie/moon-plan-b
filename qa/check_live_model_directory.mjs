@@ -28,10 +28,18 @@ try {
   const page = await browser.newPage({ serviceWorkers: "block", reducedMotion: "reduce" });
   const directories = [], details = [], sites = [], unexpected = [], errors = [];
   let outage = false;
+  let rateLimitedPath;
+  const limitedCalls = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.route("**/api/**", route => {
     const request = route.request(), url = new URL(request.url());
     if (request.method() === "GET") {
+      if (url.pathname === rateLimitedPath) {
+        limitedCalls.push(url.pathname + url.search);
+        return route.fulfill({ status: 429, headers: { "retry-after": "3" }, json: {
+          type: "about:blank", title: "Quota fixture", detail: "Wait before retrying.", status: 429, code: "RATE_LIMITED",
+        } });
+      }
       if (url.pathname === "/api/v1/runs") {
         const params = Object.fromEntries(url.searchParams);
         directories.push(params);
@@ -105,6 +113,40 @@ try {
   await retry.click();
   await runLink(alternate.run_id).waitFor();
   assert.equal(directories.length, failedCalls + 1);
+
+  rateLimitedPath = "/api/v1/runs";
+  await next.click();
+  const countdown = page.getByRole("button", { name: /Thử lại sau \d+ giây/ });
+  await countdown.waitFor();
+  assert.ok(await countdown.isDisabled());
+  assert.ok(await directory.getByRole("button", { name: "Trang trước" }).isDisabled());
+  assert.ok(await savedLink.isVisible());
+  rateLimitedPath = undefined;
+  await directory.getByRole("button", { name: "Thử lại", exact: true }).click();
+  await runLink("fixture-21").waitFor();
+  assert.equal(limitedCalls.length, 1);
+  assert.equal(directories.length, failedCalls + 2);
+  assert.equal(directories.at(-1).offset, "20");
+
+  rateLimitedPath = "/api/v1/runs/" + alternate.run_id;
+  await page.goto(new URL("/plan?run_id=" + alternate.run_id, origin).href);
+  await countdown.waitFor();
+  assert.ok(await countdown.isDisabled());
+  assert.ok(await page.locator('a[href*="source=saved-b2"]').first().isVisible());
+  rateLimitedPath = undefined;
+  await page.getByRole("button", { name: "Tải lại danh sách địa điểm", exact: true }).click();
+  await page.locator(".plan-source code").getByText(alternate.run_id, { exact: true }).waitFor();
+  assert.equal(limitedCalls.length, 2);
+  assert.deepEqual(details, [alternate.run_id, alternate.run_id]);
+
+  rateLimitedPath = "/api/v1/runs";
+  await page.goto(new URL("/plan", origin).href);
+  await countdown.waitFor();
+  assert.ok(await countdown.isDisabled());
+  await page.locator(".plan-source").getByText(/Lần chạy B2 đã lưu/).waitFor();
+  await page.locator('.catalog-fields button[type="submit"], .catalog-fields button:not([type])').click();
+  await page.locator(".plan-results tbody tr").first().waitFor();
+  assert.equal(limitedCalls.length, 3, "A local B2 calculation must not retry the unavailable live catalog.");
   for (const params of directories) {
     assert.deepEqual(params, { kind: "precompute", status: "ready", limit: "20", offset: params.offset });
     assert.ok(["0", "20"].includes(params.offset));
@@ -112,7 +154,7 @@ try {
   assert.ok(directories.some(params => params.offset === "20"));
   assert.deepEqual(unexpected, []);
   assert.deepEqual(errors, []);
-  console.log("Live run directory: filtered pagination in EN/VI, pinned model, saved B2 during outage and retry passed.", browser.version());
+  console.log("Live run directory and planner: pagination, pinned model, saved B2 and rate-limit recovery passed.", browser.version());
 } finally {
   await browser.close();
 }

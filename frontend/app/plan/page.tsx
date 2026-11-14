@@ -203,6 +203,11 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   const pinnedRun = pins.length > 1 ? "" : pins[0];
   const forced = requestedSource === "saved" || requestedSource === "saved-b2";
   const catalog = useQuery({ queryKey: ["mission-planner-run", pinnedRun], queryFn: ({signal}) => getPlannerRun(signal, pinnedRun), enabled: !isMock && !forced, retry:false });
+  const catalogWait = useRetryCountdown(catalog.error ?? "");
+  const retryCatalog = <button type="button" className="text-button" disabled={catalog.isFetching || catalogWait > 0}
+    onClick={() => void catalog.refetch({ cancelRefetch: false })}>
+    {catalogWait ? t("Try again in {seconds} s", { seconds: catalogWait }) : t("Retry site list")}
+  </button>;
   const source: PlannerSource = requestedSource === "saved" ? "saved" : forced || isMock || !catalog.data ? "saved-b2" : "live";
   const run = source === "saved-b2" ? archiveB2Run : source === "saved" ? savedPlannerRun : catalog.data!;
   const today = day(Date.now());
@@ -237,7 +242,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
     <p>{t("The linked model run could not be opened.")} <code>{pinnedRun}</code></p>
     {catalog.error && <p><ApiProblemText error={catalog.error} /></p>}
     <div className="flex flex-wrap gap-4">
-      {!isMock && <button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button>}
+      {!isMock && retryCatalog}
       <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>
       <a href={sourceLink("saved")}>{t("Open the earlier run B archive")}</a>
     </div>
@@ -247,7 +252,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
     <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · {source === "live" ? <>
       {t("Run ID")} <a href={"/api/v1/runs/" + encodeURIComponent(run.runId)}><code>{run.runId}</code></a> · <a href={"/api/v1/runs/" + encodeURIComponent(run.runId) + "/files/manifest.json"}>{t("Source file manifest (JSON)")}</a>
     </> : <a href={source === "saved" ? "/data#bundled-data" : "/data#run-b2"}>{t("Browse data and all original files")}</a>}</p>
-    {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <span className="block"><ApiProblemText error={catalog.error} /></span><button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></p>}
+    {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <span className="block"><ApiProblemText error={catalog.error} /></span>{retryCatalog}</p>}
     <div className="flex flex-wrap gap-4 print:hidden">
       {source !== "saved-b2" && <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>}
       {source !== "saved" && <a href={sourceLink("saved")}>{t("Open the earlier run B archive")}</a>}

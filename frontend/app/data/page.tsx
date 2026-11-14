@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getReadyModelRuns } from "../../lib/api/planner";
-import { ApiProblemText } from "../api-problem-text";
+import { ApiProblemText, useRetryCountdown } from "../api-problem-text";
 import manifest from "../../public/data/run-b2/manifest.json";
 import catalog from "../../public/data/run-b2/catalog.json";
 import earlierCatalog from "../../public/data/run-b/catalog.json";
@@ -35,7 +35,7 @@ function SourceRoute({ label, path }: { label: string; path: string }) {
 }
 
 function LiveModelRuns() {
-  const { locale } = useLanguage();
+  const { locale, t } = useLanguage();
   const vi = locale === "vi";
   const [offset, setOffset] = useState(0);
   const query = useQuery({
@@ -44,12 +44,16 @@ function LiveModelRuns() {
     retry: false,
   });
   const page = query.data;
+  const wait = useRetryCountdown(query.error ?? "");
+  const disabled = wait > 0 || query.isFetching;
   return <section id="live-model-runs" className="space-y-3" aria-labelledby="live-runs-title">
     <h2 id="live-runs-title">{vi ? "Các lần chạy mô hình trên API" : "Live model runs"}</h2>
     <p>{vi ? "Chọn một lần chạy để so sánh địa điểm hoặc tìm giờ hạ cánh bằng dữ liệu của lần chạy đó." : "Choose a run to compare sites or find landing times using that model."}</p>
     {query.isPending && <p role="status">{vi ? "Đang tải danh sách…" : "Loading model runs…"}</p>}
     {query.isError && <div role="alert"><p><ApiProblemText error={query.error} /></p>
-      <button className="text-button" type="button" onClick={() => void query.refetch()}>{vi ? "Thử lại" : "Retry"}</button></div>}
+      <button className="text-button" type="button" disabled={disabled} onClick={() => void query.refetch({ cancelRefetch: false })}>
+        {wait ? t("Try again in {seconds} s", { seconds: wait }) : vi ? "Thử lại" : "Retry"}
+      </button></div>}
     {page && (page.runs.length ? <ul className="space-y-4">
       {page.runs.map(run => <li key={run.runId}>
         <a className="break-words" href={"/plan?" + new URLSearchParams({ run_id: run.runId })}>{run.label}</a>
@@ -61,8 +65,8 @@ function LiveModelRuns() {
       </li>)}
     </ul> : <p role="status">{vi ? "Trang này chưa có lần chạy nào sẵn sàng." : "No ready model runs on this page."}</p>)}
     {(offset > 0 || (page && offset + page.limit < page.total)) && <div className="flex flex-wrap gap-4">
-      {offset > 0 && <button className="text-button" type="button" onClick={() => setOffset(Math.max(0, offset - 20))}>{vi ? "Trang trước" : "Previous page"}</button>}
-      {page && offset + page.limit < page.total && <button className="text-button" type="button" onClick={() => setOffset(offset + page.limit)}>{vi ? "Trang tiếp" : "Next page"}</button>}
+      {offset > 0 && <button className="text-button" type="button" disabled={disabled} onClick={() => setOffset(Math.max(0, offset - 20))}>{vi ? "Trang trước" : "Previous page"}</button>}
+      {page && offset + page.limit < page.total && <button className="text-button" type="button" disabled={disabled} onClick={() => setOffset(offset + page.limit)}>{vi ? "Trang tiếp" : "Next page"}</button>}
     </div>}
   </section>;
 }
