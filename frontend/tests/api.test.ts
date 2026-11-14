@@ -15,6 +15,9 @@ test("typed client, mock contract and problem responses work end to end", async 
   assert.equal((await getDataset({ ...defaultWindow, from: "2026-12-01T00:00:00Z", to: "2026-12-02T00:00:00Z" })).scenarios.length, 0);
   await assert.rejects(getDataset({ ...defaultWindow, to: "2031-01-01T00:00:00Z" }), /31 days/);
   await assert.rejects(getJob("missing", defaultWindow), (e: unknown) => e instanceof ApiError && e.status === 404);
+  // Browsers on plain HTTP expose getRandomValues but omit randomUUID.
+  const browserCrypto = globalThis.crypto;
+  t.mock.getter(globalThis, "crypto", () => ({ getRandomValues: browserCrypto.getRandomValues.bind(browserCrypto) }));
   const accepted = await createJob(body);
   assert.equal((await getJob(accepted.jobId, defaultWindow)).status, "queued");
   for (const payload of [{}, { jobId: null }, { jobId: [] }, { jobId: 123 }]) {

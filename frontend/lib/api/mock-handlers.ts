@@ -19,7 +19,7 @@ export const handlers = [
   http.post("*/api/v1/jobs", async ({ request }) => {
     try {
       const body = validateJobRequest(await request.json() as JobRequest);
-      const jobId = `mock-${crypto.randomUUID()}`;
+      const jobId = `mock-${crypto.getRandomValues(new Uint32Array(4)).join("-")}`;
       if (jobs.size >= 20) jobs.delete(jobs.keys().next().value!);
       jobs.set(jobId, { started: Date.now(), request: body });
       return HttpResponse.json({ jobId }, { status: 202 });
