@@ -32,7 +32,7 @@ export function SiteHeader({ comparisonHref, showSources = false }: {
           <a href="/compare#saved-model-source">{t("Sources & method")}</a>
           <a href="#team" onClick={() => setMenuOpen(false)}>{t("Team members")}</a>
         </>}
-        <a href="#resources" onClick={() => setMenuOpen(false)}>{t("Lunar resources")}</a>
+        <a href={comparisonHref ? "/#resources" : "#resources"} onClick={() => setMenuOpen(false)}>{t("Lunar resources")}</a>
         {showSources && <a href="#sources">{t("Sources & method")}</a>}
         <LanguageControl />
         <ThemeControl />

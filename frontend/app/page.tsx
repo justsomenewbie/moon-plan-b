@@ -8,11 +8,10 @@ import AstronautGuide from "./astronaut-guide";
 import MoonGlobe from "./moon-globe";
 
 const savedResult = savedResultFromUrl(new URLSearchParams());
-const exampleHref = "/compare?saved=2026-11-14T00%3A00%3A00Z#observed-week";
 const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { locale, t } = useLanguage();
   useEffect(() => {
     function restoreComparisonLink() {
       const { search, hash } = window.location;
@@ -70,17 +69,26 @@ export default function Home() {
         </figure>
       </section>
       <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
-        <h2 id="home-guide-title">{t("Quick guide")}</h2>
-        <ol>
-          <li>{t("Open the example below. It compares two landing sites over the same week.")}</li>
-          <li>{t("Compare the hours in bold. More hours means a longer time with both the Sun and Earth in view.")}</li>
-          <li>{t("To try a different comparison, choose another week or select a site to compare its two weeks.")}</li>
+        <h2 id="home-guide-title">{t("Find a site in three steps")}</h2>
+        <p>{t("Follow the saved B2 example for November 14–21, 2026 (UTC).")}</p>
+        <a className="button outline" href="/plan?mode=sites&source=saved-b2&from=2026-11-14&to=2026-11-21&priority=joint">{t("Open this planner example")}</a>
+        <ol className="guide-steps">
+          {[
+            ["Choose your dates", "In the planner, open “I have dates”. Set the start to November 14 and the end to November 21. The end date is excluded."],
+            ["Choose what to compare", "Under “Rank sites by”, select “Sun and Earth together”, then press “Find sites”. This counts the hours when both are visible from each site."],
+            ["Read the map and table", "A gold diamond marks each site with the most hours. Choose a name under “Inspect a site” to see its coordinates. In this example, Vikram leads with 162 h. The table shows the hours for all 23 sites."],
+          ].map(([title, instruction], i) => <li key={title}>
+            <h3><span aria-hidden="true">{i + 1}</span> {t(title)}</h3>
+            <p>{t(instruction)}</p>
+            <img src={`/images/guide/plan-step-${i + 1}-${locale}.webp`} width={640} height={(locale === "vi" ? [594, 340, 734] : [510, 340, 618])[i]} alt="" loading="lazy" />
+          </li>)}
         </ol>
-        <a href={exampleHref}>{t("Earlier example · run B")}</a>
         <div className="home-guide-links">
           <a href="/plan?mode=sites">{t("Find sites for my dates")}</a>
           <a href="/plan?mode=dates">{t("Find dates for my site")}</a>
-          <a href="/compare">{t("Open comparison tool")}</a><a href="/data">{t("Data catalog")}</a></div>
+          <a href="/compare">{t("Open comparison tool")}</a>
+          <a href="/data">{t("Data catalog")}</a>
+        </div>
       </section>
       <section id="team" className="home-team" tabIndex={-1} aria-labelledby="team-title">
         <h2 id="team-title">{t("Team members")}</h2>

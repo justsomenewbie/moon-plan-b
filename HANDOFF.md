@@ -1,6 +1,6 @@
-# Current handoff — 14 November 2026
+# Current handoff — 15 November 2026
 
-The bilingual homepage illustrates crater shadows and opens Athena (139 h) and Odysseus (33 h) for 14–20 November UTC. [Homepage QA](qa/check_home_navigation.mjs).
+The [orbit walkthrough](qa/check_orbit.mjs) opens Athena/Odysseus in B2 (139/47 h, then 168/168 h). Switch to the dated terrain horizon offline. Run B retains its 33 h Odysseus example. UTC lookup now distinguishes next events, bounds and missing data. Next: run the uncoached usability task.
 
 ## Mission Survival & Horizon Clearance Studio
 
@@ -18,11 +18,11 @@ Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body 
 
 Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup labels optional solar-disc fraction and Sun-facing irradiance. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Homepage links to guide and comparison. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Homepage links to the illustrated bilingual planner guide and comparison. Reference cards appear on home. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The astronaut waves, greets on opening and glances sideways while answering. Pause and reduced motion use still expressions. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [OpenAI/Ollama configuration](frontend/README.md#ask-the-astronaut).
+The astronaut guide respects reduced motion. About links to the six team members; the footer includes the school’s Facebook page. [OpenAI/Ollama configuration](frontend/README.md#ask-the-astronaut).
 
 **Plan and data:** B2 covers 23 sites and 43,824 hourly samples each. Long catalog links include downloadable visibility summaries. Switching sources retains the requested dates, site and priority. The public explorer lists 13 relay operations. All 17 upstream operations match the production contract. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The result map highlights positive leaders and ties.
 
