@@ -14,7 +14,7 @@ const copy = {
     kinds: { saved: "Saved team model", terrain: "Terrain model", scenario: "Supplied scenario", synthetic: "Simulated example", unavailable: "No shareable observation summary" },
     summary: "See UTC ranges and hours", sourceId: "Source", privacy: "Sending shares your question, the previous question if any, and the selected summary with this site's server. Planning questions check the requested dates against the team backend. Your file stays on your device.",
     hours: "Hours visible · Sun / Earth / both", unknown: "unknown", invalid: "Edit the question and send it again.", prompt: "Your question", send: "Send", cancel: "Cancel", reset: "Clear chat", retry: "Try again",
-    waiting: "Waiting for the guide…", failed: "The guide couldn’t answer. You can try again or use the questions below.",
+    waiting: "The astronaut is thinking…", failed: "The guide couldn’t answer. You can try again or use the questions below.",
     offline: "The model is unavailable. You can still use the questions below.", slow: "The guide timed out. Try again.", limited: "The guide is busy. Please try again shortly.",
     you: "You", guide: "Astronaut", actions: { workspace: "Open workspace", saved: "Open saved result", sources: "View sources", compareSites: "Compare sites", compareDates: "Compare dates" },
   },
@@ -23,7 +23,7 @@ const copy = {
     kinds: { saved: "Kết quả mô hình đã lưu", terrain: "Mô hình địa hình", scenario: "Kịch bản đã tải", synthetic: "Dữ liệu mô phỏng", unavailable: "Chưa có dữ liệu quan sát phù hợp để gửi" },
     summary: "Xem khoảng thời gian UTC và số giờ", sourceId: "Nguồn", privacy: "Khi bạn bấm Gửi, máy chủ của trang nhận câu hỏi, câu hỏi ngay trước đó (nếu có) và phần dữ liệu tóm tắt đã chọn. Câu hỏi lập kế hoạch tra ngày đã chọn trên máy chủ của nhóm. Tệp gốc vẫn nằm trên thiết bị của bạn.",
     hours: "Số giờ nhìn thấy · Mặt Trời / Trái Đất / cả hai", unknown: "chưa xác định", invalid: "Hãy sửa câu hỏi rồi gửi lại.", prompt: "Câu hỏi của bạn", send: "Gửi", cancel: "Hủy", reset: "Xóa cuộc trò chuyện", retry: "Thử lại",
-    waiting: "Phi hành gia đang trả lời…", failed: "Chưa có câu trả lời. Bạn có thể thử lại hoặc chọn một câu hỏi bên dưới.",
+    waiting: "Phi hành gia đang suy nghĩ…", failed: "Chưa có câu trả lời. Bạn có thể thử lại hoặc chọn một câu hỏi bên dưới.",
     offline: "Mô hình hiện chưa hoạt động. Bạn vẫn có thể chọn một câu hỏi bên dưới.", slow: "Đã hết thời gian chờ. Hãy thử lại.", limited: "Phi hành gia đang bận. Bạn vui lòng thử lại sau.",
     you: "Bạn", guide: "Phi hành gia", actions: { workspace: "Mở phần quan sát", saved: "Mở kết quả đã lưu", sources: "Xem nguồn dữ liệu", compareSites: "So sánh hai địa điểm", compareDates: "So sánh hai khoảng thời gian" },
   },
@@ -104,7 +104,7 @@ function Conversation({ context, actions }: { context: GuideContext; actions: Gu
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   }
-  return <div className={styles.body}>
+  return <div className={styles.body} data-guide-pending={busy || undefined}>
     <strong>{labels.kinds[context.kind]}</strong>
     {context.rows.length > 0 && <p className={styles.notice}>{[...new Set(context.rows.map(row => row.site))].join(" · ")}<br />
       {labels.sourceId} · {context.rows[0].source}</p>}

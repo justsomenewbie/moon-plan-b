@@ -111,6 +111,7 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
     </button>
     <aside id={id} popover="auto" onToggle={event => setOpen(event.newState === "open")} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
+        {open && <span className={styles.portrait} aria-hidden="true" />}
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
