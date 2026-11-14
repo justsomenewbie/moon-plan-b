@@ -36,6 +36,10 @@ The initial live aggregate omits `run_id`. On November 14 it selected `B_spice_p
 
 For an Odysseus trial, both `GET /api/v1/sites/{site_id}/pointing` and `POST /api/v1/mission/survival` returned 200 through the same-origin production frontend proxy. Response hashes matched direct backend reads. The pointing response distinguishes the requested instant from its hourly sample. The survival response records the test battery capacity, loads, panel and state of charge. These routes are provisional. The frontend uses neither trial output for site ranking.
 
+### Ranking two sites in one window
+
+Run B, November 14 at 00:00 through November 15 at 00:00 UTC: the 24 hourly samples yielded 0% Sun, 100% Earth and 0% joint visibility for Apollo 11, and 0% for all three at Haworth. The weights were 0.4 Sun, 0.3 Earth and 0.3 joint. The comparison ranked Apollo 11 first (30 points) and Haworth second (0 points) within this pair. The same-window catalog ranking placed them 10th and 17th of 23. Apollo 11 lies outside PGDA map coverage, so the producer used a smooth-sphere horizon there. Haworth has a terrain horizon. The ranking describes visibility in this model and UTC window.
+
 ### Two dates at one site
 
 The live frontend uses two bounded aggregate GETs, each with one site, the same run and `include=windows,metrics,criteria`. On run `B_spice_pgda_bruteforce_2026_2030`, Athena returned 0 hours of sunlight, 72 hours of Earth visibility and 0 hours of overlap from December 1 at 00:00 UTC to December 4 at 00:00 UTC. From December 18 at 00:00 UTC to December 21 at 00:00 UTC, all three totals were 72 hours. Both windows had complete hourly coverage and exclusive ends. The single joint interval in the second window reached both query boundaries. All 144 sets of hourly visibility flags matched the separate site windows. The point-limit diagnostic above does not affect these bounded reads.

@@ -25,6 +25,8 @@ In live mode, **Load windows** retrieves the terrain horizon, sampled Sun and Ea
 
 In the live workspace, open **Compare dates** and choose a site from the current run to compare two UTC windows of equal duration. If the catalog fails to load, the current site stays available and **Retry site list** reloads the choices. Set the first window's start and exclusive end, then the second start. Both results use the same model run. **Open date comparison in a new tab** provides a link with the selected site, both windows and the run. The linked page can be printed.
 
+To compare two sites in the displayed UTC window, open **Rank two sites for this UTC range**, choose two distinct sites and select **Compare this pair**. The score uses the displayed visibility weights. The rank applies only to the selected pair. Individual warnings identify model limits such as a flat horizon outside terrain-map coverage.
+
 Under a live site's observations, open **Find alternative landing dates**. Enter the earliest and latest allowed landing times (both inclusive, in UTC), the mission duration and the minimum percentage of the mission when both bodies must be visible. Select **Search landing dates** to run the search. Each proposal gives its landing time, mission end and delay from the earliest allowed landing. **Inspect this mission window** reopens a supported hourly result on the same site and model run.
 
 Browser Back/Forward restores the comparison encoded in a shared URL, including its date range. A bare URL opens the default request and comparison. An imported release can be reused while it remains loaded; a link alone cannot recover a missing local file.
