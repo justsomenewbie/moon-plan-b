@@ -7,9 +7,9 @@ import TerrainPair, { type DisplayedPair } from "./terrain-pair";
 import AlternativeDates from "./alternative-dates";
 import { ComparisonDownload, RunDownloads } from "./terrain-downloads";
 
-export default function TerrainResult({ result, view, onSelect, onPrint, liveWindow, replayPair, onDisplayedPair }: {
+export default function TerrainResult({ result, view, onSelect, onPrint, liveWindow, printingPair, replayPair, onDisplayedPair }: {
   onDisplayedPair: (pair: DisplayedPair | null) => void;
-  liveWindow?: { from: string; to: string; resolutionSeconds: number }; replayPair: boolean;
+  liveWindow?: { from: string; to: string; resolutionSeconds: number }; replayPair: boolean; printingPair: boolean;
   result: TerrainSummary; view: { siteIndex: number; sample: number; link: string };
   onSelect: (siteIndex: number, sample: number) => void; onPrint: () => void;
 }) {
@@ -23,7 +23,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
       <div className="terrain-print flex flex-wrap items-center gap-3">
         {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t("Open selected observation in a new tab")}</a>}
         {liveWindow && <ComparisonDownload result={result} />}
-        <button type="button" className="button outline terrain-print" onClick={onPrint}>{t("Print report")}</button>
+        <button type="button" className="button outline terrain-print" onClick={onPrint}>{t(printingPair ? "Print ranked pair" : "Print report")}</button>
       </div>
     </div>
     {liveWindow && (liveWindow.from !== range.requested_start || liveWindow.to !== range.requested_end) &&

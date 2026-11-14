@@ -338,6 +338,7 @@ export const vietnamese: Record<string, string> = {
   "Joint-window criterion": "Tiêu chí khoảng thời gian đồng thời",
   "Find a later published match": "Tìm khoảng phù hợp tiếp theo trong dữ liệu đã công bố",
   "Share comparison": "Chia sẻ kết quả so sánh",
+  "Print ranked pair": "In kết quả xếp hạng cặp địa điểm",
   "Print report": "In báo cáo",
   "Selection link": "Liên kết đến kết quả đang xem",
   "Only supplied windows are selectable. Requests include a bounded UTC range and desired resolution; the server supplies the observations.": "Chỉ chọn được các khoảng thời gian đã cung cấp. Yêu cầu gồm khoảng UTC có giới hạn và độ phân giải mong muốn; máy chủ cung cấp dữ liệu quan trắc.",

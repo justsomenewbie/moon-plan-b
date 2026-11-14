@@ -341,9 +341,12 @@ export default function Navigator() {
     const openedForPrint = new Set<HTMLDetailsElement>();
     const beforePrint = () => {
       if (!shell.dataset.printReport) {
-        shell.dataset.printReport = isSavedResultLink(window.location) ? "saved" : "workspace";
+        shell.dataset.printReport = isSavedResultLink(window.location) ? "saved"
+          : shell.querySelector("#terrain-pair[open] [data-pair-results]") ? "pair" : "workspace";
       }
-      const selector = shell.dataset.printReport === "saved" ? "#observed-week details:not([open])" : "details:not([open])";
+      if (shell.dataset.printReport === "pair") return;
+      const selector = shell.dataset.printReport === "saved" ? "#observed-week details:not([open])"
+        : "#workspace.terrain-result > .week-sites details:not([open]), #workspace:not(.terrain-result) details:not([open])";
       for (const details of shell.querySelectorAll<HTMLDetailsElement>(selector)) {
         openedForPrint.add(details);
         details.open = true;
@@ -363,7 +366,7 @@ export default function Navigator() {
     };
   }, []);
 
-  function printReport(report: "saved" | "workspace") {
+  function printReport(report: "saved" | "workspace" | "pair") {
     setPlaying(false);
     if (reportShell.current) reportShell.current.dataset.printReport = report;
     window.print();
@@ -402,7 +405,7 @@ export default function Navigator() {
     {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(locale === "vi" && error.syntax ? "JSON syntax error. Check the file before trying again." : error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target, true)}>{t("Retry API request")}</button> : null}{isMock ? <button className="button outline" onClick={() => void loadDemo(true, defaultWindow)}>{t("Reset to demonstration")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => { recoverPinnedImport.current = true; importDialog.current?.showModal(); }}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
-    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult replayPair={replayPair} onDisplayedPair={setDisplayedPair} result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
+    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult printingPair={displayedPair?.terrain === terrain} replayPair={replayPair} onDisplayedPair={setDisplayedPair} result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport(displayedPair?.terrain === terrain ? "pair" : "workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
       <aside className="controls" aria-label={t("Comparison controls")}>
         <div className="mode-switch" role="group" aria-label={t("Comparison mode")}>{(["dates", "sites"] as const).map((mode) => <button key={mode} aria-pressed={selection.mode === mode} onClick={() => choose(a, mode)}>{mode === "dates" ? t("Compare dates") : t("Compare sites")}</button>)}</div>
         {selection.mode === "sites" && siteWindow ? <>

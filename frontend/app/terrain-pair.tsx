@@ -111,7 +111,13 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
     {!catalog.isFetching && sites.length < 2 && <p>{t("Two distinct sites from this run are needed for a pair comparison.")}</p>}
     {pending && <p role="status">{t("Comparing the selected sites…")}</p>}
     {error && <p role="alert">{t(error)}</p>}
-    {comparison && <section aria-label={t("Pair comparison results")}>
+    {comparison && <section data-pair-results aria-label={t("Pair comparison results")}>
+      <div className="hidden print:block">
+        <h1>{t("Pair comparison results")}</h1>
+        <p>{result.model.label} · {t("Run ID")} · <code>{comparison.run_id}</code></p>
+        <p className="hash">SHA-256 {result.run.manifest_sha256}</p>
+        <p>{result.attribution}</p>
+      </div>
       <p>{t("Evaluated UTC range")} · <TimeRange start={comparison.range.start} end={comparison.range.end} /><br />
         {t("Boundary precision")} ±{comparison.precision_h} h</p>
       <p className="muted text-sm">{t("Score weights")} · {weightLabels

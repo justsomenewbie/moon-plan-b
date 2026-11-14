@@ -308,6 +308,11 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media print {
   .qa-inspector, .observed-week { display: none; }
+  .app-shell[data-print-report="pair"] > :not(.app-header, #workspace),
+  .app-shell[data-print-report="pair"] #workspace > :not(#terrain-pair),
+  .app-shell[data-print-report="pair"] #terrain-pair > :not([data-pair-results]) { display: none; }
+  .app-shell[data-print-report="pair"] #terrain-pair { border: 0; padding: 0; }
+  [data-standalone-dates] details::details-content, [data-landing-results] details::details-content { content-visibility: visible; }
   .terrain-print { display: none; }
   .app-shell:is([data-print-report="saved"], :not([data-print-report]):has(> #observed-week:target)) {
     padding: 6mm;

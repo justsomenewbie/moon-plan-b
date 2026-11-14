@@ -158,7 +158,7 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
     </form>
     {pending && <p role="status">{t("Searching landing dates…")}</p>}
     {error && <p role="alert">{t(error)}</p>}
-    {search && request && <section aria-label={t("Landing search results")}>
+    {search && request && <section data-landing-results={planner ? "" : undefined} aria-label={t("Landing search results")}>
       {planner && <h3>{sites.find(site => site.id === search.site_id)?.name}</h3>}
       <p role="status">{t("{feasible} of {evaluated} landing times meet the constraints. Showing {count}.", {
         feasible: search.n_feasible, evaluated: search.n_evaluated, count: search.candidates.length,

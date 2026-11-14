@@ -83,7 +83,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
     return () => active.current?.abort();
   }, [initialRequest]);
 
-  return <section id="terrain-dates" aria-label={t("Compare dates")} tabIndex={-1}>
+  return <section id="terrain-dates" data-standalone-dates={initialRequest ? "" : undefined} aria-label={t("Compare dates")} tabIndex={-1}>
     <details className="details-section" open={initialRequest ? true : undefined} onToggle={event => setOpened(event.currentTarget.open)}>
       <summary>{t("Compare dates")}</summary>
       {useEvaluated && <p>{t("The date comparison starts from the evaluated model window. The original request includes sub-millisecond precision.")}</p>}
