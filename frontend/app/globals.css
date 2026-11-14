@@ -105,6 +105,12 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
   .saved-comparison .lunar-figure { padding-top: 20px; }
 }
 .terrain-result { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.panel-sunlight { margin-top: 12px; min-width: 0; }
+.panel-sunlight legend { font-weight: 650; }
+.panel-sunlight p { color: var(--muted); font-size: .875rem; }
+.panel-sunlight label { display: grid; grid-template-columns: 1fr auto; column-gap: .75rem; margin-top: .65rem; }
+.panel-sunlight strong { font-variant-numeric: tabular-nums; }
+.panel-sunlight meter { grid-column: 1 / -1; width: 100%; }
 .week-selection { display: block; max-width: 26rem; margin-top: 14px; }
 .week-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .week-sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px; margin: 16px 0; }

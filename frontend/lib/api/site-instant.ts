@@ -7,7 +7,7 @@ type Instant = components["schemas"]["InstantResponse"];
 type Body = Pick<Instant["sun"], "az_deg" | "el_deg" | "horizon_el_deg" | "clearance_deg" | "visible">;
 type NextEvents = NonNullable<Instant["next_events"]>;
 export type SiteInstant = Pick<Instant, "run_id" | "site_id" | "t" | "sample_utc" | "sample_index" | "step_s" | "precision_h" | "both_visible"> & {
-  sun: Body & Partial<Pick<Instant["sun"], "fraction" | "irradiance_tracking_wm2">>;
+  sun: Body & Partial<Pick<Instant["sun"], "fraction" | "power_horizontal" | "power_tracking" | "irradiance_tracking_wm2">>;
   earth: Body;
   next_events: Partial<NextEvents>;
 };
@@ -55,8 +55,11 @@ export async function getSiteInstant(
   const sample = wholeSecond(data.sample_utc, 502);
   check(sample <= requested && (requested - sample) / 1000 < stepSeconds && ((sample - grid) / 1000) % stepSeconds === 0);
   const sun: SiteInstant["sun"] = readBody(data.sun), earth = readBody(data.earth);
-  const { fraction, irradiance_tracking_wm2 } = data.sun;
-  if (Number.isFinite(fraction) && fraction >= 0 && fraction <= 1) sun.fraction = fraction;
+  const { irradiance_tracking_wm2 } = data.sun;
+  for (const field of ["fraction", "power_horizontal", "power_tracking"] as const) {
+    const value = data.sun[field];
+    if (Number.isFinite(value) && value >= 0 && value <= 1) sun[field] = value;
+  }
   if (Number.isFinite(irradiance_tracking_wm2) && irradiance_tracking_wm2 >= 0) sun.irradiance_tracking_wm2 = irradiance_tracking_wm2;
   check(data.both_visible === (sun.visible && earth.visible));
   if (series) {

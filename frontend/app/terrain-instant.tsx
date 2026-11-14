@@ -82,6 +82,20 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
           {body === "sun" && value.sun.irradiance_tracking_wm2 !== undefined && <div><dt>{t("Modeled irradiance on a Sun-facing surface")}</dt>
             <dd>{value.sun.irradiance_tracking_wm2.toLocaleString(locale, { maximumFractionDigits: 3 })} W/m²</dd></div>}
         </dl>
+        {body === "sun" && (value.sun.power_horizontal !== undefined || value.sun.power_tracking !== undefined) &&
+          <fieldset className="panel-sunlight">
+            <legend>{t("Relative sunlight on two panel orientations")}</legend>
+            <p>{t("100% is the sunlight reaching an unobstructed panel facing the Sun at this time.")}</p>
+            {([["power_horizontal", "Horizontal panel"], ["power_tracking", "Sun-facing panel"]] as const).map(([field, title]) => {
+              const fraction = value.sun[field];
+              if (fraction === undefined) return null;
+              const percent = fraction.toLocaleString(locale, { style: "percent", maximumFractionDigits: 2 });
+              return <label key={field}>
+                <span>{t(title)}</span><strong aria-hidden="true">{percent}</strong>
+                <meter min={0} max={1} value={fraction} aria-label={t(title)} aria-valuetext={percent}>{percent}</meter>
+              </label>;
+            })}
+          </fieldset>}
         {body === "earth" && <p className="muted text-sm">{t("Earth visibility describes a line of sight. Radio signal strength is unavailable.")}</p>}
       </div>)}</div>
       {value.sun.visible && value.sun.clearance_deg < 0 && <p>{t("Part of the Sun is visible while its centre is below the local horizon.")}</p>}
