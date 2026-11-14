@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateWindow } from "../lib/api/client";
+import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateTerrainWindow, validateWindow } from "../lib/api/client";
 import { parseTerrainSummary } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainResult from "./terrain-result";
@@ -146,7 +146,7 @@ export default function Navigator() {
     setQaEnabled(params.get("qa") === "true");
     try {
       for (const key of ["from", "to", "resolutionSeconds", "job", "run_id", "site_id"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
-      const validateRange = !isMock && params.has("site_id") ? validateCustomWindow : validateWindow;
+      const validateRange = isMock ? validateWindow : params.has("site_id") ? validateCustomWindow : validateTerrainWindow;
       const request = ["from", "to", "resolutionSeconds"].some((key) => params.has(key)) ? validateRange({ from: params.get("from") ?? "", to: params.get("to") ?? "", resolutionSeconds: Number(params.get("resolutionSeconds")) }) : defaultWindow;
       const jobId = params.get("job") ?? "";
       const runId = params.get("run_id") ?? undefined;
