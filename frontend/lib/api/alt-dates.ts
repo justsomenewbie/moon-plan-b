@@ -27,6 +27,17 @@ function wholeSecond(value: string) {
   try { return utcMillis(value.replace(/\.0{1,9}Z$/, "Z")) / 1000; } catch { return NaN; }
 }
 
+export function landingGridBounds(earliest: string, latest: string, stepSeconds: number, gridStart: string) {
+  const origin = wholeSecond(gridStart) * 1000, step = stepSeconds * 1000;
+  const first = origin + Math.ceil((Date.parse(earliest) - origin) / step) * step;
+  const last = origin + Math.floor((Date.parse(latest) - origin) / step) * step;
+  return { first, last };
+}
+
+export function landingDelayHours(landing: string, earliest: string) {
+  return (Date.parse(landing) - Date.parse(earliest)) / HOUR;
+}
+
 function countInRange(n: number, max = Number.MAX_SAFE_INTEGER) {
   return Number.isSafeInteger(n) && n >= 0 && n <= max;
 }
@@ -58,6 +69,9 @@ function validateRequest(request: AltDatesRequest, stepSeconds: number): Request
 
 export async function findAltDates(request: AltDatesRequest, stepSeconds: number, signal?: AbortSignal, gridStart?: string): Promise<AltDatesResponse> {
   const body = validateRequest(request, stepSeconds);
+  if (gridStart !== undefined && !Number.isInteger(wholeSecond(gridStart)))
+    throw new ApiError("The returned landing search differs from the request.", 502);
+  const grid = gridStart === undefined ? undefined : landingGridBounds(body.earliest, body.latest, stepSeconds, gridStart);
   signal?.throwIfAborted();
   const { data, error, response } = await producer.POST("/api/v1/alt-dates", { body, signal });
   signal?.throwIfAborted();
@@ -65,16 +79,21 @@ export async function findAltDates(request: AltDatesRequest, stepSeconds: number
 
   const first = Date.parse(body.earliest), last = Date.parse(body.latest), step = stepSeconds * 1000;
   const c = data?.constraints;
+  const exactBounds = data?.earliest_utc === body.earliest && data.latest_utc === body.latest;
+  // Older releases echo the input. The current release reports the first and last grid points inside it.
+  const gridBounds = data && grid && grid.first <= grid.last
+    && data.earliest_utc === new Date(grid.first).toISOString().replace(".000Z", "Z")
+    && data.latest_utc === new Date(grid.last).toISOString().replace(".000Z", "Z");
   if (!data || data.site_id !== body.site_id || data.run_id !== body.run_id || data.step_s !== stepSeconds
       || data.precision_h !== stepSeconds / 3600 || data.mission_duration_h !== body.mission_h
-      || data.earliest_utc !== body.earliest || data.latest_utc !== body.latest
+      || (!exactBounds && !gridBounds)
       || typeof data.cache_id !== "string" || !/^[a-f0-9]{64}$/i.test(data.cache_id)
       || !c || Object.keys(c).some(key => !Object.hasOwn(defaults, key))
       || !Object.entries(body.constraints).every(([key, value]) => c[key as keyof Constraints] === value))
     throw new ApiError("The returned landing search differs from the request.", 502);
 
   const { n_evaluated, n_feasible, rejected_by, candidates } = data;
-  const limit = Math.floor((last - first) / step) + 1;
+  const limit = Math.floor(((grid?.last ?? last) - (grid?.first ?? first)) / step) + 1;
   if (!countInRange(n_evaluated, limit) || !countInRange(n_feasible, n_evaluated)
       || !rejected_by || typeof rejected_by !== "object" || Array.isArray(rejected_by)
       || !Object.values(rejected_by).every(n => countInRange(n, n_evaluated - n_feasible))
@@ -89,7 +108,7 @@ export async function findAltDates(request: AltDatesRequest, stepSeconds: number
     const origin = gridStart === undefined ? landings[0] ?? landing : Date.parse(gridStart);
     if (candidate.rank !== i + 1 || !between(landing, first, last) || (landing - origin) % step !== 0
         || end - landing !== body.mission_h * HOUR || !Number.isFinite(candidate.slip_h)
-        || Math.abs(candidate.slip_h - (landing - first) / HOUR) > 0.000001
+        || Math.abs(candidate.slip_h - landingDelayHours(candidate.landing_utc, data.earliest_utc)) > 0.000001
         || landings.some(time => time === landing || Math.abs(landing - time) < c.min_separation_h * HOUR)
         || (i > 0 && c.objective === "earliest" && landing <= landings[i - 1])
         || !Number.isFinite(candidate.score)
