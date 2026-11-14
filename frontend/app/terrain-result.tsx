@@ -21,11 +21,12 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     <div className="section-heading">
       <h2 id="terrain-title">{t("Sun and Earth visibility above the site horizon")}</h2>
       <div className="terrain-print flex flex-wrap items-center gap-3">
-        {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t("Open selected observation in a new tab")}</a>}
+        {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t(result.summaryOnly ? "Open this visibility summary in a new tab" : "Open selected observation in a new tab")}</a>}
         {liveWindow && <ComparisonDownload result={result} />}
         <button type="button" className="button outline terrain-print" onClick={onPrint}>{t(printingPair ? "Print ranked pair" : "Print report")}</button>
       </div>
     </div>
+    {result.summaryOnly && <p className="data-notice">{t("Long-range summary. Totals, visibility intervals and duration criteria use the native model grid. For hourly sky positions, request a shorter window.")}</p>}
     {liveWindow && (liveWindow.from !== range.requested_start || liveWindow.to !== range.requested_end) &&
       <p>{t("Requested UTC range")} · <TimeRange start={liveWindow.from} end={liveWindow.to} /></p>}
     <p>{t("Evaluated UTC range")} · <TimeRange start={range.start} end={range.end} /></p>
@@ -37,7 +38,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     {liveWindow && <TerrainPair replay={replayPair} resolutionSeconds={liveWindow.resolutionSeconds} onDisplayedPair={onDisplayedPair} key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}
     {liveWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={liveWindow} />}
 
-    {result.sites.length > 0 && <TerrainObservations live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
+    {!result.summaryOnly && result.sites.length > 0 && <TerrainObservations live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
 
     {view.link && observationSite && <AlternativeDates key={result.dataset_id + "/" + observationSite.id} result={result} site={observationSite} />}
 

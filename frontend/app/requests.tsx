@@ -38,7 +38,7 @@ export function ApiControls({ request, target, loading, onLoad, onResult, onTerr
     setInputs(current => ({ ...current, [key]: value }));
   }
   const readRequest = () => windowFromInputs(inputs.from, inputs.to, inputs.resolution, isMock ? undefined : range => validateTerrainTargetWindow(range, target));
-  return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{isMock ? t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.") : target?.site_ids ? t("Load observations for the two sites in this shared link using the UTC range below.") : t("Compare Odysseus and Athena over up to 31 days. The team API returns full-resolution visibility intervals for the selected UTC range.")}</p>
+  return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{isMock ? t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.") : target?.site_ids ? t("Load observations for the two sites in this shared link using the UTC range below.") : target?.site_id ? t("Load a new UTC window for the selected site.") : t("Compare Odysseus and Athena over up to 31 days. The team API returns full-resolution visibility intervals for the selected UTC range.")}</p>
     <form className="request-fields" onSubmit={(event) => {
       event.preventDefault();
       try { const next = readRequest(); setError(""); onLoad(next); } catch (e) { setError(e instanceof Error ? e.message : "Invalid request."); }
