@@ -11,7 +11,7 @@
     pointer-events: none;
   }
   :root[data-theme="dark"] body::before {
-    background: linear-gradient(170deg, #10131b 4%, #182442 94%), url("/images/star-map-2020.jpg") center / cover;
+    background: linear-gradient(170deg, #10131b 4%, #182442 94%), var(--star-map, url("/images/star-map-2020.jpg")) center / cover;
     background-blend-mode: screen;
     opacity: .55;
   }
@@ -58,6 +58,18 @@
   .night-stars i:nth-child(4) { left: 28%; top: 35%; }
   .sky-appearance label, .night-credit { display: none; }
   :root[data-theme="dark"] .night-credit { display: inline; }
+}
+/* Cover scales the full map to the larger of the viewport width and twice its height. */
+@media screen and (min-width: 1025px), screen and (min-height: 513px), screen and (min-resolution: 1.5dppx) {
+  :root { --star-map: url("/images/star-map-2048.webp"); }
+}
+@media screen and (min-width: 2049px), screen and (min-height: 1025px),
+       screen and (min-resolution: 1.5dppx) and (min-width: 1025px),
+       screen and (min-resolution: 1.5dppx) and (min-height: 513px) {
+  :root { --star-map: url("/images/star-map-4096.webp"); }
+}
+@media screen and (max-aspect-ratio: 3/4) and (min-height: 513px) {
+  :root { --star-map: url("/images/star-map-portrait.webp"); }
 }
 @media screen and (prefers-reduced-motion: no-preference) {
   .sky-clouds span { animation: sky-drift 24s cubic-bezier(.34,.22,.66,.78) -8s infinite alternate; }
