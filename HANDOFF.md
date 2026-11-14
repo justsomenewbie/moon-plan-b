@@ -14,11 +14,11 @@ Imports, saved links, EN/VI, printing and sources work. Local sky initially show
 
 Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
-Saved-week globes offer [dated sunlight](docs/GLOBE_SUNLIGHT.md). Sky markers select body-specific readings. EN/VI mobile checks covered the team contact footer, imports, site selection, UTC, clearance and API status.
+Saved-week globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Sky markers select body readings. Mobile checks covered contacts, imports, selection, UTC, clearance and API status.
 
 Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Reports link site coordinates and heights. UTC lookup shows requested and native samples. Fractional ends retain coverage. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gap navigation at 320px and 200% Chromium zoom. Home globe focus is visible. Reload reopens linked sources.
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus is visible. Reload reopens sources. [Homepage navigation](qa/check_home_navigation.mjs) reaches members and saved methods by keyboard.
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
