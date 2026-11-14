@@ -8,7 +8,7 @@ Minh’s `8b53003` added offline QA, supplied overlap bands, a polar skyplot and
 
 English defaults with optional Vietnamese, lunar resources and local-time appearance. Compare dates at one site or sites within one UTC window. The timeline and local 3D sky follow the supplied samples. The NASA reference globe and photograph retain [credits](docs/CREDITS.md); the globe locates sites and does not calculate terrain or visibility. [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) passed texture, decoding and Canvas failures with comparison-preserving retry. Earlier isolated native Safari checks covered JSON import, both languages, 320px width and window closure.
 
-The combined revision passed 56 frontend tests, eight offline QA gates, TypeScript and both production builds. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
+The combined revision passed 57 frontend tests, eight offline QA gates, TypeScript and both production builds. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
 
 The [synthetic regression](frontend/tests/observations.test.ts) preserves 0° markers. Chromium checked the JPL [single-site](qa/evidence/odysseus-hour-gap/README.md) and [two-site](qa/evidence/odysseus-athena-hour-gap/README.md) gap cases. Removing Athena’s 02:00 UTC row broke both paths and skipped that hour on the shared slider. Odysseus retained five original markers per body.
 
