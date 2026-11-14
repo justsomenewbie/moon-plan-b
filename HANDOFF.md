@@ -16,7 +16,7 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Vietnamese mobile QA covered home, comparison, import errors, site selectors, UTC samples, clearance and API status capitalization.
 
-Run B listed 23 sites. Apollo 11 date comparisons reopened after a catalog failure; fractional exclusive ends retain the last sample. Pair ranks, weights and model warnings come from POST /compare. [Pair checks](frontend/tests/compare-sites.test.ts) validate observed visibility, dark intervals and the order of exact ties. The [contract](docs/FRONTEND_CONTRACT.md#published-route-scope) records confirmed routes, provisional tools and schema checks.
+Run B listed 23 sites. Apollo 11 date comparisons recovered after a catalog failure. Six CSV downloads matched source bytes and scoped UTC ranges. The fractional-end issue was reported to backend; FE preserves the final sample. [Pair checks](frontend/tests/compare-sites.test.ts) validate observed visibility, dark intervals and tie order. [Confirmed routes and schema checks](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
 

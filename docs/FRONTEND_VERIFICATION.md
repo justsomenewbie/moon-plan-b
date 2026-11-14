@@ -303,6 +303,10 @@ Pinned offline recovery rejected six incompatible exports, retained the retry UR
 
 Chromium submitted the [November and December Athena searches](BACKEND_RECONCILIATION.md#alternative-landing-dates) to the team service. The form issued one POST per submission and none on opening or editing. Opening the first candidate returned its three-hour interval through a pinned GET. The December search displayed overlapping rejection counts and zero candidates. A separate intercepted replay exercised site-switch cancellation and the Vietnamese interface at 320 CSS pixels. Native Safari 26.6.2 confirmed the two November starts, retained the result after switching to Vietnamese, opened the first three-hour mission in a separate tab and closed the isolated test session.
 
+## Run-pinned CSV downloads
+
+Chromium downloaded six real CSV attachments for bounded result cards and matched their bytes and filenames to direct producer responses. From 00:00 up to 03:00 UTC on November 15, Athena and Odysseus each yielded three hourly observation rows. Two Athena date cards opened distinct ranges under the same producer filename. An injected HTTP 422 opened the problem in a separate tab and preserved the original report. The [repeatable browser check](../qa/check_terrain_csv.mjs) also covers evaluated bounds after clamping, a custom site ID and the absence of remote downloads on local imports and in mock mode.
+
 ## Producer duration assessments
 
 Eleven Chromium checks exercised the live catalog, a retained custom result and the two-date page. They matched each displayed 24-, 72- and 168-hour assessment to the producer, including the real Odysseus 24-hour borderline case, Athena’s zero and boundary-clipped 72 hours in December, and a request clamped to six evaluated hours. Opening the assessment showed the exact reason in English and Vietnamese interfaces. An older export still opened without criteria. At 320 CSS pixels the Vietnamese page had no horizontal overflow. The English A4 report fit one page and the Vietnamese report used two, retaining both clipped edges and the 72-hour interval. Closed disclosures printed their thresholds and verdicts.
