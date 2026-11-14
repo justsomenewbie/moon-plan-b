@@ -72,8 +72,8 @@ try {
       await answer.waitFor();
       return { answer: await answer.innerText(), turn };
     }
-    function expectWinner(answer, site, hours, start, end, from, to, scope) {
-      for (const fact of [b2, scope, site, hours + " h", start, end, midnight(from), midnight(to)]) {
+    function expectWinner(answer, site, hours, start, end, from, to, scope, precision) {
+      for (const fact of [b2, scope, site, hours + " h", start, end, midnight(from), midnight(to), precision]) {
         assert.ok(answer.includes(fact), "Missing " + fact + " in " + answer);
       }
       assert.match(answer, en ? /uninterrupted|continuous/i : /liên tục/i);
@@ -86,10 +86,12 @@ try {
       assert.equal(url.searchParams.get("from"), first);
       assert.equal(url.searchParams.get("to"), last);
     }
+    const endPrecision = en ? "Visibility ends ±1 h" : "Kết thúc cùng thấy ±1 h";
+    const startPrecision = en ? "Visibility starts ±1 h" : "Bắt đầu cùng thấy ±1 h";
     await page.goto(new URL("/plan?source=saved-b2", origin).href);
     await openGuide();
     const saved = await ask();
-    expectWinner(saved.answer, "Odysseus", 92, midnight(first), b2WindowEnd, first, last, "23/23");
+    expectWinner(saved.answer, "Odysseus", 92, midnight(first), b2WindowEnd, first, last, "23/23", endPrecision);
     assert.doesNotMatch(saved.answer, /114 h|Malapert/);
     await expectLink(saved.turn, "source", "saved-b2");
     await saved.turn.getByRole("link").click();
@@ -127,14 +129,14 @@ try {
     }
     if (replay) {
       const live = await askLive();
-      expectWinner(live, "Odysseus", 92, midnight(first), b2WindowEnd, first, last, "23/23");
+      expectWinner(live, "Odysseus", 92, midnight(first), b2WindowEnd, first, last, "23/23", endPrecision);
       assert.doesNotMatch(live, /114 h|Malapert/);
     }
     outage = true;
     const unavailable = await askLive();
     assert.ok(unavailable.includes(b2), unavailable);
     assert.match(unavailable, en ? /could not verify/i : /chưa xác minh/i);
-    assert.doesNotMatch(unavailable, /92 h|Odysseus/);
+    assert.doesNotMatch(unavailable, /92 h|Odysseus|±/);
 
     // Import an actual team dataset without a live workspace lookup or a model call.
     await page.goto(new URL("/compare?run_id=" + b2 + "&site_id=im1_odysseus&from=" + midnight(first) +
@@ -147,7 +149,7 @@ try {
     await chat.locator("select").selectOption("workspace");
     const before = api.length;
     const imported = await ask("2026-11-14", "2026-11-21");
-    expectWinner(imported.answer, "Athena", 139, "2026-11-15T05:00:00Z", midnight("2026-11-21"), "2026-11-14", "2026-11-21", "2/2");
+    expectWinner(imported.answer, "Athena", 139, "2026-11-15T05:00:00Z", midnight("2026-11-21"), "2026-11-14", "2026-11-21", "2/2", startPrecision);
     assert.equal(api.length, before, "Imported workspace questions must use only the supplied data.");
     assert.deepEqual(unexpected, []);
     assert.deepEqual(errors, []);

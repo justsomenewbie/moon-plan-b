@@ -4,7 +4,7 @@ Planner maps open in 3D and switch to flat. Both show [start-date Sun direction]
 
 ## Live comparison
 
-The comparison results link to the current run’s lunar globe and local 3D sky. Observations share the selected site and UTC across the globe, tracks, timeline, sky, polar plot and exact-sample table. Site changes retain matching UTC samples. Instant results pair compass bearings with sunlight levels. Terrain visibility uses producer flags. [Live regression](qa/check_terrain_sky.mjs), [clearance QA](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram). Owner: comparison integration.
+The comparison results link to the current run’s lunar globe and local 3D sky. Observations share the selected site and UTC across the globe, tracks, timeline, sky, polar plot and exact-sample table. Site changes retain matching UTC samples. Instant results pair compass bearings with sunlight levels. [Visibility transitions](docs/BACKEND_RECONCILIATION.md#timing-of-visibility-changes) use native timing precision. [Live regression](qa/check_terrain_sky.mjs), [clearance QA](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram). Owner: comparison integration.
 
 ## Current product, backend and QA state
 
