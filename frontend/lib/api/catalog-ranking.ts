@@ -30,12 +30,11 @@ function checkRow(row: Row, rank: number, duration: number, weights: CatalogRank
     close(row.score, rankingMetrics.reduce((score, field) => score + row[field] * (weights[field] ?? 0), 0)));
 }
 
-export async function getCatalogRanking(
-  comparison: SiteComparison, signal?: AbortSignal, catalogSites?: readonly { id: string }[],
+export async function readCatalogRanking(
+  context: Pick<SiteComparison, "run_id" | "range" | "weights" | "step_s" | "precision_h">,
+  signal?: AbortSignal, catalogSites?: readonly { id: string }[],
 ): Promise<CatalogRanking> {
-  if (!comparison.ranking.every(row => comparison.coverageBySite[row.site_id] === "complete"))
-    throw new ApiError("The catalog ranking requires complete coverage for both selected sites.", 422);
-  const { run_id, range, weights } = comparison;
+  const { run_id, range, weights } = context;
   signal?.throwIfAborted();
   const { data, error, response } = await producer.GET("/api/v1/ranking", { signal, params: { query: {
     run_id, start: range.start, end: range.end,
@@ -43,12 +42,12 @@ export async function getCatalogRanking(
   } } });
   signal?.throwIfAborted();
   if (!response.ok) throw apiError(error, response.status);
-  check(data && data.run_id === run_id && data.step_s === comparison.step_s && data.precision_h === comparison.precision_h &&
+  check(data && data.run_id === run_id && data.step_s === context.step_s && data.precision_h === context.precision_h &&
     data.range?.start === range.start && data.range.end === range.end && data.range.step_s === range.step_s &&
     data.range.n_samples === range.n_samples && (data.source === "computed" || data.source === "summary"));
   check(data.weights && Object.keys(data.weights).every(key => rankingMetrics.some(field => field === key)) &&
     rankingMetrics.every(field => (data.weights[field] ?? 0) === (weights[field] ?? 0)) &&
-    Array.isArray(data.ranking) && data.ranking.length >= comparison.ranking.length);
+    Array.isArray(data.ranking) && data.ranking.length > 0);
   const duration = range.n_samples * range.step_s / 3600;
   const byId = new Map<string, Row>();
   for (const [i, row] of data.ranking.entries()) {
@@ -57,6 +56,19 @@ export async function getCatalogRanking(
     if (i > 0) check(rankingInOrder(data.ranking[i - 1], row, weights, range.n_samples));
     byId.set(row.site_id, row);
   }
+  const sites = catalogSites ?? await getTerrainDateSites(run_id, signal);
+  signal?.throwIfAborted();
+  check(byId.size === sites.length && sites.every(site => byId.has(site.id)));
+  return data;
+}
+
+export async function getCatalogRanking(
+  comparison: SiteComparison, signal?: AbortSignal, catalogSites?: readonly { id: string }[],
+): Promise<CatalogRanking> {
+  if (!comparison.ranking.every(row => comparison.coverageBySite[row.site_id] === "complete"))
+    throw new ApiError("The catalog ranking requires complete coverage for both selected sites.", 422);
+  const data = await readCatalogRanking(comparison, signal, catalogSites);
+  const byId = new Map(data.ranking.map(row => [row.site_id, row]));
   let previousRank = 0;
   for (const selected of comparison.ranking) {
     const catalog = byId.get(selected.site_id);
@@ -67,8 +79,5 @@ export async function getCatalogRanking(
       check(close(catalog[field], selected[field]));
     previousRank = catalog.rank;
   }
-  const sites = catalogSites ?? await getTerrainDateSites(run_id, signal);
-  signal?.throwIfAborted();
-  check(byId.size === sites.length && sites.every(site => byId.has(site.id)));
   return data;
 }

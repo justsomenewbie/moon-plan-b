@@ -285,6 +285,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List imported runs (run picker)
+         * @description Default run first, then most recently imported first; paginated with limit/offset.
+         */
+        get: operations["listRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3263,6 +3283,124 @@ export interface components {
             /** @description true -> no event before the run end: hours = time to the run end (a lower bound) */
             lower_bound: boolean;
         };
+        RunSummary: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description precompute = imported Colab output; custom = result of a POST /jobs
+             * @enum {string}
+             */
+            kind: "precompute" | "custom";
+            /** @description Used when a request omits run_id */
+            is_default: boolean;
+            label: string;
+            /**
+             * @description Only `ready` runs serve data (others -> 409 RUN_NOT_READY)
+             * @enum {string}
+             */
+            status: "importing" | "ready" | "failed";
+            imported_at: string | null;
+            /** @description custom runs are deleted after this instant; null = kept */
+            expires_at: string | null;
+            /** @description 16-hex hash of the computation parameters (lunarnav manifest) */
+            params_fingerprint: string;
+            /** @description lunarnav version that produced the run */
+            code_version: string;
+            git_commit: string | null;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            run_timestamp_utc: string;
+            /** @description Ephemeris method: horizons | spice | analytic | synthetic */
+            provider: string;
+            /** @description Terrain source: trek | pgda | none */
+            dem: string;
+            /** @description raymarch | bruteforce | flat */
+            horizon_method: string;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            start_utc: string;
+            /**
+             * @description EXCLUSIVE end
+             * @example 2026-01-01T00:00:00Z
+             */
+            end_utc: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            n_samples: number;
+            observer_height_m: number;
+            min_earth_clearance_deg: number;
+            rank_weights: components["schemas"]["RankWeights"];
+            site_ids: string[];
+            n_sites: number;
+        };
+        /**
+         * @example {
+         *       "default_run_id": "pf_21c3f3f6dc56b1e1",
+         *       "total": 1,
+         *       "limit": 50,
+         *       "offset": 0,
+         *       "runs": [
+         *         {
+         *           "run_id": "pf_21c3f3f6dc56b1e1",
+         *           "kind": "precompute",
+         *           "is_default": true,
+         *           "label": "Sample 2026-Q1, SPICE + PGDA raymarch (6 sites)",
+         *           "status": "ready",
+         *           "imported_at": "2026-11-14T09:00:00Z",
+         *           "expires_at": null,
+         *           "params_fingerprint": "21c3f3f6dc56b1e1",
+         *           "code_version": "0.1.0",
+         *           "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+         *           "run_timestamp_utc": "2026-11-14T00:00:00Z",
+         *           "provider": "spice",
+         *           "dem": "pgda",
+         *           "horizon_method": "raymarch",
+         *           "start_utc": "2026-01-01T00:00:00Z",
+         *           "end_utc": "2026-04-01T00:00:00Z",
+         *           "step_s": 3600,
+         *           "n_samples": 2160,
+         *           "observer_height_m": 2,
+         *           "min_earth_clearance_deg": 0,
+         *           "rank_weights": {
+         *             "pct_both": 0.3,
+         *             "pct_earth": 0.3,
+         *             "pct_sun": 0.4
+         *           },
+         *           "site_ids": [
+         *             "ref_connecting_ridge_c1",
+         *             "ref_shackleton_rim",
+         *             "a3_haworth",
+         *             "a3_de_gerlache_rim_2",
+         *             "apollo11",
+         *             "change6"
+         *           ],
+         *           "n_sites": 6
+         *         }
+         *       ]
+         *     }
+         */
+        RunsResponse: {
+            /** @description Run used when a request omits run_id (null = nothing imported yet) */
+            default_run_id: string | null;
+            /** @description Number of runs matching the filters (all pages) */
+            total: number;
+            /** @description Page size used */
+            limit: number;
+            /** @description Offset used */
+            offset: number;
+            /** @description This page: default run first, then most recently imported first */
+            runs: components["schemas"]["RunSummary"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -4661,6 +4799,69 @@ export interface operations {
             };
             /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listRuns: {
+        parameters: {
+            query?: {
+                /** @description Only runs of this kind */
+                kind?: "precompute" | "custom";
+                /** @description Only runs with this status */
+                status?: "importing" | "ready" | "failed";
+                /** @description Page size */
+                limit?: number;
+                /** @description Number of runs to skip (order: default run first, then most recently imported) */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunsResponse"];
+                };
+            };
+            /** @description Not Modified: the ETag sent in If-None-Match is current (empty body) */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
