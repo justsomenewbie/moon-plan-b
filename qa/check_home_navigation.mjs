@@ -59,7 +59,12 @@ try {
     await page.waitForURL(url => url.pathname === "/plan" && url.searchParams.get("source") === "saved-b2");
     await page.locator(".plan-results tbody tr").first().waitFor();
     assert.equal(await page.locator(".plan-results tbody tr").count(), 23);
-    assert.match(await page.locator(".plan-results tbody tr").first().innerText(), /Vikram.*162/s);
+    const table = page.locator(".plan-results table");
+    const joint = (await table.locator("thead th").allTextContents()).indexOf("Both visible (h)");
+    assert.ok(joint >= 0);
+    const first = table.locator("tbody tr").first();
+    assert.match(await first.locator("th").innerText(), /Vikram/);
+    assert.equal(await first.locator("th,td").nth(joint).innerText(), "162");
     await page.goBack();
     for (const mode of ["sites", "dates"]) {
       assert.ok(await page.locator(`#home-guide a[href="/plan?mode=${mode}"]`).isVisible());

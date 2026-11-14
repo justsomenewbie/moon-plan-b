@@ -81,12 +81,12 @@ export default function Home() {
             {[
               ["Choose your dates", "Select “I have dates”. Start on November 14 and end on November 21. The last day counted is November 20."],
               ["Choose what to compare", "Select “Sun and Earth together” and press “Find sites” to rank sites by the hours when both are visible."],
-              ["Read the map and table", "The gold diamond marks the top site. In this example, Vikram has 162 hours out of 168. Select another dot to read that site's hours."],
+              ["Read the map and table", "Find Vikram’s gold diamond on the map. In its table row, “Both visible (h)” reads 162. That is how many of the week’s 168 hours both the Sun and Earth were visible. Select another dot to see that site’s hours."],
             ].map(([title, instruction], index) => <li key={title}>
               <strong>{t(title)}</strong>
               <p>{t(instruction)}</p>
               <img src={`/images/guide/plan-step-${index + 1}-${locale}.webp`} width={640}
-                height={(locale === "vi" ? [594, 340, 880] : [510, 340, 880])[index]} alt="" loading="lazy" />
+                height={(locale === "vi" ? [594, 340, 738] : [510, 340, 654])[index]} alt="" loading="lazy" />
             </li>)}
           </ol>
         </details>
