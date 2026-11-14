@@ -200,7 +200,7 @@ export default function Navigator() {
     loadFocus.current = document.activeElement;
     setLoading(true); setPlaying(false); setMessage(""); setRetryLoad(null); setError("");
     try {
-      if (file.size > MAX_FILE_BYTES) throw new Error("Choose a JSON dataset smaller than 5 MB.");
+      if (file.size > MAX_FILE_BYTES) throw new Error("Choose a JSON dataset of 5 MiB or less.");
       const input = JSON.parse(await file.text());
       const next = input?.schema_version === "lunarnav-dataset-1" ? parseTerrainSummary(input) : validateDataset(input);
       if (generation === loadGeneration.current) {

@@ -112,22 +112,24 @@ export function validateDataset(input: unknown): Dataset {
     requireValue(!real || s.evidenceUrl !== null && sources.some((v) => refs.includes(record(v, "Source").id) && record(v, "Source").rawSha256 !== null), "Computed ephemerides need a processing-evidence URL and referenced raw-response hash.");
     const samples = list(s.samples, "samples");
     let previous = start - 1;
-    let hasMissing = false;
+    const complete = s.coverage === "complete";
     for (const item of samples) {
       const sample = record(item, "Sample"), time = utcMillis(sample.utc, "Sample timestamp");
       requireValue(time >= start && time <= end && time > previous, "Samples must be strictly increasing and inside the scenario window.");
-      if (previous >= start && time - previous > step) hasMissing = true;
+      if (complete && previous >= start) requireValue(time - previous <= step, "Complete coverage cannot skip a scheduled sample.");
       previous = time;
       for (const body of ["sun", "earth"]) {
-        if (sample[body] === null) { hasMissing = true; continue; }
+        if (sample[body] === null) {
+          requireValue(!complete, "Complete coverage requires non-null Sun and Earth observations at every sample.");
+          continue;
+        }
         const angles = record(sample[body], body);
         number(angles.elevationDeg, `${body} elevation`, -90, 90);
         requireValue(number(angles.azimuthDeg, `${body} azimuth`, 0, 360) < 360, "Azimuth must be below 360 degrees.");
       }
     }
-    const complete = s.coverage === "complete";
     if (complete) {
-      requireValue(samples.length >= 2 && !hasMissing && utcMillis(record(samples[0], "Sample").utc) === start && previous === end, "Complete coverage requires non-null samples at both window boundaries.");
+      requireValue(samples.length >= 2 && utcMillis(record(samples[0], "Sample").utc) === start && previous === end, "Complete coverage requires samples at both window boundaries.");
       const m = record(s.metrics, "Complete scenario metrics");
       const sun = number(m.sunAboveHours, "Sun hours", 0, hours), earth = number(m.earthAboveHours, "Earth hours", 0, hours);
       const joint = number(m.simultaneousLongestHours, "Longest joint hours", 0, Math.min(sun, earth));
