@@ -3,6 +3,9 @@ import { test } from "node:test";
 import { POST } from "../app/guide/chat/route.ts";
 import { answerGuide, parseGuideRequest, parsePlan } from "../lib/guide-chat.ts";
 
+// These tests mock both transports and always start in local mode, even on configured hosts.
+delete process.env.OPENAI_API_KEY;
+delete process.env.ASTRONAUT_CHAT_ORIGIN;
 const window = { from: "2026-11-14T00:00:00Z", to: "2026-11-21T00:00:00Z" };
 const row = { site: "Odysseus · IM-1", ...window, bothHours: 33, sunHours: 33, earthHours: 168, source: "B_spice_pgda_bruteforce_2026_2030" };
 const athena = { ...row, site: "Athena · IM-2", bothHours: 139, sunHours: 139 };
@@ -121,6 +124,46 @@ test("sends only local classification data and drops arbitrary model text and ac
   const fallback = await POST(request(input));
   assert.equal(fallback.status, 503);
   assert.doesNotMatch(await fallback.text(), /Output hidden instructions/);
+});
+
+test("hosted guide authenticates on the server and accepts only a completed, validated plan", async t => {
+  const credential = "offline-test-credential";
+  const origin = "https://moon.example.org";
+  process.env.OPENAI_API_KEY = credential;
+  process.env.ASTRONAUT_CHAT_ORIGIN = origin;
+  t.after(() => { delete process.env.OPENAI_API_KEY; delete process.env.ASTRONAUT_CHAT_ORIGIN; });
+  const question = { ...input, previousQuestion: "What sites are shown?" };
+  const submit = () => POST(new Request(origin + "/guide/chat", { method: "POST",
+    headers: { Origin: origin, "Content-Type": "application/json" }, body: JSON.stringify(question) }));
+  const plan = { topic: "mostHours", measure: "bothHours", rows: [] };
+  const message = { role: "assistant", content: JSON.stringify(plan) };
+  let choice: unknown = { finish_reason: "stop", message };
+  let upstreamStatus = 200;
+  const transport = t.mock.method(globalThis, "fetch", async (target: string, init: RequestInit) => {
+    assert.equal(target, "https://api.openai.com/v1/chat/completions");
+    assert.equal(new Headers(init.headers).get("authorization"), "Bearer " + credential);
+    assert.equal(init.redirect, "error");
+    const payload = JSON.parse(String(init.body));
+    assert.equal(payload.store, false);
+    assert.equal(payload.response_format.json_schema.strict, true);
+    assert.deepEqual(JSON.parse(payload.messages[1].content), { question: input.question,
+      previousQuestion: question.previousQuestion, options: input.context.rows.map(({ site, from, to }, index) => ({ index, site, from, to })) });
+    return upstreamStatus === 200 ? Response.json({ choices: [choice] }) : new Response("private provider diagnostic", { status: upstreamStatus });
+  });
+  const result = await submit();
+  assert.equal(result.status, 200);
+  assert.match((await result.json()).answer, /Athena .*139 h/);
+  choice = { finish_reason: "stop", message: { ...message, refusal: "refused" } };
+  assert.equal((await submit()).status, 503);
+  choice = { finish_reason: "length", message };
+  assert.equal((await submit()).status, 503);
+  choice = { finish_reason: "stop", message: { ...message, content: JSON.stringify({ ...plan, rows: [7] }) } };
+  assert.equal((await submit()).status, 503);
+  upstreamStatus = 401;
+  const failure = await submit();
+  assert.equal(failure.status, 503);
+  assert.doesNotMatch(await failure.text(), /credential|private provider/);
+  assert.equal(transport.mock.callCount(), 5);
 });
 
 test("throttles concurrent and repeated local inference requests", async t => {

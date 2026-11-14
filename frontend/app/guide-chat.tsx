@@ -12,7 +12,7 @@ const copy = {
   en: {
     title: "Ask the astronaut", source: "Use data from", saved: "Saved comparison", workspace: "Current workspace", pair: "Displayed site pair",
     kinds: { saved: "Saved team model", terrain: "Terrain model", scenario: "Supplied scenario", synthetic: "Simulated example", unavailable: "No shareable observation summary" },
-    summary: "See UTC ranges and hours", sourceId: "Source", privacy: "Sending shares your question, the previous question if any, and the selected summary with this site's server. Planning questions check the requested dates against the team backend. Your file stays on your device.",
+    summary: "See UTC ranges and hours", sourceId: "Source", privacy: "Sending shares your question, the previous question if any, and the selected summary with this site's server. When this server uses OpenAI, it sends your question, the previous question and the site names and dates to OpenAI. Planning questions use the team backend. Your file stays on your device.",
     hours: "Hours visible · Sun / Earth / both", unknown: "unknown", invalid: "Edit the question and send it again.", prompt: "Your question", send: "Send", cancel: "Cancel", reset: "Clear chat", retry: "Try again",
     waiting: "The astronaut is thinking…", failed: "The guide couldn’t answer. You can try again or use the questions below.",
     offline: "The model is unavailable. You can still use the questions below.", slow: "The guide timed out. Try again.", limited: "The guide is busy. Please try again shortly.",
@@ -21,7 +21,7 @@ const copy = {
   vi: {
     title: "Hỏi phi hành gia", source: "Chọn dữ liệu để hỏi", saved: "Kết quả đã lưu", workspace: "Dữ liệu đang xem", pair: "Cặp địa điểm đang so sánh",
     kinds: { saved: "Kết quả mô hình đã lưu", terrain: "Mô hình địa hình", scenario: "Kịch bản đã tải", synthetic: "Dữ liệu mô phỏng", unavailable: "Chưa có dữ liệu quan sát phù hợp để gửi" },
-    summary: "Xem khoảng thời gian UTC và số giờ", sourceId: "Nguồn", privacy: "Khi bạn bấm Gửi, máy chủ của trang nhận câu hỏi, câu hỏi ngay trước đó (nếu có) và phần dữ liệu tóm tắt đã chọn. Câu hỏi lập kế hoạch tra ngày đã chọn trên máy chủ của nhóm. Tệp gốc vẫn nằm trên thiết bị của bạn.",
+    summary: "Xem khoảng thời gian UTC và số giờ", sourceId: "Nguồn", privacy: "Khi bạn bấm Gửi, máy chủ của trang nhận câu hỏi, câu hỏi ngay trước đó (nếu có) và phần dữ liệu tóm tắt đã chọn. Khi dùng OpenAI, máy chủ gửi cho OpenAI câu hỏi hiện tại, câu hỏi trước đó, tên địa điểm và khoảng ngày. Câu hỏi lập kế hoạch dùng máy chủ của nhóm. Tệp gốc vẫn nằm trên thiết bị của bạn.",
     hours: "Số giờ nhìn thấy · Mặt Trời / Trái Đất / cả hai", unknown: "chưa xác định", invalid: "Hãy sửa câu hỏi rồi gửi lại.", prompt: "Câu hỏi của bạn", send: "Gửi", cancel: "Hủy", reset: "Xóa cuộc trò chuyện", retry: "Thử lại",
     waiting: "Phi hành gia đang suy nghĩ…", failed: "Chưa có câu trả lời. Bạn có thể thử lại hoặc chọn một câu hỏi bên dưới.",
     offline: "Mô hình hiện chưa hoạt động. Bạn vẫn có thể chọn một câu hỏi bên dưới.", slow: "Đã hết thời gian chờ. Hãy thử lại.", limited: "Phi hành gia đang bận. Bạn vui lòng thử lại sau.",

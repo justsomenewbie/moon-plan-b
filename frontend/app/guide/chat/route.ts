@@ -42,8 +42,8 @@ export async function POST(request: Request) {
       return reply(answerGuide(input, plan), 200);
     } catch {
       return deadline.aborted
-        ? reply({ error: "The local guide did not respond in time." }, 504)
-        : reply({ error: "The local guide is unavailable." }, 503);
+        ? reply({ error: "The guide did not respond in time." }, 504)
+        : reply({ error: "The guide is unavailable." }, 503);
     }
   } finally { inFlight--; }
 }

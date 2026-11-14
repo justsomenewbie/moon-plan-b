@@ -22,9 +22,9 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The astronaut waves, greets on opening and glances sideways while answering. Pause and reduced motion use still expressions. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [Local Ollama](README.md#ask-the-astronaut).
+The astronaut waves, greets on opening and glances sideways while answering. Pause and reduced motion use still expressions. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [OpenAI/Ollama configuration](README.md#ask-the-astronaut).
 
-**Plan and data:** The public FE relays queries to the team API. B2 covers 23 sites and 43,824 hourly samples per site. [Archive](docs/B2_VISIBILITY_ARCHIVE.md), source catalog and manifests are available via /data. Live and offline /plan use the reported run. On November 14–21 Odysseus saw both bodies for 47 h on B2 and 33 h on historical B; Athena saw both for 139 h on each. Chrome verified live and archived searches. Download, import, print and NASA globe controls retain their evidence.
+**Plan and data:** The public FE relays queries to the team API. B2 covers 23 sites and 43,824 hourly samples per site. [Archive](docs/B2_VISIBILITY_ARCHIVE.md), source catalog and manifests are available via /data. Live and offline /plan use the reported run. On November 14–21 Odysseus saw both bodies for 47 h on B2 and 33 h on historical B; Athena saw both for 139 h on each. Downloads and NASA credits remain traceable.
 
 ## Pending
 
