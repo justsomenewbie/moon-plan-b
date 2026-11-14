@@ -47,7 +47,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   const period = from + " → " + to + tr(" (exclusive)", " (không gồm mốc cuối)");
   if (!plan.longestJoint && hasPlanningQualifications(plan.siteText)) {
     href = plannerHref({ ...plan, missionHours: null }, undefined, selected ?? (api.online ? undefined : fallback));
-    return reply(tr("The chat search ranks only total Sun, Earth or joint visibility. Open the planner to check your additional conditions for ", "Chat chỉ xếp hạng theo tổng thời gian thấy Mặt Trời, Trái Đất hoặc cả hai. Hãy mở công cụ lập kế hoạch để kiểm tra điều kiện bổ sung cho ") + period + ".");
+    return reply(tr("I can compare total visibility or the longest uninterrupted joint window. Your additional conditions need a separate check for ", "Mình có thể so sánh tổng thời gian quan sát hoặc khoảng liên tục dài nhất cùng thấy Mặt Trời và Trái Đất. Các điều kiện bổ sung cần được kiểm tra riêng cho ") + period + ".");
   }
   if ((plan.mode === "dates" || plan.missionHours !== null) && (!Number.isSafeInteger(plan.missionHours) || !plan.missionHours || plan.missionHours < 1 || plan.missionHours > span)) return reply(tr(
     "How many hours should the mission last? Choose a whole number of hours within " + period + ".",

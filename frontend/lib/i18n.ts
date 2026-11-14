@@ -344,6 +344,7 @@ export const vietnamese: Record<string, string> = {
   "Scenario dataset": "Dữ liệu theo kịch bản",
   "Contains sites, scenarios, UTC observation samples and source metadata.": "Tệp chứa các địa điểm, kịch bản, mẫu quan sát có mốc thời gian UTC và thông tin về nguồn dữ liệu.",
   "Terrain dataset": "Kết quả mô hình địa hình",
+  "The duration criterion verdict contradicts the longest joint interval and model step.": "Kết luận về thời lượng không khớp với khoảng quan sát đồng thời dài nhất và bước thời gian của mô hình.",
   "Use a terrain-model export with its run, evaluated time range, sites and visibility results.": "Tệp cần có thông tin về lần chạy mô hình, khoảng thời gian đã tính, các địa điểm và kết quả cho biết khi nào nhìn thấy Mặt Trời hoặc Trái Đất.",
   "Select Choose JSON file, then pick the export from your device.": "Bấm “Chọn tệp JSON” rồi chọn tệp trên thiết bị.",
   "Valid data opens in the observation workspace. If a file is rejected, read the reason and choose a corrected export.": "Nếu tệp hợp lệ, dữ liệu sẽ xuất hiện trong phần so sánh. Nếu có lỗi, hãy đọc thông báo, sửa tệp rồi chọn lại.",
