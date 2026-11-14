@@ -1745,7 +1745,7 @@ export interface operations {
                 criteria_hours?: string;
                 /** @description Comma separated parts of each site to return: horizon, series, windows, metrics, criteria, pointing, survival_hint (default: horizon,series,windows,metrics,criteria; pointing and survival_hint are opt-in). Omitted parts are absent from sites[]. pointing -> sites[].now = where to point the solar panel and the antenna at range.start (same block as GET /sites/{site_id}/pointing); survival_hint -> sites[].survival_hint = the longest dark period of the range and the battery a night_load_w load needs to bridge it. */
                 include?: string;
-                /** @description Reference load while the Sun is hidden, W (include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival. */
+                /** @description Reference load while the Sun is hidden, W, >= 0 (as POST /mission/survival night_load_w; include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival. */
                 night_load_w?: number;
             };
             header?: never;

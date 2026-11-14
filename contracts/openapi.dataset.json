@@ -115,13 +115,13 @@
           {
             "schema": {
               "type": "number",
-              "exclusiveMinimum": 0,
+              "minimum": 0,
               "maximum": 1000000
             },
             "in": "query",
             "name": "night_load_w",
             "required": false,
-            "description": "Reference load while the Sun is hidden, W (include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival."
+            "description": "Reference load while the Sun is hidden, W, >= 0 (as POST /mission/survival night_load_w; include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival."
           }
         ],
         "responses": {
@@ -2444,7 +2444,7 @@
             "anyOf": [
               {
                 "type": "number",
-                "exclusiveMinimum": 0
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -2865,7 +2865,7 @@
             "anyOf": [
               {
                 "type": "number",
-                "exclusiveMinimum": 0
+                "minimum": 0
               },
               {
                 "type": "null"
