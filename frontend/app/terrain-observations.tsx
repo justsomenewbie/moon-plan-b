@@ -120,11 +120,11 @@ function SiteObservations({ site, range, sample }: { site: Site; range: Range; s
   </>;
 }
 
-export default function TerrainObservations({ result, siteIndex, sample, onSelect, onSelectSite, live, reducedMotion }: {
+export default function TerrainObservations({ result, siteIndex, sample, onSelect, onSelectSite, fallbackUtc, live, reducedMotion }: {
   result: TerrainSummary; siteIndex: number; sample: number; live: boolean; reducedMotion: boolean;
-  onSelect: (siteIndex: number, sample: number) => void; onSelectSite: (index: number) => void;
+  onSelect: (siteIndex: number, sample: number) => void; onSelectSite: (index: number) => void; fallbackUtc?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [clearance, setClearance] = useState(0);
   const [playingSite, setPlayingSite] = useState<number | null>(null);
   const playing = playingSite === siteIndex;
@@ -158,6 +158,9 @@ export default function TerrainObservations({ result, siteIndex, sample, onSelec
       <select value={site.id} onChange={event => chooseSite(event.currentTarget.selectedIndex)}>
         {result.sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
       </select></label> : <p className={styles.screenSite}>{site.name}</p>}
+    {fallbackUtc && <p role="status" className="muted text-sm">{locale === "vi"
+      ? <>Tại {site.name}, không có mẫu cho thời điểm {utc(fallbackUtc)}. {at ? `Đang hiển thị mẫu đầu tiên, lúc ${utc(at)}.` : "Không có mẫu nào trong khoảng đã chọn."}</>
+      : <>{site.name} has no sample at {utc(fallbackUtc)}. {at ? `Showing the first available sample at ${utc(at)}.` : "No samples are available in the selected range."}</>}</p>}
     {a && current && at && offset !== undefined ? <>
       <div className="print:hidden">
         <Timeline a={a} b={b} mode="sites" offset={offset} clearanceDeg={clearance} angularOnly />

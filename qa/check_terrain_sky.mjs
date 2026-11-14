@@ -90,11 +90,18 @@ try {
   const start = "2026-11-15T00:00:00Z", one = "2026-11-15T01:00:00Z", two = "2026-11-15T02:00:00Z";
   const sparse = terrainFixture({ run: "partial-utc-test", start, at: one, end: "2026-11-15T04:00:00Z" });
   sparse.sites[1].series.t = [one, two];
+  const empty = { ...sparse.sites[0], id: "no_observations", name: "Site without samples", coverage: "missing", coverage_in_range: "missing" };
+  delete empty.series;
+  delete empty.horizon;
+  delete sparse.criteria_hours;
+  sparse.include = sparse.include.filter(section => section !== "criteria");
+  sparse.sites.push(empty);
   await page.getByRole("button", { name: "Nhập dữ liệu", exact: true }).click();
   await page.locator("#import-dialog input[type=file]").setInputFiles({
     name: "partial-utc-test.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(sparse)),
   });
   const clock = page.locator("#terrain-sample-utc");
+  const notice = page.locator("#terrain-observations > [role=status]");
   const sparseSite = page.locator("#terrain-observations > label select");
   const sparseSample = page.locator('#terrain-observations .slider-label input');
   await page.waitForFunction(utc => document.querySelector("#terrain-sample-utc")?.getAttribute("datetime") === utc, start);
@@ -102,10 +109,23 @@ try {
   await sparseSite.selectOption("im2_athena");
   assert.equal(await clock.getAttribute("datetime"), one);
   assert.equal(await sparseSample.inputValue(), "0");
+  assert.equal(await notice.count(), 0);
   await sparseSample.press("ArrowRight");
   assert.equal(await clock.getAttribute("datetime"), two);
   await sparseSite.selectOption("im1_odysseus");
   assert.equal(await clock.getAttribute("datetime"), start);
+  assert.match(await notice.innerText(), /không có mẫu.*02:00:00 UTC.*mẫu đầu tiên.*00:00:00 UTC/);
+  await page.locator(".language-switch select").first().selectOption("en");
+  assert.match(await notice.innerText(), /no sample at .*02:00:00 UTC.*first available sample at .*00:00:00 UTC/);
+  await sparseSample.press("ArrowRight");
+  assert.equal(await notice.count(), 0);
+  await sparseSite.selectOption("no_observations");
+  assert.match(await notice.innerText(), /no sample at .*01:00:00 UTC.*No samples are available/);
+  assert.equal(await clock.count(), 0);
+  await page.locator(".language-switch select").first().selectOption("vi");
+  assert.match(await notice.innerText(), /không có mẫu.*01:00:00 UTC.*Không có mẫu nào trong khoảng/);
+  await sparseSite.selectOption("im2_athena");
+  assert.equal(await notice.count(), 0);
   assert.deepEqual(errors, []);
   console.log("Live sky: both sites, exact UTC and four producer angles per site, overlay, clearance, sample slider, ribbon, HUD, sample table and lunar globe passed.");
 } finally { await browser.close(); }
