@@ -6,7 +6,7 @@ import { planningIntent, type PlanningIntent } from "../lib/guide-planning";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import type { DisplayedPair } from "./terrain-pair";
 import { answerWorkspacePlanning } from "../lib/guide-workspace-planning";
-import { answerPlanning, type PlanningSource } from "../lib/api/guide-planning";
+import { answerPlanning, type PlanningAnswer, type PlanningSource } from "../lib/api/guide-planning";
 import { useLanguage } from "./language";
 import styles from "./guide-chat.module.css";
 
@@ -35,7 +35,7 @@ export type GuideDestination = string | (() => void);
 export type GuideActions = Partial<Record<GuideAction, GuideDestination>>;
 export type GuideScope = "saved" | "workspace" | "pair";
 type Props = { planningSource?: PlanningSource; scope: GuideScope; savedPlanning: boolean; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; workspaceEvidence?: TerrainSummary | null; pair?: DisplayedPair; savedActions: GuideActions; workspaceActions?: GuideActions };
-type Turn = GuideReply & { question: string; plan?: PlanningIntent; href?: string };
+type Turn = GuideReply & { question: string; plan?: PlanningIntent; href?: string } & Pick<PlanningAnswer, "siteChoices" | "choiceSource">;
 
 export default function GuideChat({ planningSource, scope, savedPlanning, onChoice, saved, workspace, workspaceEvidence, pair, savedActions, workspaceActions }: Props) {
   const { locale } = useLanguage();
@@ -96,10 +96,10 @@ function Conversation({ context, actions, source, localScope, evidence }: {
     setError(null);
     try {
       const previous = turns.at(-1);
-      const plan = planningIntent(text, previous?.plan);
-      let reply: GuideReply & { plan?: PlanningIntent; href?: string };
+      const plan = planningIntent(text, previous?.plan, previous?.siteChoices);
+      let reply: Omit<Turn, "question">;
       if (plan && localScope) reply = { ...answerWorkspacePlanning(plan, locale, context, evidence), plan };
-      else if (plan) reply = { ...await answerPlanning(plan, locale, controller.signal, undefined, source), plan, action: null };
+      else if (plan) reply = { ...await answerPlanning(plan, locale, controller.signal, undefined, source ?? (plan.continuesSiteChoice ? previous?.choiceSource : undefined)), plan, action: null };
       else reply = await askGuide({ locale, question: text, previousQuestion: previous?.question, context }, controller.signal);
       if (request.current !== controller || controller.signal.aborted) return;
       setTurns(old => [...old.slice(-3), { question: text, ...reply }]);

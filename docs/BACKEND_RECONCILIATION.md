@@ -42,7 +42,7 @@ These values were independently counted from the public producer aggregate windo
 
 Two production exports cover Odysseus for November 14–21, 2026 UTC. A2 reports 42 hours of simultaneous Sun and Earth visibility, from November 19 at 06:00 until November 21 at 00:00. B2 reports 47 hours starting November 19 at 01:00. Both report 168 hours of Earth visibility. Use the [A2 aggregate](https://moon-plan-b.vercel.app/api/v1/dataset?run_id=A2_horizons_trek_raymarch_2026_2030_fix676af9d&site_ids=im1_odysseus&start=2026-11-14T00%3A00%3A00Z&end=2026-11-21T00%3A00%3A00Z&include=windows%2Cmetrics%2Ccriteria&criteria_hours=24%2C72%2C168) and the [equivalent B2 request](https://moon-plan-b.vercel.app/api/v1/dataset?run_id=B2_spice_pgda_bruteforce_2026_2030_fix676af9d&site_ids=im1_odysseus&start=2026-11-14T00%3A00%3A00Z&end=2026-11-21T00%3A00%3A00Z&include=windows%2Cmetrics%2Ccriteria&criteria_hours=24%2C72%2C168) to reproduce the comparison.
 
-The astronaut previously answered a question about the imported A2 file using the default B2 catalog. The current workspace and displayed pair now scope dated planning questions to the selected evidence in the browser. The user can open the full planner separately.
+The astronaut previously answered a question about the imported A2 file using the default B2 catalog. The current workspace and displayed pair now scope dated planning questions to the selected evidence in the browser. The user can open the full planner separately. When a question names two sites, the guide asks which one to use. Choosing a site preserves the requested UTC dates, visit length and model. The [bilingual import test](../qa/check_guide_imported_planning.mjs) verifies this with a separate source run while the API is unavailable.
 
 ### Live run directory and Earth visibility
 
@@ -201,4 +201,4 @@ Question text and imported labels are untrusted. The model has no tools, externa
 
 ## Current integration scope
 
-The live aggregate, alternate-date search, time-based appearance, credited reference globe and source-scoped astronaut planning are available in the frontend. Site-specific terrain close-ups remain a proposal. Engineering estimates for batteries, panel output and antenna pointing are provisional. The data team owns Colab execution and the science team owns independent model validation.
+The live aggregate, alternate-date search, time-based appearance, credited reference globe and source-scoped astronaut planning are available in the frontend. The planner inspector opens LROC imagery and elevation relief at the selected coordinates. The comparison globe uses reference imagery. Visibility comes from the selected producer run. Engineering estimates for batteries, panel output and antenna pointing are provisional. The data team owns Colab execution and the science team owns independent model validation.

@@ -19,6 +19,50 @@ const run: PlannerRun = { runId: "fixture-run", start: "2026-01-01T00:00:00Z", e
 const unintended = async () => { throw Error("Unexpected lookup"); };
 const api = { online: true, run: async () => run, ranking: unintended, missionRanking: unintended, observation: unintended, dates: unintended };
 
+test("English and Vietnamese site clarifications retain travel bounds, duration, priority and the saved source", async () => {
+  for (const [locale, question] of [
+    ["en", "When should I visit Odysseus or Athena for 6 hours of sunlight from 2026-11-14 to 2026-11-21?"],
+    ["vi", "Khi nào nên đi Odysseus hoặc Athena 6 giờ có ánh sáng Mặt Trời từ 2026-11-14 đến 2026-11-21?"],
+  ] as const) {
+    let plan = planningIntent(question)!;
+    let answer = await answerPlanning(plan, locale, signal, api, "saved-b2");
+    const offered = ["im1_odysseus", "im2_athena"];
+    assert.deepEqual(answer.siteChoices?.map(site => site.id).sort(), offered);
+    for (const uncertain of ["Odysseus or Athena", "Plato"]) {
+      plan = planningIntent(uncertain, plan, answer.siteChoices)!;
+      answer = await answerPlanning(plan, locale, signal, api, answer.choiceSource);
+      assert.deepEqual(answer.siteChoices?.map(site => site.id).sort(), offered);
+    }
+    const next = planningIntent("Athena", plan, answer.siteChoices)!;
+    assert.deepEqual([next.mode, next.priority, next.from, next.to, next.missionHours], ["dates", "sun", "2026-11-14", "2026-11-21", 6]);
+    const result = await answerPlanning(next, locale, signal, api, answer.choiceSource);
+    assert.match(result.answer, /IM-2 Athena/);
+    assert.doesNotMatch(result.answer, /Odysseus/);
+    const params = new URL(result.href, "https://example.org").searchParams;
+    assert.deepEqual([params.get("site"), params.get("source"), params.get("missionHours"), params.get("priority")], ["im2_athena", "saved-b2", "6", "sun"]);
+    assert.equal(result.siteChoices, undefined);
+    const unrelated = planningIntent("Where should I go from 2027-03-01 to 2027-03-04?", plan, answer.siteChoices)!;
+    assert.equal(unrelated.continuesSiteChoice, undefined);
+    assert.equal(unrelated.missionHours, null);
+  }
+});
+
+test("live disambiguation uses the offered release after the default changes", async () => {
+  const plan = planningIntent("When can I visit Apollo for 4 hours from 2026-11-14 to 2026-11-21?")!;
+  const offered = await answerPlanning(plan, "en", signal, api);
+  assert.deepEqual(offered.siteChoices?.map(site => site.id), ["apollo11", "apollo15"]);
+  assert.equal(offered.choiceSource, run);
+  const next = planningIntent("Apollo 15", plan, offered.siteChoices)!;
+  assert.equal(next.continuesSiteChoice, true);
+  const result = await answerPlanning(next, "en", signal, { ...api, run: unintended, dates: async query => {
+    assert.equal(query.site_id, "apollo15");
+    assert.equal(query.run_id, run.runId);
+    return { candidates: [] } as unknown as AltDatesResponse;
+  } }, offered.choiceSource);
+  assert.match(result.answer, /No qualifying model window/);
+  assert.equal(new URL(result.href, "https://example.org").searchParams.get("run_id"), run.runId);
+});
+
 test("an explicit EN or VI travel window never uses last week's displayed rows", async () => {
   for (const locale of ["en", "vi"] as const) {
     const question = examples[locale], intent = planningIntent(question)!;

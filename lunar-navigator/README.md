@@ -2,12 +2,11 @@
 
 **Team Moon Plan B · NASA Space Apps Challenge 2026**
 
-Ranks lunar south-pole landing sites by how long they see the **Sun** (power) and the **Earth** (radio link),
-using the real terrain horizon of each site and NASA data.
+Ranks lunar landing sites by how long they can see the **Sun** and the **Earth**. In [run B2](../frontend/public/data/run-b2/catalog.json), 18 sites use a terrain horizon and five use a smooth-sphere horizon outside elevation-map coverage. Visibility alone cannot predict electrical power or radio performance.
 
 | | |
 |---|---|
-| 🌐 Web app | https://lunavigator.com |
+| 🌐 Web app | [Open the live planner](https://moon-plan-b.vercel.app/plan) |
 | 🔌 Live API | https://api.lunavigator.com/api/v1/health (other routes need an API key) |
 | 📄 License | [MIT](LICENSE) · [third-party notices](THIRD_PARTY_NOTICES.md) |
 | 🤖 AI use | [docs/AI_DISCLOSURE.md](docs/AI_DISCLOSURE.md) |
@@ -29,7 +28,7 @@ flowchart LR
   D --> E[Web app<br/>Next.js]
 ```
 
-1. `lunarnav` computes Sun/Earth positions and each site's terrain horizon, then visibility hour by hour.
+1. `lunarnav` computes Sun/Earth positions and hourly visibility using the horizon model recorded for each site.
 2. The results are checked (`lunarnav check`) and imported into the API.
 3. The web app (`frontend/` in the team repo) reads them through the API.
 
@@ -60,7 +59,7 @@ Details: [VALIDATION.md](docs/VALIDATION.md) · [VALIDATION_TERRAIN.md](docs/VAL
 | **Creativity** | Sun **and** Earth visibility together, from real terrain, every hour for 5 years. A "Plan B" date finder for launch slips. Two independent pipelines (Horizons + Moon Trek vs SPICE + PGDA) check each other. Plain-language panel and antenna pointing. |
 | **Validity** | Real physics: apparent Sun/Earth positions, terrain horizon out to 150 km, lunar curvature, 2 m mast. Checked against NASA: Horizons vs SPICE 0.002″, 0 % sun in all 30 shadowed-crater test pixels, median 3.9 points vs NASA illumination maps, hand checks in Horizons, QuickMap and Moon Trek. 441 Python and 426 API tests. Every run is reproducible (checksums in `manifest.json`). Limits are stated (±1 h timing, DEM resolution). |
 | **Relevance** | Answers the challenge directly: compare sites and dates, show the Sun and Earth against the horizon, assess power and direct-to-Earth comms. NASA data are the core input: Horizons, Moon Trek and QuickMap from the challenge Resources, plus NASA GSFC PGDA and NAIF SPICE. |
-| **Presentation** | Live web app (https://lunavigator.com), live API, this short README and the step-by-step guide. |
+| **Presentation** | [Live planner](https://moon-plan-b.vercel.app/plan), live API, this short README and the step-by-step guide. |
 
 ## Run it locally
 

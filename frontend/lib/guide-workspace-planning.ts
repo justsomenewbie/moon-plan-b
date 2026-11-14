@@ -39,7 +39,8 @@ export function answerWorkspacePlanning(plan: PlanningIntent, locale: "en" | "vi
     if (!validDay(plan.from) || !validDay(plan.to) || plan.dateProblem || from >= to || hasPlanningQualifications(plan.siteText) ||
         (plan.missionHours !== null && plan.missionHours !== span) || (plan.mode === "dates" && plan.missionHours === null)) return reply(available, "workspace");
     const named = matchSites(plan.siteText, [...new Set(context.rows.map(row => row.site))].map(name => ({ id: name, name })));
-    if (named.length > 1 || (!named.length && (plan.mode !== "sites" || !allSites.test(plan.siteText)))) return reply(available, "workspace");
+    if (named.length > 1) return { ...reply(available, "workspace"), siteChoices: named };
+    if (!named.length && (plan.mode !== "sites" || !allSites.test(plan.siteText))) return reply(available, "workspace");
     const exact = context.rows.filter(row => Date.parse(row.from) === Date.parse(from) && Date.parse(row.to) === Date.parse(to) && (!named.length || row.site === named[0].name));
     if (!exact.length || new Set(exact.map(row => row.site)).size !== exact.length) return reply(available, "workspace");
     const field = metric[plan.priority];
@@ -72,7 +73,7 @@ export function answerWorkspacePlanning(plan: PlanningIntent, locale: "en" | "vi
       duration > spanHours || duration * 3600 % retained.range.step_s !== 0) return scoped(tr("Give one whole mission duration in hours that fits the requested dates and model step.", "Hãy chọn một thời lượng nhiệm vụ tính bằng số giờ nguyên, vừa khoảng ngày và phù hợp bước thời gian của mô hình."));
 
   const matches = matchSites(plan.siteText, retained.sites);
-  if (matches.length > 1) return scoped(tr("Which of these retained sites should I use? ", "Bạn muốn sử dụng địa điểm nào đã lưu? ") + matches.map(s => s.name).join(" · "));
+  if (matches.length > 1) return { ...scoped(tr("Which of these retained sites should I use? ", "Bạn muốn sử dụng địa điểm nào đã lưu? ") + matches.map(s => s.name).join(" · ")), siteChoices: matches };
   if (!matches.length && (plan.mode !== "sites" || !allSites.test(plan.siteText))) return scoped(
     tr("Which retained site should I check? Available sites: ", "Bạn muốn kiểm tra địa điểm nào đã lưu? Các địa điểm có dữ liệu: ") + retained.sites.map(s => s.name).join(" · "));
   const sites = matches.length ? retained.sites.filter(s => s.id === matches[0].id) : retained.sites;

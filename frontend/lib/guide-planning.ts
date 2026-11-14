@@ -1,8 +1,9 @@
 // Keep UTC dates in the visitor's words. A language-model classification must never supply a missing year or a different window.
 export type PlanningMode = "sites" | "dates" | "observation";
+export type PlanningSite = { id: string; name: string };
 export type PlanningIntent = {
   mode: PlanningMode; from: string | null; to: string | null; missionHours: number | null;
-  priority: "joint" | "sun" | "earth"; siteText: string; dateProblem: boolean;
+  priority: "joint" | "sun" | "earth"; siteText: string; dateProblem: boolean; continuesSiteChoice?: true;
 };
 const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 const monthPattern = months.map(m => m.slice(0, 3) + "(?:" + m.slice(3) + ")?").join("|");
@@ -42,7 +43,7 @@ const durationPattern = new RegExp("(?<![\\p{L}\\d.,])(" + amount + ")\\s*[- ]?\
 const durationRangePrefix = new RegExp("(?<![\\p{L}\\d])(?:" + amount + ")\\s+(?:to|or|hoặc|đến|tới)$"
   + "|(?:between|giữa)\\s+(?:" + amount + ")\\s+(?:and|và)$", "u");
 
-export function planningIntent(question: string, previous?: PlanningIntent): PlanningIntent | null {
+export function planningIntent(question: string, previous?: PlanningIntent, siteChoices?: readonly PlanningSite[]): PlanningIntent | null {
   const q = question.trim().toLowerCase().normalize("NFC");
   const dates = calendarDays(q);
   const mentionsDate = dates.length > 0 || /\b20\d{2}\b|\d\s*\/\s*\d|tháng\s+\d|\b(?:today|tomorrow|next week)\b|ngày mai|hôm nay|tuần tới/.test(q)
@@ -57,7 +58,11 @@ export function planningIntent(question: string, previous?: PlanningIntent): Pla
   const aboutSource = /\b(?:source|provenance|who computed|how was|where did)\b|nguồn|tính bằng cách nào/.test(q);
   const unrelated = /\b(weather|hotel|restaurant|flight to|football|ticket|disney|stock)\b|khách sạn|vé máy bay|thời tiết|nhà hàng/.test(q);
   if (miss || unrelated || informational || aboutSource || /[?;]\s*\S|\b(?:and|or)\s+(?:wh(?:at|ich|ere|en|y)|how|can|is|does)\b/.test(q) || /\b(?:switch|open)\b.{0,20}\b(?:mode|comparison)\b|chuyển sang/.test(q)) return null;
-  const followup = previous && !when && !where && !visiting && (mentionsDate || duration || (previous.mode !== "sites" && q.split(/\s+/).length <= 5 && !/[?]/.test(q)));
+  const choiceReply = Boolean(previous && siteChoices?.length && !when && !where && !(visiting && mentionsDate));
+  const choices = choiceReply && siteChoices ? matchSites(question, siteChoices) : [];
+  const followup = previous && (choiceReply && (choices.length || q.split(/\s+/).length <= 5 && !q.includes("?")) ||
+    !when && !where && !visiting && (mentionsDate || duration || (previous.mode !== "sites" && q.split(/\s+/).length <= 5 && !/[?]/.test(q))));
+  const continuesSiteChoice = Boolean(followup && choiceReply);
   const specificWhere = /\b(?:best site|which (?:site|location) (?:is |would be )?best)\b|địa điểm nào (?:oke|ok|ổn|tốt)|nơi nào (?:phù hợp|ổn|tốt)/.test(q);
   if (!(when || where && (mentionsDate || visiting || specificWhere) || visiting && mentionsDate || mentionsDate && /sun|earth|visibility|lunar|moon|mặt trời|trái đất|mặt trăng|thấy/.test(q) || followup)) return null;
   const namedObservation = !visiting && !where && !when && mentionsDate && !/\b(?:where|which|best site)\b|địa điểm|nơi nào/.test(q);
@@ -83,8 +88,14 @@ export function planningIntent(question: string, previous?: PlanningIntent): Pla
     const ambiguous = durations.length > 1 || durationRangePrefix.test(before) || /(?:[\d\p{L}]\s*[-–—]$|(?:twenty|thirty|forty|fifty|mươi|mười)$)/u.test(before);
     missionHours = ambiguous ? 0 : count * multiplier;
   }
+  let siteText = question;
+  if (previous && continuesSiteChoice) {
+    // A reply narrows the offered sites. Unknown names keep the existing choices.
+    siteText = choices.length ? choices.map(site => site.id).join(" ") : previous.siteText;
+    if (hasPlanningQualifications(question)) siteText += " " + question;
+  } else if (followup) siteText = [previous.siteText, question].join(" ").slice(-1000);
   return { mode, from, to, dateProblem, missionHours, priority: sun || earth ? (sun && earth ? "joint" : sun ? "sun" : "earth") : followup ? previous.priority : "joint",
-    siteText: followup ? [previous.siteText, question].join(" ").slice(-1000) : question };
+    siteText, ...(continuesSiteChoice ? { continuesSiteChoice: true as const } : {}) };
 }
 
 const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, " ").trim();

@@ -154,6 +154,12 @@ export async function proxyLunarnav(request: Request, key: string | undefined, s
   }
   const retry = upstream.headers.get("retry-after");
   if (retry) outgoing.set("retry-after", retry);
+  for (const name of ["x-ratelimit-limit", "x-ratelimit-remaining", "x-ratelimit-reset"]) {
+    const value = upstream.headers.get(name);
+    if (value !== null && /^\d{1,16}$/.test(value) && Number.isSafeInteger(Number(value))) outgoing.set(name, value);
+  }
+  const cache = upstream.headers.get("x-lunarnav-cache");
+  if (cache === "hit" || cache === "miss" || cache === "shared") outgoing.set("x-lunarnav-cache", cache);
   if (download && (upstream.ok || matched)) {
     const filename = attachmentName(match.path, url.searchParams);
     outgoing.set("content-disposition", `attachment; filename="${filename}"`);
