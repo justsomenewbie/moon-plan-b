@@ -26,6 +26,8 @@ Run B2’s [site catalog](../frontend/public/data/run-b2/catalog.json) identifie
 
 For a five-hour visit to Apollo 11 starting February 12–18, 2029, the saved B2 hourly series and the public planner agree: each of the 164 possible starts for a mission ending by February 19 00:00 UTC has five hours of Earth visibility and zero hours of sunlight or joint visibility. With a zero minimum, these starts are feasible. The planner gives no landing recommendation when the visibility objective scores zero, and retains the producer's candidates for inspection.
 
+A production call to `POST /alt-dates` for a five-hour mission at Athena on November 15 tested three conditions together: at least three continuous hours of sunlight after landing, five of Earth visibility and a minimum solar elevation of −10°. With both bodies required at landing and no minimum spacing, the API returned both tested starts, 06:00 and 07:00 UTC. The B2 archive independently reproduced the uninterrupted sunlight/Earth durations, 379/459 hours and 378/458 hours respectively. These durations extend beyond the five-hour mission.
+
 **Open backend message issue.** On the public proxy, a one-day Haworth dataset returned HTTP 200 for `max_points=10000` and HTTP 400 for `10001`. The rejected response's `detail` and field error give the correct maximum of 10,000. Its `hint` gives the 5,000-point limit and the field-count guidance for the separate series route. The aggregate contract permits 10,000. Both requests used `site_ids=a3_haworth`, `include=series`, and November 15 00:00 through November 16 00:00 UTC. The closed export filename report above concerns a different endpoint.
 
 ## Aggregate update on 14 November
