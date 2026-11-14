@@ -69,7 +69,9 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
   };
   return <>
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
-      <span aria-hidden="true">🧑‍🚀</span>
+      <span className={styles.astronaut} aria-hidden="true">
+        <span className={styles.helmet}><span className={styles.eyes} /></span>
+      </span>
     </button>
     <aside id={id} popover="auto" onToggle={event => setOpenedAt(event.newState === "open" ? Date.now() : null)} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>

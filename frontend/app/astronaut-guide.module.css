@@ -14,7 +14,52 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  font-size: 1.6rem;
+}
+.astronaut {
+  position: relative;
+  width: 32px;
+  height: 34px;
+  color: #273745;
+  transform-origin: 50% 88%;
+}
+.astronaut::before {
+  content: "";
+  position: absolute;
+  inset: 21px 3px 0;
+  border: 1.5px solid currentColor;
+  border-radius: 9px 9px 5px 5px;
+  background: linear-gradient(to right, #ebeff2 32%, #e6ab54 32% 45%, #ebeff2 45%);
+}
+.helmet {
+  position: absolute;
+  inset: 1px 1px 8px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid currentColor;
+  border-radius: 45%;
+  background: #eef1f1;
+  box-shadow: inset 0 -3px #bdcbd2;
+}
+.helmet::before {
+  content: "";
+  position: absolute;
+  inset: 5px 3px 4px;
+  border-radius: 42%;
+  background: #273745;
+}
+.eyes {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  width: 13px;
+  height: 5px;
+  margin-top: 2px;
+}
+.eyes::before, .eyes::after {
+  content: "";
+  width: 3px;
+  border-radius: 2px;
+  background: #f9d991;
 }
 
 .panel {
@@ -47,10 +92,25 @@
 .results span { display: block; color: var(--muted); }
 .jump { display: inline-block; color: var(--earth); text-decoration: underline; }
 
-@media (prefers-reduced-motion: no-preference) {
-  .launcher span { transition: transform .18s ease-out; animation: greet 1.2s ease-in-out 1.5s 1; }
-  .launcher:is(:hover, :focus-visible) span { transform: rotate(-9deg); }
-  @keyframes greet { 35% { transform: rotate(-9deg); } 70% { transform: rotate(6deg); } }
+@media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .astronaut { animation: sway 12s ease-in-out infinite; }
+  .eyes { animation: blink 7s ease-in-out infinite; }
+  :global(body:has(#pause-sky-drift:checked)) .astronaut,
+  :global(body:has(#pause-sky-drift:checked)) .eyes,
+  .launcher:has(+ .panel:popover-open) :is(.astronaut, .eyes) { animation: none; }
+  @keyframes sway {
+    0%, 60%, 76%, 100% { transform: rotate(0); }
+    66% { transform: rotate(-7deg); }
+    71% { transform: rotate(4deg); }
+  }
+  @keyframes blink {
+    0%, 53%, 56%, 100% { transform: scaleY(1); }
+    54.5% { transform: scaleY(.16); }
+  }
+}
+@media (forced-colors: active) {
+  .helmet::before { background: CanvasText; forced-color-adjust: none; }
+  .eyes::before, .eyes::after { background: Canvas; forced-color-adjust: none; }
 }
 
 @media print {
