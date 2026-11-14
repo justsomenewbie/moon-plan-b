@@ -2,11 +2,12 @@ import { archiveB2Run, rankArchiveB2, searchArchiveB2 } from "../archive-b2.ts";
 import { getSavedPlannerDates, getSavedPlannerRanking, savedPlannerRun, savedPlannerWindows } from "../saved-planner.ts";
 import { findAltDates } from "./alt-dates.ts";
 import { getTerrainAggregate, isMock } from "./client.ts";
-import { getPlannerRanking, getPlannerRun } from "./planner.ts";
+import { getPlannerRanking, getPlannerRun, type PlannerRun } from "./planner.ts";
 import type { PlanningIntent } from "../guide-planning.ts";
 
 type Locale = "en" | "vi";
 export type PlanningArchive = "saved" | "saved-b2";
+export type PlanningSource = PlanningArchive | PlannerRun;
 type Site = { id: string; name: string };
 export type PlanningAnswer = { answer: string; href: string };
 type Services = { run: typeof getPlannerRun; ranking: typeof getPlannerRanking; dates: typeof findAltDates; observation: typeof getTerrainAggregate; online: boolean };
@@ -36,9 +37,10 @@ export function matchSites(text: string, sites: readonly Site[]) {
   });
 }
 
-function plannerHref(plan: PlanningIntent, site?: string, archive?: PlanningArchive) {
+function plannerHref(plan: PlanningIntent, site?: string, source?: PlanningSource) {
   const params = new URLSearchParams({ mode: plan.mode === "dates" ? "dates" : "sites", priority: plan.priority });
-  if (archive) params.set("source", archive);
+  if (typeof source === "string") params.set("source", source);
+  else if (source) params.set("run_id", source.runId);
   if (plan.from) params.set("from", plan.from);
   if (plan.to) params.set("to", plan.to);
   if (site) params.set("site", site);
@@ -46,11 +48,13 @@ function plannerHref(plan: PlanningIntent, site?: string, archive?: PlanningArch
   return "/plan?" + params;
 }
 
-export async function answerPlanning(plan: PlanningIntent, locale: Locale, signal: AbortSignal, api: Services = services, archive?: PlanningArchive): Promise<PlanningAnswer> {
+export async function answerPlanning(plan: PlanningIntent, locale: Locale, signal: AbortSignal, api: Services = services, selected?: PlanningSource): Promise<PlanningAnswer> {
   signal.throwIfAborted();
   const tr = (en: string, vi: string) => locale === "en" ? en : vi;
+  const archive = typeof selected === "string" ? selected : undefined;
+  const liveRun = typeof selected === "object" ? selected : undefined;
   let fallback: PlanningArchive = archive ?? "saved-b2";
-  let href = plannerHref(plan, undefined, archive ?? (api.online ? undefined : fallback));
+  let href = plannerHref(plan, undefined, selected ?? (api.online ? undefined : fallback));
   const reply = (text: string) => ({ answer: text, href });
   const metric = { joint: tr("joint Sun and Earth visibility", "thấy đồng thời Mặt Trời và Trái Đất"), sun: tr("Sun visibility", "thấy Mặt Trời"), earth: tr("Earth visibility", "thấy Trái Đất") }[plan.priority];
   if (!plan.from || !plan.to || plan.dateProblem) return reply(tr("What start and end dates should I check? Use UTC dates with the year, e.g. 2026-11-21 to 2026-11-28. The end is exclusive.", "Bạn muốn kiểm tra khoảng ngày nào? Hãy ghi đủ năm, ví dụ 2026-11-21 đến 2026-11-28 theo UTC. Ngày kết thúc không được tính."));
@@ -106,7 +110,8 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   }
   if (archive || !api.online) return offline();
   try {
-    const run = await api.run(signal);
+    const run = liveRun ?? await api.run(signal);
+    href = plannerHref(plan, undefined, run);
     if (run.runId === savedPlannerRun.runId) fallback = "saved";
     if (Date.parse(from) < Date.parse(run.start) || Date.parse(to) > Date.parse(run.end)) return reply(tr("The requested dates are outside the model run. Available UTC range: ", "Ngày yêu cầu nằm ngoài phạm vi mô hình. Khoảng UTC có dữ liệu: ") + run.start + " → " + run.end + " · " + run.runId);
     const matches = matchSites(plan.siteText, run.sites);
@@ -124,7 +129,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     if (matches.length !== 1) return reply((matches.length ? tr("Which of these sites do you mean? ", "Bạn muốn chọn địa điểm nào trong số này? ") + matches.map(s => s.name).join(" · ")
       : tr("Which catalog site should I check? Please give its name or ID, for example Athena.", "Bạn muốn tra địa điểm nào trong danh mục? Hãy ghi tên hoặc mã, ví dụ Athena.")));
     const [site] = matches;
-    href = plannerHref(plan, site.id);
+    href = plannerHref(plan, site.id, run);
     if (plan.mode !== "dates") {
       const result = await api.observation({ from, to, resolutionSeconds: run.stepSeconds }, site.id, run.runId, false, signal);
       const row = result.sites[0];
@@ -147,6 +152,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       : tr("No qualifying model window was returned.", "Mô hình không trả về khoảng nào đáp ứng yêu cầu.")) + source);
   } catch {
     signal.throwIfAborted();
+    if (liveRun) return reply(unavailable + "\n" + tr("Source run", "Run nguồn") + " · " + liveRun.runId);
     return offline();
   }
 }

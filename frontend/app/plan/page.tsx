@@ -137,8 +137,10 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   const [edited, setEdited] = useState<{mode: string; params: URLSearchParams} | null>(null);
   const formArea = useRef<HTMLDivElement>(null);
   const requestedSource = seed.get("source");
+  const pins = seed.getAll("run_id");
+  const pinnedRun = pins.length > 1 ? "" : pins[0];
   const forced = requestedSource === "saved" || requestedSource === "saved-b2";
-  const catalog = useQuery({ queryKey: ["mission-planner-run"], queryFn: ({signal}) => getPlannerRun(signal), enabled: !isMock && !forced, retry:false });
+  const catalog = useQuery({ queryKey: ["mission-planner-run", pinnedRun], queryFn: ({signal}) => getPlannerRun(signal, pinnedRun), enabled: !isMock && !forced, retry:false });
   const source: PlannerSource = requestedSource === "saved" ? "saved" : forced || isMock || !catalog.data ? "saved-b2" : "live";
   const run = source === "saved-b2" ? archiveB2Run : source === "saved" ? savedPlannerRun : catalog.data!;
   const today = day(Date.now());
@@ -169,14 +171,23 @@ function Planner({ seed }: { seed: URLSearchParams }) {
     return "/plan?" + params;
   }
   if (loading) return <p role="status">{t("Connecting to the team API…")} <a href={sourceLink("saved-b2")}>{t("Use saved data now")}</a></p>;
+  if (!forced && pinnedRun !== undefined && !catalog.data) return <section role="alert">
+    <p>{t("The linked model run could not be opened.")} <code>{pinnedRun}</code></p>
+    {catalog.error && <p><ApiProblemText error={catalog.error} /></p>}
+    <div className="flex flex-wrap gap-4">
+      {!isMock && <button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button>}
+      <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>
+      <a href={sourceLink("saved")}>{t("Open the earlier run B archive")}</a>
+    </div>
+  </section>;
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
-    <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · <a href={source === "saved" ? "/data#bundled-data" : source === "saved-b2" ? "/data#run-b2" : "/data"}>{t("Browse data and all original files")}</a></p>
+    <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · <a href={source === "saved" ? "/data#bundled-data" : source === "saved-b2" ? "/data#run-b2" : "/data"}>{t("Browse data and all original files")}</a>{source === "live" && pinnedRun && <> · {t("Run ID")} <code>{run.runId}</code></>}</p>
     {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <span className="block"><ApiProblemText error={catalog.error} /></span><button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></p>}
     <div className="flex flex-wrap gap-4 print:hidden">
       {source !== "saved-b2" && <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>}
       {source !== "saved" && <a href={sourceLink("saved")}>{t("Open the earlier run B archive")}</a>}
-      {forced && !isMock && <a href={sourceLink("live")}>{t("Check live data")}</a>}
+      {forced && !isMock && <a href={sourceLink("live")}>{pinnedRun === undefined ? t("Check live data") : t("Return to the linked live run")}</a>}
     </div>
     <div className="mode-switch print:hidden" role="group" aria-label={t("Choose how to search")}>
       <button type="button" aria-pressed={mode === "sites"} onClick={() => { if (mode !== "sites") { setEdited(null); setMode("sites"); } }}>{t("I have dates")}</button>
@@ -188,14 +199,14 @@ function Planner({ seed }: { seed: URLSearchParams }) {
         if (!savedLanding && input.form) capture(input.form);
       }
     }}>
-    {mode === "sites" ? <CatalogSearch key={source} initialSite={seed.get("site")} run={run} first={first} last={last} priority={priority} source={source} /> :
+    {mode === "sites" ? <CatalogSearch key={source + "/" + run.runId} initialSite={seed.get("site")} run={run} first={first} last={last} priority={priority} source={source} /> :
       source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialEarliest={landingClock(seed, "earliest")} initialLatest={landingClock(seed, "latest")}
         initialExtras={liveExtras(seed)} initialSunAtLanding={seed.get("sunAtLanding") === "1"} initialEarthAtLanding={seed.get("earthAtLanding") === "1"}
         initialObjective={seed.get("liveObjective") === "earliest" ? "earliest" : seed.get("liveObjective") === "balanced" ? "balanced" : priority === "joint" ? "both" : priority} />}
     </div>
-    <AstronautGuide planningArchive={source === "live" ? undefined : source} savedResult={savedResultFromUrl(new URLSearchParams())} terrain={null} comparisonPath="/compare" />
+    <AstronautGuide planningSource={source === "live" ? run : source} savedResult={savedResultFromUrl(new URLSearchParams())} terrain={null} comparisonPath="/compare" />
   </>;
 }
 
