@@ -90,14 +90,33 @@ export function parsePlan(value: unknown, rowCount: number): Plan {
 }
 
 export async function classifyGuide(input: GuideRequest, signal: AbortSignal): Promise<Plan> {
-  // Only a question and the names/dates needed to identify rows reach the local model.
+  // Both providers classify the question using row labels; source values stay in the app.
   const message = { options: input.context.rows.map(({ site, from, to }, index) => ({ index, site, from, to })),
     previousQuestion: input.previousQuestion, question: input.question };
+  const messages = [{ role: "system", content: instructions }, { role: "user", content: JSON.stringify(message) }];
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (apiKey) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST", redirect: "error", cache: "no-store", signal,
+      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: "gpt-5.4-mini-2026-03-17", messages, store: false, reasoning_effort: "none", max_completion_tokens: 200,
+        response_format: { type: "json_schema", json_schema: { name: "lunar_guide_plan", strict: true, schema } },
+      }),
+    });
+    if (!response.ok) throw Error("OpenAI guide unavailable");
+    const body = await readBoundedJson(response, 16384, signal);
+    const choice = object(body) && Array.isArray(body.choices) && body.choices.length === 1 ? body.choices[0] : null;
+    if (!object(choice) || choice.finish_reason !== "stop" || !object(choice.message) ||
+        choice.message.role !== "assistant" || choice.message.refusal || choice.message.tool_calls ||
+        typeof choice.message.content !== "string") throw Error("Invalid OpenAI guide response");
+    return parsePlan(JSON.parse(choice.message.content), input.context.rows.length);
+  }
   const response = await fetch("http://127.0.0.1:11434/api/chat", {
     method: "POST", redirect: "error", signal, headers: { "content-type": "application/json" },
     body: JSON.stringify({ model: "qwen2.5:7b", stream: false, format: schema, keep_alive: "3m",
       options: { num_ctx: 4096, num_predict: 100, temperature: 0 },
-      messages: [{ role: "system", content: instructions }, { role: "user", content: JSON.stringify(message) }] }),
+      messages }),
   });
   if (!response.ok) throw Error("Local model unavailable");
   const envelope = await readBoundedJson(response, 8192);
