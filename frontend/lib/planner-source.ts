@@ -16,6 +16,33 @@ export function plannerLink(path: "/plan" | "/plan/site", fields: Record<string,
   return path + "?" + query;
 }
 
+export function fullModelPeriodLink(fields: URLSearchParams, source: PlannerSource, run: { runId: string; start: string; end: string; stepSeconds: number }) {
+  if (source === "saved") return undefined; // The earlier archive has different coverage for totals and landing windows.
+  const dates = fields.get("mode") === "dates";
+  if (!dates && !(run.start.endsWith("T00:00:00Z") && run.end.endsWith("T00:00:00Z"))) return undefined;
+
+  const p = new URLSearchParams(fields);
+  p.set("from", run.start.slice(0, 10));
+  p.set("to", new Date(Math.ceil(Date.parse(run.end) / day) * day).toISOString().slice(0, 10));
+  if (source === "live") {
+    p.delete("source");
+    p.set("run_id", run.runId);
+  } else p.set("source", source);
+  if (dates) {
+    const duration = Number(p.get("missionHours"));
+    const last = Date.parse(run.end) - duration * hour;
+    if (!(duration > 0 && Number.isSafeInteger(duration * 3600 / run.stepSeconds) && last >= Date.parse(run.start))) return undefined;
+    if (source === "live") {
+      p.set("earliest", run.start.slice(0, 19));
+      p.set("latest", new Date(last).toISOString().slice(0, 19));
+    } else {
+      p.delete("earliest");
+      p.delete("latest");
+    }
+  }
+  return "/plan?" + p + "#planning-form";
+}
+
 export function liveExtras(seed: URLSearchParams) {
   const extras: Partial<Record<ExtraField, string>> = {};
   for (const [key, fallback] of Object.entries(extraDefaults)) {

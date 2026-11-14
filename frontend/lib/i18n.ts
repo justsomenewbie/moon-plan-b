@@ -45,6 +45,7 @@ export const vietnamese: Record<string, string> = {
   "Open this visibility summary in a new tab": "Mở bảng tổng hợp tầm nhìn này trong thẻ mới",
   "Long-range summary. Totals, visibility intervals and duration criteria use the native model grid. For hourly sky positions, request a shorter window.": "Tổng hợp dài hạn. Tổng số giờ, các khoảng tầm nhìn và tiêu chí thời lượng dùng lưới thời gian gốc của mô hình. Chọn khoảng ngắn hơn để xem vị trí các thiên thể theo giờ.",
   "Saved run B2": "Lần chạy B2 đã lưu",
+  "Use full model period": "Dùng toàn bộ thời gian của mô hình",
   "Open saved run B2": "Mở lần chạy B2 đã lưu",
   "Open the earlier run B archive": "Mở kho dữ liệu của lần chạy B trước đó",
   "Saved hourly visibility for all 23 sites": "Tầm nhìn theo giờ đã lưu cho cả 23 địa điểm",

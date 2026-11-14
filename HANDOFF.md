@@ -22,7 +22,7 @@ The [Data catalog](docs/BACKEND_RECONCILIATION.md#live-run-directory-and-earth-v
 
 [Astronaut guide configuration](frontend/README.md#ask-the-astronaut).
 
-**Plan and data** — [Five-year B2 rankings](docs/B2_VISIBILITY_ARCHIVE.md#five-year-planner-comparison) match archived intervals for all 23 sites. Long astronaut queries open the summary. Planner and astronaut rank fixed-duration visits and [uninterrupted visibility](docs/BACKEND_RECONCILIATION.md#longest-uninterrupted-joint-visibility). For November 14–21, 15 sites tie at 24/24 hours, while Vikram leads the whole week at 162/168. Smooth-sphere sites carry terrain caveats. Zero visibility yields no recommendation. [Evidence and backend hint](docs/BACKEND_RECONCILIATION.md#fixed-duration-visits-within-travel-dates) · [Four-file archive replay](docs/B2_VISIBILITY_ARCHIVE.md#verify-the-published-files).
+**Plan and data** — [Five-year B2 rankings](docs/B2_VISIBILITY_ARCHIVE.md#five-year-planner-comparison) match archived intervals for all 23 sites. Both modes offer the [full period](docs/B2_VISIBILITY_ARCHIVE.md#five-year-planner-comparison). Long queries open summaries. Planner and astronaut rank fixed-duration visits and [uninterrupted visibility](docs/BACKEND_RECONCILIATION.md#longest-uninterrupted-joint-visibility). For November 14–21, 15 sites tie at 24/24 hours, while Vikram leads the whole week at 162/168. Smooth-sphere sites carry terrain caveats. Zero visibility yields no recommendation. [Evidence and backend hint](docs/BACKEND_RECONCILIATION.md#fixed-duration-visits-within-travel-dates) · [Four-file archive replay](docs/B2_VISIBILITY_ARCHIVE.md#verify-the-published-files).
 
 ## Pending
 

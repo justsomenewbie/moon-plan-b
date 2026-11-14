@@ -3,7 +3,7 @@
 import { ApiProblemText, useRetryCountdown, useProblemFields } from "../api-problem-text";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { hasLiveOptions, landingClock, liveExtras, plannerFormState, plannerLink, type PlannerSource } from "../../lib/planner-source";
+import { fullModelPeriodLink, hasLiveOptions, landingClock, liveExtras, plannerFormState, plannerLink, type PlannerSource } from "../../lib/planner-source";
 import { useQuery } from "@tanstack/react-query";
 import { hasRetryDeadline, isMock } from "../../lib/api/client";
 import { getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type PlannerRun, type PlannerPriority } from "../../lib/api/planner";
@@ -246,7 +246,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   const sort = seed.get("priority");
   const priority = sort === "sun" || sort === "earth" ? sort : "joint";
   const hours = Number(seed.get("missionHours"));
-  const mission = Number.isSafeInteger(hours) && hours > 0 && hours <= (Date.parse(run.end)-Date.parse(run.start))/3600000 ? hours : undefined;
+  const mission = Number.isSafeInteger(hours * 3600 / run.stepSeconds) && hours > 0 && hours <= (Date.parse(run.end)-Date.parse(run.start))/3600000 ? hours : undefined;
   const loading = !isMock && !forced && catalog.isPending;
   const capture = useCallback((form: HTMLFormElement) => {
     setEdited({ mode, params: plannerFormState(seed, mode, source, new FormData(form)) });
@@ -272,6 +272,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
       <a href={sourceLink("saved")}>{t("Open the earlier run B archive")}</a>
     </div>
   </section>;
+  const fullPeriod = edited?.mode === mode && fullModelPeriodLink(edited.params, source, run);
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
     <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · {source === "live" ? <>
@@ -287,7 +288,8 @@ function Planner({ seed }: { seed: URLSearchParams }) {
       <button type="button" aria-pressed={mode === "sites"} onClick={() => { if (mode !== "sites") { setEdited(null); setMode("sites"); } }}>{t("I have dates")}</button>
       <button type="button" aria-pressed={mode === "dates"} onClick={() => { if (mode !== "dates") { setEdited(null); setMode("dates"); } }}>{t("I have a site")}</button>
     </div>
-    <div ref={formArea} onChange={e => {
+    {fullPeriod && <p className="print:hidden"><a href={fullPeriod}>{t("Use full model period")}</a></p>}
+    <div id="planning-form" ref={formArea} onChange={e => {
       const input = e.target;
       if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
         if (!savedLanding && input.form) capture(input.form);

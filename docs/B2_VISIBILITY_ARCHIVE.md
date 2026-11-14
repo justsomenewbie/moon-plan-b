@@ -17,6 +17,8 @@ The site comparison reports both the total joint visibility and the longest unin
 
 ## Five-year planner comparison
 
+In the planner, select **Use full model period** to fill in the UTC bounds for the selected run. **I have dates** keeps the visibility priority and optional mission duration. **I have a site** keeps the site and mission duration. For a 24-hour mission, the final possible landing in B2 is December 31, 2030 at 00:00 UTC. The saved B2 search for Athena evaluates 43,801 possible starts, of which 15,056 have 24 hours of joint visibility.
+
 On November 15 the public planner compared all 23 B2 sites from January 1, 2026 at 00:00 UTC up to January 1, 2031 at 00:00 UTC (exclusive). The dataset and ranking requests both returned HTTP 200. Total joint visibility and the longest continuous window at every site agreed with the archived intervals. Apollo 15 LM Falcon had the highest total at 21,988 of 43,824 hours. The de Gerlache rim had the longest continuous window at 406 hours. The B2 model uses a smooth horizon at Apollo 15. These totals describe Sun and Earth visibility in the model. [Open the five-year comparison](https://moon-plan-b.vercel.app/plan?run_id=B2_spice_pgda_bruteforce_2026_2030_fix676af9d&mode=sites&priority=joint&from=2026-01-01&to=2031-01-01).
 
 ## Verify the published files

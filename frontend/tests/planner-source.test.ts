@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { hasLiveOptions, landingClock, liveExtras, plannerFormState, savedLandingHour } from "../lib/planner-source.ts";
+import { fullModelPeriodLink, hasLiveOptions, landingClock, liveExtras, plannerFormState, savedLandingHour } from "../lib/planner-source.ts";
 import { searchArchiveB2 } from "../lib/archive-b2.ts";
 
 function form(values: Record<string, string>) {
@@ -79,4 +79,27 @@ test("sub-hour bounds round inward solely for model evaluation, including when n
   assert.equal(searchArchiveB2(query)?.nEvaluated, 1);
   assert.equal(searchArchiveB2({ ...query, latest: savedLandingHour("2026-11-15T04:59:59", "latest") }), null);
   assert.equal(landingClock(new URLSearchParams({ earliest: "2026-02-30T19:00" }), "earliest"), undefined);
+});
+
+test("full period keeps edited filters and pins the selected live run", () => {
+  const run = { runId: "release-A", start: "2026-01-01T00:00:00Z", end: "2031-01-01T00:00:00Z", stepSeconds: 3600 };
+  const dates = new URLSearchParams({ mode: "sites", from: "2027-11-14", to: "2027-11-21", priority: "earth", missionHours: "12" });
+  const full = new URL(fullModelPeriodLink(dates, "live", run)!, "https://example.org");
+  assert.equal(full.hash, "#planning-form");
+  assert.deepEqual(Object.fromEntries(full.searchParams), { mode: "sites", from: "2026-01-01", to: "2031-01-01", priority: "earth", missionHours: "12", run_id: run.runId });
+  assert.equal(dates.get("from"), "2027-11-14");
+  const partial = { ...run, start: "2026-11-14T06:00:00Z", end: "2026-11-17T06:00:00Z", stepSeconds: 1800 };
+  assert.equal(fullModelPeriodLink(dates, "live", partial), undefined);
+  assert.equal(fullModelPeriodLink(dates, "saved", run), undefined);
+
+  const landing = new URLSearchParams({ mode: "dates", site: "im2_athena", missionHours: "4.5", maxResults: "3", earliest: "2026-11-15T06:00", latest: "2026-11-15T07:00" });
+  const live = new URL(fullModelPeriodLink(landing, "live", partial)!, full).searchParams;
+  assert.deepEqual([live.get("earliest"), live.get("latest"), live.get("site"), live.get("missionHours"), live.get("maxResults")],
+    ["2026-11-14T06:00:00", "2026-11-17T01:30:00", "im2_athena", "4.5", "3"]);
+  landing.set("missionHours", "24");
+  landing.set("run_id", "prior-live-run");
+  const saved = new URL(fullModelPeriodLink(landing, "saved-b2", run)!, full).searchParams;
+  assert.deepEqual([saved.get("source"), saved.get("run_id"), saved.get("earliest"), saved.get("latest")], ["saved-b2", "prior-live-run", null, null]);
+  landing.set("missionHours", "43825");
+  assert.equal(fullModelPeriodLink(landing, "live", run), undefined);
 });
