@@ -6,7 +6,7 @@ Feature checkpoint `54386ef` refines the existing static-data studio without new
 
 The synced HUD retains shortest-angle north wrapping, adds a side-elevation schematic, and labels its uniform mask as a sensitivity test rather than local terrain. Timeline and polar plots shade the selected clearance band. State patterns, always-mounted screen-reader interval text, 44px controls, forced-colors boundaries and printable results supplement color. English remains default with optional Vietnamese display translation; values, UTC and IDs are unchanged. Sun clearance is not a power model, and Earth visibility is not a radio-link budget.
 
-Evidence after the latest `main` synchronization: **82 frontend tests passed**, including the clearance, north-wrap, missing-data and new alternative-date cases. Route type generation, strict TypeScript and the production build also passed. Owner: Minh.
+Evidence after the latest `main` synchronization: **82 frontend tests passed**, including the clearance, north-wrap, missing-data and new alternative-date cases. Route type generation, strict TypeScript and the production build also passed. Owner: Minh. The [QA replay](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram) covers the side-view fix, 320px, desktop, forced colors, PDF and both orders of the archived Horizons comparison. On `65b7375`, both clocks skipped Athena’s missing 02:00 UTC in both directions.
 
 ## Current product, backend and QA state
 
@@ -16,4 +16,4 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 ## Pending
 
-Run a fresh visual pass at desktop, 320px, print and forced colors, then preserve evidence. Backend fractional bounds, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.
+Backend fractional bounds, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.
