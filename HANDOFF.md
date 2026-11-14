@@ -18,6 +18,8 @@ Vietnamese labels and instructions now distinguish sites, UTC samples and appare
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
 
+[ENV-001](qa/README.md#supported-runtime-retest) passed on macOS arm64.
+
 ## Pending
 
 Backend fractional bounds, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.

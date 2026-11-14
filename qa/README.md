@@ -11,7 +11,13 @@ python -B -m unittest qa.test_edge_cases -v
 node --experimental-strip-types --test qa/frontend_integration.test.ts
 ```
 
-`run_checks` returns nonzero on any unexpected result. Its negative control expects `--release` to reject synthetic data with exit 1. Evidence is written to ignored `qa/evidence/latest/`; use `--output qa/evidence/<reviewed-run-name>` for an intentional, shareable snapshot. The report includes commands, exit codes, runtime, timings, exact input hashes and terminal output. It does not grant release approval. The host's Node 24.22.1 is below the frontend's declared `>=24.22.3 <25`; source tests are smoke evidence, not a supported-runtime build.
+`run_checks` returns nonzero on any unexpected result. Its negative control expects `--release` to reject synthetic data with exit 1. Evidence is written to ignored `qa/evidence/latest/`; use `--output qa/evidence/<reviewed-run-name>` for an intentional, shareable snapshot. The report includes commands, exit codes, runtime, timings, exact input hashes and terminal output. It does not grant release approval. The original QA host ran Node 24.22.1. The separate frontend retest below uses the supported runtime.
+
+## Supported-runtime retest
+
+On 14 November 2026 at 09:15 UTC, OpenAI Codex retested ENV-001 from a clean source archive of [product commit `3cef1a0`](https://github.com/justsomenewbie/moon-plan-b/commit/3cef1a0bf9f4c6a86a1b9bed44a155af6c4f7a11) on macOS arm64. Node 24.22.3 and npm 11.19.1 were first on PATH. From `frontend/`, `npm ci --offline --ignore-scripts --no-audit --no-fund` installed 130 packages from the local npm cache. SHA-256 of `package-lock.json` after installation matched the source: `04a470218052f5a64b3dcec13983e7e59ac5e4d1e6835ad76830a5975c93fdfe`. On a machine with an empty cache, use the install command in the [product README](../README.md).
+
+With `NEXT_PUBLIC_API_BASE_URL=mock`, `npm test` passed all 82 frontend tests, `npm run check` passed route generation and strict TypeScript, and `npm run build` produced the production bundle. After `npm run start -- --port 3191`, Chromium 158.0.8127.18 ran the [paired Horizons replay](evidence/odysseus-hour-gap/check.mjs) with `--compare-sites` and the [file-rejection test](check_import_rejections.mjs) against that preview. Both site orders skipped Athena’s missing 02:00 sample, and the importer accepted the 5 MiB boundary. All eight offline QA checks passed. This verifies the named Mac build. The [release freeze](docs/RUNBOOK.md#release-freeze-gate--open-until-evidence-supplied) still requires its own commit and checks.
 
 ## Files and use
 
