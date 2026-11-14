@@ -6,12 +6,12 @@ import { rankRetainedMissionWindows, type RetainedSiteWindows } from "./mission-
 
 export type WorkspacePlanningEvidence = TerrainSummary | SiteComparison;
 
-function retainedWindows(evidence: WorkspacePlanningEvidence) {
+export function retainedWindows(evidence: WorkspacePlanningEvidence, coverage: "requested" | "evaluated" = "requested") {
   if ("schema_version" in evidence) return {
     run: evidence.run.run_id, range: evidence.range,
     sites: evidence.sites.map(site => ({
       id: site.id, name: site.name, windows: site.windows,
-      complete: site.coverage === "complete" && site.coverage_in_range === "complete",
+      complete: site.coverage_in_range === "complete" && (coverage === "evaluated" || site.coverage === "complete"),
     })),
   };
   const sites: RetainedSiteWindows[] = evidence.ranking.map(({ site_id, name }) => {

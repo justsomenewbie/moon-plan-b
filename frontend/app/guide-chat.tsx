@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { askGuide, GuideRequestError, type GuideErrorKey, type GuideAction, type GuideContext, type GuideReply } from "../lib/api/guide-chat";
 import { planningIntent, type PlanningIntent } from "../lib/guide-planning";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
@@ -8,7 +8,6 @@ import type { DisplayedPair } from "./terrain-pair";
 import { answerWorkspacePlanning } from "../lib/guide-workspace-planning";
 import { answerPlanning, type PlanningSource } from "../lib/api/guide-planning";
 import { useLanguage } from "./language";
-import { isSavedResultLink } from "./observed-week";
 import styles from "./guide-chat.module.css";
 
 const copy = {
@@ -35,34 +34,19 @@ const copy = {
 export type GuideDestination = string | (() => void);
 export type GuideActions = Partial<Record<GuideAction, GuideDestination>>;
 export type GuideScope = "saved" | "workspace" | "pair";
-type Props = { planningSource?: PlanningSource; choice: GuideScope | null; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; workspaceEvidence?: TerrainSummary | null; pair?: DisplayedPair; savedActions: GuideActions; workspaceActions?: GuideActions };
+type Props = { planningSource?: PlanningSource; scope: GuideScope; savedPlanning: boolean; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; workspaceEvidence?: TerrainSummary | null; pair?: DisplayedPair; savedActions: GuideActions; workspaceActions?: GuideActions };
 type Turn = GuideReply & { question: string; plan?: PlanningIntent; href?: string };
 
-function subscribeToLocation(notify: () => void) {
-  window.addEventListener("popstate", notify);
-  window.addEventListener("hashchange", notify);
-  return () => {
-    window.removeEventListener("popstate", notify);
-    window.removeEventListener("hashchange", notify);
-  };
-}
-
-const savedRoute = () => isSavedResultLink(window.location);
-
-export default function GuideChat({ planningSource, choice, onChoice, saved, workspace, workspaceEvidence, pair, savedActions, workspaceActions }: Props) {
+export default function GuideChat({ planningSource, scope, savedPlanning, onChoice, saved, workspace, workspaceEvidence, pair, savedActions, workspaceActions }: Props) {
   const { locale } = useLanguage();
   const labels = copy[locale];
-  const onSavedRoute = useSyncExternalStore(subscribeToLocation, savedRoute, () => false);
-  const defaultScope = onSavedRoute ? "saved" : pair ? "pair" : workspace ? "workspace" : "saved";
-  const scope = choice === "saved" || (choice === "workspace" && workspace) || (choice === "pair" && pair)
-    ? choice : defaultScope;
   const context = (scope === "pair" ? pair?.context : scope === "workspace" ? workspace : saved) ?? saved;
   const localScope = scope === "workspace" || scope === "pair";
   const evidence = scope === "pair" ? pair?.comparison : workspaceEvidence;
   const [lastEvidence, setLastEvidence] = useState({ evidence, revision: 0 });
   // A replacement export can retain the same run, totals and site names with different windows.
   if (lastEvidence.evidence !== evidence) setLastEvidence({ evidence, revision: lastEvidence.revision + 1 });
-  const source = planningSource ?? (scope === "saved" && (choice === "saved" || onSavedRoute) ? "saved" : undefined);
+  const source = planningSource ?? (savedPlanning ? "saved" : undefined);
   const conversationKey = [locale, scope, lastEvidence.revision, JSON.stringify(context), typeof source === "object" ? source.runId : source].join("|");
   const actions = scope === "saved" ? savedActions : scope === "pair" ? { ...workspaceActions, workspace: "#terrain-pair" } : workspaceActions ?? {};
   return <section className={styles.chat} aria-label={labels.title}>

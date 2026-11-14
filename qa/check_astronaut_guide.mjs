@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
 
 const [origin] = process.argv.slice(2);
 if (!origin) throw Error("Pass the URL of a running Moon Plan B frontend.");
@@ -8,9 +9,9 @@ const browser = await chromium.launch({
   chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"],
 });
 try {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, serviceWorkers: "block" });
   await page.clock.setFixedTime(new Date("2026-11-15T05:37:00Z"));
-  await page.goto(new URL("/compare", origin).href);
+  await page.goto(new URL("/compare#observed-week", origin).href);
   const launcher = page.getByRole("button", { name: "Astronaut guide", exact: true });
   const panel = page.locator("aside[popover]");
   async function checkGreeting(locale) {
@@ -86,7 +87,7 @@ try {
   await panel.getByRole("button", { name: "Send", exact: true }).click();
   const { context } = (await request).postDataJSON();
   const face = panel.locator("header [aria-hidden=true]");
-  await panel.getByRole("status").getByText("The astronaut is thinking…").waitFor();
+  await panel.getByRole("status").filter({ hasText: "The astronaut is thinking…" }).waitFor();
   assert.ok((await face.evaluate(el => getComputedStyle(el, "::after").backgroundImage)).includes("guide-think-strip.webp"));
   responseGate.resolve();
   await panel.getByText("OK", { exact: false }).waitFor();
@@ -112,6 +113,7 @@ try {
     "Odysseus · IM-1 · 33 h\n" + week1, "Odysseus · IM-1 · 168 h\n" + week2,
   ]);
   await viLauncher.click();
+  await panel.getByRole("combobox", { name: "Chọn dữ liệu để hỏi" }).selectOption("saved");
   await panel.getByText("Odysseus · IM-1 · Ngoài khoảng nhìn thấy đồng thời").waitFor();
   await checkGreeting("vi");
   await page.keyboard.press("Escape");
@@ -136,6 +138,34 @@ try {
   await panel.waitFor({ state: "hidden" });
   await page.emulateMedia({ media: "print" });
   assert.equal(await viLauncher.isVisible(), false);
+  // In the same hour, run B2 has joint visibility at IM-1 while the older saved B run does not.
+  const comparison = await browser.newPage({ serviceWorkers: "block", reducedMotion: "reduce" });
+  await comparison.clock.setFixedTime(new Date("2026-11-19T08:36:00Z"));
+  await comparison.goto(new URL("/compare#workspace", origin).href);
+  await comparison.getByRole("button", { name: "Import data", exact: true }).click();
+  await comparison.locator("#import-dialog input[type=file]").setInputFiles(fileURLToPath(new URL("./evidence/b2-horizons-week/dataset.json", import.meta.url)));
+  await comparison.locator("#workspace.terrain-result").waitFor();
+  await comparison.getByRole("button", { name: "Astronaut guide", exact: true }).click();
+  const guide = comparison.locator("aside:popover-open");
+  const selectedSource = guide.getByRole("combobox", { name: "Use data from" });
+  const sample = guide.locator("section:has(time)");
+  assert.equal(await selectedSource.inputValue(), "workspace");
+  await sample.getByText(/Odysseus.*Sun and Earth visible/).waitFor();
+  assert.match(await sample.locator("small").innerText(), /^B2_/);
+  await selectedSource.selectOption("saved");
+  await sample.getByText(/Odysseus.*Outside the joint visibility window/).waitFor();
+  assert.match(await sample.locator("small").innerText(), /^B_/);
+  assert.equal(await sample.locator("time").getAttribute("datetime"), "2026-11-19T08:00:00.000Z");
+  await selectedSource.selectOption("workspace");
+  await sample.getByText(/Odysseus.*Sun and Earth visible/).waitFor();
+  for (const archive of ["saved-b2", "saved"]) {
+    await comparison.goto(new URL("/plan?source=" + archive, origin).href);
+    await comparison.getByRole("button", { name: "Astronaut guide", exact: true }).click();
+    await guide.getByText("Travel planning uses saved run " + (archive === "saved" ? "B." : "B2.")).waitFor();
+    if (archive === "saved") await sample.getByText(/Odysseus.*Outside the joint visibility window/).waitFor();
+    else assert.equal(await sample.count(), 0);
+  }
+  await comparison.close();
   const fallback = await browser.newPage({ reducedMotion: "no-preference" });
   await fallback.addInitScript(() => localStorage.setItem("moon-plan-b-language", "vi"));
   await fallback.route("**/images/guide-visor-wave.webp", route => route.fulfill({ status: 404 }));
@@ -149,7 +179,7 @@ try {
   await help.press("Enter");
   await fallback.locator("aside:popover-open").waitFor();
   await fallback.close();
-  console.log("Passed EN/VI question and answer flows, keyboard dismissal, saved-result link, 320px layout, reduced motion and print.");
+  console.log("Passed EN/VI guide flows, saved and B2 sample switching, planner archive scopes, keyboard dismissal, 320px layout, reduced motion and print.");
 } finally {
   await browser.close();
 }

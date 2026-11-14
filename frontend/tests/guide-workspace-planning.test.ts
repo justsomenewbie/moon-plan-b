@@ -3,6 +3,7 @@ import test from "node:test";
 import type { TerrainSummary } from "../lib/api/terrain-summary.ts";
 import type { SiteComparison } from "../lib/api/compare-sites.ts";
 import { type GuideContext } from "../lib/api/guide-chat.ts";
+import { guideObservation, nextGuideUpdate, selectedModelSample } from "../lib/guide-observation.ts";
 import { planningIntent } from "../lib/guide-planning.ts";
 import { answerWorkspacePlanning } from "../lib/guide-workspace-planning.ts";
 
@@ -49,6 +50,11 @@ test("the displayed pair counts only visible spans, excludes a partial site, and
   const windows = { sun: partition, earth: partition, both: partition };
   const pair = { range, run_id: source, ranking: sites.map(s => ({site_id:s.id,name:s.name})),
     sites: { odysseus:{windows}, athena:{windows} }, coverageBySite:{odysseus:"complete",athena:"partial"} } as unknown as SiteComparison;
+  const sample = selectedModelSample(context, pair);
+  assert.deepEqual(guideObservation(Date.parse(stamp(30)), sample)?.readings, [{ name: "Odysseus", visibility: "both" }]);
+  assert.deepEqual(guideObservation(Date.parse(stamp(35)), sample)?.readings, [{ name: "Odysseus", visibility: "neither" }]);
+  assert.equal(nextGuideUpdate(Date.parse(stamp(30)) + 1, sample), Date.parse(stamp(31)));
+  assert.equal(guideObservation(Date.parse(to), sample), null);
   const onlySource = query("Which site is best from 2026-11-15 to 2026-11-16?", pair).answer;
   assert.match(onlySource, /1\/2/);
   assert.match(onlySource, /Incomplete coverage · Athena/);

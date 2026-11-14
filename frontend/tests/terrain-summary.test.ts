@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiError, getTerrainAggregate, getTerrainWindow, terrainSummaryRequested, validateTerrainTargetWindow } from "../lib/api/client.ts";
-import { guideObservation, nextGuideUpdate } from "../lib/guide-observation.ts";
+import { guideObservation, nextGuideUpdate, selectedModelSample } from "../lib/guide-observation.ts";
+import { workspaceGuideContext } from "../lib/api/guide-chat.ts";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary.ts";
 
 const stamp = (hour: number) => `2026-01-01T${String(hour).padStart(2, "0")}:00:00Z`;
@@ -239,19 +240,39 @@ test("rejects missing sections, unsafe links and duplicate site identifiers", ()
 test("astronaut reports the last covered terrain sample and preserves incomplete coverage", () => {
   const input = example();
   const terrain = parseTerrainSummary(input);
-  const read = (hour: number, minutes = 0) => guideObservation(Date.parse(stamp(hour)) + minutes * 60000, "", terrain);
+  const model = selectedModelSample(workspaceGuideContext(terrain, null), terrain);
+  const read = (hour: number, minutes = 0) => guideObservation(Date.parse(stamp(hour)) + minutes * 60000, model);
   assert.equal(read(0)?.readings[0].visibility, "sun");
   assert.equal(read(1, 59)?.time, Date.parse(stamp(1)));
   assert.equal(read(1, 59)?.readings[0].visibility, "both");
   assert.equal(read(2)?.readings[0].visibility, "earth");
   assert.equal(read(8), null);
   const incomplete = parseTerrainSummary({ ...input, sites: [{ ...input.sites[0], coverage: "partial", coverage_in_range: "partial", metrics: null }] });
-  assert.equal(guideObservation(Date.parse(stamp(1)), "", incomplete), null);
+  assert.equal(guideObservation(Date.parse(stamp(1)), selectedModelSample(workspaceGuideContext(incomplete, null), incomplete)), null);
+});
+
+test("current model sample follows the active catalog site and evaluated coverage, with no fallback for unsupported contexts", () => {
+  const terrain = parseTerrainSummary(example());
+  const sites = Array.from({ length: 9 }, (_, i) => ({ ...terrain.sites[0], id: `s${i}`, name: `Site ${i}` }));
+  const catalog = { ...terrain, sites };
+  const context = workspaceGuideContext(catalog, null, undefined, undefined, 8);
+  const sample = selectedModelSample(context, catalog);
+  assert.deepEqual(guideObservation(Date.parse(stamp(1)), sample)?.readings, [{ name: "Site 8", visibility: "both" }]);
+  assert.equal(selectedModelSample(context, { ...catalog, sites: [...sites, { ...sites[8], id: "duplicate-name" }] }), null);
+  assert.equal(selectedModelSample(context, { ...catalog, run: { ...catalog.run, run_id: "other-run" } }), null);
+  for (const kind of ["synthetic", "scenario", "unavailable"] as const) assert.equal(selectedModelSample({ ...context, kind }, catalog), null);
+  assert.equal(nextGuideUpdate(Date.parse(stamp(0)), null), null);
+  const original = example();
+  const clamped = parseTerrainSummary({ ...original, range: { ...original.range, requested_end: stamp(10) },
+    sites: original.sites.map(site => ({ ...site, coverage: "partial" })) });
+  const inRange = selectedModelSample(workspaceGuideContext(clamped, null), clamped);
+  assert.equal(guideObservation(Date.parse(stamp(1)), inRange)?.readings[0].visibility, "both");
+  assert.equal(guideObservation(Date.parse(stamp(9)), inRange), null);
 });
 
 test("saved guide reports only joint visibility and honors exclusive saved range limits", () => {
   const site = "im2_athena";
-  const read = (utc: string, choice = site) => guideObservation(Date.parse(utc), choice, null);
+  const read = (utc: string, choice = site) => guideObservation(Date.parse(utc), choice);
   assert.equal(read("2026-11-15T04:59:59Z")?.readings[0].visibility, "outsideJoint");
   assert.equal(read("2026-11-15T05:00:00Z")?.readings[0].visibility, "both");
   assert.equal(read("2026-11-21T00:00:00Z")?.readings[0].visibility, "both");
@@ -265,13 +286,14 @@ test("schedules guide updates at the selected model's sample and coverage bounda
   const start = Date.parse(stamp(0));
   const range = { ...terrain.range, end: new Date(start + 100 * 60_000).toISOString() };
   const shortened = { ...terrain, range };
-  assert.equal(nextGuideUpdate(start - 1, "", shortened), start);
-  assert.equal(nextGuideUpdate(start + 1, "", shortened), Date.parse(stamp(1)));
-  assert.equal(nextGuideUpdate(Date.parse(stamp(1)), "", shortened), Date.parse(range.end));
-  assert.equal(nextGuideUpdate(Date.parse(range.end), "", shortened), null);
+  const model = selectedModelSample(workspaceGuideContext(shortened, null), shortened);
+  assert.equal(nextGuideUpdate(start - 1, model), start);
+  assert.equal(nextGuideUpdate(start + 1, model), Date.parse(stamp(1)));
+  assert.equal(nextGuideUpdate(Date.parse(stamp(1)), model), Date.parse(range.end));
+  assert.equal(nextGuideUpdate(Date.parse(range.end), model), null);
   const secondWeek = "2026-11-21T00:00:00Z";
-  assert.equal(nextGuideUpdate(Date.parse(secondWeek) - 500, secondWeek, null), Date.parse(secondWeek));
-  assert.equal(nextGuideUpdate(Date.parse(secondWeek), "2026-11-14T00:00:00Z", null), null);
+  assert.equal(nextGuideUpdate(Date.parse(secondWeek) - 500, secondWeek), Date.parse(secondWeek));
+  assert.equal(nextGuideUpdate(Date.parse(secondWeek), "2026-11-14T00:00:00Z"), null);
 });
 
 function plotted(hours = [0, 1, 2, 3, 4, 5, 7]) {

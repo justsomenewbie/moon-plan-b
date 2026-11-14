@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import { guideObservation, nextGuideUpdate } from "../lib/guide-observation";
+import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { guideObservation, nextGuideUpdate, selectedModelSample } from "../lib/guide-observation";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
+import { isSavedResultLink } from "./observed-week";
 import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
 import type { PlanningSource } from "../lib/api/guide-planning";
@@ -52,6 +53,17 @@ const messages = {
   },
 };
 
+function subscribeToLocation(notify: () => void) {
+  window.addEventListener("popstate", notify);
+  window.addEventListener("hashchange", notify);
+  return () => {
+    window.removeEventListener("popstate", notify);
+    window.removeEventListener("hashchange", notify);
+  };
+}
+
+const savedRoute = () => isSavedResultLink(window.location);
+
 export default function AstronautGuide({ planningSource, savedResult, terrain, comparisonPath = "", workspace, workspaceEvidence, pair, workspaceActions, onSaved }: {
   planningSource?: PlanningSource; savedResult: string; terrain: TerrainSummary | null; comparisonPath?: string;
   workspace?: GuideContext; workspaceEvidence?: TerrainSummary | null; pair?: DisplayedPair; workspaceActions?: GuideActions; onSaved?: (value: string) => void;
@@ -67,6 +79,16 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
     else if (image.currentSrc.endsWith("/guide-visor-rest.webp")) setImageMode("text");
   }
   const [guideChoice, setGuideChoice] = useState<GuideScope | null>(null);
+  const onSavedRoute = useSyncExternalStore(subscribeToLocation, savedRoute, () => false);
+  const defaultScope = onSavedRoute ? "saved" : pair ? "pair" : workspace ? "workspace" : "saved";
+  const scope = guideChoice === "saved" || (guideChoice === "workspace" && workspace) || (guideChoice === "pair" && pair)
+    ? guideChoice : defaultScope;
+  const sampleSource = useMemo(() => {
+    if (!open) return null;
+    if (scope === "saved") return planningSource && planningSource !== "saved" ? null : savedResult;
+    if (!terrain) return null;
+    return scope === "pair" ? selectedModelSample(pair?.context, pair?.comparison) : selectedModelSample(workspace, terrain);
+  }, [open, scope, savedResult, planningSource, terrain, pair, workspace]);
   useEffect(() => {
     if (!open) return;
     let timer: number | undefined;
@@ -75,7 +97,7 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
       if (document.hidden) return;
       const current = Date.now();
       setNow(current);
-      const next = nextGuideUpdate(current, savedResult, terrain);
+      const next = nextGuideUpdate(current, sampleSource);
       if (next !== null) timer = window.setTimeout(refresh, Math.min(next - current, 2_147_483_647));
     }
     refresh();
@@ -84,8 +106,9 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
       window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [open, savedResult, terrain]);
-  const reading = !open || now === null ? null : guideObservation(now, savedResult, terrain);
+  }, [open, sampleSource]);
+  const reading = !open || now === null ? null : guideObservation(now, sampleSource);
+  const sourceAnchor = scope === "pair" ? "#terrain-pair" : scope === "workspace" ? "#sources" : "#saved-model-source";
   const rows = snapshot.weeks.flatMap(week => week.sites
     .filter(site => week.startUtc === savedResult || site.id === savedResult)
     .map(site => ({ week, site })));
@@ -118,12 +141,12 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
       <p className={styles.greeting}>{copy.greeting}<br />{copy.measurementNote}</p>
-      {open && <GuideChat planningSource={planningSource} choice={guideChoice} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
+      {open && <GuideChat planningSource={planningSource} scope={scope} savedPlanning={scope === "saved" && (guideChoice === "saved" || onSavedRoute)} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
       {reading && <section className={styles.sample}>
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>
         <ul>{reading.readings.map((row, index) => <li key={index}>{row.name} · {copy.states[row.visibility]}</li>)}</ul>
-        <a href={comparisonPath + (reading.saved ? "#saved-model-source" : "#sources")} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
+        <a href={comparisonPath + sourceAnchor} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
         <small>{reading.source}</small>
       </section>}
       {copy.questions.map(([question, answer], index) =>
