@@ -96,6 +96,7 @@ function readRun(value: unknown) {
 }
 function readModel(value: unknown) {
   const m = row(value, "model");
+  check(m.id === "lunarnav-terrain-horizon-v1", "Unsupported terrain visibility model.");
   const limits = items(m.limits, "model limitations", 100).map(item => text(item, "model limitation"));
   check(limits.length, "Model limitations are missing.");
   return { id: text(m.id, "model ID"), label: text(m.label, "model label"), definition: text(m.definition, "model definition"), limits };

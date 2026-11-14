@@ -1,6 +1,8 @@
-// AI-assisted draft integration. Replace the shared OpenAPI source only after producer agreement.
+// The live aggregate and synthetic workflow each use their published or draft OpenAPI types.
 import createClient from "openapi-fetch";
 import type { components, paths } from "./schema";
+import type { paths as ProducerPaths } from "./producer";
+import { parseTerrainSummary } from "./terrain-summary.ts";
 import { utcMillis, validateDataset } from "../dataset.ts";
 import type { Dataset } from "../dataset.ts";
 
@@ -21,7 +23,8 @@ export function apiError(value: unknown, status = 0): ApiError {
   return new ApiError(message.slice(0, 2000), status);
 }
 export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && (error.status === 0 || error.status >= 500);
-const api = createClient<paths>({ baseUrl: typeof window === "undefined" ? "http://localhost" : "", fetch: async (request) => {
+const baseUrl = typeof window === "undefined" ? "http://localhost" : "";
+async function boundedFetch(request: Request) {
   await ensureMock();
   const deadline = AbortSignal.timeout(15000);
   try {
@@ -39,12 +42,16 @@ const api = createClient<paths>({ baseUrl: typeof window === "undefined" ? "http
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
     return new Response(bytes, { status: response.status, statusText: response.statusText, headers: response.headers });
   } catch (error) { if (request.signal.aborted) throw error; if (deadline.aborted) throw new ApiError("The API did not respond within 15 seconds. Please retry.", 504); throw apiError(error); }
-} });
+}
+const api = createClient<paths>({ baseUrl, fetch: boundedFetch });
+const producer = createClient<ProducerPaths>({ baseUrl, fetch: boundedFetch });
 
 export type WindowRequest = NonNullable<paths["/api/v1/dataset"]["get"]["parameters"]["query"]>;
 export type JobRequest = components["schemas"]["JobRequest"];
 export type Job = components["schemas"]["Job"];
-export const defaultWindow: WindowRequest = { from: "2026-11-14T00:00:00Z", to: "2026-11-18T00:00:00Z", resolutionSeconds: 10800 };
+export const defaultWindow: WindowRequest = isMock
+  ? { from: "2026-11-14T00:00:00Z", to: "2026-11-18T00:00:00Z", resolutionSeconds: 10800 }
+  : { from: "2026-11-14T00:00:00Z", to: "2026-11-21T00:00:00Z", resolutionSeconds: 3600 };
 export function validateWindow(request: WindowRequest) {
   const span = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
   if (span <= 0 || span > 31 * 86400000) throw new ApiError("Choose an increasing UTC range of at most 31 days (draft limit).", 422);
@@ -70,6 +77,18 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   }
   if (!response.ok) throw apiError(error, response.status);
   return withinRequestedWindow(validateDataset(data), request);
+}
+export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, runId?: string) {
+  validateWindow(request);
+  const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
+    run_id: runId, site_ids: "im1_odysseus,im2_athena", start: request.from, end: request.to, include: "windows,metrics",
+  } } });
+  if (!response.ok) throw apiError(error, response.status);
+  const result = parseTerrainSummary(data, request);
+  if (runId && result.run.run_id !== runId) throw new ApiError("The returned model run differs from the shared link.", 502);
+  if (result.sites.map(site => site.id).join(",") !== "im1_odysseus,im2_athena")
+    throw new ApiError("The returned sites do not match the requested comparison.", 502);
+  return result;
 }
 export function validateJobRequest(request: JobRequest) {
   validateWindow(request);

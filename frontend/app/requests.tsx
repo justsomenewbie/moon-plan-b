@@ -36,17 +36,17 @@ export function ApiControls({ request, loading, onLoad, onResult }: { request: W
     setInputs(current => ({ ...current, [key]: value }));
   }
   const readRequest = () => windowFromInputs(inputs.from, inputs.to, inputs.resolution);
-  return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.")}</p>
+  return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{isMock ? t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.") : t("Compare Odysseus and Athena over up to 31 days. The team API returns full-resolution visibility intervals for the selected UTC range.")}</p>
     <form className="request-fields" onSubmit={(event) => {
       event.preventDefault();
       try { const next = readRequest(); setError(""); onLoad(next); } catch (e) { setError(e instanceof Error ? e.message : "Invalid request."); }
     }}>
       <label className="field">{t("From · UTC")}<input name="from" type="datetime-local" step="0.001" required value={inputs.from} onChange={(e) => changeInput("from", e.target.value)} /></label>
       <label className="field">{t("To · UTC")}<input name="to" type="datetime-local" step="0.001" required value={inputs.to} onChange={(e) => changeInput("to", e.target.value)} /></label>
-      <label className="field">{t("Desired step · seconds")}<input name="resolution" type="number" min="60" max="86400" step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>
+      {isMock && <label className="field">{t("Desired step · seconds")}<input name="resolution" type="number" min="60" max="86400" step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>}
       <button className="button outline" disabled={loading}>{t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}
-  </details><JobForm readRequest={readRequest} onResult={onResult} /></>;
+  </details>{isMock && <JobForm readRequest={readRequest} onResult={onResult} />}</>;
 }
 
 function JobForm({ readRequest, onResult }: { readRequest: () => WindowRequest; onResult: ResultHandler }) {

@@ -16,7 +16,7 @@ function example() {
       run_id: "unit-test", label: "Parser test run", provider: "test", dem: "test", horizon_method: "test", code_version: "test", run_timestamp_utc: stamp(0),
       observer_height_m: 2, min_earth_clearance_deg: 0, git_commit: null, manifest_sha256: "a".repeat(64), manifest_url: "/api/v1/runs/unit-test/files/manifest.json",
     },
-    model: { id: "test-terrain", label: "Declared test model", definition: "Test only", limits: ["Synthetic test values"] },
+    model: { id: "lunarnav-terrain-horizon-v1", label: "Declared test model", definition: "Test only", limits: ["Synthetic test values"] },
     sources: [{ id: "source", title: "Test reference", url: "https://example.org/reference", sha256: null }],
     sites: [{
       id: "custom:-89.4500:222.6900", name: "Example", coverage: "complete", coverage_in_range: "complete",
@@ -94,6 +94,7 @@ test("checks ordered intervals, exact full Sun/Earth intersection and matching s
 test("rejects missing sections, unsafe links and duplicate site identifiers", () => {
   const d = example();
   assert.throws(() => parseTerrainSummary({ ...d, include: ["metrics"] }), /needs windows and metrics/);
+  assert.throws(() => parseTerrainSummary({ ...d, model: { ...d.model, id: "different-horizon" } }), /Unsupported terrain visibility model/);
   assert.throws(() => parseTerrainSummary({ ...d, sites: [d.sites[0], d.sites[0]] }), /Duplicate site/);
   for (const url of ["javascript:alert(1)", "https://user:password@example.org/"]) {
     assert.throws(() => parseTerrainSummary({ ...d, sources: [{ ...d.sources[0], url }] }), /source URL/);
