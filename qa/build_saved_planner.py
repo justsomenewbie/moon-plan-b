@@ -68,7 +68,9 @@ def build(root):
             ranking = read(directory + f"{month}-{label}-ranking.json", f"GET /ranking?{params}&weights={weights}")
             selected = json.loads((root / directory / f"{month}-{label}-pair.json").read_bytes())["sites"]
             pair = read(directory + f"{month}-{label}-pair.json", f"POST /compare (same UTC range and weights, sites {','.join(sorted(selected))})")
-            require(ranking["run_id"] == pair["run_id"] == RUN and ranking["source"] == "computed" and ranking["weights"] == pair["weights"], "rank source")
+            expected_weights = {k: float(v) for k, v in (term.split(":") for term in weights.split(","))}
+            require(ranking["run_id"] == pair["run_id"] == RUN and ranking["source"] == "computed"
+                    and ranking["weights"] == pair["weights"] == expected_weights, "rank source")
             r = ranking["range"]
             require(r == pair["range"] and (r["start"], r["end"], r["step_s"]) == (start, end, 3600), "rank range")
             n = r["n_samples"]
