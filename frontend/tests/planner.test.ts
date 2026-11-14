@@ -79,6 +79,21 @@ test("matches the native interval evidence to all ranked IDs, preserves ties and
   await assert.rejects(getPlannerRanking(run, request), /observation evidence/);
 });
 
+test("anchors the evaluated window to the selected run's native grid", async t => {
+  const { aggregate, ranking } = replies();
+  const paths: string[] = [];
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    const path = new URL(req.url).pathname;
+    paths.push(path);
+    return Response.json(path.endsWith("/dataset") ? aggregate : ranking);
+  });
+  // Both responses use whole hours. This run's hourly samples fall on the half hour.
+  const halfHourRun = { ...run, start: "2026-02-28T00:30:00Z", end: "2026-03-03T00:30:00Z" };
+  const request = { from: "2026-03-01T00:10:00.000000001Z", to: "2026-03-01T23:50:00.000000001Z", priority: "joint" as const };
+  await assert.rejects(getPlannerRanking(halfHourRun, request), /ranking and its observation evidence do not match/);
+  assert.deepEqual(paths, ["/api/v1/dataset"]);
+});
+
 test("rejects dates beyond either inclusive start or exclusive end, reversal and cancellation before any lookup", async t => {
   let calls = 0;
   t.mock.method(globalThis, "fetch", async () => { calls++; return Response.json({}); });

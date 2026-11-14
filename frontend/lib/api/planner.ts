@@ -38,7 +38,8 @@ export async function getPlannerRun(signal?: AbortSignal): Promise<PlannerRun> {
 
 export async function getPlannerRanking(run: PlannerRun, request: PlannerDateRequest, signal?: AbortSignal): Promise<PlannerRanking> {
   const from = terrainUtcNanos(request.from, "Start UTC"), to = terrainUtcNanos(request.to, "End UTC");
-  if (from < terrainUtcNanos(run.start) || to > terrainUtcNanos(run.end) || to <= from)
+  const runStart = terrainUtcNanos(run.start);
+  if (from < runStart || to > terrainUtcNanos(run.end) || to <= from)
     throw new ApiError("Choose an increasing UTC window inside the model run.", 422);
   const fields = { joint: "pct_both", sun: "pct_sun", earth: "pct_earth" } as const;
   if (!Object.hasOwn(fields, request.priority)) throw new ApiError("Choose a visibility priority.", 422);
@@ -47,8 +48,9 @@ export async function getPlannerRanking(run: PlannerRun, request: PlannerDateReq
   // The aggregate supplies full-resolution intervals with coverage for every site, without time series.
   const evidence = await getTerrainAggregate({ from: request.from, to: request.to, resolutionSeconds: run.stepSeconds },
     run.sites.map(site => site.id).join(","), run.runId, false, signal);
+  const stepNanos = BigInt(run.stepSeconds) * 1_000_000_000n;
   requireMatch(evidence.range.step_s === run.stepSeconds && evidence.range.start === evidence.range.requested_start &&
-    evidence.range.end === evidence.range.requested_end);
+    evidence.range.end === evidence.range.requested_end && (terrainUtcNanos(evidence.range.start) - runStart) % stepNanos === 0n);
   const ranking = await readCatalogRanking({ run_id: run.runId, range: evidence.range, step_s: run.stepSeconds,
     precision_h: run.stepSeconds / 3600, weights: { [metric]: 1 } }, signal, run.sites);
   const byId = new Map(evidence.sites.map(site => [site.id, site]));
