@@ -1,5 +1,6 @@
 import catalog from "../public/data/run-b2/catalog.json" with { type: "json" };
 import archive from "../public/data/run-b2/visibility.json" with { type: "json" };
+import type { EarthWindow } from "./earth-windows.ts";
 
 type Priority = "joint" | "sun" | "earth";
 type Request = { from: string; to: string; priority: Priority };
@@ -53,6 +54,18 @@ export function savedB2JointWindows(from: string, to: string) {
     const { longest, first } = observed(masks[id].both, range.start, range.end);
     return { id, name, window: longest ? { hours: longest, start: iso(first), end: iso(first + longest) } : null };
   });
+}
+
+export function savedB2EarthWindows(siteId: string, from: string, to: string): EarthWindow[] | undefined {
+  const range = bounds({ from, to, priority: "earth" });
+  if (!range || !Object.hasOwn(masks, siteId)) return undefined;
+  // Each pair is an uninterrupted span in native hours from the B2 archive's own epoch.
+  const edges = masks[siteId].earth, windows: EarthWindow[] = [];
+  for (let i = 0; i < edges.length && edges[i] < range.end; i += 2) {
+    if (edges[i + 1] <= range.start) continue;
+    windows.push({ start: iso(Math.max(edges[i], range.start)), end: iso(Math.min(edges[i + 1], range.end)) });
+  }
+  return windows;
 }
 
 // Counts and ties are hourly model samples. Each window is [start,end) in UTC.

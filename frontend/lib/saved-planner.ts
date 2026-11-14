@@ -1,5 +1,6 @@
 import catalog from "../public/data/run-b/catalog.json" with { type: "json" };
 import data from "./saved-planner-data.json" with { type: "json" };
+import { clipEarthWindows, type EarthWindow } from "./earth-windows.ts";
 import { longestJointWindow } from "./joint-window.ts";
 
 type Priority = "joint" | "sun" | "earth";
@@ -32,6 +33,14 @@ function bounds(request: Request) {
 const field = { joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const;
 const format = (ms: number) => new Date(ms).toISOString().replace(".000Z", "Z");
 const ids = Object.keys(pair.intervals) as PairId[];
+export function savedEarthWindows(siteId: string, from: string, to: string): EarthWindow[] | undefined {
+  const range = bounds({ from, to, priority: "earth" });
+  if (!range || range.start < Date.parse(pair.from) || range.end > Date.parse(pair.to) ||
+      !Object.hasOwn(pair.intervals, siteId)) return undefined;
+  const windows = pair.intervals[siteId as PairId].earth.map(([start, end]) => ({ start, end }));
+  return clipEarthWindows(windows, format(range.start), format(range.end));
+}
+
 export function savedJointWindows(from: string, to: string) {
   const range = bounds({ from, to, priority: "joint" });
   if (!range || range.start < Date.parse(pair.from) || range.end > Date.parse(pair.to)) return null;
