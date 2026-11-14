@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, getTerrainWindow } from "../lib/api/client.ts";
+import { ApiError, getTerrainAggregate, getTerrainWindow } from "../lib/api/client.ts";
 import { guideObservation } from "../lib/guide-observation.ts";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary.ts";
 
@@ -78,6 +78,38 @@ test("accepts snapped client input and run clamping, rejects wrong request, reve
   const single = example();
   Object.assign(single.range, { requested_end: stamp(1), end: stamp(1), n_samples: 1 });
   assert.throws(() => parseTerrainSummary(single, { from: "2026-01-01T00:30:00Z", to: "2026-01-01T00:10:00Z" }), /requested UTC range/);
+});
+
+test("sends fractional exclusive dataset ends on the next whole second and checks the original bounds", async t => {
+  const d = example();
+  const criteria_hours = [24, 72, 168];
+  const site = { ...d.sites[0], criteria: criteria_hours.map(minimum_hours => ({
+    minimum_hours, metric: "longest_both_h", value_h: 2, value_clipped: false, result: "below", reason: "Test fixture",
+  })) };
+  const response = { ...d, sites: [site], criteria_hours, include: [...d.include, "criteria"] };
+  const sent: URLSearchParams[] = [];
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    sent.push(new URL(req.url).searchParams);
+    return Response.json(response);
+  });
+  const from = stamp(0).replace("Z", ".500Z");
+  const read = (to: string) => getTerrainAggregate({ from, to, resolutionSeconds: 3600 }, site.id, d.run.run_id, false);
+  for (const [input, wire] of [
+    [stamp(7).replace("Z", ".001Z"), "2026-01-01T07:00:01Z"],
+    [stamp(7).replace("Z", ".000000001Z"), "2026-01-01T07:00:01Z"],
+    ["2026-01-01T07:59:59.999Z", stamp(8)],
+    [stamp(8), stamp(8)], [stamp(8).replace("Z", ".000Z"), stamp(8).replace("Z", ".000Z")],
+  ]) {
+    const result = await read(input);
+    assert.equal(sent.at(-1)?.get("start"), from);
+    assert.equal(sent.at(-1)?.get("end"), wire);
+    assert.equal(result.range.end, stamp(8));
+  }
+  await assert.rejects(read(stamp(8).replace("Z", ".001Z")), /different requested UTC range/);
+  const count = sent.length;
+  await assert.rejects(read("2026-02-30T23:59:59.999Z"), /real calendar instant/);
+  await assert.rejects(read("9999-12-31T23:59:59.999Z"), /four-digit year/);
+  assert.equal(sent.length, count);
 });
 
 test("keeps incomplete and missing measurements distinct from a complete zero-overlap result", () => {
