@@ -9,11 +9,19 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | UI-03 | Inject HTTP 404/500, network disconnect, timeout and truncated body on actual data route | Error/retry with bounded attempts; live mode must not silently show mocks | [PASS in Chromium](#ui-03-live-api-failures) |
 | UI-04 | Import partial and missing fixtures | Unknown text and null metrics, broken lines across missing samples; no zero-filled darkness | [PASS in Chromium](#ui-04-and-ui-05-plot-retest) |
 | UI-05 | Import crossing_wrap; inspect both sites and zero values | North seam does not draw a full-width spike; exact-zero displayed accurately | [PASS in Chromium](#ui-04-and-ui-05-plot-retest) |
-| UI-06 | Switch English/Vietnamese and share/reopen selection | Same UTC `Z`, source identity, degrees/km and dataset version; English default retained | NOT RUN |
+| UI-06 | Switch English/Vietnamese and share/reopen selection | Same UTC `Z`, source identity, degrees/km and dataset version; English default retained | [PASS in Chromium](#ui-06-sharing-a-sample) |
 | UI-07 | Block globe texture, simulate image decode failure and unavailable Canvas 2D context separately | Fallback/retry or explicit error; numeric tables and SVG charts still usable, selection retained | [PASS in Chromium](#ui-07-browser-retest) |
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
 | UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
 | UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | NOT RUN |
+
+## UI-06 sharing a sample
+
+On 14 November 2026 at 08:44 UTC, Chromium 158.0.8127.18 tested the [shared-sample fix](https://github.com/justsomenewbie/moon-plan-b/commit/c73a884ea794beffaf0e3d94eb7e83ddde942a0b) at 1280 × 720 in the Asia/Ho_Chi_Minh timezone. The [browser replay](../check_shared_sample.mjs) imported the archived [paired Horizons copy](../evidence/odysseus-athena-hour-gap/gap.json), SHA-256 `7acb4779b02e8c743f9f04d5c69da5b51e33a31eb2f6b525d2d1a87851a0579b`. Only Athena lacks the 02:00 UTC sample on January 7. The test intercepted the initial API request with a 404, then used the normal local import and share controls.
+
+With Athena primary and Odysseus alternative, the English and Vietnamese clocks, slider labels and sky timestamp all showed 03:00 UTC. Before the fix, reopening the shared URL and supplying the same file reset the clocks to 00:00. The new link restored 03:00 in another Vietnamese tab; after pressing Left and sharing again, a clean browser context defaulted to English and restored 01:00. The source links, four Horizons raw hashes, site coordinates in degrees, heights in km, schema and dataset ID matched the imported file. Changing the link to 02:00 produced an error and no selected sample. Imported releases still travel separately from their links. An independent Chromium run with the bundled demo on November 14 and 15 restored 03:00 UTC on each date. Removing the optional sample field reopened each date at 00:00 UTC.
+
+Replay with `node qa/check_shared_sample.mjs <live-mode-frontend-origin>`. The [dataset tests](../../frontend/tests/dataset.test.ts) also cover different dates, missing offsets and older links. OpenAI Codex implemented the link change and regression.
 
 ## UI-01 pending windows
 
