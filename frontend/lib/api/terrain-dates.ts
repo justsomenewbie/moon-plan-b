@@ -18,7 +18,7 @@ export async function getTerrainDateSites(runId: string, signal?: AbortSignal) {
   if (!data || !("sites" in data) || data.run_id !== runId || !Array.isArray(data.sites))
     throw new ApiError("The site list does not match the selected model run.", 502);
   const ids = new Set<string>();
-  return data.sites.map(site => {
+  return data.sites.map((site): { id: string; name: string; demSource: string; horizonMethod: string; lat_deg: number | null; lon_deg: number | null } => {
     if (!site || typeof site.id !== "string" || !siteIdPattern.test(site.id) || ids.has(site.id)
         || typeof site.name !== "string" || !site.name.trim()
         || typeof site.dem_source !== "string" || !site.dem_source.trim()

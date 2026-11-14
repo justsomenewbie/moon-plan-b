@@ -59,6 +59,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     "How many hours or days should the mission last within " + period + "?",
     "Bạn muốn nhiệm vụ kéo dài bao nhiêu giờ hoặc ngày trong khoảng " + period + "?"));
   const unavailable = tr("I could not verify team-model results for ", "Mình chưa xác minh được kết quả mô hình của nhóm cho ") + period + tr(". Reopen the planner to retry.", ". Bạn có thể mở công cụ lập kế hoạch để thử lại.");
+  const noVisibility = tr("No evaluated option provides any hours of the requested visibility.", "Không có lựa chọn nào cho giờ quan sát đáp ứng tiêu chí này.");
   function offline() {
     const savedSource = "\n" + tr("Saved run", "Run đã lưu") + " · " + savedPlannerRun.runId;
     const matches = matchSites(plan.siteText, savedPlannerRun.sites);
@@ -71,6 +72,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       const search = getSavedPlannerDates({ ...plan, from, to, siteId: site.id, missionHours: plan.missionHours! });
       if (!search) return reply(unavailable);
       const first = search.rows[0], ties = search.rows.filter(r => r[key] === first[key]).length;
+      if (!first[key]) return reply(site.name + "\n" + period + "\n" + noVisibility + savedSource);
       return reply(tr("Saved hourly observations", "Các mẫu giờ đã lưu") + " · " + site.name + "\n" + period
         + "\n" + tr("Earliest highest-visibility mission window", "Khoảng nhiệm vụ sớm nhất đạt mức quan sát cao nhất") + " · " + first.start + " → " + first.end
         + "\n" + metric + " · " + first[key] + " h · " + tr(ties + " tied starts out of " + search.nEvaluated, ties + " mốc đồng hạng trong " + search.nEvaluated + " mốc") + savedSource);
@@ -86,6 +88,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       return reply(scope + "\n" + row.name + "\n" + period + "\n" + tr("Sun / Earth / both", "Mặt Trời / Trái Đất / cả hai") + " · "
         + [row.sunHours, row.earthHours, row.bothHours].join(" / ") + " h" + savedSource);
     }
+    if (!ranking.rows[0][key]) return reply(scope + "\n" + period + "\n" + noVisibility + savedSource);
     return reply(scope + "\n" + period + "\n" + metric + " · " + ranking.rows.filter(r => ranking.leaders.includes(r.id))
       .map(r => r.name + " · " + r[key] + " h").join("\n") + savedSource);
   }
@@ -99,6 +102,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       const result = await api.ranking(run, { from, to, priority: plan.priority }, signal);
       const winners = result.evidence.sites.filter(s => result.recommendedIds.includes(s.id));
       const key = ({ joint: "both_hours", sun: "sun_hours", earth: "earth_hours" } as const)[plan.priority];
+      if (winners.length && winners.every(s => s.metrics?.[key] === 0)) return reply(period + "\n" + noVisibility + source);
       const rows = winners.map(s => s.name + " · " + s.metrics![key] + " h");
       return reply(period + "\n" + (rows.length
         ? tr("Highest " + metric + " among catalog sites with complete coverage", "Các địa điểm có tỷ lệ " + metric + " cao nhất trong số các địa điểm có đủ dữ liệu") + ":\n" + rows.join("\n")
@@ -124,6 +128,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     const search = await api.dates({ run_id: run.runId, site_id: site.id, earliest: from, latest, mission_h: hours, max_results: 1,
       constraints: { objective: plan.priority === "joint" ? "both" : plan.priority, require_sun_at_landing: false } }, run.stepSeconds, signal, run.start);
     const candidate = search.candidates[0];
+    if (candidate && candidate[({ joint: "both_pct", sun: "sun_pct", earth: "earth_pct" } as const)[plan.priority]] === 0) return reply(site.name + "\n" + period + "\n" + noVisibility + source);
     return reply(site.name + "\n" + period + "\n" + (candidate ? tr("Top returned mission window", "Khoảng nhiệm vụ được mô hình xếp đầu") + " · " + candidate.landing_utc + " → " + candidate.mission_end_utc
       + "\n" + tr("Sun / Earth / both", "Mặt Trời / Trái Đất / cả hai") + " · " + [candidate.sun_pct, candidate.earth_pct, candidate.both_pct].map(v => v + "%").join(" / ")
       : tr("No qualifying model window was returned.", "Mô hình không trả về khoảng nào đáp ứng yêu cầu.")) + source);

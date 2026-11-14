@@ -64,7 +64,7 @@ export default function DataPage() {
         <p>{text("Compare the sites for one of these three UTC windows. Each contains summary values for the entire selected window.",
           "So sánh các địa điểm trong một trong ba khoảng UTC sau. Mỗi bộ số liệu tổng hợp bao phủ toàn bộ khoảng đã chọn.")}</p>
         <ul className="space-y-1">{savedCatalogWindows.map(([from,to]) => <li key={from}>
-          <a href={"/plan?" + new URLSearchParams({ mode: "sites", from, to, priority: "joint" })}>{from} → {to} UTC</a>
+          <a href={"/plan?" + new URLSearchParams({ source: "saved", mode: "sites", from, to, priority: "joint" })}>{from} → {to} UTC</a>
         </li>)}</ul>
         <h3>{text("Saved Odysseus and Athena comparisons", "Kết quả so sánh Odysseus và Athena đã lưu")}</h3>
         <p>{text("Open either week to see both sites’ simultaneous Sun and Earth visibility intervals. The end time is exclusive.",
@@ -74,7 +74,7 @@ export default function DataPage() {
         </li>)}</ul>
         <p>{text("For these two sites, the saved intervals also support daily comparisons and hourly landing-start searches from 14 November up to 28 November 2026 UTC.",
           "Với hai địa điểm này, dữ liệu đã lưu còn cho phép so sánh khoảng ngày tự chọn và tìm giờ bắt đầu hạ cánh từ ngày 14/11 đến trước ngày 28/11/2026 UTC.")}</p>
-        <a href={"/plan?" + new URLSearchParams({ mode: "dates", site: "im2_athena", from: "2026-11-14", to: "2026-11-28", missionHours: "3", priority: "joint" })}>
+        <a href={"/plan?" + new URLSearchParams({ source: "saved", mode: "dates", site: "im2_athena", from: "2026-11-14", to: "2026-11-28", missionHours: "3", priority: "joint" })}>
           {text("Find landing times within the saved intervals", "Tìm giờ hạ cánh trong các khoảng đã lưu")}</a>
       </section>
       <section className="space-y-3" aria-labelledby="source-files">

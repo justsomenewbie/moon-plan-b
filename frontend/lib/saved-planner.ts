@@ -10,7 +10,7 @@ type PairId = keyof typeof pair.intervals;
 const full = data.catalogWindows[0];
 const provenance = { runId: data.runId, manifestSha256: data.manifestSha256, stepSeconds: data.stepSeconds };
 export const savedPlannerRun = { ...provenance, start: full.from, end: full.to,
-  sites: catalog.sites.map(s => ({ id: s.id, name: s.name, demSource: s.dem_source, horizonMethod: s.horizon_method })) };
+  sites: catalog.sites.map(s => ({ id: s.id, name: s.name, lat_deg: s.lat_deg, lon_deg: s.lon_deg, demSource: s.dem_source, horizonMethod: s.horizon_method })) };
 export const savedPlannerWindows = {
   catalog: data.catalogWindows.map(({ from, to }) => ({ from, to })),
   pair: { from: pair.from, to: pair.to, siteIds: Object.keys(pair.intervals) },

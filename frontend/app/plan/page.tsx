@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isMock } from "../../lib/api/client";
-import { getPlannerRanking, getPlannerRun, type PlannerRun } from "../../lib/api/planner";
+import { getPlannerRanking, getPlannerRun, type PlannerRun, type PlannerPriority } from "../../lib/api/planner";
+import { getSavedPlannerRanking, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
 import { useLanguage, LanguageControl } from "../language";
 import MissionDateSearch from "../mission-date-search";
+import SavedLanding from "./saved-landing";
 import { SiteFooter, SkyBackground } from "../site-chrome";
 import { TimeRange } from "../terrain-site-result";
 import ThemeControl from "../theme-control";
@@ -13,64 +15,83 @@ import AstronautGuide from "../astronaut-guide";
 import { savedResultFromUrl } from "../observed-week";
 import "./plan.css";
 
-type Priority = "joint" | "sun" | "earth";
 const criteria = { joint: "Sun and Earth together", sun: "Sunlight", earth: "Earth visibility" } as const;
 const DAY = 86400000;
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const midnight = (date: string) => date + "T00:00:00Z";
+const planLink = (params: Record<string, string>) => "/plan?" + new URLSearchParams(params);
+type SearchResult = {
+  from: string; to: string; scope: "live" | "catalog" | "pair";
+  rows: { id: string; name: string; hours: number[] | null; longest?: number; coverage?: string }[];
+  leaders: string[];
+};
 
-function CatalogSearch({ run, first, last, priority }: { run: PlannerRun; first: string; last: string; priority: Priority }) {
+function storedResult(from: string, to: string, priority: PlannerPriority): SearchResult | null {
+  const saved = getSavedPlannerRanking({ from, to, priority });
+  return saved && { ...saved, rows: saved.rows.map(s => ({ id: s.id, name: s.name, hours: [s.sunHours, s.earthHours, s.bothHours] })) };
+}
+
+function CatalogSearch({ run, first, last, priority, saved }: { run: PlannerRun; first: string; last: string; priority: PlannerPriority; saved: boolean }) {
   const { t } = useLanguage();
-  const [result, setResult] = useState<Awaited<ReturnType<typeof getPlannerRanking>>>();
+  const [result, setResult] = useState<SearchResult | null>(() => saved ? storedResult(first, last, priority) : null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [metric, setMetric] = useState(priority);
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
-  function clear() {
-    active.current?.abort(); setPending(false); setError(""); setResult(undefined);
-  }
+  function clear() { active.current?.abort(); setPending(false); setError(""); setResult(null); }
+  const best = result?.rows.filter(r => result.leaders.includes(r.id)) ?? [];
+  const column = { sun: 0, earth: 1, joint: 2 }[metric];
   return <section aria-labelledby="catalog-question">
     <h2 id="catalog-question">{t("Which site fits my dates?")}</h2>
-    <form className="request-fields" onChange={clear} onSubmit={async e => {
+    <form className="request-fields print:hidden" onChange={clear} onSubmit={async e => {
       e.preventDefault();
       const form = new FormData(e.currentTarget);
       const from = midnight(String(form.get("from"))), to = midnight(String(form.get("to")));
       clear();
-      const controller = new AbortController();
-      active.current = controller;
-      setPending(true);
+      if (from < run.start || to > run.end || from >= to) { setError("Choose an increasing UTC window inside the model run."); return; }
+      if (saved) {
+        const next = storedResult(from, to, metric);
+        setResult(next);
+        if (!next) setError("No saved observations cover this request. Choose a saved range below or connect to the team API.");
+        return;
+      }
+      const controller = new AbortController(); active.current = controller; setPending(true);
       try {
-        const next = await getPlannerRanking(run, { from, to, priority: metric }, controller.signal);
-        if (!controller.signal.aborted) setResult(next);
+        const { ranking, evidence, recommendedIds } = await getPlannerRanking(run, { from, to, priority: metric }, controller.signal);
+        if (!controller.signal.aborted) setResult({ from: ranking.range.start, to: ranking.range.end, scope: "live", leaders: recommendedIds,
+          rows: ranking.ranking.map(row => {
+            const site = evidence.sites.find(s => s.id === row.site_id)!;
+            const m = site.coverage === "complete" && site.coverage_in_range === "complete" ? site.metrics : null;
+            return { id: row.site_id, name: row.name, hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
+          }) });
       } catch (cause) {
         if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "The request could not be completed. Retry or check the connection.");
       } finally { if (!controller.signal.aborted) setPending(false); }
     }}>
       <label className="field">{t("Start date (UTC)")}<input name="from" type="date" required min={run.start.slice(0,10)} max={day(Date.parse(run.end) - DAY)} defaultValue={first} /></label>
       <label className="field">{t("End date (UTC, exclusive)")}<input name="to" type="date" required min={day(Date.parse(run.start) + DAY)} max={run.end.slice(0,10)} defaultValue={last} /></label>
-      <label className="field">{t("Rank sites by")}<select name="priority" value={metric} onChange={e => setMetric(e.target.value as Priority)}>
+      <label className="field">{t("Rank sites by")}<select name="priority" value={metric} onChange={e => setMetric(e.target.value as PlannerPriority)}>
         {Object.entries(criteria).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
       </select></label>
       <button className="button primary" disabled={pending}>{t("Find sites")}</button>
     </form>
     {pending && <p role="status">{t("Checking visibility for the catalog…")}</p>}
     {error && <p role="alert">{t(error)}</p>}
+    {saved && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{savedPlannerWindows.catalog.map(w => <a key={w.from} href={planLink({mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric})}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
     {result && <section aria-label={t("Site search results")} className="plan-results">
       <h3>{t("Site search results")}</h3>
-      <p><TimeRange start={result.ranking.range.start} end={result.ranking.range.end} /> · {t(criteria[metric])}</p>
-      <p className="data-notice">{result.recommendedIds.length
-        ? t("Highest percentage among sites with complete coverage: {sites}.", { sites: result.ranking.ranking.filter(r => result.recommendedIds.includes(r.site_id)).map(r => r.name).join(" · ") })
-        : t("No site has enough coverage for a recommendation.")}</p>
-      <div className="table-scroll"><table><caption>{t("All sites in this run")}</caption>
-        <thead><tr><th scope="col">{t("Site")}</th><th scope="col">{t("Sun visible")}</th><th scope="col">{t("Earth visible")}</th><th scope="col">{t("Both visible")}</th><th scope="col">{t("Longest joint window")}</th></tr></thead>
-        <tbody>{result.ranking.ranking.map(row => {
-          const site = result.evidence.sites.find(s => s.id === row.site_id)!;
-          const complete = site.coverage_in_range === "complete" && site.metrics !== null;
-          const bounds = result.ranking.range;
-          const href = "/compare?" + new URLSearchParams({ run_id: run.runId, site_id: row.site_id, view_site: row.site_id, from: bounds.start, to: bounds.end, resolutionSeconds: "3600" }) + "#terrain-observations";
-          return <tr key={row.site_id}><th scope="row">{run.stepSeconds === 3600 && Date.parse(bounds.end) - Date.parse(bounds.start) <= 366 * DAY ? <a href={href}>{row.name}</a> : row.name}</th>
-            {complete ? <><td>{row.pct_sun}%</td><td>{row.pct_earth}%</td><td>{row.pct_both}%</td><td>{site.metrics!.longest_both_h} h</td></> : <td colSpan={4}>{t("Coverage")} · {t(site.coverage_in_range)}</td>}</tr>;
+      <p><TimeRange start={result.from} end={result.to} /> · {t(criteria[metric])}</p>
+      <p><strong>{result.scope === "pair" ? t("Saved observations: Odysseus and Athena only.") : result.scope === "catalog" ? t("Saved ranking: all 23 sites.") : t("Live catalog: {count} sites.", {count: result.rows.length})}</strong></p>
+      <p className="data-notice">{!best.length ? t("No site has enough coverage for a recommendation.") : best.some(r => (r.hours?.[column] ?? 0) > 0)
+        ? t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
+        : t("No evaluated site meets this visibility priority for any hour in this window.")}</p>
+      <div className="table-scroll"><table><caption>{t("Visibility hours in the selected window")}</caption>
+        <thead><tr><th scope="col">{t("Site")}</th>{["Sun visible","Earth visible","Both visible",...(result.scope === "live" ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
+        <tbody>{result.rows.map(row => {
+          const href = "/compare?" + new URLSearchParams({run_id:run.runId,site_id:row.id,view_site:row.id,from:result.from,to:result.to,resolutionSeconds:"3600"}) + "#terrain-observations";
+          return <tr key={row.id}><th scope="row">{result.scope === "live" && run.stepSeconds === 3600 && Date.parse(result.to)-Date.parse(result.from) <= 366*DAY ? <a href={href}>{row.name}</a> : row.name}</th>
+            {row.hours ? <>{row.hours.map((h,i) => <td key={i}>{h}</td>)}{result.scope === "live" && <td>{row.longest}</td>}</> : <td colSpan={4}>{t("Coverage")} · {t(row.coverage ?? "Incomplete coverage")}</td>}</tr>;
         })}</tbody></table></div>
       <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code>{run.runId}</code></p>
     </section>}
@@ -80,31 +101,37 @@ function CatalogSearch({ run, first, last, priority }: { run: PlannerRun; first:
 function Planner({ seed }: { seed: URLSearchParams }) {
   const { t } = useLanguage();
   const [mode, setMode] = useState(seed.get("mode") === "dates" ? "dates" : "sites");
-  const catalog = useQuery({ queryKey: ["mission-planner-run"], queryFn: ({signal}) => getPlannerRun(signal), enabled: !isMock });
-  if (isMock) return <div className="data-notice"><p>{t("This preview uses sample data. Searching the model catalog requires a connection to the team API.")}</p><a href="/compare#observed-week">{t("Try the saved example")}</a></div>;
-  if (catalog.isPending) return <p role="status">{t("Loading sites for this run…")}</p>;
-  if (!catalog.data) return <div role="alert"><p>{t(catalog.error?.message ?? "The default model run or its site catalog is unavailable.")}</p><button className="button outline" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></div>;
-  const run = catalog.data;
+  const forced = seed.get("source") === "saved";
+  const catalog = useQuery({ queryKey: ["mission-planner-run"], queryFn: ({signal}) => getPlannerRun(signal), enabled: !isMock && !forced, retry:false });
+  const saved = isMock || forced || !catalog.data;
+  const run = saved ? savedPlannerRun : catalog.data!;
   const today = day(Date.now());
   const seedDay = (key: string, fallback: string) => {
     const v = seed.get(key);
     return v && /^\d{4}-\d\d-\d\d$/.test(v) && Number.isFinite(Date.parse(midnight(v))) && day(Date.parse(midnight(v))) === v ? v : fallback;
   };
-  const first = seedDay("from", today >= run.start.slice(0,10) && today < run.end.slice(0,10) ? today : run.start.slice(0,10));
-  const last = seedDay("to", day(Math.min(Date.parse(midnight(first)) + 7*DAY, Date.parse(run.end))));
+  const localStart = savedPlannerWindows.pair.from.slice(0,10);
+  const first = seedDay("from", saved ? localStart : today >= run.start.slice(0,10) && today < run.end.slice(0,10) ? today : run.start.slice(0,10));
+  const last = seedDay("to", day(Math.min(Date.parse(midnight(first)) + (saved && mode === "sites" ? 1 : 7)*DAY, Date.parse(run.end))));
   const sort = seed.get("priority");
   const priority = sort === "sun" || sort === "earth" ? sort : "joint";
-  const mission = Number(seed.get("missionHours"));
+  const hours = Number(seed.get("missionHours"));
+  const mission = Number.isSafeInteger(hours) && hours > 0 && hours <= (Date.parse(run.end)-Date.parse(run.start))/3600000 ? hours : undefined;
+  const savedParams = new URLSearchParams(seed); savedParams.set("source","saved"); savedParams.set("mode",mode);
+  if (!isMock && !forced && catalog.isPending) return <p role="status">{t("Connecting to the team API…")} <a href={"/plan?"+savedParams}>{t("Use saved data now")}</a></p>;
   return <>
-    <p className="plan-coverage">{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}<br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
-    <div className="mode-switch" role="group" aria-label={t("Choose how to search")}>
+    <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
+    <p className="plan-source">{saved ? t("Saved run B") : t("Live team API")} · <a href="/data">{t("Browse data and all original files")}</a></p>
+    {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></p>}
+    {(!saved || forced && !isMock) && <a className="print:hidden" href={forced ? "/plan?" + new URLSearchParams([...savedParams].filter(([k]) => k !== "source")) : "/plan?"+savedParams}>{t(forced ? "Check live data" : "Use saved data now")}</a>}
+    <div className="mode-switch print:hidden" role="group" aria-label={t("Choose how to search")}>
       <button type="button" aria-pressed={mode === "sites"} onClick={() => setMode("sites")}>{t("I have dates")}</button>
       <button type="button" aria-pressed={mode === "dates"} onClick={() => setMode("dates")}>{t("I have a site")}</button>
     </div>
-    {mode === "sites" ? <CatalogSearch run={run} first={first} last={last} priority={priority} /> :
+    {mode === "sites" ? <CatalogSearch key={String(saved)} run={run} first={first} last={last} priority={priority} saved={saved} /> :
+      saved ? <SavedLanding siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
-        coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined}
-        initialMissionHours={mission > 0 && Number.isInteger(mission) ? mission : undefined} initialObjective={priority === "joint" ? "both" : priority} />}
+        coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialObjective={priority === "joint" ? "both" : priority} />}
   </>;
 }
 
@@ -117,8 +144,9 @@ export default function PlanPage() {
     return () => window.removeEventListener("popstate", read);
   }, []);
   return <div className="app-shell"><SkyBackground />
-    <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label={t("Main")}><a href="/compare">{t("Compare")}</a><LanguageControl /><ThemeControl /></nav></header>
-    <main className="plan-main"><h1>{t("Plan a lunar visit")}</h1>{seed && <Planner key={seed.toString()} seed={seed} />}</main>
+    <a className="skip-link" href="#plan-title">{t("Skip to content")}</a>
+    <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label={t("Main")}><a href="/data">{t("Data catalog")}</a><a href="/compare">{t("Compare")}</a><LanguageControl /><ThemeControl /></nav></header>
+    <main className="plan-main"><h1 id="plan-title" tabIndex={-1}>{t("Plan a lunar visit")}</h1>{seed && <Planner key={seed.toString()} seed={seed} />}</main>
     <AstronautGuide savedResult={savedResultFromUrl(new URLSearchParams())} terrain={null} comparisonPath="/compare" /><SiteFooter />
   </div>;
 }

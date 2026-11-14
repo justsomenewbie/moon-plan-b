@@ -5,7 +5,7 @@ import { getPlannerRun, getPlannerRanking, type PlannerRun } from "../lib/api/pl
 const start = "2026-03-01T00:00:00Z", end = "2026-03-02T00:00:00Z";
 const ids = ["alpha", "beta", "unknown"];
 const run: PlannerRun = { runId: "fixture", start, end, stepSeconds: 3600,
-  sites: ids.map(id => ({ id, name: id, demSource: "fixture", horizonMethod: "fixture" })) };
+  sites: ids.map(id => ({ id, name: id, demSource: "fixture", lat_deg: null, lon_deg: null, horizonMethod: "fixture" })) };
 const nativeRange = { start, end, step_s: 3600, n_samples: 24 };
 const weights = { pct_both: 1 };
 const thresholdHours = [24, 72, 168];

@@ -7,3 +7,9 @@
 .plan-main table { width: 100%; font-variant-numeric: tabular-nums; }
 .plan-main table th, .plan-main table td { padding: .55rem .75rem; text-align: start; border-bottom: 1px solid var(--line); }
 .plan-main caption { text-align: start; font-weight: 600; }
+
+.plan-presets { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1rem; margin: 1rem 0; }
+.plan-source, .plan-presets { overflow-wrap: anywhere; }
+.plan-results table { min-width: 32rem; }
+.plan-main code { overflow-wrap: anywhere; }
+.hero-actions a:not(.button) { align-self: center; text-decoration: underline; }

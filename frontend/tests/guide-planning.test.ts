@@ -13,7 +13,7 @@ const examples = {
   vi: "Tôi muốn đi từ 21 đến 28 tháng 11 năm 2026, địa điểm nào có nhiều giờ nhìn thấy cả Mặt Trời và Trái Đất nhất?",
 };
 const signal = new AbortController().signal;
-const site = (id: string, name: string) => ({ id, name, demSource: "test", horizonMethod: "test" });
+const site = (id: string, name: string) => ({ id, name, demSource: "test", lat_deg: null, lon_deg: null, horizonMethod: "test" });
 const run: PlannerRun = { runId: "fixture-run", start: "2026-01-01T00:00:00Z", end: "2028-01-01T00:00:00Z", stepSeconds: 3600,
   sites: [site("im2_athena", "IM-2 Athena"), site("apollo11", "Apollo 11 LM Eagle (Tranquility Base)"), site("apollo15", "Apollo 15 LM Falcon (Hadley-Apennine)")] };
 const unintended = async () => { throw Error("Unexpected lookup"); };
@@ -81,4 +81,11 @@ test("the astronaut can answer a saved complete catalog ranking or site-first se
   const mission = await answerPlanning(planningIntent("Khi nào nên đi Odysseus 24 giờ từ 14 đến 21 tháng 11 năm 2026?")!, "vi", signal, offline);
   assert.match(mission.answer, /2026-11-19T15:00:00Z → 2026-11-20T15:00:00Z/);
   assert.match(mission.answer, /10 mốc đồng hạng trong 145 mốc/);
+});
+
+test("no recommendation for a saved landing window with zero joint visibility", async () => {
+  const plan = planningIntent("When should I land at Odysseus for 3 hours from 2026-11-15 to 2026-11-16?")!;
+  const response = await answerPlanning(plan, "en", signal, {...api, online:false});
+  assert.match(response.answer, /No evaluated option/);
+  assert.doesNotMatch(response.answer, /highest-visibility mission window/);
 });

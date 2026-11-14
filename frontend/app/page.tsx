@@ -38,6 +38,7 @@ export default function Home() {
             <a className="button primary" href="/plan?mode=sites">{t("Find sites for my dates")}</a>
             <a className="button outline" href="/plan?mode=dates">{t("Find dates for my site")}</a>
             <a href="/compare">{t("Open comparison tool")}</a>
+            <a href="/data">{t("Data catalog")}</a>
 
           </div>
         </div>
