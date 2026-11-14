@@ -199,3 +199,96 @@ test("original run downloads retain the manifest bytes, ETag and path while qual
   assert.ok(longName.endsWith(".csv.gz"));
   assert.notEqual(longName, await name("B2", longPath.replace("/p/", "/q/")));
 });
+
+test("conditional reads forward bounded validators, accept a matching upstream 304 and preserve download metadata", async () => {
+  const match = 'W/"other", "opaque@,value"';
+  const tag = 'W/"opaque@,value"';
+  const req = request("sites", { headers: { "if-none-match": match, cookie: "private=browser", authorization: "client credential" } });
+  const result = await proxyLunarnav(req, freshKey(), async (_url, init) => {
+    const headers = new Headers(init?.headers);
+    assert.equal(headers.get("if-none-match"), match);
+    assert.equal(headers.get("cookie"), null);
+    assert.equal(headers.get("authorization"), null);
+    return new Response(null, { status: 304, headers: { etag: tag, "cache-control": "public, max-age=55", "set-cookie": "x=fake" } });
+  });
+  assert.equal(result.status, 304);
+  assert.equal(result.body, null);
+  assert.equal(result.headers.get("content-type"), null);
+  assert.equal(result.headers.get("etag"), tag);
+  assert.equal(result.headers.get("set-cookie"), null);
+  assert.equal(result.headers.get("cache-control"), "private, max-age=55, must-revalidate");
+
+  const path = "runs/B2/files/sites%2Fapollo11%2Fwindows.json";
+  const cache = { etag: '"file"', "cache-control": "public, immutable, max-age=3600" };
+  const first = await proxyLunarnav(request(path), freshKey(), async () => Response.json({}, { headers: cache }));
+  const second = await proxyLunarnav(request(path, { headers: { "if-none-match": "*" } }), freshKey(), async (_url, init) => {
+    assert.equal(new Headers(init?.headers).get("if-none-match"), "*");
+    return new Response(null, { status: 304, headers: cache });
+  });
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 304);
+  assert.match(first.headers.get("content-disposition")!, /attachment; filename=/);
+  assert.equal(first.headers.get("content-disposition"), second.headers.get("content-disposition"));
+  assert.equal(first.headers.get("cache-control"), "private, no-cache");
+  assert.equal(second.headers.get("cache-control"), "private, no-cache");
+});
+
+test("unmatched, unsolicited and malformed 304 responses are protected; requests that miss still fetch fresh data", async () => {
+  for (const [condition, tag, forwarded] of [
+    [null, '"current"', null], ['"prior"', '"different"', '"prior"'], ['"prior"', null, '"prior"'],
+    ['junk, "current"', '"current"', null], ['*, "current"', '"current"', null],
+    [Array(17).fill('"x"').join(","), '"x"', null], ['"' + "a".repeat(1100) + '"', '"current"', null],
+  ]) {
+    const req = request("sites", { headers: condition ? { "if-none-match": condition } : {} });
+    const res = await proxyLunarnav(req, freshKey(), async (_url, init) => {
+      assert.equal(new Headers(init?.headers).get("if-none-match"), forwarded);
+      return new Response(null, { status: 304, headers: tag ? { etag: tag } : {} });
+    });
+    assert.equal(res.status, 502);
+    assert.equal(res.headers.get("cache-control"), "no-store");
+  }
+  const changed = await proxyLunarnav(request("sites", { headers: { "if-none-match": 'W/"old"' } }), freshKey(),
+    async () => Response.json({ updated: true }, { headers: { etag: 'W/"new"', "cache-control": "max-age=10" } }));
+  assert.equal(changed.status, 200);
+  assert.equal(changed.headers.get("etag"), 'W/"new"');
+  assert.deepEqual(await changed.json(), { updated: true });
+
+  for (const status of [200, 304]) {
+    const options = post({});
+    const headers = new Headers(options.headers);
+    headers.set("if-none-match", '"x"');
+    const res = await proxyLunarnav(request("compare", { ...options, headers }), freshKey(), async (_url, init) => {
+      assert.equal(new Headers(init?.headers).get("if-none-match"), null);
+      return new Response(status === 200 ? "{}" : null, { status, headers: { etag: '"x"', "content-type": "application/json", "cache-control": "public, max-age=300" } });
+    });
+    assert.equal(res.status, status === 304 ? 502 : 200);
+    assert.equal(res.headers.get("cache-control"), "no-store");
+  }
+});
+
+test("only tagged successful reads receive private, capped freshness; upstream age and stricter policies win", async t => {
+  t.mock.method(Date, "now", () => Date.parse("2026-11-15T01:01:00Z"));
+  async function policy(path: string, control: string | null, extras: Record<string, string> = {}, status = 200) {
+    const headers = new Headers({ etag: '"model"', "content-type": "application/json", ...extras });
+    if (control !== null) headers.set("cache-control", control);
+    return (await proxyLunarnav(request(path), freshKey(), async () => Response.json({}, { status, headers }))).headers.get("cache-control");
+  }
+  for (const [path, control, extras, ttl] of [
+    ["sites", "public, max-age=600", { age: "10" }, 50],
+    ["sites?run_id=B2", "public, max-age=9999", { age: "5" }, 3595],
+    ["runs/B2", 'private, max-age="120"', { age: "8", date: "Sun, 15 Nov 2026 01:00:30 GMT" }, 90],
+    ["runs", "max-age=30", { age: "60" }, 0],
+  ] as [string, string, Record<string,string>, number][]) {
+    assert.equal(await policy(path, control, extras), `private, max-age=${ttl}, must-revalidate`);
+  }
+  assert.equal(await policy("sites", "public, no-store, max-age=20"), "no-store");
+  assert.equal(await policy("sites", null), "no-store");
+  assert.equal(await policy("sites", "max-age=300", { etag: "malformed" }), "no-store");
+  assert.equal(await policy("sites", "max-age=300", { vary: "*" }), "no-store");
+  for (const control of ["max-age=300, no-cache", "max-age=20, max-age=50", "public, s-maxage=600", "max-age=bad", "no-cache=\"etag\""])
+    assert.equal(await policy("sites", control), "private, no-cache");
+  for (const extra of [{ age: "invalid" }, { date: "invalid" }] as Record<string,string>[])
+    assert.equal(await policy("sites", "max-age=60", extra), "private, no-cache");
+  assert.equal(await policy("export/summary.csv", "no-store"), "no-store");
+  for (const status of [401, 403, 302, 422, 429, 503]) assert.equal(await policy("sites", "public, max-age=60", {}, status), "no-store");
+});
