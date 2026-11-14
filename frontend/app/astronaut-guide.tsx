@@ -6,6 +6,8 @@ import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
+import GuideChat, { type GuideActions } from "./guide-chat";
+import { savedGuideContext, type GuideContext } from "../lib/api/guide-chat";
 
 const messages = {
   en: {
@@ -44,7 +46,10 @@ const messages = {
   },
 };
 
-export default function AstronautGuide({ savedResult, terrain, comparisonPath = "" }: { savedResult: string; terrain: TerrainSummary | null; comparisonPath?: string }) {
+export default function AstronautGuide({ savedResult, terrain, comparisonPath = "", workspace, workspaceActions, onSaved }: {
+  savedResult: string; terrain: TerrainSummary | null; comparisonPath?: string;
+  workspace?: GuideContext; workspaceActions?: GuideActions; onSaved?: (value: string) => void;
+}) {
   const { locale } = useLanguage();
   const copy = messages[locale];
   const id = useId();
@@ -53,6 +58,15 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
   const rows = snapshot.weeks.flatMap(week => week.sites
     .filter(site => week.startUtc === savedResult || site.id === savedResult)
     .map(site => ({ week, site })));
+  function savedMode(value: string) {
+    if (!onSaved) return "/compare?saved=" + encodeURIComponent(value) + "#observed-week";
+    return () => { onSaved(value); document.getElementById("observed-week")?.focus(); };
+  }
+  const savedActions: GuideActions = {
+    workspace: comparisonPath + "#workspace", sources: comparisonPath + "#saved-model-source", saved: comparisonPath + "#observed-week",
+    compareSites: savedMode(rows[0]?.week.startUtc ?? snapshot.weeks[0].startUtc),
+    compareDates: savedMode(rows[0]?.site.id ?? snapshot.weeks[0].sites[0].id),
+  };
   return <>
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
       <span aria-hidden="true">🧑‍🚀</span>
@@ -62,6 +76,7 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
+      {openedAt !== null && <GuideChat saved={savedGuideContext(savedResult)} workspace={workspace} savedActions={savedActions} workspaceActions={workspaceActions} />}
       {reading ? <section className={styles.sample}>
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>

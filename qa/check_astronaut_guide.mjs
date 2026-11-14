@@ -19,7 +19,7 @@ try {
   await panel.getByText("2026-11-15 05:00:00 UTC").waitFor();
   await panel.getByText("Athena · IM-2 · Sun and Earth visible").waitFor();
   await panel.getByText("Odysseus · IM-1 · Outside the joint visibility window").waitFor();
-  const questions = panel.locator("summary");
+  const questions = panel.locator("details[name] > summary");
   assert.equal(await questions.count(), 4);
   for (const [index, expected] of ["choose a week", "no live feed", "no signal-strength estimate"].entries()) {
     await questions.nth(index).click();

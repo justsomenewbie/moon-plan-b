@@ -4,7 +4,7 @@
 
 Codex generated and revised the frontend implementation, runtime validator, tests, documentation and synthetic demonstration fixture after the recorded event start. Independent Codex reviewers inspected code, checked the fixture numerically and reran tests. Built-in Image Gen generated an internal design concept labeled as AI-generated; that raster is not shipped in the app. The app's simple icon and scientific diagrams are code-native SVG, also AI-assisted. No generated content includes NASA branding.
 
-Codex assisted the bilingual home and astronaut guide, site selection, globe zoom and sky comparison controls. The astronaut is a system-rendered Unicode character. The guide uses prepared explanations and reports time-stamped values from the saved model or loaded terrain result. Codex assisted the UTC lookup and test cases.
+Codex assisted the bilingual home and astronaut guide, site selection, globe zoom and sky comparison controls. The astronaut is a system-rendered Unicode character. The guide uses prepared explanations and reports time-stamped values from the saved model or loaded terrain result. Codex assisted the UTC lookup, chat integration and tests. For free-text questions, a separately installed Qwen2.5 7B model served by Ollama identifies the topic and relevant data rows. The app formats the answer using the selected model results and source IDs. Neither the inference runtime nor the model weights are distributed in this repository.
 
 The proposal had AI-assisted history before implementation. Preserve that history in submission disclosure. The NASA guide's condition about SI supplying solution ideas remains unresolved for this history; no originality or award-eligibility declaration is made here.
 
