@@ -34,6 +34,15 @@ try {
 
   await page.goto(pinned.href);
   await error.getByText("Test outage", { exact: true }).waitFor();
+  await recover.click();
+  const dialog = page.getByRole("dialog");
+  for (const value of [run, "im1_odysseus, im2_athena", bounds.start, bounds.end, "7200 s", site, bounds.at])
+    await dialog.getByText(value, { exact: false }).first().waitFor();
+  assert.equal(await dialog.getByRole("link").count(), 0);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Import data", exact: true }).click();
+  assert.equal(await dialog.getByRole("link").getAttribute("href"), "/data/demo.json");
+  await page.keyboard.press("Escape");
   const wrongStep = structuredClone(source);
   for (const row of wrongStep.sites) row.series.step_s = 3600;
   const noSample = structuredClone(source);
@@ -71,5 +80,12 @@ try {
   await page.waitForFunction(utc => document.querySelector("#terrain-sample-utc")?.dateTime === utc, bounds.end);
   assert.equal(new URL(page.url()).search, "");
   assert.equal(reads.length, 2);
+  await page.goto(pinned.href);
+  await error.getByText("Test outage", { exact: true }).waitFor();
+  const example = await (await page.request.get(new URL("/data/demo.json", origin).href)).json();
+  await importFile(page.getByRole("button", { name: "Import data", exact: true }), example);
+  await page.locator("#workspace.workspace").waitFor();
+  assert.equal(new URL(page.url()).search, "");
+  assert.equal(new URL(page.url()).hash, "");
   console.log("Pinned recovery rejected six incompatible files, retried the original GET, restored the exact sample offline, and kept manual import independent.", browser.version());
 } finally { await browser.close(); }

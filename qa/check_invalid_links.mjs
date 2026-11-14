@@ -61,11 +61,20 @@ try {
     assert.equal(reads.length, count, "Malformed link fetched a default dataset");
   }
 
+  const dialog = page.getByRole("dialog");
+  await visit(mixed);
+  await alert.getByRole("button", { name: "Import the correct dataset" }).click();
+  await dialog.getByText(/ask the sender for a new link/i).waitFor();
+  assert.equal(await dialog.getByRole("link").count(), 0);
+  await page.keyboard.press("Escape");
+
   const stale = await visit({ ...comparison, v: "retired-release" });
   const mismatch = /different dataset version|exact release|version.*(match|unavailable)/i;
   await rejected(stale, mismatch);
   await alert.getByRole("button", { name: "Import the correct dataset" }).click();
   await page.getByRole("dialog").waitFor();
+  await dialog.getByText(/datasetId retired-release/).waitFor();
+  assert.equal(await dialog.getByRole("link").count(), 0);
   await field.setInputFiles({ name: "unrelated-terrain.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(terrain)) });
   // Wait for the attempted import to finish, even if it leaves the same incompatibility message.
   await page.waitForFunction(() => !document.querySelector('#workspace[aria-busy="true"]') && document.activeElement?.id === "data-error");
@@ -94,9 +103,20 @@ try {
 
   // Both scenario IDs exist in the demo, but these two sites cover different UTC dates.
   const demo = fileURLToPath(new URL("../frontend/public/data/demo.json", import.meta.url));
+  const demoPin = { ...request, v: "synthetic-ui-v2", mode: "sites",
+    a: "ridge-1", b: "basin-1", duration: "24", h: "6" };
+  await visit(demoPin);
+  await alert.getByRole("button", { name: "Import the correct dataset" }).click();
+  assert.equal(await dialog.getByRole("link").getAttribute("href"), "/data/demo.json");
+  await field.setInputFiles(demo);
+  await page.locator("#workspace.workspace").waitFor();
+
   const crossed = await visit({ ...request, v: "synthetic-ui-v2", mode: "sites",
     a: "ridge-1", b: "basin-2", duration: "24", h: "6" });
-  await importFile(demo);
+  await page.getByRole("button", { name: "Import data", exact: true }).click();
+  await dialog.getByText(/datasetId synthetic-ui-v2/).waitFor();
+  assert.equal(await dialog.getByRole("link").count(), 0);
+  await field.setInputFiles(demo);
   await rejected(crossed, /pair.*incompatible|incompatible.*window/i);
 
   const before = reads.length;
@@ -117,6 +137,9 @@ try {
   assert.equal(await page.getByLabel(/^Primary site/).inputValue(), athena.id);
   assert.equal(await page.getByLabel(/^Alternative site/).inputValue(), odysseus.id);
   assert.equal(await page.locator("#local-sky time").getAttribute("datetime"), sample);
+  await page.getByRole("button", { name: "Import data", exact: true }).click();
+  await dialog.getByText(new RegExp(archive.datasetId)).waitFor();
+  assert.equal(await dialog.getByRole("link").count(), 0);
   assert.deepEqual(errors, []);
   console.log("Malformed and incompatible links rejected; explicit recovery and the original shared UTC verified.", browser.version());
 } finally { await browser.close(); }
