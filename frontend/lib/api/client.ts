@@ -26,7 +26,9 @@ export const retryQuery = (failureCount: number, error: Error) => failureCount <
 const baseUrl = typeof window === "undefined" ? "http://localhost" : "";
 async function boundedFetch(request: Request) {
   await ensureMock();
-  const deadline = AbortSignal.timeout(15000);
+  // The producer can spend 30 seconds on its synchronous alternative-date search.
+  const dateSearch = request.method === "POST" && new URL(request.url).pathname === "/api/v1/alt-dates";
+  const deadline = AbortSignal.timeout(dateSearch ? 35000 : 15000);
   try {
     const response = await fetch(new Request(request, { signal: AbortSignal.any([request.signal, deadline]) }));
     if (!response.body) return response;
@@ -41,7 +43,7 @@ async function boundedFetch(request: Request) {
     const bytes = new Uint8Array(size); let offset = 0;
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
     return new Response(bytes, { status: response.status, statusText: response.statusText, headers: response.headers });
-  } catch (error) { if (request.signal.aborted) throw error; if (deadline.aborted) throw new ApiError("The API did not respond within 15 seconds. Please retry.", 504); throw apiError(error); }
+  } catch (error) { if (request.signal.aborted) throw error; if (deadline.aborted) throw new ApiError(dateSearch ? "The date search did not respond within 35 seconds. Please retry." : "The API did not respond within 15 seconds. Please retry.", 504); throw apiError(error); }
 }
 const api = createClient<paths>({ baseUrl, fetch: boundedFetch });
 export const producer = createClient<ProducerPaths>({ baseUrl, fetch: boundedFetch });

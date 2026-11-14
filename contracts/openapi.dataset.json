@@ -490,6 +490,148 @@
           }
         }
       }
+    },
+    "/api/v1/alt-dates": {
+      "post": {
+        "operationId": "findAltDates",
+        "summary": "Alternative landing dates for one site (slip calendar)",
+        "tags": [
+          "alt-dates"
+        ],
+        "description": "Synchronous (<= 30 s, ~0.5 s typical; identical requests are served from a 7-day cache, header `x-lunarnav-cache: hit|miss|shared`). No feasible date = 200 with empty candidates + rejected_by. mission_h not a multiple of the step -> 422 BAD_MISSION_LENGTH; earliest before the run start -> 422 OUT_OF_RANGE (min_earliest); latest + mission_h past the run end -> 422 OUT_OF_RANGE (max_latest); latest < earliest -> 400. Works on custom job runs too (run_id = job_...).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AltDatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AltDatesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type (UNSUPPORTED_MEDIA_TYPE): send Content-Type: application/json",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Python failed (PYTHON_FAILED)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable (SERVICE_UNAVAILABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Python timed out (PYTHON_TIMEOUT)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -512,6 +654,311 @@
           "type"
         ],
         "additionalProperties": false
+      },
+      "AltDatesRequest": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "site_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "earliest": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "Earliest landing instant (inclusive)"
+          },
+          "latest": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "Latest landing instant (inclusive); latest + mission_h must be inside the run (else 422 OUT_OF_RANGE with max_latest)"
+          },
+          "mission_h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Mission duration, h; must be a multiple of the run step (else 422 BAD_MISSION_LENGTH)"
+          },
+          "max_results": {
+            "default": 10,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "constraints": {
+            "default": {
+              "min_sun_pct": 0,
+              "min_earth_pct": 0,
+              "min_both_pct": 0,
+              "require_sun_at_landing": true,
+              "require_earth_at_landing": false,
+              "min_continuous_sun_h": 0,
+              "min_continuous_earth_h": 0,
+              "max_dark_gap_h": null,
+              "max_comms_gap_h": null,
+              "min_sun_el_at_landing_deg": null,
+              "objective": "balanced",
+              "min_separation_h": 12
+            },
+            "$ref": "#/components/schemas/DateConstraintsInput"
+          }
+        },
+        "required": [
+          "site_id",
+          "earliest",
+          "latest",
+          "mission_h"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "site_id": "ref_connecting_ridge_c1",
+            "earliest": "2026-01-05T00:00:00Z",
+            "latest": "2026-02-20T00:00:00Z",
+            "mission_h": 336,
+            "max_results": 3,
+            "constraints": {
+              "min_sun_pct": 70,
+              "min_earth_pct": 0,
+              "min_both_pct": 0,
+              "require_sun_at_landing": true,
+              "require_earth_at_landing": true,
+              "min_continuous_sun_h": 0,
+              "min_continuous_earth_h": 0,
+              "max_dark_gap_h": null,
+              "max_comms_gap_h": null,
+              "min_sun_el_at_landing_deg": null,
+              "objective": "balanced",
+              "min_separation_h": 12
+            }
+          }
+        ]
+      },
+      "AltDatesResponse": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Sample step of the run, seconds",
+            "examples": [
+              3600
+            ]
+          },
+          "precision_h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "= step_s / 3600. Every boundary and \"hours until\" value is accurate to +- this many hours.",
+            "examples": [
+              1
+            ]
+          },
+          "cache_id": {
+            "type": "string",
+            "description": "sha256 of (endpoint, params, params_fingerprint) - identical requests are served from cache"
+          },
+          "site_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "earliest_utc": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "latest_utc": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "mission_duration_h": {
+            "type": "number"
+          },
+          "constraints": {
+            "$ref": "#/components/schemas/DateConstraints"
+          },
+          "n_evaluated": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Landing instants examined"
+          },
+          "n_feasible": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Instants satisfying all constraints"
+          },
+          "rejected_by": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "description": "constraint -> number of instants failing it (one instant can fail several)"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LandingCandidate"
+            },
+            "description": "Empty = no feasible date (still 200; see rejected_by)"
+          }
+        },
+        "required": [
+          "run_id",
+          "step_s",
+          "precision_h",
+          "cache_id",
+          "site_id",
+          "earliest_utc",
+          "latest_utc",
+          "mission_duration_h",
+          "constraints",
+          "n_evaluated",
+          "n_feasible",
+          "rejected_by",
+          "candidates"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "run_id": "pf_21c3f3f6dc56b1e1",
+            "step_s": 3600,
+            "precision_h": 1,
+            "cache_id": "c5d0a3f1e2b4c6d8a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f708192a3b4c5d",
+            "site_id": "ref_connecting_ridge_c1",
+            "earliest_utc": "2026-01-05T00:00:00Z",
+            "latest_utc": "2026-02-20T00:00:00Z",
+            "mission_duration_h": 336,
+            "constraints": {
+              "min_sun_pct": 70,
+              "min_earth_pct": 0,
+              "min_both_pct": 0,
+              "require_sun_at_landing": true,
+              "require_earth_at_landing": true,
+              "min_continuous_sun_h": 0,
+              "min_continuous_earth_h": 0,
+              "max_dark_gap_h": null,
+              "max_comms_gap_h": null,
+              "min_sun_el_at_landing_deg": null,
+              "objective": "balanced",
+              "min_separation_h": 12
+            },
+            "n_evaluated": 1105,
+            "n_feasible": 456,
+            "rejected_by": {
+              "min_sun_pct": 0,
+              "min_earth_pct": 0,
+              "min_both_pct": 0,
+              "require_sun_at_landing": 0,
+              "require_earth_at_landing": 649,
+              "min_continuous_sun_h": 0,
+              "min_continuous_earth_h": 0
+            },
+            "candidates": [
+              {
+                "rank": 1,
+                "landing_utc": "2026-02-17T11:00:00Z",
+                "mission_end_utc": "2026-03-03T11:00:00Z",
+                "slip_h": 1043,
+                "score": 99.702381,
+                "sun_pct": 100,
+                "earth_pct": 99.404762,
+                "both_pct": 99.404762,
+                "longest_dark_h": 0,
+                "longest_comms_gap_h": 2,
+                "continuous_sun_h": 949,
+                "continuous_sun_lower_bound": false,
+                "continuous_earth_h": 334,
+                "continuous_earth_lower_bound": false,
+                "sun_at_landing": true,
+                "earth_at_landing": true,
+                "sun_el_at_landing_deg": 0.696018,
+                "earth_el_at_landing_deg": -1.946834,
+                "mean_power_horizontal": 0.002281,
+                "mean_power_tracking": 1
+              },
+              {
+                "rank": 2,
+                "landing_utc": "2026-01-21T04:00:00Z",
+                "mission_end_utc": "2026-02-04T04:00:00Z",
+                "slip_h": 388,
+                "score": 99.404762,
+                "sun_pct": 100,
+                "earth_pct": 98.809524,
+                "both_pct": 98.809524,
+                "longest_dark_h": 0,
+                "longest_comms_gap_h": 4,
+                "continuous_sun_h": 1604,
+                "continuous_sun_lower_bound": false,
+                "continuous_earth_h": 332,
+                "continuous_earth_lower_bound": false,
+                "sun_at_landing": true,
+                "earth_at_landing": true,
+                "sun_el_at_landing_deg": 1.15636,
+                "earth_el_at_landing_deg": -1.977546,
+                "mean_power_horizontal": 0.008381,
+                "mean_power_tracking": 1
+              },
+              {
+                "rank": 3,
+                "landing_utc": "2026-02-17T23:00:00Z",
+                "mission_end_utc": "2026-03-03T23:00:00Z",
+                "slip_h": 1055,
+                "score": 97.916667,
+                "sun_pct": 100,
+                "earth_pct": 95.833333,
+                "both_pct": 95.833333,
+                "longest_dark_h": 0,
+                "longest_comms_gap_h": 14,
+                "continuous_sun_h": 937,
+                "continuous_sun_lower_bound": false,
+                "continuous_earth_h": 322,
+                "continuous_earth_lower_bound": false,
+                "sun_at_landing": true,
+                "earth_at_landing": true,
+                "sun_el_at_landing_deg": 0.637677,
+                "earth_el_at_landing_deg": -1.166752,
+                "mean_power_horizontal": 0.001864,
+                "mean_power_tracking": 1
+              }
+            ]
+          }
+        ]
       },
       "AnalyseJobRequest": {
         "type": "object",
@@ -1818,6 +2265,222 @@
         "additionalProperties": false,
         "description": "ONLY the visible intervals inside the range, sorted by start (boundaries +- one data step)"
       },
+      "DateConstraints": {
+        "type": "object",
+        "properties": {
+          "min_sun_pct": {
+            "default": 0,
+            "description": "Minimum % of the mission with Sun",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_earth_pct": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_both_pct": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "require_sun_at_landing": {
+            "default": true,
+            "type": "boolean"
+          },
+          "require_earth_at_landing": {
+            "default": false,
+            "type": "boolean"
+          },
+          "min_continuous_sun_h": {
+            "default": 0,
+            "description": "Uninterrupted Sun from landing (may extend past mission end)",
+            "type": "number",
+            "minimum": 0
+          },
+          "min_continuous_earth_h": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "max_dark_gap_h": {
+            "default": null,
+            "description": "Longest Sun-less run allowed inside the mission; null = no limit",
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_comms_gap_h": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "min_sun_el_at_landing_deg": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "objective": {
+            "default": "balanced",
+            "type": "string",
+            "enum": [
+              "balanced",
+              "sun",
+              "earth",
+              "both",
+              "energy",
+              "earliest"
+            ],
+            "description": "balanced = 0.5 sun_pct + 0.25 earth_pct + 0.25 both_pct; energy = 100 * mean tracking power; earliest = smallest slip. Ties -> earlier landing."
+          },
+          "min_separation_h": {
+            "default": 12,
+            "description": "Returned candidates are at least this far apart",
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "min_sun_pct",
+          "min_earth_pct",
+          "min_both_pct",
+          "require_sun_at_landing",
+          "require_earth_at_landing",
+          "min_continuous_sun_h",
+          "min_continuous_earth_h",
+          "max_dark_gap_h",
+          "max_comms_gap_h",
+          "min_sun_el_at_landing_deg",
+          "objective",
+          "min_separation_h"
+        ],
+        "additionalProperties": false
+      },
+      "DateConstraintsInput": {
+        "type": "object",
+        "properties": {
+          "min_sun_pct": {
+            "default": 0,
+            "description": "Minimum % of the mission with Sun",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_earth_pct": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_both_pct": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "require_sun_at_landing": {
+            "default": true,
+            "type": "boolean"
+          },
+          "require_earth_at_landing": {
+            "default": false,
+            "type": "boolean"
+          },
+          "min_continuous_sun_h": {
+            "default": 0,
+            "description": "Uninterrupted Sun from landing (may extend past mission end)",
+            "type": "number",
+            "minimum": 0
+          },
+          "min_continuous_earth_h": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "max_dark_gap_h": {
+            "default": null,
+            "description": "Longest Sun-less run allowed inside the mission; null = no limit",
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_comms_gap_h": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "min_sun_el_at_landing_deg": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "objective": {
+            "default": "balanced",
+            "type": "string",
+            "enum": [
+              "balanced",
+              "sun",
+              "earth",
+              "both",
+              "energy",
+              "earliest"
+            ],
+            "description": "balanced = 0.5 sun_pct + 0.25 earth_pct + 0.25 both_pct; energy = 100 * mean tracking power; earliest = smallest slip. Ties -> earlier landing."
+          },
+          "min_separation_h": {
+            "default": 12,
+            "description": "Returned candidates are at least this far apart",
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
       "HorizonMaskJobRequest": {
         "type": "object",
         "properties": {
@@ -2192,6 +2855,108 @@
           "horizon_mask"
         ],
         "description": "Job type (GET /api/v1/capabilities lists which ones this server runs)"
+      },
+      "LandingCandidate": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "landing_utc": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "mission_end_utc": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "slip_h": {
+            "type": "number",
+            "description": "landing - earliest, h"
+          },
+          "score": {
+            "type": "number"
+          },
+          "sun_pct": {
+            "type": "number"
+          },
+          "earth_pct": {
+            "type": "number"
+          },
+          "both_pct": {
+            "type": "number"
+          },
+          "longest_dark_h": {
+            "type": "number"
+          },
+          "longest_comms_gap_h": {
+            "type": "number"
+          },
+          "continuous_sun_h": {
+            "type": "number",
+            "description": "From landing; lower bound if continuous_sun_lower_bound"
+          },
+          "continuous_sun_lower_bound": {
+            "type": "boolean"
+          },
+          "continuous_earth_h": {
+            "type": "number"
+          },
+          "continuous_earth_lower_bound": {
+            "type": "boolean"
+          },
+          "sun_at_landing": {
+            "type": "boolean"
+          },
+          "earth_at_landing": {
+            "type": "boolean"
+          },
+          "sun_el_at_landing_deg": {
+            "type": "number"
+          },
+          "earth_el_at_landing_deg": {
+            "type": "number"
+          },
+          "mean_power_horizontal": {
+            "type": "number"
+          },
+          "mean_power_tracking": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "rank",
+          "landing_utc",
+          "mission_end_utc",
+          "slip_h",
+          "score",
+          "sun_pct",
+          "earth_pct",
+          "both_pct",
+          "longest_dark_h",
+          "longest_comms_gap_h",
+          "continuous_sun_h",
+          "continuous_sun_lower_bound",
+          "continuous_earth_h",
+          "continuous_earth_lower_bound",
+          "sun_at_landing",
+          "earth_at_landing",
+          "sun_el_at_landing_deg",
+          "earth_el_at_landing_deg",
+          "mean_power_horizontal",
+          "mean_power_tracking"
+        ],
+        "additionalProperties": false
       },
       "PrecomputeJobRequest": {
         "type": "object",

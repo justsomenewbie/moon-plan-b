@@ -81,6 +81,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alt-dates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Alternative landing dates for one site (slip calendar)
+         * @description Synchronous (<= 30 s, ~0.5 s typical; identical requests are served from a 7-day cache, header `x-lunarnav-cache: hit|miss|shared`). No feasible date = 200 with empty candidates + rejected_by. mission_h not a multiple of the step -> 422 BAD_MISSION_LENGTH; earliest before the run start -> 422 OUT_OF_RANGE (min_earliest); latest + mission_h past the run end -> 422 OUT_OF_RANGE (max_latest); latest < earliest -> 400. Works on custom job runs too (run_id = job_...).
+         */
+        post: operations["findAltDates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -90,6 +110,217 @@ export interface components {
             type: "alt_dates_python";
             /** @description Display name (not part of the job identity) */
             name?: string;
+        };
+        /**
+         * @example {
+         *       "site_id": "ref_connecting_ridge_c1",
+         *       "earliest": "2026-01-05T00:00:00Z",
+         *       "latest": "2026-02-20T00:00:00Z",
+         *       "mission_h": 336,
+         *       "max_results": 3,
+         *       "constraints": {
+         *         "min_sun_pct": 70,
+         *         "min_earth_pct": 0,
+         *         "min_both_pct": 0,
+         *         "require_sun_at_landing": true,
+         *         "require_earth_at_landing": true,
+         *         "min_continuous_sun_h": 0,
+         *         "min_continuous_earth_h": 0,
+         *         "max_dark_gap_h": null,
+         *         "max_comms_gap_h": null,
+         *         "min_sun_el_at_landing_deg": null,
+         *         "objective": "balanced",
+         *         "min_separation_h": 12
+         *       }
+         *     }
+         */
+        AltDatesRequest: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id?: string;
+            /**
+             * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+             * @example ref_connecting_ridge_c1
+             */
+            site_id: string;
+            /** @description Earliest landing instant (inclusive) */
+            earliest: string;
+            /** @description Latest landing instant (inclusive); latest + mission_h must be inside the run (else 422 OUT_OF_RANGE with max_latest) */
+            latest: string;
+            /** @description Mission duration, h; must be a multiple of the run step (else 422 BAD_MISSION_LENGTH) */
+            mission_h: number;
+            /** @default 10 */
+            max_results: number;
+            /**
+             * @default {
+             *       "min_sun_pct": 0,
+             *       "min_earth_pct": 0,
+             *       "min_both_pct": 0,
+             *       "require_sun_at_landing": true,
+             *       "require_earth_at_landing": false,
+             *       "min_continuous_sun_h": 0,
+             *       "min_continuous_earth_h": 0,
+             *       "max_dark_gap_h": null,
+             *       "max_comms_gap_h": null,
+             *       "min_sun_el_at_landing_deg": null,
+             *       "objective": "balanced",
+             *       "min_separation_h": 12
+             *     }
+             */
+            constraints: components["schemas"]["DateConstraintsInput"];
+        };
+        /**
+         * @example {
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "step_s": 3600,
+         *       "precision_h": 1,
+         *       "cache_id": "c5d0a3f1e2b4c6d8a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f708192a3b4c5d",
+         *       "site_id": "ref_connecting_ridge_c1",
+         *       "earliest_utc": "2026-01-05T00:00:00Z",
+         *       "latest_utc": "2026-02-20T00:00:00Z",
+         *       "mission_duration_h": 336,
+         *       "constraints": {
+         *         "min_sun_pct": 70,
+         *         "min_earth_pct": 0,
+         *         "min_both_pct": 0,
+         *         "require_sun_at_landing": true,
+         *         "require_earth_at_landing": true,
+         *         "min_continuous_sun_h": 0,
+         *         "min_continuous_earth_h": 0,
+         *         "max_dark_gap_h": null,
+         *         "max_comms_gap_h": null,
+         *         "min_sun_el_at_landing_deg": null,
+         *         "objective": "balanced",
+         *         "min_separation_h": 12
+         *       },
+         *       "n_evaluated": 1105,
+         *       "n_feasible": 456,
+         *       "rejected_by": {
+         *         "min_sun_pct": 0,
+         *         "min_earth_pct": 0,
+         *         "min_both_pct": 0,
+         *         "require_sun_at_landing": 0,
+         *         "require_earth_at_landing": 649,
+         *         "min_continuous_sun_h": 0,
+         *         "min_continuous_earth_h": 0
+         *       },
+         *       "candidates": [
+         *         {
+         *           "rank": 1,
+         *           "landing_utc": "2026-02-17T11:00:00Z",
+         *           "mission_end_utc": "2026-03-03T11:00:00Z",
+         *           "slip_h": 1043,
+         *           "score": 99.702381,
+         *           "sun_pct": 100,
+         *           "earth_pct": 99.404762,
+         *           "both_pct": 99.404762,
+         *           "longest_dark_h": 0,
+         *           "longest_comms_gap_h": 2,
+         *           "continuous_sun_h": 949,
+         *           "continuous_sun_lower_bound": false,
+         *           "continuous_earth_h": 334,
+         *           "continuous_earth_lower_bound": false,
+         *           "sun_at_landing": true,
+         *           "earth_at_landing": true,
+         *           "sun_el_at_landing_deg": 0.696018,
+         *           "earth_el_at_landing_deg": -1.946834,
+         *           "mean_power_horizontal": 0.002281,
+         *           "mean_power_tracking": 1
+         *         },
+         *         {
+         *           "rank": 2,
+         *           "landing_utc": "2026-01-21T04:00:00Z",
+         *           "mission_end_utc": "2026-02-04T04:00:00Z",
+         *           "slip_h": 388,
+         *           "score": 99.404762,
+         *           "sun_pct": 100,
+         *           "earth_pct": 98.809524,
+         *           "both_pct": 98.809524,
+         *           "longest_dark_h": 0,
+         *           "longest_comms_gap_h": 4,
+         *           "continuous_sun_h": 1604,
+         *           "continuous_sun_lower_bound": false,
+         *           "continuous_earth_h": 332,
+         *           "continuous_earth_lower_bound": false,
+         *           "sun_at_landing": true,
+         *           "earth_at_landing": true,
+         *           "sun_el_at_landing_deg": 1.15636,
+         *           "earth_el_at_landing_deg": -1.977546,
+         *           "mean_power_horizontal": 0.008381,
+         *           "mean_power_tracking": 1
+         *         },
+         *         {
+         *           "rank": 3,
+         *           "landing_utc": "2026-02-17T23:00:00Z",
+         *           "mission_end_utc": "2026-03-03T23:00:00Z",
+         *           "slip_h": 1055,
+         *           "score": 97.916667,
+         *           "sun_pct": 100,
+         *           "earth_pct": 95.833333,
+         *           "both_pct": 95.833333,
+         *           "longest_dark_h": 0,
+         *           "longest_comms_gap_h": 14,
+         *           "continuous_sun_h": 937,
+         *           "continuous_sun_lower_bound": false,
+         *           "continuous_earth_h": 322,
+         *           "continuous_earth_lower_bound": false,
+         *           "sun_at_landing": true,
+         *           "earth_at_landing": true,
+         *           "sun_el_at_landing_deg": 0.637677,
+         *           "earth_el_at_landing_deg": -1.166752,
+         *           "mean_power_horizontal": 0.001864,
+         *           "mean_power_tracking": 1
+         *         }
+         *       ]
+         *     }
+         */
+        AltDatesResponse: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            /**
+             * @description = step_s / 3600. Every boundary and "hours until" value is accurate to +- this many hours.
+             * @example 1
+             */
+            precision_h: number;
+            /** @description sha256 of (endpoint, params, params_fingerprint) - identical requests are served from cache */
+            cache_id: string;
+            /**
+             * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+             * @example ref_connecting_ridge_c1
+             */
+            site_id: string;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            earliest_utc: string;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            latest_utc: string;
+            mission_duration_h: number;
+            constraints: components["schemas"]["DateConstraints"];
+            /** @description Landing instants examined */
+            n_evaluated: number;
+            /** @description Instants satisfying all constraints */
+            n_feasible: number;
+            /** @description constraint -> number of instants failing it (one instant can fail several) */
+            rejected_by: {
+                [key: string]: number;
+            };
+            /** @description Empty = no feasible date (still 200; see rejected_by) */
+            candidates: components["schemas"]["LandingCandidate"][];
         };
         AnalyseJobRequest: {
             /** @constant */
@@ -472,6 +703,90 @@ export interface components {
             /** @description Sun AND Earth visible */
             both: components["schemas"]["DatasetWindow"][];
         };
+        DateConstraints: {
+            /**
+             * @description Minimum % of the mission with Sun
+             * @default 0
+             */
+            min_sun_pct: number;
+            /** @default 0 */
+            min_earth_pct: number;
+            /** @default 0 */
+            min_both_pct: number;
+            /** @default true */
+            require_sun_at_landing: boolean;
+            /** @default false */
+            require_earth_at_landing: boolean;
+            /**
+             * @description Uninterrupted Sun from landing (may extend past mission end)
+             * @default 0
+             */
+            min_continuous_sun_h: number;
+            /** @default 0 */
+            min_continuous_earth_h: number;
+            /**
+             * @description Longest Sun-less run allowed inside the mission; null = no limit
+             * @default null
+             */
+            max_dark_gap_h: number | null;
+            /** @default null */
+            max_comms_gap_h: number | null;
+            /** @default null */
+            min_sun_el_at_landing_deg: number | null;
+            /**
+             * @description balanced = 0.5 sun_pct + 0.25 earth_pct + 0.25 both_pct; energy = 100 * mean tracking power; earliest = smallest slip. Ties -> earlier landing.
+             * @default balanced
+             * @enum {string}
+             */
+            objective: "balanced" | "sun" | "earth" | "both" | "energy" | "earliest";
+            /**
+             * @description Returned candidates are at least this far apart
+             * @default 12
+             */
+            min_separation_h: number;
+        };
+        DateConstraintsInput: {
+            /**
+             * @description Minimum % of the mission with Sun
+             * @default 0
+             */
+            min_sun_pct: number;
+            /** @default 0 */
+            min_earth_pct: number;
+            /** @default 0 */
+            min_both_pct: number;
+            /** @default true */
+            require_sun_at_landing: boolean;
+            /** @default false */
+            require_earth_at_landing: boolean;
+            /**
+             * @description Uninterrupted Sun from landing (may extend past mission end)
+             * @default 0
+             */
+            min_continuous_sun_h: number;
+            /** @default 0 */
+            min_continuous_earth_h: number;
+            /**
+             * @description Longest Sun-less run allowed inside the mission; null = no limit
+             * @default null
+             */
+            max_dark_gap_h: number | null;
+            /** @default null */
+            max_comms_gap_h: number | null;
+            /** @default null */
+            min_sun_el_at_landing_deg: number | null;
+            /**
+             * @description balanced = 0.5 sun_pct + 0.25 earth_pct + 0.25 both_pct; energy = 100 * mean tracking power; earliest = smallest slip. Ties -> earlier landing.
+             * @default balanced
+             * @enum {string}
+             */
+            objective: "balanced" | "sun" | "earth" | "both" | "energy" | "earliest";
+            /**
+             * @description Returned candidates are at least this far apart
+             * @default 12
+             */
+            min_separation_h: number;
+        };
         HorizonMaskJobRequest: {
             /** @constant */
             type: "horizon_mask";
@@ -569,6 +884,38 @@ export interface components {
          * @enum {string}
          */
         JobType: "custom_site" | "precompute" | "analyse" | "alt_dates_python" | "check" | "validate" | "validate_terrain" | "compare_runs" | "horizon_mask";
+        LandingCandidate: {
+            rank: number;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            landing_utc: string;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            mission_end_utc: string;
+            /** @description landing - earliest, h */
+            slip_h: number;
+            score: number;
+            sun_pct: number;
+            earth_pct: number;
+            both_pct: number;
+            longest_dark_h: number;
+            longest_comms_gap_h: number;
+            /** @description From landing; lower bound if continuous_sun_lower_bound */
+            continuous_sun_h: number;
+            continuous_sun_lower_bound: boolean;
+            continuous_earth_h: number;
+            continuous_earth_lower_bound: boolean;
+            sun_at_landing: boolean;
+            earth_at_landing: boolean;
+            sun_el_at_landing_deg: number;
+            earth_el_at_landing_deg: number;
+            mean_power_horizontal: number;
+            mean_power_tracking: number;
+        };
         PrecomputeJobRequest: {
             /** @constant */
             type: "precompute";
@@ -980,6 +1327,129 @@ export interface operations {
             };
             /** @description Database unavailable (SERVICE_UNAVAILABLE) */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    findAltDates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AltDatesRequest"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AltDatesResponse"];
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Request body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unsupported media type (UNSUPPORTED_MEDIA_TYPE): send Content-Type: application/json */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Python failed (PYTHON_FAILED) */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Python timed out (PYTHON_TIMEOUT) */
+            504: {
                 headers: {
                     [name: string]: unknown;
                 };
