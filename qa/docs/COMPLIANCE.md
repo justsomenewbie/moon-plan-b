@@ -4,7 +4,7 @@ This checklist separates engineering constraints from event requirements. It is 
 
 ## Engineering / scientific gates
 
-- [ ] Browser never sends ephemeris API queries to JPL; attach exercised-path network evidence. Offline batch -> versioned static JSON is the mission brief's architecture; current Next.js same-origin API mode needs reconciliation.
+- [x] The [live-frontend browser trace](UI_RESILIENCE.md#chromium-live-api-replay-14-november-2026) recorded zero direct JPL queries across the exercised imports, comparisons, retry, job and API documentation flows. Offline imports use versioned JSON. Live terrain and job requests go through the same-origin team API.
 - [ ] Offline producer uses serial requests, caching/reuse, appropriate backoff, application-specific User-Agent and API response-version checks. These controls belong to the producer, not the offline QA validator.
 - [ ] Metadata preserves target 10/399, Moon `coord@301`, geodetic location/frame/datum, angles in degrees, elevation km, airless Q4, time-scale conversion, actual requests/raw responses and SHA-256 identities.
 - [ ] Visible English disclaimer: "Body-center elevation above an ideal geometric horizon (> 0 degrees) does not account for local terrain or crater masking, guarantee usable solar power, validate a radio link, or certify landing safety."

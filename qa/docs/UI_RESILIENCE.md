@@ -30,3 +30,22 @@ Source inspection is only a first check. On a fresh browser session, capture req
 For the requested static-only architecture, also verify the tested build reads only released static JSON for data; the existing same-origin job/API mode does not by itself meet that requirement. State the exercised mode and pending architecture decision. Browser isolation from JPL does not prove a server proxy respects the offline design.
 
 Record observed domains, request initiator and count, cache/service-worker state, errors and retry behavior. Preserve a redacted HAR/screenshot outside public sources when it contains cookies or machine/account information; publish only reviewed minimal evidence. Zero calls in one trace covers only the paths actually exercised. Do not mark compliance from a grep result alone.
+
+### Chromium live-API replay, 14 November 2026
+
+At 07:47 UTC Chromium 158.0.8127.18 exercised the production frontend from [0c6b8ab](https://github.com/justsomenewbie/moon-plan-b/commit/0c6b8ab4adae263ad2fa92cce224a4b125e9b058). A fresh context with HTTP caching disabled recorded **66 HTTP requests, all to the frontend loopback origin**. There were zero external requests, WebSockets, worker targets or transport failures. The separate page DevTools stream recorded 46 parser, 10 script and 13 other initiator events. These are separate counts from the context requests.
+
+- Loaded the live two-site result, injected one local dataset 404, clicked Retry and received the comparison again.
+- Imported all four QA observation fixtures, both single-site and both paired Horizons control/gap copies, and the bundled demo. Swapped primary and alternative sites where available, stepped through sampled windows, verified the unavailable slider for missing data and selected a different date comparison.
+- Submitted the previously exercised three-hour custom site once. The producer reused the cached job (HTTP 200). Opened the single-site result, reloaded its permalink and loaded the producer’s OpenAPI specification in the Swagger iframe.
+
+| Browser API requests | Count and result |
+| --- | --- |
+| GET dataset | 4 × 200, 1 × injected 404 |
+| GET capabilities | 1 × 200 |
+| POST jobs / GET job status | 1 × 200 each |
+| GET OpenAPI specification | 1 × 200 |
+
+An independent replay returned the same counts. A separate two-port loopback control confirmed that the context listener detected a dedicated worker fetching from another origin. The configured Next.js rewrite forwarded `/api/*` to the team producer; its OpenAPI title was verified directly. This trace covers browser traffic on these flows. Upstream processing and other deployments require their own evidence.
+
+To replay, run `node qa/check_browser_network.mjs <frontend-origin>` on a live-configured production build with Playwright Chromium. It submits one bounded request; cache reuse depends on the producer. The [test](../check_browser_network.mjs) prints counts without recording headers, bodies, machine addresses or job identifiers. OpenAI Codex prepared the test and evidence.
