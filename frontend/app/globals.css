@@ -237,6 +237,9 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
   .theme-disc:hover svg { transform: rotate(-15deg); }
 }
 .app-footer { border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; font-size: .75rem; color: var(--muted); padding: 20px 0 28px; }
+.footer-directory { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 12px 48px; margin-block: 12px; }
+.footer-directory h2 { color: var(--text); font-size: .9rem; }
+.footer-directory a { display: block; width: fit-content; padding: .35rem 0; font-size: .9rem; overflow-wrap: anywhere; }
 .error-state { border-left: 3px solid var(--error-line); background: var(--error-bg); padding: 20px; margin-top: 24px; }
 .error-state h2 { font-size: 1.2rem; margin-bottom: 8px; }
 .coverage-notice { border-left: 2px solid var(--sun); padding-left: 12px; color: var(--sun); font-size: .85rem; margin-bottom: 20px; }
@@ -307,6 +310,7 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
   .intro { display: block; }
   .intro h1 { font-size: 26pt; max-width: none; }
   .app-footer { display: block; padding: 8px 0; }
+  .footer-directory { display: none; }
   .meets { color: #245c2e; }
   .detail-row { display: grid; }
   h2, h3 { break-after: avoid; }
