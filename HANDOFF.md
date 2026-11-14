@@ -2,7 +2,7 @@
 
 ## Combined frontend and QA
 
-Synthetic jobs work over Wi-Fi HTTP.
+Synthetic jobs work over Wi-Fi HTTP. [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) verified nine rejected imports, comparison retention and recovery at exactly 5 MiB.
 
 Minh’s `8b53003` added offline QA, supplied overlap bands, a polar skyplot and the `?qa=true` scenario inspector. [Minh’s QA report](qa/LOCAL_WEB_DEEP_TEST_REPORT.md) and [frontend verification](docs/FRONTEND_VERIFICATION.md) distinguish synthetic tests from release evidence.
 

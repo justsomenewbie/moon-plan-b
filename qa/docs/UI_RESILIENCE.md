@@ -5,7 +5,7 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | ID | Procedure | Expected result | Status |
 | --- | --- | --- | --- |
 | UI-01 | Throttle initial data loading; change selection during pending load | Visible loading; no old data labeled as new; controls recover | NOT RUN |
-| UI-02 | Import invalid JSON, each invalid fixture, wrong schema, >5 MiB and empty file | Accessible error, no crash or partial acceptance; prior valid dataset remains recoverable | NOT RUN |
+| UI-02 | Import invalid JSON, each invalid fixture, wrong schema, >5 MiB and empty file | Accessible error, no crash or partial acceptance; prior valid dataset remains recoverable | [PASS in Chromium](#ui-02-import-retest) |
 | UI-03 | Inject HTTP 404/500, network disconnect, timeout and truncated body on actual data route | Error/retry with bounded attempts; live mode must not silently show mocks | NOT RUN |
 | UI-04 | Import partial and missing fixtures | Unknown text and null metrics, broken lines across missing samples; no zero-filled darkness | NOT RUN |
 | UI-05 | Import crossing_wrap; inspect both sites and zero values | North seam does not draw a full-width spike; exact-zero displayed accurately | NOT RUN |
@@ -14,6 +14,14 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
 | UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
 | UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | NOT RUN |
+
+## UI-02 import retest
+
+At 08:02 UTC on 14 November 2026, Chromium 158.0.8127.18 exercised the [corrected importer](https://github.com/justsomenewbie/moon-plan-b/commit/8ddc9bb1421b70629ec71817a1029d0f539ffeff) at `/` on a local production build with the mock startup API. The browser used its default 1280 × 720 viewport. It started with the [paired Horizons gap copy](../evidence/odysseus-athena-hour-gap/gap.json), SHA-256 `7acb4779b02e8c743f9f04d5c69da5b51e33a31eb2f6b525d2d1a87851a0579b`, with Athena primary and Odysseus alternative at 03:00 UTC.
+
+All five invalid fixture files, a separate unsupported schema version, malformed JSON, an empty file and a valid JSON document padded to 5 MiB + 1 byte produced focused error alerts. Each rejection preserved the dataset ID, both site selections, both exact-sample tables and the visible and accessible time labels. The next valid file, padded to exactly 5 MiB, replaced the dataset and cleared the alert. No uncaught page errors occurred.
+
+Replay with `node qa/check_import_rejections.mjs <frontend-origin>` using Playwright Chromium. OpenAI Codex prepared the [browser test](../check_import_rejections.mjs) and the diagnostic changes.
 
 ## UI-07 browser retest
 
