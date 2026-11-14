@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { pairLocation } from "../lib/globe-sites";
 import MoonGlobe from "./moon-globe";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
@@ -19,13 +19,19 @@ export default function TerrainResult({ reducedMotion, result, view, onSelect, o
   const { t } = useLanguage();
   const { range, run, model, sources } = result;
   const observationSite = result.sites[view.siteIndex];
+  const [fallback, setFallback] = useState<{ site: typeof observationSite; requestedUtc: string } | null>(null);
   const placements = useMemo(() => result.sites.map(site =>
     pairLocation({ site_id: site.id, name: site.name }, [], [site], result.conventions)), [result]);
   const hasGlobe = placements.some(site => "point" in site.location);
   const hasSky = !result.summaryOnly && result.sites.some(site => site.series?.t.length);
-  function selectGlobeSite(id: string) {
-    const index = result.sites.findIndex(site => site.id === id);
-    if (index >= 0 && index !== view.siteIndex) onSelect(index, 0);
+  function selectSite(index: number) {
+    const nextSite = result.sites[index];
+    if (!nextSite || index === view.siteIndex) return;
+    const utc = observationSite?.series?.t[view.sample];
+    const exact = utc ? nextSite.series?.t.indexOf(utc) : undefined;
+    // An unequal sample grid can omit this UTC. Start at the first returned sample in that case.
+    setFallback(utc && (exact === undefined || exact < 0) ? { site: nextSite, requestedUtc: utc } : null);
+    onSelect(index, Math.max(0, exact ?? 0));
   }
   const clippedRange = range.start !== range.requested_start || range.end !== range.requested_end;
   return <main id="workspace" className="terrain-result" aria-labelledby="terrain-title" tabIndex={-1}>
@@ -47,7 +53,7 @@ export default function TerrainResult({ reducedMotion, result, view, onSelect, o
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>
     {hasGlobe && observationSite && <section className="my-6 print:hidden" aria-labelledby="terrain-globe-heading">
       <h3 id="terrain-globe-heading">{t("Sites on the Moon")}</h3>
-      <MoonGlobe pairSites={placements} terrainView={{ siteId: observationSite.id, onSelect: selectGlobeSite }} />
+      <MoonGlobe pairSites={placements} terrainView={{ siteId: observationSite.id, onSelect: id => selectSite(result.sites.findIndex(site => site.id === id)) }} />
     </section>}
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} source={result} liveResult={liveWindow ? result : undefined} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
@@ -55,7 +61,8 @@ export default function TerrainResult({ reducedMotion, result, view, onSelect, o
     {liveWindow && <TerrainPair replay={replayPair} resolutionSeconds={liveWindow.resolutionSeconds} onDisplayedPair={onDisplayedPair} key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}
     {liveWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={liveWindow} />}
 
-    {!result.summaryOnly && result.sites.length > 0 && <TerrainObservations reducedMotion={reducedMotion} live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
+    {!result.summaryOnly && result.sites.length > 0 && <TerrainObservations reducedMotion={reducedMotion} live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={(siteIndex, sample) => { setFallback(null); onSelect(siteIndex, sample); }}
+      fallbackUtc={fallback?.site === observationSite && view.sample === 0 ? fallback?.requestedUtc : undefined} onSelectSite={selectSite} />}
 
     {view.link && observationSite && <AlternativeDates key={result.dataset_id + "/" + observationSite.id} result={result} site={observationSite} />}
 

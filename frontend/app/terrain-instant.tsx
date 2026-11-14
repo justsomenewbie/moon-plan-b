@@ -5,6 +5,12 @@ import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { instantEventText } from "../lib/instant-events";
 import { useLanguage } from "./language";
 
+// Sector boundaries follow the producer's clockwise 16-point compass.
+const headings = [
+  "north", "north-northeast", "northeast", "east-northeast", "east", "east-southeast", "southeast", "south-southeast",
+  "south", "south-southwest", "southwest", "west-southwest", "west", "west-northwest", "northwest", "north-northwest",
+] as const;
+
 type Lookup = { status: "idle" | "pending" } | { status: "error"; message: Error | string } | { status: "ready"; value: SiteInstant };
 
 export default function TerrainInstant({ runId, site, range, initialUtc }: {
@@ -40,6 +46,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
     }
   }
   const value = lookup.status === "ready" ? lookup.value : null;
+  const angles = new Intl.NumberFormat(locale, { maximumSignificantDigits: 21, useGrouping: false });
   return <details className="details-section">
     <summary onClick={() => {
       if (!timeInput.current) return;
@@ -66,13 +73,39 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
       </dl>
       <p className="muted text-sm">{t("Angles and visibility come from the model sample. Each sample covers {step} seconds.", { step: value.step_s })}</p>
       <p className="muted text-sm">{t("Azimuth tells you which way to look: 0° is north, 90° is east. Elevation is the angle above the horizontal. A negative value points below it.")}</p>
-      <div className="week-sites">{(["sun", "earth"] as const).map(body => <div key={body}>
+      <div className="week-sites instant-bodies">{(["sun", "earth"] as const).map(body => <div key={body}>
         <h5>{t(body === "sun" ? "Sun" : "Earth")}</h5>
+        <p className="instant-bearing">
+          <svg aria-hidden="true" viewBox="0 0 36 36" width="36" height="36">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" opacity=".5" />
+            <path d="M18 2v4" stroke="currentColor" strokeWidth="2" />
+            <path d="M18 8l4 7-3 -1v12h-2V14l-3 1z" fill="currentColor" transform={`rotate(${value[body].az_deg} 18 18)`} />
+          </svg>
+          <span>{t("Direction from the site")} · <strong>{t(headings[Math.round(value[body].az_deg / 22.5) % 16])}</strong>
+            {` (${value[body].az_deg.toLocaleString(locale, { maximumFractionDigits: 2 })}°)`}
+          </span>
+        </p>
+        {body === "sun" &&
+          <fieldset className="panel-sunlight">
+            <legend>{t("Relative sunlight on two panel orientations")}</legend>
+            {(value.sun.power_horizontal !== undefined || value.sun.power_tracking !== undefined) &&
+              <p>{t("100% is the sunlight reaching an unobstructed panel facing the Sun at this time.")}</p>}
+            {([["power_horizontal", "Horizontal panel"], ["power_tracking", "Sun-facing panel"]] as const).map(([field, title]) => {
+              const fraction = value.sun[field];
+              if (fraction === undefined) return <p className="panel-missing" key={field}>{t(title)} · {t("No data for this sample")}</p>;
+              const percent = fraction.toLocaleString(locale, { style: "percent", maximumFractionDigits: 2 });
+              return <label key={field}>
+                <span>{t(title)}</span><strong aria-hidden="true">{percent}</strong>
+                <meter min={0} max={1} value={fraction} aria-label={t(title)} aria-valuetext={percent}>{percent}</meter>
+              </label>;
+            })}
+          </fieldset>}
+        {body === "earth" && <p className="muted text-sm">{t("Earthrise and Earthset track the centre crossing the clearance threshold. Radio signal strength is unavailable.")}</p>}
         <dl className="metadata">
-          <div><dt>{t("Azimuth")}</dt><dd>{value[body].az_deg}°</dd></div>
-          <div><dt>{t("Elevation angle")}</dt><dd>{value[body].el_deg}°</dd></div>
-          <div><dt>{t("Horizon elevation at this azimuth")}</dt><dd>{value[body].horizon_el_deg}°</dd></div>
-          <div><dt>{t("Body centre above horizon")}</dt><dd>{value[body].clearance_deg}°</dd></div>
+          <div><dt>{t("Azimuth")}</dt><dd>{angles.format(value[body].az_deg)}°</dd></div>
+          <div><dt>{t("Elevation angle")}</dt><dd>{angles.format(value[body].el_deg)}°</dd></div>
+          <div><dt>{t("Horizon elevation at this azimuth")}</dt><dd>{angles.format(value[body].horizon_el_deg)}°</dd></div>
+          <div><dt>{t("Body centre above horizon")}</dt><dd>{angles.format(value[body].clearance_deg)}°</dd></div>
           {body === "earth" ? <>
             <div><dt>{t("Earth’s centre exceeds the run’s clearance threshold")}</dt><dd>{t(value.earth.visible ? "Yes" : "No")}</dd></div>
             {value.earth.fraction !== undefined && <div><dt>{t("Share of Earth’s disc above the local horizon")}</dt>
@@ -87,21 +120,6 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
           {body === "sun" && value.sun.irradiance_tracking_wm2 !== undefined && <div><dt>{t("Modeled irradiance on a Sun-facing surface")}</dt>
             <dd>{value.sun.irradiance_tracking_wm2.toLocaleString(locale, { maximumFractionDigits: 3 })} W/m²</dd></div>}
         </dl>
-        {body === "sun" && (value.sun.power_horizontal !== undefined || value.sun.power_tracking !== undefined) &&
-          <fieldset className="panel-sunlight">
-            <legend>{t("Relative sunlight on two panel orientations")}</legend>
-            <p>{t("100% is the sunlight reaching an unobstructed panel facing the Sun at this time.")}</p>
-            {([["power_horizontal", "Horizontal panel"], ["power_tracking", "Sun-facing panel"]] as const).map(([field, title]) => {
-              const fraction = value.sun[field];
-              if (fraction === undefined) return null;
-              const percent = fraction.toLocaleString(locale, { style: "percent", maximumFractionDigits: 2 });
-              return <label key={field}>
-                <span>{t(title)}</span><strong aria-hidden="true">{percent}</strong>
-                <meter min={0} max={1} value={fraction} aria-label={t(title)} aria-valuetext={percent}>{percent}</meter>
-              </label>;
-            })}
-          </fieldset>}
-        {body === "earth" && <p className="muted text-sm">{t("Earthrise and Earthset track the centre crossing the clearance threshold. Radio signal strength is unavailable.")}</p>}
       </div>)}</div>
       {value.sun.visible && value.sun.clearance_deg < 0 && <p>{t("Part of the Sun is visible while its centre is below the local horizon.")}</p>}
       <p>{t("Both visible")} · {t(value.both_visible ? "Yes" : "No")}</p>

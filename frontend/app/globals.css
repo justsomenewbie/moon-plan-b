@@ -124,6 +124,10 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
   .saved-comparison .lunar-figure { padding-top: 20px; }
 }
 .terrain-result { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.instant-bodies .metadata dd { overflow-wrap: normal; }
+.instant-bearing { display: flex; gap: .5rem; align-items: center; margin-block: .4rem; }
+.instant-bearing svg { flex-shrink: 0; }
+.panel-sunlight .panel-missing { margin-top: .65rem; }
 .panel-sunlight { margin-top: 12px; min-width: 0; }
 .panel-sunlight legend { font-weight: 650; }
 .panel-sunlight p { color: var(--muted); font-size: .875rem; }

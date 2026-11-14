@@ -120,13 +120,14 @@ function SiteObservations({ site, range, sample }: { site: Site; range: Range; s
   </>;
 }
 
-export default function TerrainObservations({ result, siteIndex, sample, onSelect, live, reducedMotion }: {
+export default function TerrainObservations({ result, siteIndex, sample, onSelect, onSelectSite, fallbackUtc, live, reducedMotion }: {
   result: TerrainSummary; siteIndex: number; sample: number; live: boolean; reducedMotion: boolean;
-  onSelect: (siteIndex: number, sample: number) => void;
+  onSelect: (siteIndex: number, sample: number) => void; onSelectSite: (index: number) => void; fallbackUtc?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [clearance, setClearance] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const [playingSite, setPlayingSite] = useState<number | null>(null);
+  const playing = playingSite === siteIndex;
   const site = result.sites[siteIndex];
   const count = site?.series?.t.length ?? 0;
   const at = site?.series?.t[sample];
@@ -141,23 +142,25 @@ export default function TerrainObservations({ result, siteIndex, sample, onSelec
   const offset = at && a ? Date.parse(at) - Date.parse(a.startUtc) : undefined;
   const advance = useEffectEvent(() => onSelect(siteIndex, sample + 1));
   useEffect(() => {
-    if (!playing) return;
-    if (reducedMotion || sample + 1 >= count) { setPlaying(false); return; }
+    if (playingSite === null) return;
+    if (!playing || reducedMotion || sample + 1 >= count) { setPlayingSite(null); return; }
     const timer = window.setTimeout(advance, 900);
     return () => window.clearTimeout(timer);
-  }, [playing, reducedMotion, siteIndex, sample, count]);
+  }, [playing, playingSite, reducedMotion, siteIndex, sample, count]);
   if (!site) return null;
   function chooseSite(index: number) {
-    setPlaying(false);
-    const matchingSample = at ? result.sites[index].series?.t.indexOf(at) : undefined;
-    onSelect(index, Math.max(0, matchingSample ?? 0));
+    setPlayingSite(null);
+    onSelectSite(index);
   }
   return <section id="terrain-observations" className={styles.observations} aria-labelledby="terrain-observations-title">
     <h3 id="terrain-observations-title">{t("Sky observations and visibility")}</h3>
     {result.sites.length > 1 ? <label className={`field ${styles.control}`}>{t("Observation site")}
-      <select value={site.id} onChange={event => { setPlaying(false); onSelect(event.currentTarget.selectedIndex, 0); }}>
+      <select value={site.id} onChange={event => chooseSite(event.currentTarget.selectedIndex)}>
         {result.sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
       </select></label> : <p className={styles.screenSite}>{site.name}</p>}
+    {fallbackUtc && <p role="status" className="muted text-sm">{locale === "vi"
+      ? <>Tại {site.name}, không có mẫu cho thời điểm {utc(fallbackUtc)}. {at ? `Đang hiển thị mẫu đầu tiên, lúc ${utc(at)}.` : "Không có mẫu nào trong khoảng đã chọn."}</>
+      : <>{site.name} has no sample at {utc(fallbackUtc)}. {at ? `Showing the first available sample at ${utc(at)}.` : "No samples are available in the selected range."}</>}</p>}
     {a && current && at && offset !== undefined ? <>
       <div className="print:hidden">
         <Timeline a={a} b={b} mode="sites" offset={offset} clearanceDeg={clearance} angularOnly />
@@ -167,11 +170,11 @@ export default function TerrainObservations({ result, siteIndex, sample, onSelec
       <div className="playback print:hidden">
         <button className="button outline" type="button" disabled={count < 2 || reducedMotion} onClick={() => {
           if (!playing && sample + 1 === count) onSelect(siteIndex, 0);
-          setPlaying(!playing);
+          setPlayingSite(playing ? null : siteIndex);
         }}>{t(playing ? "Pause timeline" : "Play timeline")}</button>
         <label className="slider-label"><span className="sr-only">{t("Observation sample")}</span>
           <input type="range" min="0" max={count - 1} step="1" value={sample} disabled={count < 2}
-            aria-valuetext={utc(at)} onChange={event => { setPlaying(false); onSelect(siteIndex, Number(event.target.value)); }} /></label>
+            aria-valuetext={utc(at)} onChange={event => { setPlayingSite(null); onSelect(siteIndex, Number(event.target.value)); }} /></label>
       </div>
       <time id="terrain-sample-utc" className="mono" dateTime={at}>{utc(at)}</time>
       <div className="print:hidden">
