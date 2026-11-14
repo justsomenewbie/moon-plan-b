@@ -75,7 +75,10 @@ async function share(page, hour) {
 try {
   const context = await newContext();
   const page = await context.newPage();
-  await page.goto(origin);
+  const incomplete = new URL("/?sample=" + encodeURIComponent(utc(2)), origin);
+  await page.goto(incomplete.href);
+  await page.waitForURL(url => url.pathname === "/compare" && url.search === incomplete.search);
+  await page.goto(new URL("/compare", origin).href);
   await supplyFile(page);
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
   await page.getByLabel(/^Primary site/).selectOption(athena.id);

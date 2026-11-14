@@ -3,6 +3,7 @@ import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
 import { SiteResult, TimeRange } from "./terrain-site-result";
 import TerrainDates from "./terrain-dates";
+import AlternativeDates from "./alternative-dates";
 
 export default function TerrainResult({ result, view, onSelect, onPrint, catalogWindow }: {
   catalogWindow?: { from: string; to: string };
@@ -11,6 +12,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, catalog
 }) {
   const { t } = useLanguage();
   const { range, run, model, sources } = result;
+  const observationSite = result.sites[view.siteIndex];
   const clippedRange = range.start !== range.requested_start || range.end !== range.requested_end;
   return <main id="workspace" className="terrain-result" aria-labelledby="terrain-title" tabIndex={-1}>
     <div className="section-heading">
@@ -29,6 +31,8 @@ export default function TerrainResult({ result, view, onSelect, onPrint, catalog
     {catalogWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={catalogWindow} />}
 
     {result.sites.length > 0 && <TerrainObservations result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
+
+    {view.link && observationSite && <AlternativeDates key={result.dataset_id + "/" + observationSite.id} result={result} site={observationSite} />}
 
     <section id="sources" className="sources-section" aria-labelledby="terrain-sources" tabIndex={-1}>
       <h2 id="terrain-sources">{t("Sources & method")}</h2>

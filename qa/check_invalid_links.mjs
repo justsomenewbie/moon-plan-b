@@ -30,7 +30,7 @@ try {
   const field = page.getByLabel("Import JSON dataset");
   const workspace = page.locator("#workspace.terrain-result, #workspace.workspace, .sample-time");
   async function visit(params) {
-    const url = new URL(origin);
+    const url = new URL("/compare", origin);
     url.search = new URLSearchParams(params).toString();
     await page.goto(url.href);
     await page.getByRole("button", { name: "Import data", disabled: false }).waitFor();
@@ -42,28 +42,35 @@ try {
     assert.equal(await workspace.count(), 0);
     if (!allowPinnedRetry) assert.equal(await retry.count(), 0, "Retry must not switch to a default request");
   }
+  async function importFile(path) {
+    await page.getByRole("button", { name: "Import data", exact: true }).click();
+    await page.getByRole("dialog").waitFor();
+    await field.setInputFiles(path);
+  }
   const malformed = new URLSearchParams(comparison);
   malformed.delete("v");
   const duplicate = new URLSearchParams(comparison);
   duplicate.append("a", odysseus.id);
   const liveDuplicate = new URLSearchParams({ ...request, run_id: spec.run, view_site: athena.siteId });
   liveDuplicate.append("view_site", odysseus.siteId);
-  for (const params of [malformed, duplicate, liveDuplicate]) {
+  const mixed = new URLSearchParams({ ...comparison, run_id: spec.run });
+  for (const params of [malformed, duplicate, liveDuplicate, mixed, new URLSearchParams({ job: "" }), new URLSearchParams({ view_site: "absent-site" })]) {
     const count = reads.length;
     const url = await visit(params);
-    await rejected(url, /incomplete|duplicate|version|required/i);
+    await rejected(url, /incomplete|duplicate|version|required|mixes|invalid|needs a pinned/i);
     assert.equal(reads.length, count, "Malformed link fetched a default dataset");
   }
 
   const stale = await visit({ ...comparison, v: "retired-release" });
   const mismatch = /different dataset version|exact release|version.*(match|unavailable)/i;
   await rejected(stale, mismatch);
-  const [picker] = await Promise.all([page.waitForEvent("filechooser"), alert.getByRole("button", { name: "Import the correct dataset" }).click()]);
-  await picker.setFiles({ name: "unrelated-terrain.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(terrain)) });
+  await alert.getByRole("button", { name: "Import the correct dataset" }).click();
+  await page.getByRole("dialog").waitFor();
+  await field.setInputFiles({ name: "unrelated-terrain.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(terrain)) });
   // Wait for the attempted import to finish, even if it leaves the same incompatibility message.
   await page.waitForFunction(() => !document.querySelector('#workspace[aria-busy="true"]') && document.activeElement?.id === "data-error");
   await rejected(stale, mismatch);
-  await field.setInputFiles(file);
+  await importFile(file);
   await rejected(stale, mismatch);
   assert.doesNotMatch(await page.locator(".live-status").innerText(), /Dataset imported locally/);
 
@@ -75,7 +82,7 @@ try {
     [{ sample: missingSample }, /sample.*unavailable|unavailable.*sample/i],
   ]) {
     const url = await visit({ ...comparison, ...change });
-    await field.setInputFiles(file);
+    await importFile(file);
     await rejected(url, reason);
   }
   // Explicitly choose the supplied release's defaults after the unavailable 02:00.
@@ -89,7 +96,7 @@ try {
   const demo = fileURLToPath(new URL("../frontend/public/data/demo.json", import.meta.url));
   const crossed = await visit({ ...request, v: "synthetic-ui-v2", mode: "sites",
     a: "ridge-1", b: "basin-2", duration: "24", h: "6" });
-  await field.setInputFiles(demo);
+  await importFile(demo);
   await rejected(crossed, /pair.*incompatible|incompatible.*window/i);
 
   const before = reads.length;
@@ -105,7 +112,7 @@ try {
   }
 
   await visit(comparison);
-  await field.setInputFiles(file);
+  await importFile(file);
   await page.locator("#workspace.workspace").waitFor();
   assert.equal(await page.getByLabel(/^Primary site/).inputValue(), athena.id);
   assert.equal(await page.getByLabel(/^Alternative site/).inputValue(), odysseus.id);

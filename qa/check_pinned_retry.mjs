@@ -11,7 +11,7 @@ const sites = ["im1_odysseus", site];
 const dataset = terrainFixture({ run, start, at, end });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined,
   chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
-const pinned = new URL(origin);
+const pinned = new URL("/compare", origin);
 pinned.search = new URLSearchParams({ from: start, to: end, resolutionSeconds: step, run_id: run, view_site: site, at, saved: site });
 pinned.hash = "terrain-observations";
 const cases = [

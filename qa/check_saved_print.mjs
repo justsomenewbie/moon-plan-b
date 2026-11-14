@@ -24,7 +24,7 @@ try {
     }
     assert.doesNotMatch(text, /Demo ridge A/);
   }
-  await page.goto(origin);
+  await page.goto(new URL("/compare", origin).href);
   await page.getByRole("button", { name: "Print report", exact: true }).waitFor();
   await selector.selectOption("im2_athena");
   await saved.getByText("139 h", { exact: true }).waitFor();
@@ -61,7 +61,7 @@ try {
   await source.waitFor({ state: "visible" });
   checkAthena(await printText());
 
-  await page.goto(new URL("#lunar-reference", origin).href);
+  await page.goto(new URL("/compare#lunar-reference", origin).href);
   await page.getByRole("button", { name: "Print report", exact: true }).waitFor();
   assert.match(await printText(), /Demo ridge A/);
   await page.goto(new URL("?saved=im2_athena#workspace", origin).href);

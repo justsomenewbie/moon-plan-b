@@ -44,7 +44,7 @@ const messages = {
   },
 };
 
-export default function AstronautGuide({ savedResult, terrain }: { savedResult: string; terrain: TerrainSummary | null }) {
+export default function AstronautGuide({ savedResult, terrain, comparisonPath = "" }: { savedResult: string; terrain: TerrainSummary | null; comparisonPath?: string }) {
   const { locale } = useLanguage();
   const copy = messages[locale];
   const id = useId();
@@ -66,7 +66,7 @@ export default function AstronautGuide({ savedResult, terrain }: { savedResult: 
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>
         <ul>{reading.readings.map((row, index) => <li key={index}>{row.name} · {copy.states[row.visibility]}</li>)}</ul>
-        <a href={reading.saved ? "#saved-model-source" : "#sources"} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
+        <a href={comparisonPath + (reading.saved ? "#saved-model-source" : "#sources")} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
         <small>{reading.source}</small>
       </section> : <p className={styles.greeting}>{copy.greeting}</p>}
       {copy.questions.map(([question, answer], index) =>
@@ -84,7 +84,7 @@ export default function AstronautGuide({ savedResult, terrain }: { savedResult: 
           </li>
         )}</ul>
       </details>}
-      <a className={styles.jump} href="#observed-week" onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.saved}</a>
+      <a className={styles.jump} href={comparisonPath + "#observed-week"} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.saved}</a>
     </aside>
   </>;
 }

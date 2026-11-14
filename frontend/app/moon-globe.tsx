@@ -19,7 +19,7 @@ type GlobeProps = {
   alternative?: GlobeSite;
   evidence?: Dataset["evidence"];
   savedResult: string;
-  showSky: (alternative: boolean) => void;
+  showSky?: (alternative: boolean) => void;
 };
 
 type Target = {
@@ -250,10 +250,10 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
               </div>;
             })}
             <p>{t("Earth visibility describes a line of sight. Radio signal strength is unavailable.")}</p>
-            <a href="#saved-model-source">{t("Source and interval checks")}</a>
+            <a href={showSky ? "#saved-model-source" : "/compare#saved-model-source"}>{t("Source and interval checks")}</a>
           </div>}
           {target.source ? <a href={target.source} target="_blank" rel="noreferrer">{t("Landing site source")} ↗</a> :
-            <><a href="#local-sky" onClick={() => showSky(target.key === "Alternative")}>{t("Open this observation in 3D")}</a>{" · "}
+            <><a href="#local-sky" onClick={() => showSky?.(target.key === "Alternative")}>{t("Open this observation in 3D")}</a>{" · "}
               <a href="#sources">{t("Sources & method")}</a></>}
         </div>}
       </div>

@@ -49,7 +49,7 @@ try {
   const page = await browser.newPage({ viewport, timezoneId: "UTC", reducedMotion: "reduce" });
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
-  await page.goto(origin);
+  await page.goto(new URL("/compare", origin).href);
   await page.getByRole("button", { name: "Import data", exact: true, disabled: false }).waitFor();
   const observed = {};
   const cases = [["control", control], ["gap", gap]];

@@ -12,7 +12,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, timezoneId: "UTC" });
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto(origin);
+  await page.goto(new URL("/compare", origin).href);
   const globe = page.locator("#lunar-reference");
   const map = globe.getByRole("img", { name: "Lunar surface globe" });
   await map.waitFor();
