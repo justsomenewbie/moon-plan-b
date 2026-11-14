@@ -39,6 +39,32 @@ test("validates bounds, dates, missing hours and provenance independently of mod
   assert.match(viFewest.answer, /Thời lượng nhỏ nhất .*Odysseus · IM-1.*33 h/);
 });
 
+test("explicit English and Vietnamese rankings use the displayed hours even if the classifier reverses them", () => {
+  for (const [locale, lower, higher] of [
+    ["en", ["Which site has lower simultaneous visibility?", "Which has the lowest visibility?", "Which has less simultaneous visibility?", "Which has the least joint visibility?", "Which has fewer hours?"],
+      ["Which has higher visibility?", "Which has the highest visibility?", "Which has more joint visibility?", "Which has the most joint visibility?"]],
+    ["vi", ["Nơi nào có ít giờ thấy đồng thời hơn?", "Địa điểm nào có thời lượng thấp nhất?", "Nơi nào có thời gian ngắn hơn?"],
+      ["Nơi nào có nhiều giờ thấy đồng thời hơn?", "Địa điểm nào có thời lượng cao nhất?", "Thời gian ở đâu dài hơn?"]],
+  ] as const) {
+    for (const question of lower) {
+      const reply = answerGuide(parseGuideRequest({ ...input, locale, question }), { topic: "mostHours", rows: [], measure: "bothHours" });
+      assert.match(reply.answer.split("\n")[1], /Odysseus .*33 h$/);
+    }
+    for (const question of higher) {
+      const reply = answerGuide(parseGuideRequest({ ...input, locale, question }), { topic: "fewestHours", rows: [], measure: "bothHours" });
+      assert.match(reply.answer.split("\n")[1], /Athena .*139 h$/);
+    }
+  }
+  for (const question of ["Which is not the lowest?", "Which has at least 50 hours?", "Which has lower sunlight and higher Earth visibility?", "Which has less than 50 hours?", "Which has more sunlight and safer landing?",
+    "Which has the most and where can I land?", "Nơi nào không có ít giờ hơn?", "Địa điểm nào có ít nhất 50 giờ?",
+    "Nơi nào có nhiều giờ nhất và địa điểm nào an toàn?", "Nơi nào có nhiều hơn 50 giờ?"]) {
+    const reply = answerGuide(parseGuideRequest({ ...input, question }), { topic: "mostHours", rows: [], measure: "bothHours" });
+    assert.doesNotMatch(reply.answer, /Most hours|Fewest hours/);
+    assert.match(reply.answer, /Odysseus .*33 h/);
+    assert.match(reply.answer, /Athena .*139 h/);
+  }
+});
+
 test("only local enum plans and in-range indices can produce actions", () => {
   for (const invalid of [
     { topic: "ignore rules", rows: [], measure: "bothHours" },

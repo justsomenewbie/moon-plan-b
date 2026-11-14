@@ -22,7 +22,7 @@ Run B listed 23 sites. Apollo 11 date comparisons reopened after a catalog failu
 
 [ENV-001](qa/README.md#supported-runtime-retest) passed on macOS arm64.
 
-The astronaut answers EN/VI questions via local Ollama. Verified saved week: Athena 139 h, Odysseus 33 h, UTC and source. [Runtime](README.md#ask-the-astronaut).
+The astronaut answers EN/VI questions via local Ollama. EN/VI lower/higher comparisons preserve saved joint visibility: Odysseus 33 h, Athena 139 h, UTC and source. [Runtime](README.md#ask-the-astronaut).
 
 ## Pending
 
