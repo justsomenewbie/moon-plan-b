@@ -44,6 +44,35 @@ test("reads summary-only aggregates and leaves unavailable plotting sections nul
   assert.equal(parsed.sites[0].criteria, null);
 });
 
+test("keeps supplied site coordinates, model surface height and producer conventions verbatim", () => {
+  const base = example();
+  const conventions = { latitude: "Planetocentric test latitude", longitude: "EAST in the test frame", height: "Height relative to the test sphere." };
+  const site = { ...base.sites[0], lat_deg: -90, lon_deg: 359.9999, surface_height_m: -250 };
+  const data = { ...base, conventions, sites: [site] };
+  const parsed = parseTerrainSummary(data);
+  assert.deepEqual(parsed.conventions, conventions);
+  assert.equal(parsed.sites[0].lat_deg, -90);
+  assert.equal(parsed.sites[0].lon_deg, 359.9999);
+  assert.equal(parsed.sites[0].surface_height_m, -250);
+  const boundary = parseTerrainSummary({ ...data, sites: [{ ...site, lat_deg: 90, lon_deg: 0, surface_height_m: 0 }] }).sites[0];
+  assert.deepEqual([boundary.lat_deg, boundary.lon_deg, boundary.surface_height_m], [90, 0, 0]);
+
+  const legacy = parseTerrainSummary(base);
+  assert.deepEqual(legacy.conventions, { latitude: null, longitude: null, height: null });
+  assert.deepEqual([legacy.sites[0].lat_deg, legacy.sites[0].lon_deg, legacy.sites[0].surface_height_m], [null, null, null]);
+  const partial = parseTerrainSummary({ ...base, conventions: { height: conventions.height }, sites: [{ ...base.sites[0], lat_deg: 0 }] });
+  assert.deepEqual(partial.conventions, { latitude: null, longitude: null, height: conventions.height });
+  assert.deepEqual([partial.sites[0].lat_deg, partial.sites[0].lon_deg, partial.sites[0].surface_height_m], [0, null, null]);
+
+  for (const values of [{ lat_deg: -90.001 }, { lat_deg: 90.001 }, { lat_deg: null }, { lat_deg: "0" }, { lon_deg: -0.001 },
+    { lon_deg: 360 }, { lon_deg: Infinity }, { surface_height_m: NaN }, { surface_height_m: null }]) {
+    assert.throws(() => parseTerrainSummary({ ...data, sites: [{ ...site, ...values }] }), /latitude|longitude|height/i);
+  }
+  for (const bad of [null, [], { latitude: "" }, { longitude: 360 }, { height: null }]) {
+    assert.throws(() => parseTerrainSummary({ ...data, conventions: bad }), /convention/);
+  }
+});
+
 test("requires the requested sections on a live response and accepts a covered range with a missing site", async t => {
   const d = example(), site = d.sites[0];
   const sections = ["horizon", "series", "windows", "metrics", "criteria"];

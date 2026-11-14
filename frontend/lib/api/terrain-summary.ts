@@ -292,6 +292,15 @@ function readCriteria(value: unknown, hours: number[], inRange: Coverage, both: 
   });
 }
 
+function readConventions(value: unknown) {
+  const c = value === undefined ? {} : row(value, "conventions");
+  return {
+    latitude: c.latitude === undefined ? null : text(c.latitude, "latitude convention"),
+    longitude: c.longitude === undefined ? null : text(c.longitude, "longitude convention"),
+    height: c.height === undefined ? null : text(c.height, "height convention"),
+  };
+}
+
 function readSite(value: unknown, range: Range, include: unknown[], criteriaHours: number[] | null) {
   const s = row(value, "site"), c = coverage(s.coverage), inRange = coverage(s.coverage_in_range);
   const clamped = range.start !== range.requested_start || range.end !== range.requested_end;
@@ -301,7 +310,14 @@ function readSite(value: unknown, range: Range, include: unknown[], criteriaHour
   const bodySpans = { sun: spans(windows.sun), earth: spans(windows.earth), both: spans(windows.both) };
   check(inRange !== "missing" || !windows.sun.length && !windows.earth.length && !windows.both.length, "Missing site coverage cannot have visibility windows.");
   checkOverlap(bodySpans.sun, bodySpans.earth, bodySpans.both);
+  // Older local summary fixtures omitted site coordinates and surface height.
+  const lat_deg = s.lat_deg === undefined ? null : number(s.lat_deg, "planetocentric latitude");
+  const lon_deg = s.lon_deg === undefined ? null : number(s.lon_deg, "east longitude");
+  const surface_height_m = s.surface_height_m === undefined ? null : number(s.surface_height_m, "surface height");
+  check(lat_deg === null || Math.abs(lat_deg) <= 90, "Planetocentric latitude is outside [-90, 90].");
+  check(lon_deg === null || (lon_deg >= 0 && lon_deg < 360), "East longitude is outside [0, 360).");
   return {
+    lat_deg, lon_deg, surface_height_m,
     id: identifier(s.id, "site", /^[A-Za-z0-9_.:-]{1,64}$/), name: text(s.name, "site name"), coverage: c, coverage_in_range: inRange,
     windows, metrics: readMetrics(s.metrics, range, bodySpans, inRange),
     criteria: criteriaHours && readCriteria(s.criteria, criteriaHours, inRange, bodySpans.both),
@@ -328,13 +344,13 @@ export function parseTerrainSummary(input: unknown, request?: { from: string; to
   return {
     schema_version: d.schema_version, dataset_id: identifier(d.dataset_id, "dataset", /^[A-Za-z0-9._-]{1,100}$/),
     evidence: d.evidence, attribution: text(d.attribution, "attribution"), run: readRun(d.run), model: readModel(d.model),
-    range, sources, criteria_hours, sites: uniqueIds(items(d.sites, "sites", 100).map(site => readSite(site, range, include, criteria_hours)), "site"),
+    range, sources, criteria_hours, conventions: readConventions(d.conventions), sites: uniqueIds(items(d.sites, "sites", 100).map(site => readSite(site, range, include, criteria_hours)), "site"),
   };
 }
 export type TerrainSummary = {
   schema_version: "lunarnav-dataset-1"; dataset_id: string; evidence: "computed-ephemeris"; attribution: string;
   run: ReturnType<typeof readRun>; model: ReturnType<typeof readModel>; range: Range;
-  criteria_hours: number[] | null;
+  criteria_hours: number[] | null; conventions: ReturnType<typeof readConventions>;
   sites: ReturnType<typeof readSite>[];
   sources: { id: string; title: string; url: string | null; sha256: string | null }[];
 };
