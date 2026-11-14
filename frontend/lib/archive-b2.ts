@@ -1,6 +1,5 @@
 import catalog from "../public/data/run-b2/catalog.json" with { type: "json" };
 import archive from "../public/data/run-b2/visibility.json" with { type: "json" };
-import { longestJointWindow } from "./joint-window.ts";
 
 type Priority = "joint" | "sun" | "earth";
 type Request = { from: string; to: string; priority: Priority };
@@ -35,21 +34,24 @@ function bounds(request: Request) {
   return Object.hasOwn(selected, request.priority) && start >= 0 && end > start && end <= archive.sampleCount ? { start, end } : null;
 }
 function observed(edges: number[], start: number, end: number) {
-  let hours = 0, longest = 0;
+  let hours = 0, longest = 0, first = 0;
   for (let i = 0; i < edges.length && edges[i] < end; i += 2) {
     const overlap = Math.max(0, Math.min(end, edges[i + 1]) - Math.max(start, edges[i]));
     hours += overlap;
-    longest = Math.max(longest, overlap);
+    if (overlap > longest) {
+      longest = overlap;
+      first = Math.max(start, edges[i]);
+    }
   }
-  return { hours, longest };
+  return { hours, longest, first };
 }
 
 export function savedB2JointWindows(from: string, to: string) {
-  if (!bounds({ from, to, priority: "joint" })) return null;
+  const range = bounds({ from, to, priority: "joint" });
+  if (!range) return null;
   return archiveB2Run.sites.map(({ id, name }) => {
-    const edges = masks[id].both, windows = [];
-    for (let i = 0; i < edges.length; i += 2) windows.push({ start: iso(edges[i]), end: iso(edges[i + 1]) });
-    return { id, name, window: longestJointWindow(windows, from, to) };
+    const { longest, first } = observed(masks[id].both, range.start, range.end);
+    return { id, name, window: longest ? { hours: longest, start: iso(first), end: iso(first + longest) } : null };
   });
 }
 

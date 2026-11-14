@@ -17,7 +17,37 @@ const site = (id: string, name: string) => ({ id, name, demSource: "test", lat_d
 const run: PlannerRun = { runId: "fixture-run", start: "2026-01-01T00:00:00Z", end: "2028-01-01T00:00:00Z", stepSeconds: 3600,
   sites: [site("im2_athena", "IM-2 Athena"), site("apollo11", "Apollo 11 LM Eagle (Tranquility Base)"), site("apollo15", "Apollo 15 LM Falcon (Hadley-Apennine)")] };
 const unintended = async () => { throw Error("Unexpected lookup"); };
-const api = { online: true, run: async () => run, ranking: unintended, missionRanking: unintended, observation: unintended, dates: unintended };
+const api = { online: true, run: async () => run, windows: unintended, ranking: unintended, missionRanking: unintended, observation: unintended, dates: unintended };
+
+test("the guide ranks uninterrupted visibility from intervals and keeps the winning objective in the planner", async () => {
+  const q = planningIntent("Which site has the longest uninterrupted visibility of the Sun and Earth from 2026-11-28 to 2026-12-12?")!;
+  const saved = await answerPlanning(q, "en", signal, api, "saved-b2");
+  assert.match(saved.answer, /23\/23[\s\S]*Odysseus[^\n]*92 h · 2026-11-28T00:00:00Z → 2026-12-01T20:00:00Z/);
+  assert.doesNotMatch(saved.answer, /Malapert/);
+  assert.equal(new URL(saved.href, "https://example.org").searchParams.get("order"), "longest");
+  const old = await answerPlanning(q, "vi", signal, api, "saved");
+  assert.match(old.answer, /Bản lưu này không có các khoảng/);
+  assert.doesNotMatch(old.answer, /92 h|B2_/);
+
+  const s = "2026-11-28T00:00:00Z", mid = "2026-11-28T01:00:00Z", e = "2026-11-28T03:00:00Z";
+  const complete = { coverage: "complete", coverage_in_range: "complete" };
+  const hits: string[] = [];
+  const result = await answerPlanning(q, "en", signal, { ...api, windows: async (pinned, bounds) => {
+    hits.push(pinned.runId);
+    assert.deepEqual(bounds, { from: s, to: "2026-12-12T00:00:00Z", priority: "joint" });
+    return { sites: [
+      { ...complete, id: "im2_athena", name: "Athena", windows: { both: [{ start: s, end: mid }, { start: mid, end: e }] } },
+      { ...complete, id: "apollo11", name: "Apollo 11", windows: { both: [] } },
+      { ...complete, coverage: "partial", id: "apollo15", name: "Apollo 15", windows: { both: [{ start: s, end: bounds.to }] } },
+    ] } as unknown as PlannerRanking["evidence"];
+  } }, run);
+  assert.deepEqual(hits, [run.runId]);
+  assert.match(result.answer, /2\/3[\s\S]*Athena · 3 h/);
+  assert.doesNotMatch(result.answer, /Apollo 15|92 h/);
+  const failed = await answerPlanning(q, "en", signal, api, run);
+  assert.match(failed.answer, /could not verify[\s\S]*fixture-run/);
+  assert.doesNotMatch(failed.answer, /92 h|B2_/);
+});
 
 test("English and Vietnamese site clarifications retain travel bounds, duration, priority and the saved source", async () => {
   for (const [locale, question] of [

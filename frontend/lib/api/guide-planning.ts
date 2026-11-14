@@ -1,8 +1,9 @@
-import { archiveB2Run, rankArchiveB2, searchArchiveB2 } from "../archive-b2.ts";
-import { getSavedPlannerDates, getSavedPlannerRanking, savedPlannerRun, savedPlannerWindows } from "../saved-planner.ts";
+import { archiveB2Run, rankArchiveB2, savedB2JointWindows, searchArchiveB2 } from "../archive-b2.ts";
+import { getSavedPlannerDates, getSavedPlannerRanking, savedJointWindows, savedPlannerRun, savedPlannerWindows } from "../saved-planner.ts";
+import { describeLongestJoint, longestJointWindow } from "../joint-window.ts";
 import { findAltDates } from "./alt-dates.ts";
 import { getTerrainAggregate, isMock } from "./client.ts";
-import { getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type PlannerRun } from "./planner.ts";
+import { getCatalogEvidence, getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type PlannerRun } from "./planner.ts";
 import { rankSavedMissionWindows, type MissionWindowRanking } from "../mission-window-ranking.ts";
 import { usesSmoothSphere } from "../site-horizon.ts";
 import { translate } from "../i18n.ts";
@@ -13,8 +14,8 @@ type Locale = "en" | "vi";
 export type PlanningArchive = "saved" | "saved-b2";
 export type PlanningSource = PlanningArchive | PlannerRun;
 export type PlanningAnswer = { answer: string; href: string; siteChoices?: readonly PlanningSite[]; choiceSource?: PlanningSource };
-type Services = { run: typeof getPlannerRun; ranking: typeof getPlannerRanking; missionRanking: typeof getPlannerMissionRanking; dates: typeof findAltDates; observation: typeof getTerrainAggregate; online: boolean };
-const services: Services = { run: getPlannerRun, ranking: getPlannerRanking, missionRanking: getPlannerMissionRanking, dates: findAltDates, observation: getTerrainAggregate, online: !isMock };
+type Services = { run: typeof getPlannerRun; windows: typeof getCatalogEvidence; ranking: typeof getPlannerRanking; missionRanking: typeof getPlannerMissionRanking; dates: typeof findAltDates; observation: typeof getTerrainAggregate; online: boolean };
+const services: Services = { run: getPlannerRun, windows: getCatalogEvidence, ranking: getPlannerRanking, missionRanking: getPlannerMissionRanking, dates: findAltDates, observation: getTerrainAggregate, online: !isMock };
 
 function plannerHref(plan: PlanningIntent, site?: string, source?: PlanningSource) {
   const params = new URLSearchParams({ mode: plan.mode === "dates" ? "dates" : "sites", priority: plan.priority });
@@ -23,6 +24,7 @@ function plannerHref(plan: PlanningIntent, site?: string, source?: PlanningSourc
   if (plan.from) params.set("from", plan.from);
   if (plan.to) params.set("to", plan.to);
   if (site) params.set("site", site);
+  if (plan.longestJoint) params.set("order", "longest");
   if (plan.mode !== "observation" && plan.missionHours && Number.isSafeInteger(plan.missionHours)) params.set("missionHours", String(plan.missionHours));
   return "/plan?" + params;
 }
@@ -43,7 +45,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   const from = plan.from + "T00:00:00Z", to = plan.to + "T00:00:00Z";
   const span = (Date.parse(to) - Date.parse(from)) / 3600000;
   const period = from + " → " + to + tr(" (exclusive)", " (không gồm mốc cuối)");
-  if (hasPlanningQualifications(plan.siteText)) {
+  if (!plan.longestJoint && hasPlanningQualifications(plan.siteText)) {
     href = plannerHref({ ...plan, missionHours: null }, undefined, selected ?? (api.online ? undefined : fallback));
     return reply(tr("The chat search ranks only total Sun, Earth or joint visibility. Open the planner to check your additional conditions for ", "Chat chỉ xếp hạng theo tổng thời gian thấy Mặt Trời, Trái Đất hoặc cả hai. Hãy mở công cụ lập kế hoạch để kiểm tra điều kiện bổ sung cho ") + period + ".");
   }
@@ -54,6 +56,15 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   const noVisibility = tr("No evaluated option provides any hours of the requested visibility.", "Không có lựa chọn nào cho giờ quan sát đáp ứng tiêu chí này.");
   const key = ({ joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const)[plan.priority];
   const flatNote = translate(locale, "Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.");
+  function continuousReply(rows: NonNullable<ReturnType<typeof savedJointWindows>>, sites: PlannerRun["sites"], source: string) {
+    const matches = matchSites(plan.siteText, sites);
+    const eligible = rows.filter(row => !matches.length || matches.some(site => site.id === row.id));
+    const count = eligible.length + "/" + (matches.length || sites.length);
+    const scope = tr("Sites with complete interval coverage", "Địa điểm có đủ dữ liệu khoảng quan sát") + " · " + count;
+    const longest = Math.max(0, ...eligible.map(row => row.window?.hours ?? 0));
+    const flat = eligible.filter(row => longest > 0 && row.window?.hours === longest && usesSmoothSphere(sites.find(site => site.id === row.id)));
+    return reply([period, scope, describeLongestJoint(eligible, locale), ...flat.map(row => row.name + " — " + flatNote)].join("\n") + source);
+  }
   function outsideRun(run: Pick<PlannerRun, "start" | "end" | "runId">) {
     return reply(tr("The requested dates are outside the model run. Available UTC range: ", "Ngày yêu cầu nằm ngoài phạm vi mô hình. Khoảng UTC có dữ liệu: ") + run.start + " → " + run.end + tr(" (exclusive)", " (không gồm mốc cuối)") + " · " + run.runId);
   }
@@ -81,6 +92,12 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     const savedSource = "\n" + tr("Saved run", "Run đã lưu") + " · " + run.runId;
     const matches = matchSites(plan.siteText, run.sites);
     if (from < run.start || to > run.end) return outsideRun(run);
+    if (plan.longestJoint) {
+      const rows = legacy ? savedJointWindows(from, to) : savedB2JointWindows(from, to);
+      if (!rows) return reply(tr("This archive has no joint visibility intervals covering the selected dates.", "Bản lưu này không có các khoảng cùng thấy Mặt Trời và Trái Đất bao phủ những ngày đã chọn.") + savedSource);
+      const scope = legacy ? "\n" + tr("The earlier archive retains joint intervals only for Odysseus and Athena.", "Bản lưu trước chỉ có các khoảng quan sát đồng thời của Odysseus và Athena.") : "";
+      return continuousReply(rows, run.sites, scope + savedSource);
+    }
     if (matches.length > 1) return { ...reply(tr("Which catalog site do you mean? ", "Bạn muốn chọn địa điểm nào? ") + matches.map(s => s.name).join(" · ")), siteChoices: matches, choiceSource: fallback };
     if (plan.mode === "sites" && !matches.length && plan.missionHours !== null) {
       const result = rankSavedMissionWindows(fallback, { from, to, priority: plan.priority, missionHours: plan.missionHours });
@@ -126,6 +143,12 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     if (from < run.start || to > run.end) return outsideRun(run);
     const matches = matchSites(plan.siteText, run.sites);
     const source = "\n" + tr("Source run", "Run nguồn") + " · " + run.runId;
+    if (plan.longestJoint) {
+      const evidence = await api.windows(run, { from, to, priority: "joint" }, signal);
+      const rows = evidence.sites.filter(s => s.coverage === "complete" && s.coverage_in_range === "complete")
+        .map(s => ({ id: s.id, name: s.name, window: longestJointWindow(s.windows.both, from, to) }));
+      return continuousReply(rows, run.sites, source);
+    }
     if (plan.mode === "sites" && !matches.length) {
       if (plan.missionHours !== null) {
         const { ranking } = await api.missionRanking(run, { from, to, priority: plan.priority, missionHours: plan.missionHours }, signal);

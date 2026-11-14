@@ -93,7 +93,7 @@ export async function getPlannerRun(signal?: AbortSignal, pinnedRunId?: string):
   return { runId: run.run_id, start: run.start_utc, end: run.end_utc, stepSeconds: run.step_s, sites };
 }
 
-async function getCatalogEvidence(run: PlannerRun, request: PlannerDateRequest, signal?: AbortSignal) {
+export async function getCatalogEvidence(run: PlannerRun, request: PlannerDateRequest, signal?: AbortSignal) {
   const from = terrainUtcNanos(request.from, "Start UTC"), to = terrainUtcNanos(request.to, "End UTC");
   const runStart = terrainUtcNanos(run.start);
   if (from < runStart || to > terrainUtcNanos(run.end) || to <= from)
