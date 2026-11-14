@@ -53,7 +53,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
           </article>;
         }))}
       </div>
-      <details>
+      <details id="saved-model-source">
         <summary>{t("How the team obtained these hours")}</summary>
         <p>{t("Each site has one continuous overlap per week. The total shown is also the longest overlap inside that week. The bars share a scale of 168 hours from the start of each week.")}</p>
         <p>{t("The team sampled once per hour with SPICE and a PGDA terrain horizon for an observer 2 m above the surface. Sun visibility uses the upper limb. Earth visibility uses clearance above the local horizon.")}</p>

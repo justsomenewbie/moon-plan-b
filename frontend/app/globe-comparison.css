@@ -45,6 +45,8 @@
 .site-pin-key [aria-pressed="true"], .sky-scenario-key [aria-pressed="true"] { border-color: currentColor; background: var(--bg); }
 .site-pin-key small, .sky-scenario-key small { display: block; color: var(--muted); }
 .site-week-readings p { margin-bottom: 6px; }
+.site-week-range { margin-top: 10px; }
+.site-week-range label, .site-week-range meter { display: block; width: 100%; }
 .sky-ray line { pointer-events: none; }
 .sky-ray [role="button"] { cursor: pointer; }
 .sky-ray text { fill: currentColor; font: bold 9px monospace; paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }

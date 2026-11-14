@@ -18,7 +18,7 @@ type GlobeProps = {
   primary?: GlobeSite;
   alternative?: GlobeSite;
   evidence?: Dataset["evidence"];
-  savedResult?: string;
+  savedResult: string;
   showSky: (alternative: boolean) => void;
 };
 
@@ -52,8 +52,7 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
   const target = targets.find(item => item.key === chosen?.key && item.identity === chosen.identity);
   const point = target && "point" in target.location ? target.location.point : undefined;
   const comparisonPins = targets.filter(item => !item.source && "point" in item.location);
-  const pins = (target && !target.source) || (!savedResult && !target && comparisonPins.length)
-    ? comparisonPins : targets.filter(item => item.source);
+  const pins = target && !target.source ? comparisonPins : targets.filter(item => item.source);
   const marker = point && ready ? diskPosition(point, center, zoom) : null;
   const selectedWeek = saved.weeks.find(week => week.startUtc === savedResult);
   const displayedWeeks = selectedWeek ? [selectedWeek] : saved.weeks;
@@ -65,14 +64,9 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
     const mission = missionSites.find(item => item.id === savedResult);
     if (mission) {
       setChosen({ key: mission.name, identity: mission }); setCenter(mission);
-    } else if (!savedResult && evidence && primary) {
-      const location = comparisonLocation(primary, evidence);
-      if ("point" in location) {
-        setChosen({ key: "Primary", identity: primary }); setCenter(location.point);
-      } else { setChosen(null); setCenter(origin); }
     } else { setChosen(null); setCenter(origin); }
     setZoom(1); setAnnounced(null);
-  }, [savedResult, primary, evidence]);
+  }, [savedResult]);
 
   const currentCenter = useEffectEvent(() => ({ ...center, zoom }));
   useEffect(() => { setEnabled(true); }, []);
@@ -202,11 +196,19 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
             <strong>{t("Saved team model results")}</strong>
             {displayedWeeks.map(week => {
               const site = week.sites.find(s => s.id === target.missionId);
-              return site && <p key={week.startUtc}><time dateTime={week.startUtc}>{t("Week of {date} UTC", { date: week.startUtc.slice(0, 10) })}</time><br />
-                {t("Sun visible")} · {site.sunHours} h · {t("Earth visible")} · {site.earthHours} h · {site.overlap.duration_h} h {t("with both visible")}</p>;
+              if (!site) return null;
+              const hours = (Date.parse(week.endUtc) - Date.parse(week.startUtc)) / 3600000;
+              return <div className="site-week-range" key={week.startUtc}>
+                <time dateTime={week.startUtc}>{t("Week of {date} UTC", { date: week.startUtc.slice(0, 10) })}</time>
+                {([["Sun visible", site.sunHours], ["Earth visible", site.earthHours]] as const).map(([label, value]) =>
+                  <label key={label}>{t(label)} · {value} / {hours} h
+                    <meter min={0} max={hours} value={value} />
+                  </label>)}
+                <p>{site.overlap.duration_h} h {t("with both visible")}</p>
+              </div>;
             })}
             <p>{t("Earth visibility describes a line of sight. Radio signal strength is unavailable.")}</p>
-            <a href="#observed-week">{t("Source and interval checks")}</a>
+            <a href="#saved-model-source">{t("Source and interval checks")}</a>
           </div>}
           {target.source ? <a href={target.source} target="_blank" rel="noreferrer">{t("Landing site source")} ↗</a> :
             <><a href="#local-sky" onClick={() => showSky(target.key === "Alternative")}>{t("Open this observation in 3D")}</a>{" · "}

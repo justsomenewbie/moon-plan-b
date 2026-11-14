@@ -26,7 +26,7 @@ try {
   await page.keyboard.press("Escape");
   await panel.waitFor({ state: "hidden" });
   assert.ok(await launcher.evaluate(button => button === document.activeElement));
-  const saved = page.locator("#observed-week select");
+  const saved = page.locator("#observed-week .week-selection select");
   const week1 = "2026-11-14 → 2026-11-20 UTC";
   const week2 = "2026-11-21 → 2026-11-27 UTC";
   async function checkSavedAnswer(button, question, selection, expected) {

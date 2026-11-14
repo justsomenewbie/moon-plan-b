@@ -4,7 +4,7 @@
 
 Codex generated and revised the frontend implementation, runtime validator, tests, documentation and synthetic demonstration fixture after the recorded event start. Independent Codex reviewers inspected code, checked the fixture numerically and reran tests. Built-in Image Gen generated an internal design concept labeled as AI-generated; that raster is not shipped in the app. The app's simple icon and scientific diagrams are code-native SVG, also AI-assisted. No generated content includes NASA branding.
 
-Codex assisted the bilingual home and astronaut guide, site selection, globe zoom and sky comparison controls. The astronaut is a system-rendered Unicode character. The guide uses prepared answers.
+Codex assisted the bilingual home and astronaut guide, site selection, globe zoom and sky comparison controls. The astronaut is a system-rendered Unicode character. The guide uses prepared explanations and reads the active saved model comparison for dated site values.
 
 The proposal had AI-assisted history before implementation. Preserve that history in submission disclosure. The NASA guide's condition about SI supplying solution ideas remains unresolved for this history; no originality or award-eligibility declaration is made here.
 
@@ -64,3 +64,9 @@ The interactive comparison globe uses the 2025 surface color map from NASA’s C
 NASA adapted the color map from LRO Wide Angle Camera imagery and used lower-resolution laser reflectance near the poles. NASA describes its color processing and gap filling as intended for visualization. The application samples these pixels onto a smooth sphere with fixed display shading. Codex assisted the projection, controls, translations and tests. The photographic texture was downloaded directly from NASA. Neither lunar image supplies values to the comparison. [Processing notes](https://svs.gsfc.nasa.gov/4720/)
 
 The SVS reuse FAQ permits redistribution unless an item specifies another restriction. The item requests acknowledgment and lists no separate copyright restriction for this texture. NASA’s guidelines cover educational web pages and computer simulations using texture maps, subject to acknowledgment and its endorsement and third-party restrictions. Preserve the credit in educational demos, judging materials and repository copies that use the asset. [SVS FAQ](https://svs.gsfc.nasa.gov/help/) · [NASA media guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/)
+
+## Night theme star map
+
+The decorative background uses the unchanged 1024 × 512 JPEG from *Deep Star Maps 2020*, SVS item 4851. Credit: NASA/Goddard Space Flight Center Scientific Visualization Studio. Gaia DR2: ESA/Gaia/DPAC. The selected image shows the stars without constellation figures. The display blends it with the night theme and gently shifts a fixed backdrop independently of page scrolling. It supplies no site, time or observation values. Codex assisted the CSS. [Item and credits](https://svs.gsfc.nasa.gov/4851/) · [Source image](https://svs.gsfc.nasa.gov/vis/a000000/a004800/a004851/starmap_2020_4k_print.jpg)
+
+The unmodified file at `frontend/public/images/star-map-2020.jpg` is 42,786 bytes, SHA-256 `8d2e7e8d515e238deaf90e2b7fb11b2838b6e8db64f933a57540d894468148aa`. Checked 14 November 2026. The SVS FAQ permits reuse and redistribution unless an item states otherwise. Item 4851 requests the credits above and lists no separate restriction for this JPEG. Keep the credit with app, demo and repository copies. [SVS reuse FAQ](https://svs.gsfc.nasa.gov/help/) · [NASA media guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/)
