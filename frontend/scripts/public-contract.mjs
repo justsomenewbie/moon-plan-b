@@ -57,7 +57,6 @@ export function publicContract(producer) {
       (paths[path] ??= {})[method] = exposed;
     }
   }
-  paths['/api/v1/runs'].get.description = 'Default run first, then most recently imported first. Use limit to choose the maximum number of results.';
   paths['/api/v1/ranking'].get.description = 'The full run with its default weights uses the source summary. Other rankings use computed scores, with ties ordered by shorter longest_dark_h, then site_id.';
 
   const siteExports = paths['/api/v1/sites/{site_id}/export/series.csv'].get;

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getReadyModelRuns } from "../../lib/api/planner";
+import { ApiProblemText } from "../api-problem-text";
 import manifest from "../../public/data/run-b2/manifest.json";
 import catalog from "../../public/data/run-b2/catalog.json";
 import earlierCatalog from "../../public/data/run-b/catalog.json";
@@ -31,6 +34,39 @@ function SourceRoute({ label, path }: { label: string; path: string }) {
     : <a href={path} target="_blank" rel="noreferrer">{label}</a>;
 }
 
+function LiveModelRuns() {
+  const { locale } = useLanguage();
+  const vi = locale === "vi";
+  const [offset, setOffset] = useState(0);
+  const query = useQuery({
+    queryKey: ["ready-model-runs", offset],
+    queryFn: ({ signal }) => getReadyModelRuns(offset, signal),
+    retry: false,
+  });
+  const page = query.data;
+  return <section id="live-model-runs" className="space-y-3" aria-labelledby="live-runs-title">
+    <h2 id="live-runs-title">{vi ? "Các lần chạy mô hình trên API" : "Live model runs"}</h2>
+    <p>{vi ? "Chọn một lần chạy để so sánh địa điểm hoặc tìm giờ hạ cánh bằng dữ liệu của lần chạy đó." : "Choose a run to compare sites or find landing times using that model."}</p>
+    {query.isPending && <p role="status">{vi ? "Đang tải danh sách…" : "Loading model runs…"}</p>}
+    {query.isError && <div role="alert"><p><ApiProblemText error={query.error} /></p>
+      <button className="text-button" type="button" onClick={() => void query.refetch()}>{vi ? "Thử lại" : "Retry"}</button></div>}
+    {page && (page.runs.length ? <ul className="space-y-4">
+      {page.runs.map(run => <li key={run.runId}>
+        <a className="break-words" href={"/plan?" + new URLSearchParams({ run_id: run.runId })}>{run.label}</a>
+        {run.isDefault && <strong> · {vi ? "Mặc định" : "Default"}</strong>}
+        {run.runId !== run.label && <code className="block break-all text-sm">{run.runId}</code>}
+        <p>{[run.provider, run.dem].filter(Boolean).join(" / ")}{(run.provider || run.dem) && " · "}
+          {run.siteCount} {vi ? "địa điểm" : run.siteCount === 1 ? "site" : "sites"} · {vi ? "Bước mô hình" : "Model step"} {run.stepSeconds} s</p>
+        <p><TimeRange start={run.start} end={run.end} /> · {vi ? "UTC, không gồm mốc cuối" : "UTC, end exclusive"}</p>
+      </li>)}
+    </ul> : <p role="status">{vi ? "Trang này chưa có lần chạy nào sẵn sàng." : "No ready model runs on this page."}</p>)}
+    {(offset > 0 || (page && offset + page.limit < page.total)) && <div className="flex flex-wrap gap-4">
+      {offset > 0 && <button className="text-button" type="button" onClick={() => setOffset(Math.max(0, offset - 20))}>{vi ? "Trang trước" : "Previous page"}</button>}
+      {page && offset + page.limit < page.total && <button className="text-button" type="button" onClick={() => setOffset(offset + page.limit)}>{vi ? "Trang tiếp" : "Next page"}</button>}
+    </div>}
+  </section>;
+}
+
 export default function DataPage() {
   const { locale, t } = useLanguage();
   const vi = locale === "vi";
@@ -53,6 +89,7 @@ export default function DataPage() {
       <div>
         <h1 id="data-title" tabIndex={-1}>{text("Lunar data catalog", "Danh mục dữ liệu Mặt Trăng")}</h1>
       </div>
+      {!isMock && <LiveModelRuns />}
       <section id="run-b2" className="space-y-3" aria-labelledby="b2-title">
         <h2 id="b2-title">{text("Run B2 · hourly visibility for all 23 sites", "Lần chạy B2 · tầm nhìn theo giờ cho cả 23 địa điểm")}</h2>
         <p className="lead">{text("Compare sites or search landing times throughout five model years. The saved archive includes hourly Sun, Earth and joint visibility.", "So sánh địa điểm hoặc tìm giờ hạ cánh trong suốt 5 năm mô hình. Kho lưu trữ có trạng thái nhìn thấy Mặt Trời, Trái Đất và cả hai theo giờ.")}</p>
