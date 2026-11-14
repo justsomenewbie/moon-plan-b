@@ -114,6 +114,15 @@ try {
 
   const labelEN = await page.locator('label[for="horizon-clearance-input"]').innerText();
   const limitEN = await page.locator(".battery-picker span").innerText();
+  const caption = page.locator(".lander-hud-diagrams p");
+  assert.match(await caption.innerText(), /not local terrain/);
+  await page.emulateMedia({ forcedColors: "active" });
+  const swatches = await page.locator(".state-legend .state-dot").evaluateAll(labels => labels.map(label => {
+    const style = getComputedStyle(label, "::before");
+    return [style.backgroundColor, style.backgroundImage].join(" ");
+  }));
+  assert.equal(new Set(swatches).size, 5, "All five states remain distinguishable in forced colors");
+  await page.emulateMedia({ forcedColors: "none" });
   const ribbonEN = await rows.first().getByRole("img").getAttribute("aria-label");
   assert.ok(ribbonEN);
   await page.getByRole("combobox", { name: "Language" }).selectOption("vi");
@@ -122,6 +131,9 @@ try {
   assert.notEqual(await rows.first().getByRole("img").getAttribute("aria-label"), ribbonEN);
   assert.equal(await limit.inputValue(), "100");
   assert.equal(await mask.inputValue(), "2");
+  await page.setViewportSize({ width: 320, height: 720 });
+  assert.match(await caption.innerText(), /không phải địa hình địa phương/);
+  assert.ok(await caption.evaluate(p => p.scrollWidth <= p.clientWidth && p.scrollHeight <= p.clientHeight));
   await mask.press("ArrowLeft");
   assert.equal(await mask.inputValue(), "1.9");
   assert.match(await mask.getAttribute("aria-valuetext"), /^Ngưỡng thông thoáng đồng đều mô phỏng 1[,.]9°$/);

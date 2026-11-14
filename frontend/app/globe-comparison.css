@@ -300,7 +300,16 @@
   .lander-hud-body { grid-template-columns: 1fr; }
 }
 @media (forced-colors: active) {
-  .ribbon-seg, .state-dot::before { border: 1px solid CanvasText; }
+  .ribbon-seg, .state-dot::before {
+    forced-color-adjust: none;
+    --positive: CanvasText;
+    --sun: CanvasText;
+    --earth: CanvasText;
+    --error-line: CanvasText;
+    --line: CanvasText;
+    --surface: Canvas;
+    border: 1px solid CanvasText;
+  }
   .clearance-band, .clearance-band-ring, .hud-clearance-band { opacity: .25; }
 }
 @media print {

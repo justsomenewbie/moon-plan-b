@@ -380,8 +380,8 @@ export default function LocalSky({
                   <rect x={earthSide.x - 3.5} y={earthSide.y - 3.5} width="7" height="7" className="hud-earth-node" />
                   <text x={earthSide.x + 6} y={earthSide.y + 10} className="hud-side-label">{t("Earth")} · {hud.earthElevationDeg}°</text>
                 </g>}
-                <text x="12" y="112" className="hud-side-label">{t("Side elevation schematic · not local terrain")}</text>
               </svg>
+              <p className="muted text-xs">{t("Side elevation schematic · not local terrain")}</p>
             </div>
 
             <dl className="hud-readouts">
