@@ -184,6 +184,11 @@ export function analyzeScenarioClearance(
   const darknessClipped = segments.some(segment =>
     (segment.state === "comms-only" || segment.state === "blackout")
     && (Date.parse(segment.startUtc) === windowStart || Date.parse(segment.endUtc) === windowEnd));
+  let batteryStatus: ScenarioClearanceSummary["batteryStatus"] = "unknown";
+  if (complete) {
+    if (longestDark > batteryLimitHours * 3_600_000) batteryStatus = "risk";
+    else if (!darknessClipped) batteryStatus = "safe";
+  }
   const hours = (milliseconds: number) => complete ? milliseconds / 3_600_000 : null;
   return {
     clearanceDeg: mask,
@@ -195,7 +200,7 @@ export function analyzeScenarioClearance(
     longestGoldenStreakHours: complete ? longestGolden : null,
     longestSolarDarknessHours: hours(longestDark),
     darknessClipped,
-    batteryStatus: !complete || darknessClipped ? "unknown" : longestDark <= batteryLimitHours * 3_600_000 ? "safe" : "risk",
+    batteryStatus,
     segments,
   };
 }
