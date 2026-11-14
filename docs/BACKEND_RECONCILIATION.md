@@ -1,8 +1,8 @@
 # Evolving backend plan and frontend handoff
 
-Status: review proposal, 14 November 2026. The user supplied Chung's `WEB_BACKEND_PLAN.md` and confirmed that it may grow as more resources are discovered. It is a snapshot, not a feature ceiling or evidence of a deployed service. Its first paragraph says implementation has not started; its response numbers are illustrative. Source SHA-256: `d9062845466b1d093640026cf5b547965197a958e55f5dd0c34a3b9501e615c9`. The original internal document is not redistributed here.
+Status on 14 November 2026: the team has selected the backend contract and a single aggregate GET for frontend integration. The payload and science model are pending. The user supplied Chung's `WEB_BACKEND_PLAN.md` and confirmed that it may grow as more resources are discovered. It is a snapshot, not a feature ceiling or evidence of a deployed service. Its first paragraph says implementation has not started; its response numbers are illustrative. Source SHA-256: `d9062845466b1d093640026cf5b547965197a958e55f5dd0c34a3b9501e615c9`. The original internal document is not redistributed here.
 
-The frontend remains a working synthetic baseline. The current draft must not constrain a reviewed scientific model to its original assumptions. Equally, do not silently feed a richer model into the old validator. Reconcile the public contract and a small sourced example, then adapt the API layer, views and checks together.
+Chung owns the production OpenAPI and will add **GET `/api/v1/dataset`** after the current backend workflow. The frontend already calls this route once per requested window through its typed API client. Once Chung supplies the versioned schema and a bounded example, regenerate the client types and adapt the API layer. Preserve the current UI where the meanings match. Where the backend supplies a different horizon model, review the affected labels and validation before displaying it. A separate team member owns Colab execution and testing.
 
 ## Colab precompute and the first science comparison
 
@@ -16,10 +16,10 @@ The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The
 
 | Area | Backend plan | Current frontend / proposed next step |
 | --- | --- | --- |
-| Public fields | `snake_case`, matching OUTPUT_SPEC | Earlier mandatory rules say `camelCase`. Agree the wire format; regenerate types from the backend export. Do not mechanically rename without checking semantics. |
+| Public fields | `snake_case`, matching OUTPUT_SPEC | Earlier mandatory rules say `camelCase`. Use the published backend schema to settle the wire format and regenerate types. Do not mechanically rename without checking semantics. |
 | Repository | Assumes a separate frontend repository | User selected one shared product repository. Bring intended backend/data source into that repository with explicit ownership; preserve both existing checkouts. |
 | Scientific model | Terrain horizon, Sun fractions, power/irradiance, longitude [0,360), observer height in metres | Existing draft is flat-horizon body-centre only, with longitude [-180,180] and elevation in km. Version the model and document frames/units. Observer height and site elevation are different quantities. |
-| Results | Separate runs/sites/horizon/series/windows/compare; implicit sample times, snapped bounds and downsampling | Existing `/dataset` envelope has explicit times and boundary/coverage checks. Agree transport, then one explicit adapter or model replacement; retain actual bounds, gaps, clipping, cadence and provenance. |
+| Results | Separate runs/sites/horizon/series/windows/compare; implicit sample times, snapped bounds and downsampling | Existing `/dataset` envelope has explicit times and boundary/coverage checks. Use the agreed aggregate GET and map the versioned response in the client; retain actual bounds, gaps, clipping, cadence and provenance. |
 | Jobs | Cached 200, `succeeded`/`cancelled`, potentially unknown percentage, result references run/site | Current draft expects 202, `done`, a percentage and an embedded dataset. Revise types, validation, polling and result loading together. Unknown progress stays indeterminate; cancellation is not success. |
 
 Frontend answers already available: Next.js 16.4.6, TypeScript 5.9.3, TanStack Query 5.107.1, openapi-fetch 0.17.0, generated OpenAPI types and MSW. Same-origin `/api/*` proxy is prepared. Hosting is still undecided.

@@ -1,29 +1,29 @@
 # Current handoff — 14 November 2026
 
-**The lunar reference globe and date-first comparison work in English and Vietnamese. Comparison data is synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
+**The globe opens automatically. The date-first comparison and interactive 3D local sky work in English and Vietnamese with synthetic data.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
 
 ## Current decisions
 
-Chung supplied API conventions, a backend plan and a Colab precompute notebook. The saved notebook stops at a failed Drive mount. Its planned A/B outputs use terrain horizons and different visibility definitions from the frontend draft. See [reconciliation](docs/BACKEND_RECONCILIATION.md). An agreed OpenAPI file and a completed sourced export are still needed.
+The backend owns the production OpenAPI. Chung will add `GET /api/v1/dataset` after the backend workflow. The frontend already calls this aggregate route. A separate team member owns Colab execution and testing. FE needs the versioned response schema and one bounded sample. Terrain horizons and visibility definitions need review before display. See [reconciliation](docs/BACKEND_RECONCILIATION.md).
 
 AI planning assistance remains a proposed backend capability, with server-side keys, explicit criteria/UTC interpretation and answers grounded in supplied releases. No provider/model/assistant endpoint is established. Richer terrain, 3D and alternate-date features remain open candidates; the synthetic baseline is not a feature ceiling.
 
 ## Current result and evidence
 
-The hero opens with a credited NASA LRO photograph. **Rotate the Moon** loads the 457,942-byte NASA CGI Moon Kit color map on demand. Drag, direction buttons and reset change the view center. Its bilingual caption identifies fixed-light reference imagery and excludes terrain and Sun/Earth visibility calculations. NASA credits and reuse terms are in [credits](docs/CREDITS.md).
+The hero loads the NASA CGI Moon Kit globe after hydration, with a credited photograph during loading and on texture failure. Drag, direction buttons and reset change the reference view. **Explore the 3D sky** follows the comparison cursor. Switch between primary and alternative samples, orbit the compass and read the supplied body angles at the selected site's UTC. The ideal horizon omits terrain. See [method](docs/METHOD.md) and [NASA credits](docs/CREDITS.md).
 
 Auto/Light/Dark follows local time or a saved manual choice. English is the default with a saved Vietnamese option. Animate UI supplies Share comparison’s press feedback. Its redistribution restriction conflicts with the published judging terms. The team’s release decision remains open. See [credits](docs/CREDITS.md).
 
-**Compare sites** lists the producer’s assessments, reasons and source IDs for a published UTC window and selected threshold. Prior browser checks covered all three demo thresholds, swaps, partial coverage, absent sites, shared links and the 320px Vietnamese layout. Prior bilingual date reports were reviewed across ten Letter pages.
+**Compare sites** lists the producer’s assessments, reasons and source IDs for a published UTC window and selected threshold. Checks covered demo thresholds, swaps, partial coverage, absent sites, share links and bilingual printing.
 
-**33 tests and TypeScript passed.** The browser build previously passed. The offline [joint-interval check](docs/METHOD.md) flags incomplete overlaps and longest-duration discrepancies for source review. Globe checks covered orientation, seam, poles, keyboard, drag, 320px Vietnamese and reduced motion. With a forced texture 404, both languages offered Retry. The photograph retained its NASA credit. Retry restored the globe and its map credit on HTTP 200 with the comparison still selected. The accessibility status reflected keyboard rotation. See [verification](docs/FRONTEND_VERIFICATION.md).
+**34 tests, TypeScript and a production build passed.** The offline [joint-interval check](docs/METHOD.md) flags incomplete overlaps and longest-duration discrepancies for source review. A forced texture 404 preserved the photograph and credit. Retry restored the globe. The 3D sky passed checks for both roles, their UTC instants, missing samples, zero elevation, pointer and keyboard rotation, reduced motion and Vietnamese at 320px. See [verification](docs/FRONTEND_VERIFICATION.md).
 
-Native Safari imported synthetic JSON. In an isolated window English → Vietnamese → English passed with measured 320px viewport and document widths in both languages. The direct production page loaded six windows in Vietnamese with no visible console error. Final QA-window closure remains unverified.
+Browser checks confirmed a later range edit survives a pending GET and a pending file import hides stale recovery controls. Native Safari imported synthetic JSON. In an isolated window English → Vietnamese → English passed with measured 320px viewport and document widths in both languages. The direct production page loaded six windows in Vietnamese with no visible console error. Safari’s Window menu confirmed the QA window was closed.
 
 Evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `native-safari-language-width.json` and `globe-retry-verified.json`. Saved language applies after hydration. Theme can flash dark, Auto can lag one minute, and a press animation can finish after reduced motion is enabled. Real science/backend, full release licensing and spoken screen-reader checks remain open.
 
 ## Ownership and publication
 
-Root edited; agents reviewed. Prior verified GitHub checkpoint `8878d1fc16d56df1dad28014bbd64cb7fda7a268`. Product cloud SHA is unestablished. No deployment or submission.
+Root edited; agents reviewed. Prior verified GitHub checkpoint `01ae4dcf7557e3ab954632a2b75e1f6a1a7423c6`. Product cloud SHA is unestablished. No deployment or submission.
 
-Next input from Chung and Trang is one versioned site-pair export for a shared UTC window, with raw source responses and processing evidence for every joint interval.
+Next input for FE: Chung’s versioned OpenAPI and one sourced, bounded response from the backend/data team.

@@ -109,6 +109,29 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--earth);
 .playback output { font-size: .85rem; min-width: 64px; text-align: right; }
 .sample-time { color: var(--muted); font-size: .73rem; margin: 7px 0 24px; overflow-wrap: anywhere; }
 .detail-row { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.4fr); gap: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+/* Local observer's sky, synchronized to the comparison cursor. */
+.local-sky { margin: 24px 0; padding: clamp(12px, 2vw, 24px); border: 1px solid var(--line); background: var(--surface); border-radius: 8px; }
+.local-sky-heading, .sky-orbit { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.local-sky-heading { justify-content: space-between; }
+.local-sky-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; max-width: 100%; font-size: .9rem; }
+.local-sky-picker select { background: var(--bg); border: 1px solid var(--line); padding: 6px; min-height: 44px; max-width: 100%; }
+.sky-stage { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: center; margin: 12px 0; }
+.sky-stage svg { display: block; width: 100%; max-height: 310px; cursor: grab; touch-action: pan-y; user-select: none; }
+.sky-stage svg:active { cursor: grabbing; }
+.sky-shell { fill: var(--bg); stroke: var(--grid); }
+.sky-mesh, .sky-ring { fill: none; stroke: var(--grid); stroke-width: .8; }
+.sky-ring { stroke: var(--horizon); stroke-width: 1.5; }
+.sky-bearing { fill: var(--text); font: 10px monospace; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+.sky-observer { fill: var(--text); }
+.sky-info { overflow-wrap: anywhere; }
+.sky-info dl { margin-top: 10px; }
+.sky-info dt { font-weight: 650; }
+.sky-info dd { margin-bottom: 8px; }
+.sky-info time, .sky-info dd span, .sky-orbit .mono { font: .78rem monospace; color: var(--muted); }
+.sky-orbit { font-size: .9rem; margin: 4px 0 8px; }
+.sky-orbit input { width: min(220px, 100%); max-width: 100%; min-height: 44px; accent-color: var(--earth); }
+@media (max-width: 680px) { .sky-stage { grid-template-columns: 1fr; gap: 4px; } .sky-info dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } }
+@media print { .local-sky { display: none; } }
 .sky { border-right: 1px solid var(--line); padding-right: 24px; }
 .sky svg { width: 100%; margin-top: 18px; }
 .body-label { fill: currentColor; font: 13px Arial, sans-serif; }

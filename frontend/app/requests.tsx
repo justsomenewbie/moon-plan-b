@@ -14,9 +14,14 @@ export function ApiControls({ request, loading, onLoad, onResult }: { request: W
   const [error, setError] = useState("");
   const [inputs, setInputs] = useState(() => windowInputs(request));
   const previousRequest = useRef(request);
-  // A response may update defaults, but must not overwrite a newer draft.
+  const editedWhileLoading = useRef(false);
   useEffect(() => {
+    if (loading) return;
     const previous = previousRequest.current;
+    const preserveDraft = editedWhileLoading.current;
+    previousRequest.current = request;
+    editedWhileLoading.current = false;
+    if (previous === request || preserveDraft) return;
     setInputs((current) => {
       try {
         const draft = windowFromInputs(current.from, current.to, current.resolution);
@@ -24,17 +29,21 @@ export function ApiControls({ request, loading, onLoad, onResult }: { request: W
       } catch { /* An incomplete draft stays editable. */ }
       return current;
     });
-    previousRequest.current = request;
-  }, [request]);
+  }, [loading, request]);
+  function changeInput(key: keyof typeof inputs, value: string) {
+    // A deliberate edit back to the previous accepted value is still a new draft.
+    if (loading) editedWhileLoading.current = true;
+    setInputs(current => ({ ...current, [key]: value }));
+  }
   const readRequest = () => windowFromInputs(inputs.from, inputs.to, inputs.resolution);
   return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.")}</p>
     <form className="request-fields" onSubmit={(event) => {
       event.preventDefault();
       try { const next = readRequest(); setError(""); onLoad(next); } catch (e) { setError(e instanceof Error ? e.message : "Invalid request."); }
     }}>
-      <label className="field">{t("From · UTC")}<input name="from" type="datetime-local" step="0.001" required value={inputs.from} onChange={(e) => setInputs({ ...inputs, from: e.target.value })} /></label>
-      <label className="field">{t("To · UTC")}<input name="to" type="datetime-local" step="0.001" required value={inputs.to} onChange={(e) => setInputs({ ...inputs, to: e.target.value })} /></label>
-      <label className="field">{t("Desired step · seconds")}<input name="resolution" type="number" min="60" max="86400" step="1" required value={inputs.resolution} onChange={(e) => setInputs({ ...inputs, resolution: e.target.value })} /></label>
+      <label className="field">{t("From · UTC")}<input name="from" type="datetime-local" step="0.001" required value={inputs.from} onChange={(e) => changeInput("from", e.target.value)} /></label>
+      <label className="field">{t("To · UTC")}<input name="to" type="datetime-local" step="0.001" required value={inputs.to} onChange={(e) => changeInput("to", e.target.value)} /></label>
+      <label className="field">{t("Desired step · seconds")}<input name="resolution" type="number" min="60" max="86400" step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>
       <button className="button outline" disabled={loading}>{t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}
   </details><JobForm readRequest={readRequest} onResult={onResult} /></>;

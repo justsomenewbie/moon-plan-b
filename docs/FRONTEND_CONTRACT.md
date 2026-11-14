@@ -1,6 +1,6 @@
 # Frontend API contract — draft 2
 
-**Status: proposed by the frontend, awaiting Chung/data-producer and scientific review.** Sơn explicitly authorized a marked draft after supplying Chung's mandatory coordination rules. No agreed OpenAPI or real Colab export has been supplied. This is not an agreed backend API. The frontend accepts local JSON or calls a fixed same-origin API; it never calls Horizons.
+**The team selected the backend OpenAPI and one aggregate GET. The response schema in this document remains a frontend draft.** Sơn explicitly authorized a marked draft after supplying Chung's mandatory coordination rules. No agreed OpenAPI or real Colab export has been supplied. This is not an agreed backend API. The frontend accepts local JSON or calls a fixed same-origin API; it never calls Horizons.
 
 Chung's subsequently supplied backend plan is an evolving proposal with richer terrain/series/run APIs. Its naming, model and jobs differ from this draft; see [the reconciliation and AI-assistant proposal](BACKEND_RECONCILIATION.md). The current fixture is a working baseline, not a ceiling on future features. No endpoint or scientific model has been silently switched.
 
@@ -10,7 +10,7 @@ The single authored structural definition is [`contracts/openapi.draft.json`](..
 
 | Endpoint | Behavior |
 | --- | --- |
-| GET `/api/v1/dataset` | Requires `from`, `to`, `resolutionSeconds`; returns a dataset or problem response. |
+| GET `/api/v1/dataset` | Agreed route. The mock accepts `from`, `to`, `resolutionSeconds`. Chung’s production OpenAPI will specify the query and response. |
 | POST `/api/v1/jobs` | Explicit coordinate request; HTTP 202 returns `jobId`. |
 | GET `/api/v1/jobs/{id}` | `queued`, `running`, `done` or `failed`, with `progressPct` 0–100. Done requires a dataset; failed requires a problem. |
 | GET `/api/v1/openapi.json` | Contract served by mock/static copy or the configured backend. |

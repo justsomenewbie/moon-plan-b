@@ -59,7 +59,7 @@ This check records evidence, not a completed release-license audit. The suppleme
 
 ## Interactive lunar reference globe
 
-The optional **Rotate the Moon** view uses the 2025 surface color map from NASA’s CGI Moon Kit, SVS ID 4720. Required credit is **NASA’s Scientific Visualization Studio**. The unchanged JPEG in `frontend/public/images/lroc-color-2k.jpg` is 2048 × 1024 pixels, 457,942 bytes, SHA-256 `f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170`. Retrieved 14 November 2026. [Item and credits](https://svs.gsfc.nasa.gov/4720/) · [Exact JPEG](https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg)
+The opening interactive globe uses the 2025 surface color map from NASA’s CGI Moon Kit, SVS ID 4720. Required credit is **NASA’s Scientific Visualization Studio**. The unchanged JPEG in `frontend/public/images/lroc-color-2k.jpg` is 2048 × 1024 pixels, 457,942 bytes, SHA-256 `f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170`. Retrieved 14 November 2026. [Item and credits](https://svs.gsfc.nasa.gov/4720/) · [Exact JPEG](https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg)
 
 NASA adapted the color map from LRO Wide Angle Camera imagery and used lower-resolution laser reflectance near the poles. NASA describes its color processing and gap filling as intended for visualization. The application samples these pixels onto a smooth sphere with fixed display shading. Codex assisted the projection, controls, translations and tests. The photographic texture was downloaded directly from NASA. Neither lunar image supplies values to the comparison. [Processing notes](https://svs.gsfc.nasa.gov/4720/)
 

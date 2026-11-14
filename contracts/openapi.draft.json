@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Moon Plan B — DRAFT, NOT AGREED WITH BACKEND",
+    "title": "Moon Plan B — frontend draft payloads",
     "version": "0.0.1-draft",
-    "description": "AI-assisted frontend proposal based on Chung's rules, not a supplied backend specification. All examples are explicitly synthetic. Dates are UTC ISO8601 with Z; angles degrees clockwise from north; durations hours; percentages 0–100. FE displays supplied physics only. Proposed request limit 31 days, pending backend agreement."
+    "description": "The backend owns the production OpenAPI for the agreed GET /api/v1/dataset route. This AI-assisted frontend draft illustrates proposed parameters, payloads and jobs with synthetic examples. Dates are UTC ISO8601 with Z; angles degrees clockwise from north; durations hours; percentages 0–100. FE displays supplied physics only. Proposed request limit 31 days, pending backend agreement."
   },
   "servers": [
     {

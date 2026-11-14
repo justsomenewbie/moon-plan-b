@@ -18,6 +18,8 @@ export default function MoonGlobe() {
   const renderer = useRef<{ context: CanvasRenderingContext2D; texture: ImageData; frame: ImageData } | null>(null);
   const drag = useRef<{ id: number; x: number; y: number; scale: number; center: typeof origin } | null>(null);
 
+  useEffect(() => { setEnabled(true); }, []);
+
   useEffect(() => {
     if (!enabled) return;
     let active = true;

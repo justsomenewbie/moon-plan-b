@@ -196,3 +196,15 @@ The 32 frontend tests and production build including TypeScript passed. New asym
 In-app Chromium checks exercised opt-in loading, keyboard rotation, the far side, pointer drag, the pole limit, reset, the return to the photograph and manual rotation with reduced motion enabled. The Vietnamese layout measured 320 CSS pixels with no horizontal page overflow. Both texture and photograph credits were checked in their respective states. On a separate loopback origin a single image request returned 404. The photograph and active site comparison remained usable and retry loaded the texture with HTTP 200. The final keyboard action updated the accessibility status with the new view center. These checks cover the browser accessibility tree. Spoken announcements, physical touch and native Safari remain unverified for the globe.
 
 Local evidence includes `globe-tests.log`, `globe-build.log`, `globe-browser-first.json`, `globe-recovery.json`, `globe-desktop.png` and `globe-vi-mobile.png`. Tools used were the visual-tools and frontend-testing workflows, NASA SVS, CUA, image inspection, independent review and Gitleaks. Canvas 2D provided the required sphere projection with the existing stack.
+
+## Opening globe and local sky in 3D
+
+The native Safari Window menu later listed only the user's original window, confirming closure of the separate QA window from the language and width checks above.
+
+On a production build, Chromium loaded the globe on entry, showed the photograph and its NASA credit after a forced map 404, and restored the map and its credit after Retry. Choosing the photograph while a map request was held kept the photograph selected when that response arrived. Both the globe and the sky accept manual input without automatic rotation.
+
+The local sky opens from the hero link. Pointer drag and keyboard orbit changed marker positions. Switching between the primary and alternative kept the cursor offset and showed the proper UTC date for each window. The timeline exercised negative, zero and positive elevations. A synthetic partial window with one missing body kept the other marker. A window with no shared samples showed no markers or timestamp. English on desktop and Vietnamese at 320 CSS pixels passed. Reduced motion disabled playback and preserved manual controls. The browser reported no application exception during these flows.
+
+Local evidence: `local-sky-desktop.png` and `local-sky-vi-320.png` in the existing task evidence directory. These checks used the frontend fixture. The science and backend team owns validation of its actual data.
+
+A separate browser run held the aggregate GET for a 7,200-second step. An edit back to 10,800 seconds retained its value and focus on completion. The shared result still used 7,200 and the next request sent 10,800. While a local file read was delayed, stale recovery controls were hidden and the requested release opened when the read finished. Requests used a controlled local response.
