@@ -8,7 +8,7 @@ English defaults with optional Vietnamese, lunar resources and local-time appear
 
 The combined revision passed 39 frontend tests, eight offline QA gates, TypeScript and the production build. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
 
-The [synthetic regression](frontend/tests/observations.test.ts) preserves genuine 0° markers. In [Odysseus browser QA](qa/evidence/odysseus-hour-gap/README.md), Chromium displayed five JPL Horizons hourly samples. Removing 02:00 UTC from a copy left four markers per body and split both traces from 01:00 to 03:00. Two runs agreed. The archive includes both original responses, the import pair and screenshots.
+The [synthetic regression](frontend/tests/observations.test.ts) preserves genuine 0° markers. Chromium verified the [single-site gap](qa/evidence/odysseus-hour-gap/README.md) and [two-site comparison](qa/evidence/odysseus-athena-hour-gap/README.md) against JPL Horizons. Removing only Athena’s 02:00 UTC row split its Sun and Earth paths between 01:00 and 03:00. Odysseus kept five markers per body and both paths matched the complete control. The shared slider skipped 02:00.
 
 ## Backend integration
 
@@ -18,6 +18,4 @@ Chung’s OpenAPI 1.0.0 documents real per-site responses. The planned aggregate
 
 Recheck the member’s living IDEA document at each frontend integration. The corner astronaut, suggested questions and data-backed answers remain proposals. Globe zoom and the new multi-site marker suggestion are queued for review. Terrain close-ups and overlays need appropriate source data; Earth visibility alone does not establish radio strength. Contact and sponsor details need confirmation. Share now uses a native button and reduced-motion-aware CSS. The five unused packages were removed from the product; the local Animate UI skill and historical notices remain. Release licensing, science sign-off, the network trace, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md).
 
-Frontend QA prepared the browser evidence on `codex/odysseus-horizons-browser` from verified GitHub main `cb50af2803193499e095c11fa066ee7893451c2f`. Import the linked gap copy to inspect the 02:00 UTC break.
-
-Root integrated native Share and saved-result links above verified main `6505d9b`.
+Root integrated native Share and saved-result links above verified main `6505d9b`. Frontend QA used the updated main `a76e42cc5f70c5bd1c4631b4e348a9f4735b0d91` for the final comparison. Open the two-site gap screenshot to inspect Athena beside Odysseus at 02:00 UTC.

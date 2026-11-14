@@ -1,0 +1,292 @@
+{
+  "schemaVersion": "frontend-draft-2",
+  "datasetId": "odysseus-athena-jan07-athena-gap",
+  "evidence": "computed-ephemeris",
+  "attribution": "NASA/JPL Horizons supplied the ephemerides. NASA LRO and LROC supplied the Odysseus and Athena locations. OpenAI Codex prepared the QA imports and browser check. Only the Athena copy omits the 02:00 UTC row for QA.",
+  "model": {
+    "id": "ideal-horizon-center-v1",
+    "label": "Ideal horizon at the Odysseus and Athena sites",
+    "definition": "Airless apparent body-center elevation above the local horizontal plane. Azimuth is clockwise from north. Angles are in degrees.",
+    "limits": [
+      "Hourly samples with linear interpolation for the complete control. Terrain and lander attitude are outside this check."
+    ]
+  },
+  "criteriaHours": [
+    1
+  ],
+  "sources": [
+    {
+      "id": "lro-site",
+      "title": "NASA LRO location of the Odysseus lander",
+      "url": "https://www.nasa.gov/missions/lro/nasas-lro-images-intuitive-machines-odysseus-lander/",
+      "version": "2024-02-26",
+      "retrievedAtUtc": "2026-11-14T06:38:53Z",
+      "rawSha256": null
+    },
+    {
+      "id": "jpl-sun",
+      "title": "JPL Horizons: apparent Sun center from Odysseus",
+      "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%2710%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%271.44%2C-80.13%2C2.579%27&START_TIME=%272026-01-07+00%3A00%3A00%27&STOP_TIME=%272026-01-07+04%3A00%3A00%27&STEP_SIZE=%271+h%27&QUANTITIES=%274%27&REF_SYSTEM=%27ICRF%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&TIME_DIGITS=%27SECONDS%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27NO%27",
+      "version": "Horizons API 1.2 / DE441",
+      "retrievedAtUtc": "2026-11-14T06:37:12Z",
+      "rawSha256": "5f08dc78365a07a0aa25031f30bb67d2e165fae6422d8b9a793b5495103d1046"
+    },
+    {
+      "id": "jpl-earth",
+      "title": "JPL Horizons: apparent Earth center from Odysseus",
+      "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27399%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%271.44%2C-80.13%2C2.579%27&START_TIME=%272026-01-07+00%3A00%3A00%27&STOP_TIME=%272026-01-07+04%3A00%3A00%27&STEP_SIZE=%271+h%27&QUANTITIES=%274%27&REF_SYSTEM=%27ICRF%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&TIME_DIGITS=%27SECONDS%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27NO%27",
+      "version": "Horizons API 1.2 / DE441",
+      "retrievedAtUtc": "2026-11-14T06:37:13Z",
+      "rawSha256": "7cea681d5fc86e555f28d772faa43f584950e32982d33ac193e63a782cdb738b"
+    },
+    {
+      "id": "athena-lroc",
+      "title": "LROC Athena landing location",
+      "url": "https://lroc.im-ldi.com/featured_sites/im2/flip-book",
+      "version": "LROC IM-2 landing site page, accessed 2026-11-14",
+      "retrievedAtUtc": "2026-11-14T06:48:45Z",
+      "rawSha256": null
+    },
+    {
+      "id": "athena-sun",
+      "title": "JPL Horizons: apparent Sun center from Athena",
+      "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%2710%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%2729.1957%2C-84.7906%2C5.321%27&START_TIME=%272026-01-07+00%3A00%3A00%27&STOP_TIME=%272026-01-07+04%3A00%3A00%27&STEP_SIZE=%271+h%27&QUANTITIES=%274%27&REF_SYSTEM=%27ICRF%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&TIME_DIGITS=%27SECONDS%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27NO%27",
+      "version": "Horizons API 1.2 / DE441",
+      "retrievedAtUtc": "2026-11-14T06:48:46Z",
+      "rawSha256": "63bab60b0ed02bbded3b48453a7dba5b59d933c3f7dc952653a01649c0e4a680"
+    },
+    {
+      "id": "athena-earth",
+      "title": "JPL Horizons: apparent Earth center from Athena",
+      "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27399%27&EPHEM_TYPE=%27OBSERVER%27&CENTER=%27coord%40301%27&COORD_TYPE=%27GEODETIC%27&SITE_COORD=%2729.1957%2C-84.7906%2C5.321%27&START_TIME=%272026-01-07+00%3A00%3A00%27&STOP_TIME=%272026-01-07+04%3A00%3A00%27&STEP_SIZE=%271+h%27&QUANTITIES=%274%27&REF_SYSTEM=%27ICRF%27&APPARENT=%27AIRLESS%27&TIME_TYPE=%27UT%27&TIME_DIGITS=%27SECONDS%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&EXTRA_PREC=%27YES%27&OBJ_DATA=%27NO%27",
+      "version": "Horizons API 1.2 / DE441",
+      "retrievedAtUtc": "2026-11-14T06:48:47Z",
+      "rawSha256": "d58c3b8ebcc635d2364798dc5a095be4cdf924d1de00d0bdd9da91b64755b524"
+    }
+  ],
+  "sites": [
+    {
+      "id": "im1_odysseus",
+      "name": "Odysseus (IM-1)",
+      "sourceIds": [
+        "lro-site"
+      ],
+      "location": {
+        "latitudeDeg": -80.13,
+        "longitudeEastDeg": 1.44,
+        "elevationKm": 2.579,
+        "frame": "Horizons lunar MEAN_ME (high precision), east-positive",
+        "elevationDatum": "QA assumption: published site elevation above the Horizons 1737.4 km reference sphere."
+      }
+    },
+    {
+      "id": "im2_athena",
+      "name": "Athena (IM-2)",
+      "sourceIds": [
+        "athena-lroc"
+      ],
+      "location": {
+        "latitudeDeg": -84.7906,
+        "longitudeEastDeg": 29.1957,
+        "elevationKm": 5.321,
+        "frame": "Horizons lunar MEAN_ME (high precision), east-positive",
+        "elevationDatum": "QA assumption: published site elevation above the Horizons 1737.4 km reference sphere."
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "odysseus-jan07",
+      "siteId": "im1_odysseus",
+      "startUtc": "2026-01-07T00:00:00Z",
+      "endUtc": "2026-01-07T04:00:00Z",
+      "coverage": "complete",
+      "sampleStepSeconds": 3600,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ],
+      "samples": [
+        {
+          "utc": "2026-01-07T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 317.755198793,
+            "elevationDeg": 8.590625606
+          },
+          "earth": {
+            "azimuthDeg": 5.603790227,
+            "elevationDeg": 10.311728926
+          }
+        },
+        {
+          "utc": "2026-01-07T01:00:00Z",
+          "sun": {
+            "azimuthDeg": 317.247552478,
+            "elevationDeg": 8.531407233
+          },
+          "earth": {
+            "azimuthDeg": 5.61139144,
+            "elevationDeg": 10.246978372
+          }
+        },
+        {
+          "utc": "2026-01-07T02:00:00Z",
+          "sun": {
+            "azimuthDeg": 316.740042964,
+            "elevationDeg": 8.471625735
+          },
+          "earth": {
+            "azimuthDeg": 5.618167346,
+            "elevationDeg": 10.182261439
+          }
+        },
+        {
+          "utc": "2026-01-07T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 316.232670403,
+            "elevationDeg": 8.411285888
+          },
+          "earth": {
+            "azimuthDeg": 5.624121136,
+            "elevationDeg": 10.117584436
+          }
+        },
+        {
+          "utc": "2026-01-07T04:00:00Z",
+          "sun": {
+            "azimuthDeg": 315.725434904,
+            "elevationDeg": 8.350392507
+          },
+          "earth": {
+            "azimuthDeg": 5.62925611,
+            "elevationDeg": 10.052953606
+          }
+        }
+      ],
+      "intervals": {
+        "sun": [
+          {
+            "startUtc": "2026-01-07T00:00:00Z",
+            "endUtc": "2026-01-07T04:00:00Z",
+            "endClipped": true
+          }
+        ],
+        "earth": [
+          {
+            "startUtc": "2026-01-07T00:00:00Z",
+            "endUtc": "2026-01-07T04:00:00Z",
+            "endClipped": true
+          }
+        ],
+        "simultaneous": [
+          {
+            "startUtc": "2026-01-07T00:00:00Z",
+            "endUtc": "2026-01-07T04:00:00Z",
+            "endClipped": true
+          }
+        ]
+      },
+      "metrics": {
+        "sunAboveHours": 4,
+        "earthAboveHours": 4,
+        "simultaneousLongestHours": 4
+      },
+      "criteria": [
+        {
+          "minimumHours": 1,
+          "result": "meets",
+          "reason": "All five hourly samples are positive for both bodies. The QA linear model gives four hours of overlap."
+        }
+      ],
+      "sourceIds": [
+        "jpl-sun",
+        "jpl-earth"
+      ],
+      "evidenceUrl": "https://github.com/justsomenewbie/moon-plan-b/tree/main/qa/evidence/odysseus-hour-gap"
+    },
+    {
+      "id": "athena-jan07",
+      "siteId": "im2_athena",
+      "startUtc": "2026-01-07T00:00:00Z",
+      "endUtc": "2026-01-07T04:00:00Z",
+      "coverage": "partial",
+      "sampleStepSeconds": 3600,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ],
+      "samples": [
+        {
+          "utc": "2026-01-07T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 290.384887079,
+            "elevationDeg": 3.066483331
+          },
+          "earth": {
+            "azimuthDeg": 337.644081341,
+            "elevationDeg": 5.304562908
+          }
+        },
+        {
+          "utc": "2026-01-07T01:00:00Z",
+          "sun": {
+            "azimuthDeg": 289.880603863,
+            "elevationDeg": 3.022710649
+          },
+          "earth": {
+            "azimuthDeg": 337.654920715,
+            "elevationDeg": 5.240308977
+          }
+        },
+        {
+          "utc": "2026-01-07T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 288.872104785,
+            "elevationDeg": 2.934759049
+          },
+          "earth": {
+            "azimuthDeg": 337.67415656,
+            "elevationDeg": 5.111783654
+          }
+        },
+        {
+          "utc": "2026-01-07T04:00:00Z",
+          "sun": {
+            "azimuthDeg": 288.367887812,
+            "elevationDeg": 2.890586857
+          },
+          "earth": {
+            "azimuthDeg": 337.682558312,
+            "elevationDeg": 5.047525049
+          }
+        }
+      ],
+      "intervals": null,
+      "metrics": null,
+      "criteria": [
+        {
+          "minimumHours": 1,
+          "result": "unknown",
+          "reason": "The Athena QA copy omits 02:00 UTC. No visibility duration is assessed."
+        }
+      ],
+      "sourceIds": [
+        "athena-sun",
+        "athena-earth"
+      ],
+      "evidenceUrl": "https://github.com/justsomenewbie/moon-plan-b/tree/main/qa/evidence/odysseus-athena-hour-gap"
+    }
+  ]
+}
