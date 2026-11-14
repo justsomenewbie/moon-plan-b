@@ -56,7 +56,7 @@ export default function Home() {
       </section>
       <section id="team" className="home-team" aria-labelledby="team-title">
         <h2 id="team-title">{t("Team members")}</h2>
-        <ul>{["Chung", "Trang", "Lam", "Minh", "Son", "Thao"].map(name => <li key={name}>{name}</li>)}</ul>
+        <ul>{["Nguyen Trong Chung", "Nguyen Thuy Trang", "Chu Hoang Lam", "Man Gia Minh", "Nguyen Nhu Son", "Nguyen Phuong Thao"].map(name => <li key={name}>{name}</li>)}</ul>
       </section>
       <LunarResources />
     </main>
