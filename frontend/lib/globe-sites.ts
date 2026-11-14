@@ -3,6 +3,10 @@ import type { Dataset } from "./dataset.ts";
 export type GlobeSite = Dataset["sites"][number];
 export type MapPoint = { latitude: number; longitude: number };
 
+export function lrocSiteUrl(point: MapPoint) {
+  return `https://data.lroc.im-ldi.com/lroc/?projection=ORTHO&c_lon=${point.longitude}&c_lat=${point.latitude}&x=0&y=0&resolution=73.05454999604635&layers=LUNA_WAC_GLOBAL`;
+}
+
 type TerrainCoordinates = { id: string; lat_deg: number | null; lon_deg: number | null };
 export type PairLocation = { id: string; name: string; reported?: MapPoint; location: { point: MapPoint } | { reason: string } };
 

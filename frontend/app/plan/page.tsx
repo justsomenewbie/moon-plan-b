@@ -15,6 +15,8 @@ import { TimeRange } from "../terrain-site-result";
 import ThemeControl from "../theme-control";
 import AstronautGuide from "../astronaut-guide";
 import { savedResultFromUrl } from "../observed-week";
+import { pairLocation, type PairLocation } from "../../lib/globe-sites";
+import SiteMap from "./site-map";
 import "./plan.css";
 
 const criteria = { joint: "Sun and Earth together", sun: "Sunlight", earth: "Earth visibility" } as const;
@@ -24,13 +26,20 @@ const midnight = (date: string) => date + "T00:00:00Z";
 const planLink = (params: Record<string, string>) => "/plan?" + new URLSearchParams(params);
 type SearchResult = {
   from: string; to: string; scope: "live" | "catalog" | "pair";
-  rows: { id: string; name: string; hours: number[] | null; longest?: number; coverage?: string }[];
+  rows: (PairLocation & { hours: number[] | null; longest?: number; coverage?: string })[];
   leaders: string[];
 };
 
 function storedResult(from: string, to: string, priority: PlannerPriority, source: PlannerSource): SearchResult | null {
   const saved = source === "saved-b2" ? rankArchiveB2({ from, to, priority }) : getSavedPlannerRanking({ from, to, priority });
-  return saved && { ...saved, rows: saved.rows.map(s => ({ id: s.id, name: s.name, hours: [s.sunHours, s.earthHours, s.bothHours] })) };
+  const run = source === "saved-b2" ? archiveB2Run : savedPlannerRun;
+  // Both archived manifests specify planetocentric latitude and east longitude in MOON_ME.
+  return saved && { ...saved, rows: saved.rows.map(row => {
+    const site = run.sites.find(s => s.id === row.id);
+    const location = site ? { point: { latitude: site.lat_deg, longitude: site.lon_deg } }
+      : { reason: "This release supplies no coordinates for this site." };
+    return { id: row.id, name: row.name, location, hours: [row.sunHours, row.earthHours, row.bothHours] };
+  }) };
 }
 
 function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource }) {
@@ -65,7 +74,7 @@ function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun
           rows: ranking.ranking.map(row => {
             const site = evidence.sites.find(s => s.id === row.site_id)!;
             const m = site.coverage === "complete" && site.coverage_in_range === "complete" ? site.metrics : null;
-            return { id: row.site_id, name: row.name, hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
+            return { ...pairLocation(row, run.sites, evidence.sites, evidence.conventions), hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
           }) });
       } catch (cause) {
         if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "The request could not be completed. Retry or check the connection.");
@@ -88,6 +97,7 @@ function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun
       <p className="data-notice">{!best.length ? t("No site has enough coverage for a recommendation.") : best.some(r => (r.hours?.[column] ?? 0) > 0)
         ? t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
         : t("No evaluated site meets this visibility priority for any hour in this window.")}</p>
+      <SiteMap sites={result.rows} leaders={result.leaders} column={column} criterion={t(criteria[metric])} />
       <div className="table-scroll"><table><caption>{t("Visibility hours in the selected window")}</caption>
         <thead><tr><th scope="col">{t("Site")}</th>{["Sun visible","Earth visible","Both visible",...(result.scope === "live" ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
         <tbody>{result.rows.map(row => {
