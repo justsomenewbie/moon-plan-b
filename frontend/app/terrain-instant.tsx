@@ -38,11 +38,12 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
     }
   }
   const value = lookup.status === "ready" ? lookup.value : null;
-  return <details className="details-section" onToggle={event => {
-    if (!event.currentTarget.open) clear();
-    else if (timeInput.current) timeInput.current.value = initialUtc.slice(0, 19);
-  }}>
-    <summary>{t("Look up a UTC instant")}</summary>
+  return <details className="details-section">
+    <summary onClick={() => {
+      if (!timeInput.current) return;
+      if (timeInput.current.closest("details")?.open) clear();
+      else timeInput.current.value = initialUtc.slice(0, 19);
+    }}>{t("Look up a UTC instant")}</summary>
     <form className="request-fields my-4 print:hidden" onSubmit={submit}>
       <label className="field">{t("Requested time (UTC)")}
         <input ref={timeInput} name="instantUtc" type="datetime-local" step="1" required onChange={clear}
