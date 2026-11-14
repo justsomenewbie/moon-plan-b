@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { type KeyboardEvent, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { guideObservation, nextGuideUpdate, selectedModelSample } from "../lib/guide-observation";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
@@ -18,6 +18,7 @@ const messages = {
     help: "Help",
     close: "Close astronaut guide",
     greeting: "What can I help you explore?",
+    suggested: "Browse suggested questions",
     measurementNote: "I don’t have live measurements from the Moon.",
     currentQuestion: "Can I see what’s happening now?",
     unavailable: "The selected data has no model sample available for the current UTC time.",
@@ -39,6 +40,7 @@ const messages = {
     help: "Trợ giúp",
     close: "Đóng hướng dẫn của phi hành gia",
     greeting: "Bạn muốn mình giúp tìm hiểu điều gì?",
+    suggested: "Xem câu hỏi gợi ý",
     measurementNote: "Mình chưa có số liệu đo trực tiếp từ Mặt Trăng.",
     currentQuestion: "Tôi xem được tình hình hiện tại không?",
     unavailable: "Dữ liệu đang chọn chưa có kết quả mô hình cho thời điểm UTC hiện tại.",
@@ -75,6 +77,7 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
   const { locale } = useLanguage();
   const copy = messages[locale];
   const id = useId();
+  const firstQuestion = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     // The native launcher can already have opened the popover while the page scripts were loading.
@@ -164,6 +167,10 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
       <p className={styles.greeting}>{copy.greeting}<br />{copy.measurementNote}</p>
+      {open && <button type="button" className={styles.jump} onClick={() => {
+        firstQuestion.current?.focus({ preventScroll: true });
+        firstQuestion.current?.scrollIntoView({ block: "start" });
+      }}>{copy.suggested}</button>}
       {open && <details open={Boolean(reading)}>
         <summary>{copy.currentQuestion}</summary>
         {reading ? <section className={styles.sample}>
@@ -181,7 +188,7 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
       {open && <GuideChat planningSource={planningSource} scope={scope} savedPlanning={scope === "saved" && (guideChoice === "saved" || onSavedRoute)} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
       {copy.questions.map(([question, answer], index) =>
         <details key={index} name={id}>
-          <summary>{question}</summary>
+          <summary ref={index === 0 ? firstQuestion : undefined}>{question}</summary>
           <p>{answer}</p>
         </details>
       )}

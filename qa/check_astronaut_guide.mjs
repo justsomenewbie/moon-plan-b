@@ -21,6 +21,24 @@ try {
     assert.deepEqual((await greeting.innerText()).split("\n"), [invitation, limit]);
     assert.ok(await greeting.evaluate(el => el.previousElementSibling?.tagName === "HEADER"));
   }
+  async function checkSuggestedQuestions(guide) {
+    const button = guide.getByRole("button", { name: "Xem câu hỏi gợi ý" });
+    const onScreen = locator => locator.evaluate(el => {
+      const rect = el.getBoundingClientRect();
+      return el.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+    });
+    assert.ok(await onScreen(button), "Suggestions should be reachable without scrolling");
+    await button.press("Enter");
+    const questions = guide.locator("details[name] > summary");
+    assert.equal(await questions.count(), 3);
+    assert.ok(await questions.first().evaluate(el => el === document.activeElement));
+    for (const question of await questions.all()) assert.ok(await onScreen(question), "Suggested question should be in view");
+    await questions.first().press("Enter");
+    assert.match(await guide.locator("details[name][open] p").innerText(), /chọn một tuần/);
+    await button.press("Enter");
+    for (const question of await questions.all()) assert.ok(await onScreen(question), "An expanded answer should leave the questions in reach");
+    await questions.first().press("Enter");
+  }
   const animations = () => launcher.evaluate(el => el.getAnimations({ subtree: true })
     .filter(animation => animation instanceof CSSAnimation)
     .map(animation => animation.effect.getTiming().duration).sort((a, b) => a - b));
@@ -114,6 +132,7 @@ try {
     "Odysseus · IM-1 · 33 h\n" + week1, "Odysseus · IM-1 · 168 h\n" + week2,
   ]);
   await viLauncher.click();
+  await checkSuggestedQuestions(panel);
   await panel.getByRole("combobox", { name: "Chọn dữ liệu để hỏi" }).selectOption("saved");
   await panel.getByText("Odysseus · IM-1 · Không thấy đồng thời Mặt Trời và Trái Đất").waitFor();
   await checkGreeting("vi");
@@ -196,6 +215,7 @@ try {
     assert.equal(await current.locator("time").isVisible(), false);
     await current.locator("summary").click();
     await current.getByText("Odysseus · IM-1 · Không thấy đồng thời Mặt Trời và Trái Đất").waitFor();
+    await checkSuggestedQuestions(mobileGuide);
     await mobileGuide.getByRole("textbox").focus();
     await mobile.keyboard.press("Escape");
   }

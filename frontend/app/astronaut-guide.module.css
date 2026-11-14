@@ -89,6 +89,7 @@
 .panel details { border-top: 1px solid var(--line); }
 .panel summary, .jump { padding: .65rem 0; min-height: 2.75rem; }
 .panel summary { font-weight: 600; }
+.panel details[name] > summary { scroll-margin-block-start: 5.5rem; }
 .panel details p { margin-bottom: .85rem; }
 .results { list-style: none; margin-bottom: .85rem; }
 .results li + li { margin-top: .5rem; }
