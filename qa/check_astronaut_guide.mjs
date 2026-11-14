@@ -13,6 +13,13 @@ try {
   await page.goto(new URL("/compare", origin).href);
   const launcher = page.getByRole("button", { name: "Astronaut guide", exact: true });
   const panel = page.locator("aside[popover]");
+  async function checkGreeting(locale) {
+    const greeting = panel.locator(":scope > p").first();
+    const invitation = locale === "en" ? "What can I help you explore?" : "Bạn muốn mình giúp tìm hiểu điều gì?";
+    const limit = locale === "en" ? "I don’t have live measurements from the Moon." : "Mình chưa có số liệu đo trực tiếp từ Mặt Trăng.";
+    assert.deepEqual((await greeting.innerText()).split("\n"), [invitation, limit]);
+    assert.ok(await greeting.evaluate(el => el.previousElementSibling?.tagName === "HEADER"));
+  }
   const animations = () => launcher.evaluate(el => el.getAnimations({ subtree: true })
     .filter(animation => animation instanceof CSSAnimation)
     .map(animation => animation.effect.getTiming().duration).sort((a, b) => a - b));
@@ -28,6 +35,8 @@ try {
   await panel.waitFor({ state: "visible" });
   assert.deepEqual(await animations(), []);
   await panel.getByText("2026-11-15 05:00:00 UTC").waitFor();
+  await checkGreeting("en");
+  await panel.getByText("Saved model sample · interval boundaries ±1 h", { exact: true }).waitFor();
   await panel.getByText("Athena · IM-2 · Sun and Earth visible").waitFor();
   await panel.getByText("Odysseus · IM-1 · Outside the joint visibility window").waitFor();
   const questions = panel.locator("details[name] > summary");
@@ -94,10 +103,13 @@ try {
   ]);
   await viLauncher.click();
   await panel.getByText("Odysseus · IM-1 · Ngoài khoảng nhìn thấy đồng thời").waitFor();
+  await checkGreeting("vi");
   await page.keyboard.press("Escape");
   await page.clock.setFixedTime(new Date("2026-11-28T00:00:00Z"));
   await viLauncher.click();
-  await panel.getByText("Bạn muốn tìm hiểu điều gì?").waitFor();
+  await panel.getByText("Hỏi phi hành gia", { exact: true }).waitFor();
+  await checkGreeting("vi");
+  assert.equal(await panel.locator("time").count(), 0);
   await questions.first().click();
   const box = await panel.boundingBox();
   assert.ok(box && box.x >= 0 && box.x + box.width <= 320 && box.y >= 0 && box.y + box.height <= 568);

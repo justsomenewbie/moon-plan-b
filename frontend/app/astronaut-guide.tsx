@@ -13,7 +13,8 @@ const messages = {
   en: {
     title: "Astronaut guide",
     close: "Close astronaut guide",
-    greeting: "What would you like to explore?",
+    greeting: "What can I help you explore?",
+    measurementNote: "I don’t have live measurements from the Moon.",
     savedSample: "Saved model sample · interval boundaries ±1 h",
     terrainSample: "Loaded terrain model sample",
     states: { both: "Sun and Earth visible", sun: "Sun visible, Earth out of view", earth: "Earth visible, Sun out of view", neither: "Sun and Earth both out of view", outsideJoint: "Outside the joint visibility window" },
@@ -30,7 +31,8 @@ const messages = {
   vi: {
     title: "Hướng dẫn của phi hành gia",
     close: "Đóng hướng dẫn của phi hành gia",
-    greeting: "Bạn muốn tìm hiểu điều gì?",
+    greeting: "Bạn muốn mình giúp tìm hiểu điều gì?",
+    measurementNote: "Mình chưa có số liệu đo trực tiếp từ Mặt Trăng.",
     savedSample: "Mốc mô hình đã lưu · sai số ranh giới ±1 giờ",
     terrainSample: "Mốc mô hình địa hình đã tải",
     states: { both: "Thấy cả Mặt Trời và Trái Đất", sun: "Thấy Mặt Trời, không thấy Trái Đất", earth: "Thấy Trái Đất, không thấy Mặt Trời", neither: "Không thấy Mặt Trời và Trái Đất", outsideJoint: "Ngoài khoảng nhìn thấy đồng thời" },
@@ -77,14 +79,15 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
+      <p className={styles.greeting}>{copy.greeting}<br />{copy.measurementNote}</p>
       {openedAt !== null && <GuideChat choice={guideChoice} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
-      {reading ? <section className={styles.sample}>
+      {reading && <section className={styles.sample}>
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>
         <ul>{reading.readings.map((row, index) => <li key={index}>{row.name} · {copy.states[row.visibility]}</li>)}</ul>
         <a href={comparisonPath + (reading.saved ? "#saved-model-source" : "#sources")} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
         <small>{reading.source}</small>
-      </section> : <p className={styles.greeting}>{copy.greeting}</p>}
+      </section>}
       {copy.questions.map(([question, answer], index) =>
         <details key={index} name={id}>
           <summary>{question}</summary>
