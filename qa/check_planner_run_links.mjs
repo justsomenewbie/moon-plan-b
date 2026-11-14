@@ -38,7 +38,7 @@ try {
     unexpected.push(path); return route.abort();
   });
   await page.goto(new URL("/plan", origin).href);
-  await page.locator(".plan-source").getByText(/Live team API/).waitFor();
+  await page.locator(".plan-source").getByText(/Model results from the team API/).waitFor();
   current = "release-b";
   await page.getByRole("button", { name: "Astronaut guide", exact: true }).click();
   const chat = page.getByRole("region", { name: "Ask the astronaut" });
@@ -91,7 +91,7 @@ try {
   await page.locator(".plan-source").getByText(/Saved run B2/).waitFor();
   assert.equal(calls.filter(call => call.startsWith("/api/v1/runs?")).length, 1);
   await page.goto(new URL("/plan", origin).href);
-  await page.locator(".plan-source").getByText(/Live team API/).waitFor();
+  await page.locator(".plan-source").getByText(/Model results from the team API/).waitFor();
   assert.ok(calls.some(call => {
     const request = new URL(call, origin);
     return request.pathname === "/api/v1/sites" && request.searchParams.get("run_id") === "release-b";

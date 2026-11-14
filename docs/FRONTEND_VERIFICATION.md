@@ -280,6 +280,12 @@ The November 15 review compared the team's homepage sketch with the public site 
 
 The separate homepage-only suggestion refers to the LRO, JPL and Moon Trek cards. The feedback document shows it as highlighted, while the [restored layout](https://github.com/justsomenewbie/moon-plan-b/commit/b6b76a2d5226022843dbede9890811bbe2c8576d) displays those cards on both Home and Compare. Their final placement is open. [First-time user sessions](../qa/docs/RUNBOOK.md#three-user-usability-log--not-run) are pending.
 
+### Explaining modeled visibility
+
+The planner introduces its two searches in terms of hours of Sun and Earth visibility and identifies results served by the team API as model output. In Vietnamese, the comparison explains when both bodies were already in view at the start or still in view at the last model sample before the exclusive end. The displayed hours apply only to the evaluated range.
+
+On November 15, Chrome at 320 and 375 CSS pixels opened the planner and compared Odysseus and Athena using the public B2 dataset. For November 14–21 UTC, both notices at the end of the range matched the API intervals, with 47 h for Odysseus and 139 h for Athena. For November 21–28 UTC, both notices at the start matched the intervals and each total was 168 h. The four narrow-screen comparisons had no page overflow. The [run-link check](../qa/check_planner_run_links.mjs) also reopened the selected model run. These were browser and API checks. The [first-time user sessions](../qa/docs/RUNBOOK.md#three-user-usability-log--not-run) remain open.
+
 ## Custom-coordinate job lifecycle
 
 A Chromium check on the live-configured frontend used intercepted producer-format responses for capability recovery, HTTP 202, queued/running/failed/cancelled jobs, indeterminate progress, the HTTP 200 cache hit and status retry. It checked that the same cached job ID needed a fresh status read. After a simulated POST timeout, explicitly retrying the same request preserved its original coordinates and UTCs even after the form was edited. Opening the result sent a GET for the accepted run and site, and its link pinned both. The Vietnamese form fit a 320 px viewport. These failure branches were simulated locally.
