@@ -199,10 +199,778 @@
           }
         }
       }
+    },
+    "/api/v1/capabilities": {
+      "get": {
+        "operationId": "getCapabilities",
+        "summary": "What this server can run (providers, DEMs, job types, tools, CLI flags)",
+        "tags": [
+          "meta"
+        ],
+        "description": "Probed at startup and cached (CAPABILITIES_TTL_S, default 600 s; `checked_at`). `?refresh=true` probes again (at most every 30 s). Use it to enable / disable UI options: a job type with available = false answers 501 JOB_TYPE_UNAVAILABLE, an option the server lacks (dem trek without files, near_exclusion_m without CLI support) 422 CAPABILITY_UNAVAILABLE. Network reachability is null when the probe is disabled.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "description": "true = probe again now instead of serving the cached result"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capabilities"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs": {
+      "post": {
+        "operationId": "createJob",
+        "summary": "Start a Python job (async): custom_site, precompute, analyse, alt_dates_python, check, validate, ...",
+        "tags": [
+          "jobs"
+        ],
+        "description": "Body = CreateJobRequest, discriminated on `type` (one schema per job type; GET /api/v1/capabilities lists the types this server runs - others answer 501 JOB_TYPE_UNAVAILABLE). 202 = queued, or an identical job is already queued/running: you are then subscribed to it (cached: true, same job_id; poll `poll` every 1-2 s; `Location` header = the same URL). 200 = an identical job already succeeded (cached: true). 429 TOO_MANY_JOBS when this client (IP) already waits on JOB_MAX_ACTIVE_PER_CLIENT (default 2) queued/running jobs; 429 QUEUE_FULL when JOB_QUEUE_MAX jobs wait. start snaps down / end snaps up to whole hours. When succeeded, use result.run_id with the normal endpoints. Measured on the dev machine (1 site, hourly, spice + pgda + raymarch, PGDA tiles of the area already cached): POST -> succeeded in ~14 s for 1 month and ~19 s for 1 year (precompute 11-18 s, import 1-3 s). The first job in a polar area not yet cached also downloads PGDA tiles and can take minutes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identical job already succeeded (cache hit): status succeeded, cached true",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                },
+                "example": {
+                  "job_id": "j_7f3k2m9q4x1z",
+                  "type": "custom_site",
+                  "status": "succeeded",
+                  "site_id": "custom:-89.4500:222.6900",
+                  "poll": "/api/v1/jobs/j_7f3k2m9q4x1z",
+                  "cached": true
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Job queued (or identical active job)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type (UNSUPPORTED_MEDIA_TYPE): send Content-Type: application/json",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Not implemented on this server (JOB_TYPE_UNAVAILABLE: see GET /api/v1/capabilities)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable (SERVICE_UNAVAILABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "operationId": "getJob",
+        "summary": "Job status / progress / result (poll)",
+        "tags": [
+          "jobs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^j_[A-Za-z0-9]{6,40}$"
+            },
+            "example": "j_7f3k2m9q4x1z",
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "description": "Job id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable (SERVICE_UNAVAILABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AltDatesPythonJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "alt_dates_python"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "AnalyseJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "analyse"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "Availability": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Why it is not available (null when available)",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "available",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "Capabilities": {
+        "type": "object",
+        "properties": {
+          "checked_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "python": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "python_version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lunarnav_code_version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "ok",
+              "python_version",
+              "lunarnav_code_version",
+              "error"
+            ],
+            "additionalProperties": false
+          },
+          "cli": {
+            "type": "object",
+            "properties": {
+              "subcommands": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "lunarnav CLI sub-commands (from its argparse help)"
+              },
+              "near_exclusion_m": {
+                "type": "boolean",
+                "description": "The installed CLI supports --near-exclusion-m (request field near_exclusion_m)"
+              },
+              "flags": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "description": "Long options per sub-command, from `lunarnav <cmd> --help`"
+              }
+            },
+            "required": [
+              "subcommands",
+              "near_exclusion_m",
+              "flags"
+            ],
+            "additionalProperties": false
+          },
+          "modules": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "description": "Python modules importable by the interpreter (spiceypy, rasterio, lunarnav.validate...)"
+          },
+          "providers": {
+            "type": "object",
+            "properties": {
+              "spice": {
+                "$ref": "#/components/schemas/Availability"
+              },
+              "horizons": {
+                "$ref": "#/components/schemas/Availability"
+              },
+              "analytic": {
+                "$ref": "#/components/schemas/Availability"
+              }
+            },
+            "required": [
+              "spice",
+              "horizons",
+              "analytic"
+            ],
+            "additionalProperties": false
+          },
+          "dems": {
+            "type": "object",
+            "properties": {
+              "pgda": {
+                "type": "object",
+                "properties": {
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why it is not available (null when available)",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "cached_products": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "PGDA products with a local tile cache"
+                  }
+                },
+                "required": [
+                  "available",
+                  "reason",
+                  "cached_products"
+                ],
+                "additionalProperties": false
+              },
+              "trek": {
+                "type": "object",
+                "properties": {
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "description": "Why it is not available (null when available)",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string"
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "label",
+                        "bytes"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "Moon Trek GeoTIFFs present in LUNARNAV_DATA/dem (never downloaded by the API)"
+                  }
+                },
+                "required": [
+                  "available",
+                  "reason",
+                  "files"
+                ],
+                "additionalProperties": false
+              },
+              "none": {
+                "$ref": "#/components/schemas/Availability"
+              }
+            },
+            "required": [
+              "pgda",
+              "trek",
+              "none"
+            ],
+            "additionalProperties": false
+          },
+          "horizon_methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "raymarch",
+                "bruteforce",
+                "flat"
+              ]
+            }
+          },
+          "network": {
+            "type": "object",
+            "properties": {
+              "horizons": {
+                "type": "object",
+                "properties": {
+                  "reachable": {
+                    "description": "null = not probed (CAPABILITIES_NETWORK_PROBE off)",
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "latency_ms": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "reachable",
+                  "latency_ms",
+                  "error"
+                ],
+                "additionalProperties": false
+              },
+              "pgda": {
+                "type": "object",
+                "properties": {
+                  "reachable": {
+                    "description": "null = not probed (CAPABILITIES_NETWORK_PROBE off)",
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "latency_ms": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "error": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "reachable",
+                  "latency_ms",
+                  "error"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "horizons",
+              "pgda"
+            ],
+            "additionalProperties": false
+          },
+          "job_types": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "$ref": "#/components/schemas/JobType"
+                },
+                "implemented": {
+                  "type": "boolean",
+                  "description": "false = registered placeholder (POST answers 501 JOB_TYPE_UNAVAILABLE)"
+                },
+                "available": {
+                  "type": "boolean"
+                },
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "timeout_s": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "result_ttl_h": {
+                  "type": "number"
+                },
+                "limits": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {},
+                  "description": "Type-specific request limits"
+                }
+              },
+              "required": [
+                "type",
+                "implemented",
+                "available",
+                "reason",
+                "timeout_s",
+                "result_ttl_h",
+                "limits"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "tools": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Availability"
+            },
+            "description": "Synchronous tools under /api/v1/tools/*"
+          }
+        },
+        "required": [
+          "checked_at",
+          "python",
+          "cli",
+          "modules",
+          "providers",
+          "dems",
+          "horizon_methods",
+          "network",
+          "job_types",
+          "tools"
+        ],
+        "additionalProperties": false
+      },
+      "CheckJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "check"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "CompareRunsJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "compare_runs"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "CreateJobRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CustomSiteJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/PrecomputeJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/AnalyseJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/AltDatesPythonJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CheckJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/ValidateJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/ValidateTerrainJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CompareRunsJobRequest"
+          },
+          {
+            "$ref": "#/components/schemas/HorizonMaskJobRequest"
+          }
+        ],
+        "description": "Discriminated on `type`. Types this server cannot run answer 501 JOB_TYPE_UNAVAILABLE (see GET /api/v1/capabilities)."
+      },
       "CriterionResult": {
         "type": "string",
         "enum": [
@@ -210,6 +978,97 @@
           "below",
           "borderline"
         ]
+      },
+      "CustomSiteJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "custom_site"
+          },
+          "site_id": {
+            "description": "A catalog site id (to compute a date range outside the precomputed runs) - XOR lat_deg/lon_deg",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "lat_deg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Planetocentric latitude, deg [-90, 90]"
+          },
+          "lon_deg": {
+            "description": "Longitude, deg; EAST-positive (west-negative values are converted to [0, 360))",
+            "type": "number",
+            "minimum": -360,
+            "maximum": 360
+          },
+          "name": {
+            "description": "Display name of the custom site",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "UTC instant, ISO 8601 with `Z` (e.g. `2026-01-01T00:00:00Z`). Snapped to the sample grid by the server."
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "EXCLUSIVE end; at most 366 days after start"
+          },
+          "step_min": {
+            "default": 60,
+            "description": "Time step, minutes (only 60 for now)",
+            "type": "number",
+            "const": 60
+          },
+          "provider": {
+            "default": "spice",
+            "type": "string",
+            "enum": [
+              "spice",
+              "horizons",
+              "analytic"
+            ]
+          },
+          "dem": {
+            "default": "pgda",
+            "type": "string",
+            "enum": [
+              "pgda",
+              "trek",
+              "none"
+            ]
+          },
+          "horizon_method": {
+            "default": "raymarch",
+            "type": "string",
+            "enum": [
+              "raymarch",
+              "bruteforce",
+              "flat"
+            ]
+          },
+          "observer_height_m": {
+            "default": 2,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "type",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false,
+        "description": "One catalog or custom site over a date range (hourly), imported as a custom run (result.run_id)"
       },
       "DatasetConventions": {
         "type": "object",
@@ -959,6 +1818,400 @@
         "additionalProperties": false,
         "description": "ONLY the visible intervals inside the range, sorted by start (boundaries +- one data step)"
       },
+      "HorizonMaskJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "horizon_mask"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "Job": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "pattern": "^j_[A-Za-z0-9]{6,40}$",
+            "description": "Job id",
+            "examples": [
+              "j_7f3k2m9q4x1z"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/JobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+                "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+                "examples": [
+                  "ref_connecting_ridge_c1"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null for job types without a single site"
+          },
+          "params": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {},
+            "description": "Canonical parameters (CreateJobRequest after defaults)"
+          },
+          "progress": {
+            "type": "object",
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "precompute",
+                  "python",
+                  "import",
+                  "artifacts",
+                  "done"
+                ]
+              },
+              "pct": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "null = unknown (lunarnav prints text progress only)"
+              },
+              "lines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Last <= 50 progress lines of the Python process"
+              }
+            },
+            "required": [
+              "stage",
+              "pct",
+              "lines"
+            ],
+            "additionalProperties": false
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "run_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+                    "description": "Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs",
+                    "examples": [
+                      "pf_21c3f3f6dc56b1e1"
+                    ]
+                  },
+                  "site_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+                    "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+                    "examples": [
+                      "ref_connecting_ridge_c1"
+                    ]
+                  }
+                },
+                "required": [
+                  "run_id",
+                  "site_id"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Imported run of a succeeded custom_site / precompute job (site_id = its first site); null for the other types"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Small type-specific JSON summary of a succeeded job (schema: src/contract/job_types/<type>.ts); null otherwise"
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobArtifact"
+            },
+            "description": "Files the job produced (reports, JSON); [] for custom_site. Download: artifacts[].url"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "clients": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Clients currently waiting on this job (identical POSTs from different clients share one job). DELETE removes only the caller: the job is cancelled when the last one leaves, otherwise it keeps running for the others. 0 once finished."
+          },
+          "created_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "job_id",
+          "type",
+          "status",
+          "site_id",
+          "params",
+          "progress",
+          "result",
+          "output",
+          "artifacts",
+          "error",
+          "clients",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "expires_at"
+        ],
+        "additionalProperties": false
+      },
+      "JobAccepted": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "pattern": "^j_[A-Za-z0-9]{6,40}$",
+            "description": "Job id",
+            "examples": [
+              "j_7f3k2m9q4x1z"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/JobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+                "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+                "examples": [
+                  "ref_connecting_ridge_c1"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Canonical site id the job computes (custom:<lat>:<lon> with 4 decimals); null for job types without a single site"
+          },
+          "poll": {
+            "type": "string",
+            "description": "Relative URL to poll"
+          },
+          "cached": {
+            "type": "boolean",
+            "description": "true = identical job (same params_hash) reused instead of starting a new one"
+          }
+        },
+        "required": [
+          "job_id",
+          "type",
+          "status",
+          "site_id",
+          "poll",
+          "cached"
+        ],
+        "additionalProperties": false
+      },
+      "JobArtifact": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$",
+            "description": "Artifact file name (flat, no directories)",
+            "examples": [
+              "report.json"
+            ]
+          },
+          "media_type": {
+            "type": "string",
+            "description": "Content-Type the file is served with"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "url": {
+            "type": "string",
+            "description": "Relative URL of the file (GET)"
+          }
+        },
+        "required": [
+          "name",
+          "media_type",
+          "bytes",
+          "sha256",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled"
+        ]
+      },
+      "JobType": {
+        "type": "string",
+        "enum": [
+          "custom_site",
+          "precompute",
+          "analyse",
+          "alt_dates_python",
+          "check",
+          "validate",
+          "validate_terrain",
+          "compare_runs",
+          "horizon_mask"
+        ],
+        "description": "Job type (GET /api/v1/capabilities lists which ones this server runs)"
+      },
+      "PrecomputeJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "precompute"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
       "Problem": {
         "type": "object",
         "properties": {
@@ -1065,6 +2318,44 @@
         "required": [
           "path",
           "message"
+        ],
+        "additionalProperties": false
+      },
+      "ValidateJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "validate"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "ValidateTerrainJobRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "validate_terrain"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Display name (not part of the job identity)"
+          }
+        },
+        "required": [
+          "type"
         ],
         "additionalProperties": false
       }

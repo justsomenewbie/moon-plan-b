@@ -24,12 +24,227 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What this server can run (providers, DEMs, job types, tools, CLI flags)
+         * @description Probed at startup and cached (CAPABILITIES_TTL_S, default 600 s; `checked_at`). `?refresh=true` probes again (at most every 30 s). Use it to enable / disable UI options: a job type with available = false answers 501 JOB_TYPE_UNAVAILABLE, an option the server lacks (dem trek without files, near_exclusion_m without CLI support) 422 CAPABILITY_UNAVAILABLE. Network reachability is null when the probe is disabled.
+         */
+        get: operations["getCapabilities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a Python job (async): custom_site, precompute, analyse, alt_dates_python, check, validate, ...
+         * @description Body = CreateJobRequest, discriminated on `type` (one schema per job type; GET /api/v1/capabilities lists the types this server runs - others answer 501 JOB_TYPE_UNAVAILABLE). 202 = queued, or an identical job is already queued/running: you are then subscribed to it (cached: true, same job_id; poll `poll` every 1-2 s; `Location` header = the same URL). 200 = an identical job already succeeded (cached: true). 429 TOO_MANY_JOBS when this client (IP) already waits on JOB_MAX_ACTIVE_PER_CLIENT (default 2) queued/running jobs; 429 QUEUE_FULL when JOB_QUEUE_MAX jobs wait. start snaps down / end snaps up to whole hours. When succeeded, use result.run_id with the normal endpoints. Measured on the dev machine (1 site, hourly, spice + pgda + raymarch, PGDA tiles of the area already cached): POST -> succeeded in ~14 s for 1 month and ~19 s for 1 year (precompute 11-18 s, import 1-3 s). The first job in a polar area not yet cached also downloads PGDA tiles and can take minutes.
+         */
+        post: operations["createJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Job status / progress / result (poll) */
+        get: operations["getJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AltDatesPythonJobRequest: {
+            /** @constant */
+            type: "alt_dates_python";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
+        };
+        AnalyseJobRequest: {
+            /** @constant */
+            type: "analyse";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
+        };
+        Availability: {
+            available: boolean;
+            /** @description Why it is not available (null when available) */
+            reason: string | null;
+        };
+        Capabilities: {
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            checked_at: string;
+            python: {
+                ok: boolean;
+                python_version: string | null;
+                lunarnav_code_version: string | null;
+                error: string | null;
+            };
+            cli: {
+                /** @description lunarnav CLI sub-commands (from its argparse help) */
+                subcommands: string[];
+                /** @description The installed CLI supports --near-exclusion-m (request field near_exclusion_m) */
+                near_exclusion_m: boolean;
+                /** @description Long options per sub-command, from `lunarnav <cmd> --help` */
+                flags: {
+                    [key: string]: string[];
+                };
+            };
+            /** @description Python modules importable by the interpreter (spiceypy, rasterio, lunarnav.validate...) */
+            modules: {
+                [key: string]: boolean;
+            };
+            providers: {
+                spice: components["schemas"]["Availability"];
+                horizons: components["schemas"]["Availability"];
+                analytic: components["schemas"]["Availability"];
+            };
+            dems: {
+                pgda: {
+                    available: boolean;
+                    /** @description Why it is not available (null when available) */
+                    reason: string | null;
+                    /** @description PGDA products with a local tile cache */
+                    cached_products: number;
+                };
+                trek: {
+                    available: boolean;
+                    /** @description Why it is not available (null when available) */
+                    reason: string | null;
+                    /** @description Moon Trek GeoTIFFs present in LUNARNAV_DATA/dem (never downloaded by the API) */
+                    files: {
+                        label: string;
+                        bytes: number;
+                    }[];
+                };
+                none: components["schemas"]["Availability"];
+            };
+            horizon_methods: ("raymarch" | "bruteforce" | "flat")[];
+            network: {
+                horizons: {
+                    /** @description null = not probed (CAPABILITIES_NETWORK_PROBE off) */
+                    reachable: boolean | null;
+                    latency_ms: number | null;
+                    error: string | null;
+                };
+                pgda: {
+                    /** @description null = not probed (CAPABILITIES_NETWORK_PROBE off) */
+                    reachable: boolean | null;
+                    latency_ms: number | null;
+                    error: string | null;
+                };
+            };
+            job_types: {
+                type: components["schemas"]["JobType"];
+                /** @description false = registered placeholder (POST answers 501 JOB_TYPE_UNAVAILABLE) */
+                implemented: boolean;
+                available: boolean;
+                reason: string | null;
+                timeout_s: number;
+                result_ttl_h: number;
+                /** @description Type-specific request limits */
+                limits: {
+                    [key: string]: unknown;
+                };
+            }[];
+            /** @description Synchronous tools under /api/v1/tools/* */
+            tools: {
+                [key: string]: components["schemas"]["Availability"];
+            };
+        };
+        CheckJobRequest: {
+            /** @constant */
+            type: "check";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
+        };
+        CompareRunsJobRequest: {
+            /** @constant */
+            type: "compare_runs";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
+        };
+        /** @description Discriminated on `type`. Types this server cannot run answer 501 JOB_TYPE_UNAVAILABLE (see GET /api/v1/capabilities). */
+        CreateJobRequest: components["schemas"]["CustomSiteJobRequest"] | components["schemas"]["PrecomputeJobRequest"] | components["schemas"]["AnalyseJobRequest"] | components["schemas"]["AltDatesPythonJobRequest"] | components["schemas"]["CheckJobRequest"] | components["schemas"]["ValidateJobRequest"] | components["schemas"]["ValidateTerrainJobRequest"] | components["schemas"]["CompareRunsJobRequest"] | components["schemas"]["HorizonMaskJobRequest"];
         /** @enum {string} */
         CriterionResult: "meets" | "below" | "borderline";
+        /** @description One catalog or custom site over a date range (hourly), imported as a custom run (result.run_id) */
+        CustomSiteJobRequest: {
+            /** @constant */
+            type: "custom_site";
+            /**
+             * @description A catalog site id (to compute a date range outside the precomputed runs) - XOR lat_deg/lon_deg
+             * @example ref_connecting_ridge_c1
+             */
+            site_id?: string;
+            /** @description Planetocentric latitude, deg [-90, 90] */
+            lat_deg?: number;
+            /** @description Longitude, deg; EAST-positive (west-negative values are converted to [0, 360)) */
+            lon_deg?: number;
+            /** @description Display name of the custom site */
+            name?: string;
+            /** @description UTC instant, ISO 8601 with `Z` (e.g. `2026-01-01T00:00:00Z`). Snapped to the sample grid by the server. */
+            start: string;
+            /** @description EXCLUSIVE end; at most 366 days after start */
+            end: string;
+            /**
+             * @description Time step, minutes (only 60 for now)
+             * @default 60
+             * @constant
+             */
+            step_min: 60;
+            /**
+             * @default spice
+             * @enum {string}
+             */
+            provider: "spice" | "horizons" | "analytic";
+            /**
+             * @default pgda
+             * @enum {string}
+             */
+            dem: "pgda" | "trek" | "none";
+            /**
+             * @default raymarch
+             * @enum {string}
+             */
+            horizon_method: "raymarch" | "bruteforce" | "flat";
+            /** @default 2 */
+            observer_height_m: number;
+        };
         DatasetConventions: {
             time: string;
             azimuth: string;
@@ -257,6 +472,109 @@ export interface components {
             /** @description Sun AND Earth visible */
             both: components["schemas"]["DatasetWindow"][];
         };
+        HorizonMaskJobRequest: {
+            /** @constant */
+            type: "horizon_mask";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
+        };
+        Job: {
+            /**
+             * @description Job id
+             * @example j_7f3k2m9q4x1z
+             */
+            job_id: string;
+            type: components["schemas"]["JobType"];
+            status: components["schemas"]["JobStatus"];
+            /** @description null for job types without a single site */
+            site_id: string | null;
+            /** @description Canonical parameters (CreateJobRequest after defaults) */
+            params: {
+                [key: string]: unknown;
+            };
+            progress: {
+                /** @enum {string} */
+                stage: "queued" | "precompute" | "python" | "import" | "artifacts" | "done";
+                /** @description null = unknown (lunarnav prints text progress only) */
+                pct: number | null;
+                /** @description Last <= 50 progress lines of the Python process */
+                lines: string[];
+            };
+            /** @description Imported run of a succeeded custom_site / precompute job (site_id = its first site); null for the other types */
+            result: {
+                /**
+                 * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id: string;
+                /**
+                 * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+                 * @example ref_connecting_ridge_c1
+                 */
+                site_id: string;
+            } | null;
+            /** @description Small type-specific JSON summary of a succeeded job (schema: src/contract/job_types/<type>.ts); null otherwise */
+            output: {
+                [key: string]: unknown;
+            } | null;
+            /** @description Files the job produced (reports, JSON); [] for custom_site. Download: artifacts[].url */
+            artifacts: components["schemas"]["JobArtifact"][];
+            error: {
+                code: string;
+                message: string;
+            } | null;
+            /** @description Clients currently waiting on this job (identical POSTs from different clients share one job). DELETE removes only the caller: the job is cancelled when the last one leaves, otherwise it keeps running for the others. 0 once finished. */
+            clients: number;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            created_at: string;
+            started_at: string | null;
+            finished_at: string | null;
+            expires_at: string | null;
+        };
+        JobAccepted: {
+            /**
+             * @description Job id
+             * @example j_7f3k2m9q4x1z
+             */
+            job_id: string;
+            type: components["schemas"]["JobType"];
+            status: components["schemas"]["JobStatus"];
+            /** @description Canonical site id the job computes (custom:<lat>:<lon> with 4 decimals); null for job types without a single site */
+            site_id: string | null;
+            /** @description Relative URL to poll */
+            poll: string;
+            /** @description true = identical job (same params_hash) reused instead of starting a new one */
+            cached: boolean;
+        };
+        JobArtifact: {
+            /**
+             * @description Artifact file name (flat, no directories)
+             * @example report.json
+             */
+            name: string;
+            /** @description Content-Type the file is served with */
+            media_type: string;
+            bytes: number;
+            sha256: string;
+            /** @description Relative URL of the file (GET) */
+            url: string;
+        };
+        /** @enum {string} */
+        JobStatus: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+        /**
+         * @description Job type (GET /api/v1/capabilities lists which ones this server runs)
+         * @enum {string}
+         */
+        JobType: "custom_site" | "precompute" | "analyse" | "alt_dates_python" | "check" | "validate" | "validate_terrain" | "compare_runs" | "horizon_mask";
+        PrecomputeJobRequest: {
+            /** @constant */
+            type: "precompute";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
+        };
         /** @description RFC 9457 problem details. Extra members (e.g. `max_latest`, `limits`) may be present. */
         Problem: {
             /** @description URI identifying the problem type */
@@ -292,6 +610,18 @@ export interface components {
             message: string;
             /** @description zod issue code, e.g. "too_big", "invalid_type" */
             code?: string;
+        };
+        ValidateJobRequest: {
+            /** @constant */
+            type: "validate";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
+        };
+        ValidateTerrainJobRequest: {
+            /** @constant */
+            type: "validate_terrain";
+            /** @description Display name (not part of the job identity) */
+            name?: string;
         };
     };
     responses: never;
@@ -378,6 +708,251 @@ export interface operations {
             };
             /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getCapabilities: {
+        parameters: {
+            query?: {
+                /** @description true = probe again now instead of serving the cached result */
+                refresh?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Capabilities"];
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    createJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateJobRequest"];
+            };
+        };
+        responses: {
+            /** @description Identical job already succeeded (cache hit): status succeeded, cached true */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "job_id": "j_7f3k2m9q4x1z",
+                     *       "type": "custom_site",
+                     *       "status": "succeeded",
+                     *       "site_id": "custom:-89.4500:222.6900",
+                     *       "poll": "/api/v1/jobs/j_7f3k2m9q4x1z",
+                     *       "cached": true
+                     *     }
+                     */
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            /** @description Job queued (or identical active job) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Request body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unsupported media type (UNSUPPORTED_MEDIA_TYPE): send Content-Type: application/json */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not implemented on this server (JOB_TYPE_UNAVAILABLE: see GET /api/v1/capabilities) */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Job id
+                 * @example j_7f3k2m9q4x1z
+                 */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

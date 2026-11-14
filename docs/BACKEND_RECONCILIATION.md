@@ -83,7 +83,11 @@ The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The
 
 Frontend answers already available: Next.js 16.4.6, TypeScript 5.9.3, TanStack Query 5.107.1, openapi-fetch 0.17.0, generated OpenAPI types and MSW. Same-origin `/api/*` proxy is prepared. Hosting is still undecided.
 
-The aggregate schema and two bounded responses have been checked. Live custom jobs still need agreement on their lifecycle and result handoff.
+The aggregate schema and two bounded responses have been checked. The production client also uses the producer’s custom-site job contract.
+
+## Live custom-coordinate jobs
+
+Opening the form fetches `GET /api/v1/capabilities` and checks the custom-site job type, SPICE, PGDA, ray marching and hourly sampling. The form uses the selected UTC range, planetocentric latitude, east-positive longitude and observer height above the surface in metres. `POST /api/v1/jobs` returns a job receipt. The client accepts 202 for queued or running work and 200 for an already completed matching job. It polls the same job ID every 1.5 seconds. A null percentage is shown as indeterminate. Failed and cancelled jobs have separate terminal states. A successful job identifies the resulting site and run. Opening the result performs a bounded aggregate GET for that one site, and its permalink retains the site ID, run ID and UTC range. Once the backend expires the run, the link may become unavailable.
 
 ## AI planning assistant — proposed addition
 

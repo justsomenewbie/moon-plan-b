@@ -2,11 +2,11 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateWindow } from "../lib/api/client";
+import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateWindow } from "../lib/api/client";
 import { parseTerrainSummary } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainResult from "./terrain-result";
-import type { WindowRequest } from "../lib/api/client";
+import type { TerrainTarget, WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
 import ThemeControl from "./theme-control";
 import AstronautGuide from "./astronaut-guide";
@@ -35,7 +35,7 @@ export default function Navigator() {
   const [loading, setLoading] = useState(true);
   const [importCompletion, setImportCompletion] = useState(0);
   const [error, setError] = useState<string | { importReason: string }>("");
-  const [retryLoad, setRetryLoad] = useState<{ request: WindowRequest; jobId: string; runId?: string; reset: boolean } | null>(null);
+  const [retryLoad, setRetryLoad] = useState<{ request: WindowRequest; jobId: string; target?: TerrainTarget; reset: boolean } | null>(null);
   const [message, setMessage] = useState<Message>("");
   const [shareUrl, setShareUrl] = useState("");
   const [savedResult, setSavedResult] = useState(() => savedResultFromUrl(new URLSearchParams()));
@@ -89,11 +89,12 @@ export default function Navigator() {
     }
   }
 
-  function acceptTerrain(next: TerrainSummary, reset: boolean, request?: WindowRequest) {
+  function acceptTerrain(next: TerrainSummary, reset: boolean, request?: WindowRequest, target?: TerrainTarget) {
     setData(null); setSelection(null); setTerrain(next); setSharedJobId(""); setShareUrl(""); setError(""); setPlaying(false);
     if (request) {
       const url = new URL(window.location.pathname, window.location.origin);
       url.search = new URLSearchParams({ from: request.from, to: request.to, resolutionSeconds: String(request.resolutionSeconds), run_id: next.run.run_id }).toString();
+      if (target?.site_id) url.searchParams.set("site_id", target.site_id);
       url.hash = "workspace";
       setTerrainLink(url.href);
       if (reset) replaceUrl(url.href);
@@ -103,13 +104,13 @@ export default function Navigator() {
     }
   }
 
-  async function loadDemo(reset = false, request: WindowRequest = requestWindow, jobId = "", runId?: string) {
+  async function loadDemo(reset = false, request: WindowRequest = requestWindow, jobId = "", target?: TerrainTarget) {
     const generation = ++loadGeneration.current;
     loadFocus.current = document.activeElement?.closest("button, form") ? document.activeElement : null;
     setLoading(true); setError(""); setRetryLoad(null); setMessage(""); setPlaying(false);
     try {
-      const next = await queryClient.fetchQuery({ queryKey: ["dataset", request, jobId, runId], queryFn: async ({ signal }) => {
-        if (!jobId) return isMock ? getDataset(request, signal) : getTerrainWindow(request, signal, runId);
+      const next = await queryClient.fetchQuery({ queryKey: ["dataset", request, jobId, target], queryFn: async ({ signal }) => {
+        if (!jobId) return isMock ? getDataset(request, signal) : getTerrainWindow(request, signal, target);
         if (!isMock) throw new Error("This view accepts saved observation windows. Custom job links require the backend jobs interface.");
         const job = await getJob(jobId, request, signal);
         if (job.status !== "done") throw new Error(job.status === "failed" ? job.problem.detail : "The shared job has not completed. Retry when its result is ready.");
@@ -119,7 +120,7 @@ export default function Navigator() {
         setRequestWindow(request);
         if ("schema_version" in next) {
           if (!reset && new URLSearchParams(window.location.search).has("v")) throw new Error("This link needs a different dataset version. Import that exact release before reopening it.");
-          acceptTerrain(next, reset, request);
+          acceptTerrain(next, reset, request, target);
           setMessage("Loaded terrain-model results from the team API.");
         } else {
           setSharedJobId(jobId); acceptDataset(next, reset);
@@ -127,7 +128,7 @@ export default function Navigator() {
         }
       }
     } catch (e) {
-      if (generation === loadGeneration.current) { setError(e instanceof Error ? e.message : "Data could not load."); setRetryLoad({ request, jobId, runId, reset }); }
+      if (generation === loadGeneration.current) { setError(e instanceof Error ? e.message : "Data could not load."); setRetryLoad({ request, jobId, target, reset }); }
     } finally { if (generation === loadGeneration.current) setLoading(false); }
   }
 
@@ -144,16 +145,19 @@ export default function Navigator() {
     const params = new URLSearchParams(window.location.search);
     setQaEnabled(params.get("qa") === "true");
     try {
-      for (const key of ["from", "to", "resolutionSeconds", "job", "run_id"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
-      const request = ["from", "to", "resolutionSeconds"].some((key) => params.has(key)) ? validateWindow({ from: params.get("from") ?? "", to: params.get("to") ?? "", resolutionSeconds: Number(params.get("resolutionSeconds")) }) : defaultWindow;
+      for (const key of ["from", "to", "resolutionSeconds", "job", "run_id", "site_id"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
+      const validateRange = !isMock && params.has("site_id") ? validateCustomWindow : validateWindow;
+      const request = ["from", "to", "resolutionSeconds"].some((key) => params.has(key)) ? validateRange({ from: params.get("from") ?? "", to: params.get("to") ?? "", resolutionSeconds: Number(params.get("resolutionSeconds")) }) : defaultWindow;
       const jobId = params.get("job") ?? "";
       const runId = params.get("run_id") ?? undefined;
       if (runId !== undefined && (!/^[A-Za-z0-9_.-]{1,64}$/.test(runId) || jobId || isMock)) throw new Error("This run link requires a live backend and a valid model run ID.");
+      const siteId = params.get("site_id") ?? undefined;
+      if (siteId !== undefined && (!runId || !/^[A-Za-z0-9_.:-]{1,64}$/.test(siteId))) throw new Error("The shared site requires a model run and a valid site ID.");
       if (jobId && !/^[a-zA-Z0-9._-]{1,100}$/.test(jobId)) throw new Error("The shared job ID is invalid.");
       if (data && params.get("v") === data.datasetId && jobId === sharedJobId && Date.parse(request.from) === Date.parse(requestWindow.from) && Date.parse(request.to) === Date.parse(requestWindow.to) && request.resolutionSeconds === requestWindow.resolutionSeconds) {
         setSelection(readSelection(params, data)); setLoading(false);
       } else {
-        void loadDemo(false, request, jobId, runId);
+        void loadDemo(false, request, jobId, runId ? { run_id: runId, site_id: siteId } : undefined);
         // Browser history owns focus/scroll; a request must not move it to results.
         loadFocus.current = null;
       }
@@ -328,9 +332,9 @@ export default function Navigator() {
       <p className="muted text-sm">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Team API · terrain horizon model")} · <a href="/api-docs">{t("API explorer")}</a></p>
       <p className="data-notice">{terrain ? t("Terrain-model results use the supplied surface horizon. Visibility alone does not establish power or a radio link.") : !data ? isMock ? t("No scientific dataset connected. Use the demonstration or import a release.") : t("Waiting for a valid API dataset. You can also import a release.") : data.evidence === "synthetic-fixture" ? t("Demonstration data — fictional sites and values. Not for mission planning.") : t("Supplied data — scientific validity has not been independently verified. Not for mission planning.")}</p>
     </div>
-    <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
+    <ApiControls request={requestWindow} loading={loading} onTerrainResult={(request, target) => void loadDemo(true, request, "", target)} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
-    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.runId)}>{t("Retry API request")}</button> : null}{isMock || !retryLoad ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? t("Reset to demonstration") : t("Retry API request")}</button> : null}<button className="button outline" onClick={() => fileInput.current?.click()}>{t("Import the correct dataset")}</button></div></div> : null}
+    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target)}>{t("Retry API request")}</button> : null}{isMock || !retryLoad ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? t("Reset to demonstration") : t("Retry API request")}</button> : null}<button className="button outline" onClick={() => fileInput.current?.click()}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
     {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult result={terrain} permalink={terrainLink || undefined} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
