@@ -33,6 +33,7 @@ def component_refs(value):
 def scoped_contract(producer, tracked):
     paths = {}
     inherits_security = False
+    schemes = set()
     for path, tracked_item in tracked["paths"].items():
         methods = tracked_item.keys() & HTTP_METHODS
         if not methods:
@@ -46,6 +47,8 @@ def scoped_contract(producer, tracked):
                 raise ValueError(f"missing producer operation: {method.upper()} {path}")
             scoped_item[method] = item[method]
             inherits_security |= "security" not in item[method]
+            for requirement in item[method].get("security", []):
+                schemes.update(requirement)
         # Path-level declarations also apply to the included methods.
         for key in ("parameters", "servers", "summary", "description", "$ref"):
             if key in item:
@@ -55,7 +58,11 @@ def scoped_contract(producer, tracked):
         raise ValueError("the frontend extract contains no paths")
 
     components = {}
-    pending = set(component_refs(paths))
+    # Security requirements name their schemes directly, without an OpenAPI $ref.
+    if inherits_security:
+        for requirement in producer.get("security", []):
+            schemes.update(requirement)
+    pending = set(component_refs(paths)) | {("securitySchemes", name) for name in schemes}
     while pending:
         kind, name = pending.pop()
         group = components.setdefault(kind, {})
@@ -76,7 +83,7 @@ def scoped_contract(producer, tracked):
         "paths": paths,
         "components": components,
     }
-    if producer.get("security") and inherits_security:
+    if inherits_security and "security" in producer:
         result["security"] = producer["security"]
     return result
 

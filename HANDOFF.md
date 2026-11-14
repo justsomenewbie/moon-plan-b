@@ -24,7 +24,7 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 The astronaut waves, greets on opening and glances sideways while answering. Pause and reduced motion use still expressions. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [OpenAI/Ollama configuration](frontend/README.md#ask-the-astronaut).
 
-**Plan and data:** The public explorer lists 13 supported team API operations. Saved planning runs on-device. /plan maps positive leaders and ties. B2 covers 23 sites and 43,824 hourly samples per site. /data links [B2 originals](docs/B2_VISIBILITY_ARCHIVE.md) with hashes and preserves B archives. Live and offline /plan use the reported run. On November 14–21 Odysseus saw both bodies for 47 h on B2 and 33 h on historical B; Athena saw both for 139 h on each.
+**Plan and data:** B2 covers 23 sites and 43,824 hourly samples each. Long catalog links include downloadable visibility summaries. Switching sources retains the requested dates, site and priority. The public explorer lists 13 relay operations. All 17 upstream operations match the production contract. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The result map highlights positive leaders and ties.
 
 ## Pending
 

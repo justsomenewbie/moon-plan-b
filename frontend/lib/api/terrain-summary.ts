@@ -350,6 +350,8 @@ export function parseTerrainSummary(input: unknown, request?: { from: string; to
 export type TerrainSummary = {
   /** Original bounded response body for the displayed live observation workspace. */
   exportFile?: Blob;
+  /** A long-range catalog workspace requested intervals and metrics without plotted samples. */
+  summaryOnly?: boolean;
   schema_version: "lunarnav-dataset-1"; dataset_id: string; evidence: "computed-ephemeris"; attribution: string;
   run: ReturnType<typeof readRun>; model: ReturnType<typeof readModel>; range: Range;
   criteria_hours: number[] | null; conventions: ReturnType<typeof readConventions>;

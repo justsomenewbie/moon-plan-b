@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, getTerrainAggregate, getTerrainWindow, validateTerrainTargetWindow } from "../lib/api/client.ts";
+import { ApiError, getTerrainAggregate, getTerrainWindow, terrainSummaryRequested, validateTerrainTargetWindow } from "../lib/api/client.ts";
 import { guideObservation, nextGuideUpdate } from "../lib/guide-observation.ts";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary.ts";
 
@@ -391,7 +391,11 @@ test("live terrain URL bounds use exact fractional seconds and cap ranges at the
     const end = target?.site_id || target?.site_ids ? "2027-01-02" : "2026-02-01";
     const boundary = { ...window, from: "2026-01-01T00:00:00.000000002Z", to: end + "T00:00:00.000000002Z" };
     assert.equal(validateTerrainTargetWindow(boundary, target), boundary);
-    assert.throws(() => validateTerrainTargetWindow({ ...boundary, to: end + "T00:00:00.000000003Z" }, target), /days/);
+    const beyond = { ...boundary, to: end + "T00:00:00.000000003Z" };
+    if (target?.site_id || target?.site_ids) {
+      assert.equal(validateTerrainTargetWindow(beyond, target), beyond);
+      assert.equal(terrainSummaryRequested(beyond, target), true);
+    } else assert.throws(() => validateTerrainTargetWindow(beyond, target), /days/);
     for (const fraction of ["1", "12", "123", "1234", "12345", "123456", "1234567", "12345678", "123456789"]) {
       const request = { ...window, to: "2026-11-19T14:00:00." + fraction + "Z" };
       assert.equal(validateTerrainTargetWindow(request, target), request);
@@ -400,4 +404,39 @@ test("live terrain URL bounds use exact fractional seconds and cap ranges at the
       assert.throws(() => validateTerrainTargetWindow({ ...window, to: invalid }, target));
     }
   }
+});
+
+test("long pinned catalog requests download the exact compact response and keep job caps", async t => {
+  const from = "2026-01-01T00:00:00Z", to = "2031-01-01T00:00:00Z";
+  const request = { from, to, resolutionSeconds: 3600 };
+  const source = example();
+  const base = source.sites[0];
+  const ids = ["apollo11", "im2_athena"];
+  const sections = ["windows", "metrics", "criteria"];
+  const range = { start: from, end: to, requested_start: from, requested_end: to, step_s: 3600, n_samples: 43824 };
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async (wire: Request) => {
+    const u = new URL(wire.url), selected = u.searchParams.get("site_ids")!.split(",");
+    assert.equal(u.searchParams.get("include"), sections.join(","));
+    assert.equal(u.searchParams.get("start"), from); assert.equal(u.searchParams.get("end"), to);
+    assert.equal(u.searchParams.has("max_points"), false); assert.equal(u.searchParams.has("horizon_step_deg"), false);
+    calls++;
+    const data = { ...source, range, include: sections, criteria_hours: [24,72,168], sites: selected.map(id => ({
+      ...base, id, coverage: "missing", coverage_in_range: "missing", windows: {sun:[],earth:[],both:[]}, metrics: null, criteria: [],
+    })) };
+    return new Response(JSON.stringify(data, null, 1), {headers: {"content-type":"application/json"}});
+  });
+  for (const target of [{ run_id: source.run.run_id, site_id: ids[0] }, { run_id: source.run.run_id, site_ids: ids.join(",") }]) {
+    const result = await getTerrainWindow(request, undefined, target);
+    assert.equal(result.summaryOnly, true); assert.equal(result.sites[0].series, null);
+    const text = await result.exportFile!.text();
+    assert.equal(text,JSON.stringify(JSON.parse(text),null,1));
+    assert.equal(parseTerrainSummary(JSON.parse(text),request).range.n_samples,43824);
+    assert.equal(result.sites.map(s=>s.id).join(","),target.site_id ?? target.site_ids);
+    assert.throws(() => readTerrainObservation(new URLSearchParams({ view_site:ids[0],at:from }),result), /sample was not returned/);
+  }
+  for (const target of [{run_id:"job_j_fixture",site_id:ids[0]}, {run_id:"B2",site_ids:"apollo11,custom:-89.0000:0.0000"}]) {
+    await assert.rejects(getTerrainWindow(request, undefined, target), /366 days/);
+  }
+  assert.equal(calls,2);
 });

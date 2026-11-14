@@ -71,8 +71,8 @@ export type Job = components["schemas"]["Job"];
 export const defaultWindow: WindowRequest = isMock
   ? { from: "2026-11-14T00:00:00Z", to: "2026-11-18T00:00:00Z", resolutionSeconds: 10800 }
   : { from: "2026-11-14T00:00:00Z", to: "2026-11-21T00:00:00Z", resolutionSeconds: 3600 };
+const day = 86_400_000_000_000n;
 function checkTerrainWindow(request: WindowRequest, span: bigint, hourly: boolean) {
-  const day = 86_400_000_000_000n;
   if (hourly) {
     if (span <= 0n || span > 366n * day || request.resolutionSeconds !== 3600)
       throw new ApiError("Choose an increasing UTC range of up to 366 days for an hourly custom-site job.", 422);
@@ -120,7 +120,7 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
 export { defaultTerrainSites, type TerrainTarget } from "../terrain-target.ts";
 const terrainCriteriaHours = [24, 72, 168];
 
-export async function getTerrainAggregate(request: WindowRequest, siteIds: string, runId: string | undefined, withObservations: boolean, signal?: AbortSignal) {
+export async function getTerrainAggregate(request: WindowRequest, siteIds: string, runId: string | undefined, withObservations: boolean, signal?: AbortSignal, keepFile = withObservations) {
   const endSecond = request.to.replace(/\.\d{1,9}Z$/, "Z");
   utcMillis(endSecond, "End UTC");
   if (endSecond === "9999-12-31T23:59:59Z" && /\.\d*[1-9]\d*Z$/.test(request.to))
@@ -128,7 +128,7 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
   const sections = withObservations ? ["horizon", "series", "windows", "metrics", "criteria"] : ["windows", "metrics", "criteria"];
   let file: Blob | undefined;
   const { data, error, response } = await producer.GET("/api/v1/dataset", {
-    ...(withObservations ? { fetch: (request: Request) => boundedFetch(request, bytes => { file = new Blob([bytes], { type: "application/json" }); }) } : {}),
+    ...(keepFile ? { fetch: (request: Request) => boundedFetch(request, bytes => { file = new Blob([bytes], { type: "application/json" }); }) } : {}),
     signal, params: { query: {
     run_id: runId, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
     ...(withObservations ? { horizon_step_deg: 0.5, max_points: 10000 } : {}),
@@ -150,16 +150,33 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
   return result;
 }
 
+function catalogSummary(request: WindowRequest, target: TerrainTarget | undefined, span: bigint) {
+  if (!target || target.run_id.startsWith("job_") || (!target.site_id && !target.site_ids)) return false;
+  if (terrainSiteIds(target).split(",").some(id => id.startsWith("custom:"))) return false;
+  return span > (request.resolutionSeconds === 3600 ? 366n : 31n) * day;
+}
+
+export function terrainSummaryRequested(request: WindowRequest, target?: TerrainTarget) {
+  return catalogSummary(request, target, terrainUtcNanos(request.to, "End UTC") - terrainUtcNanos(request.from, "Start UTC"));
+}
+
 export function validateTerrainTargetWindow(request: WindowRequest, target?: TerrainTarget) {
   terrainSiteIds(target);
-  // An explicit pair may come from a year-long hourly custom-site workspace.
-  const hourly = target?.site_id !== undefined || (target?.site_ids !== undefined && request.resolutionSeconds === 3600);
   const span = terrainUtcNanos(request.to, "End UTC") - terrainUtcNanos(request.from, "Start UTC");
+  if (catalogSummary(request, target, span)) {
+    if (!Number.isInteger(request.resolutionSeconds) || request.resolutionSeconds < 3600 || request.resolutionSeconds > 2678400)
+      throw new ApiError("Choose a track sampling step between 3,600 and 2,678,400 seconds.", 422);
+    return request;
+  }
+  const hourly = target?.site_id !== undefined || (target?.site_ids !== undefined && request.resolutionSeconds === 3600);
   return checkTerrainWindow(request, span, hourly);
 }
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
   validateTerrainTargetWindow(request, target);
-  return getTerrainAggregate(request, terrainSiteIds(target), target?.run_id, true, signal);
+  const summary = terrainSummaryRequested(request, target);
+  const result = await getTerrainAggregate(request, terrainSiteIds(target), target?.run_id, !summary, signal, true);
+  if (summary) result.summaryOnly = true;
+  return result;
 }
 export function validateJobRequest(request: JobRequest) {
   validateWindow(request);

@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateTerrainTargetWindow, validateWindow } from "../lib/api/client";
+import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, terrainSummaryRequested, validateTerrainTargetWindow, validateWindow } from "../lib/api/client";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { readTerrainTarget, terrainSiteIds, writeTerrainTarget } from "../lib/terrain-target";
@@ -40,7 +40,7 @@ export default function Navigator() {
   const [terrainView, setTerrainView] = useState({ siteIndex: 0, sample: 0, link: "" });
   const observationTarget = useMemo(() => {
     const target = terrain && terrainView.link ? readTerrainTarget(new URL(terrainView.link).searchParams) : undefined;
-    return target?.site_ids ? target : undefined;
+    return target?.site_ids || target?.site_id ? target : undefined;
   }, [terrain, terrainView.link]);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +118,7 @@ export default function Navigator() {
       const at = site.series?.t[sample];
       if (at) url.searchParams.set("at", at);
       else url.searchParams.delete("at");
-      url.hash = "terrain-observations";
+      url.hash = result.summaryOnly ? "workspace" : "terrain-observations";
     }
     setTerrainView({ siteIndex, sample, link: url?.href ?? "" });
     if (updateAddress) replaceUrl(url?.href ?? window.location.pathname);
@@ -288,7 +288,9 @@ export default function Navigator() {
               throw new Error("The returned sites do not match the requested comparison.");
             // A series may retain transitions between its regular samples. The range step is the native grid.
             const spacing = Math.max(1, Math.floor(pin.request.resolutionSeconds / next.range.step_s)) * next.range.step_s;
-            if (next.sites.some(site => site.coverage_in_range !== "missing" && site.series?.step_s !== spacing))
+            const summary = terrainSummaryRequested(pin.request, pin.target);
+            if (summary) next.summaryOnly = true;
+            if (!summary && next.sites.some(site => site.coverage_in_range !== "missing" && site.series?.step_s !== spacing))
               throw new Error("The export does not contain the observation series at the shared sampling step.");
           }
           // Local recovery restores the pinned observation without offering live actions.

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { savedLandingHour } from "../../lib/planner-source";
 import { archiveB2Run, searchArchiveB2 } from "../../lib/archive-b2";
 import { getSavedPlannerDates, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
 import { useLanguage } from "../language";
@@ -38,22 +39,29 @@ function rank(fields: Fields) {
   return { ...saved, rows: rows.slice(0, 5), nEvaluated: rows.length, best, first: stamp(first), last: stamp(last), ties: rows.filter(row => row[metric[fields.priority]] === best).length };
 }
 
-export default function SavedLanding({ siteId, from, to, missionHours, priority, source }: Props & { source: "saved" | "saved-b2" }) {
+export default function SavedLanding({ siteId, from, to, missionHours, priority, source, earliest, latest, liveOptions, onFieldsChange }: Props & { source: "saved" | "saved-b2"; earliest?: string; latest?: string; liveOptions?: boolean; onFieldsChange: (form: HTMLFormElement) => void }) {
   const { locale, t } = useLanguage();
   const vi = locale === "vi";
   const b2 = source === "saved-b2";
   const sites = b2 ? archiveB2Run.sites : legacySites;
   const coverage = b2 ? { from: archiveB2Run.start, to: archiveB2Run.end } : savedPlannerWindows.pair;
   const initial: Fields = { ...example, siteId: siteId ?? example.siteId, from: from ?? example.from, to: to ?? example.to,
-    missionHours: missionHours ?? example.missionHours, priority: priority ?? example.priority };
+    missionHours: missionHours ?? example.missionHours, priority: priority ?? example.priority, earliest: earliest ?? "", latest: latest ?? "" };
   const [fields, setFields] = useState(initial);
-  const [submitted, setSubmitted] = useState<Fields | null>(initial);
+  const formRef = useRef<HTMLFormElement>(null);
+  useLayoutEffect(() => {
+    if (formRef.current) onFieldsChange(formRef.current);
+  }, [fields, onFieldsChange]);
+  const [submitted, setSubmitted] = useState<Fields | null>(liveOptions ? null : initial);
   const change = <K extends keyof Fields>(key: K, value: Fields[K]) => {
     setFields(previous => ({ ...previous, [key]: value }));
     setSubmitted(null);
   };
-  const result = useMemo(() => submitted && (b2 ? searchArchiveB2({ ...submitted,
-    earliest: submitted.earliest || undefined, latest: submitted.latest || undefined }) : rank(submitted)), [b2, submitted]);
+  const result = useMemo(() => {
+    if (!submitted) return null;
+    const limits = { ...submitted, earliest: savedLandingHour(submitted.earliest, "earliest"), latest: savedLandingHour(submitted.latest, "latest") };
+    return b2 ? searchArchiveB2({ ...limits, earliest: limits.earliest || undefined, latest: limits.latest || undefined }) : rank(limits);
+  }, [b2, submitted]);
   const validSite = sites.some(site => site.id === fields.siteId);
   const labels = { joint: t("Both visible"), sun: t("Sun visible"), earth: t("Earth visible") };
   const title = vi ? "Giờ hạ cánh nào phù hợp ở đây?" : "When should I land at this site?";
@@ -61,7 +69,10 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
   return <section aria-labelledby="saved-landing-title">
     <h2 id="saved-landing-title">{title}</h2>
     <p>{b2 ? t("Saved hourly visibility for all 23 sites") : vi ? "Dữ liệu đã lưu theo giờ cho Odysseus và Athena" : "Saved hourly observations for Odysseus and Athena"} · <TimeRange start={coverage.from} end={coverage.to} /> ({vi ? "không gồm mốc cuối" : "end exclusive"})</p>
-    <form className="request-fields print:hidden" onSubmit={event => { event.preventDefault(); setSubmitted(fields); }}>
+    {liveOptions && <p className="data-notice" role="status">{vi
+      ? "Bản lưu giữ nguyên địa điểm, giới hạn giờ và thời lượng. Tìm kiếm tại đây xếp theo giờ quan sát; điều kiện bổ sung và cách xếp hạng riêng của API chỉ áp dụng khi bạn quay lại dữ liệu trực tuyến."
+      : "Your site, landing bounds and duration are retained. The saved search ranks visibility hours. Additional live constraints and live-only ranking options apply again when you return to live data."}</p>}
+    <form ref={formRef} className="request-fields print:hidden" onSubmit={event => { event.preventDefault(); setSubmitted(fields); }}>
       <label className="field">{t("Site")}<select name="savedLandingSite" value={fields.siteId} onChange={event => change("siteId", event.target.value)}>
         {!validSite && <option value={fields.siteId}>{(b2 ? archiveB2Run : savedPlannerRun).sites.find(s => s.id === fields.siteId)?.name ?? fields.siteId}</option>}
         {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
@@ -72,11 +83,11 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
       <label className="field">{vi ? "Ưu tiên" : "Visibility priority"}<select name="savedPriority" value={fields.priority} onChange={e => change("priority", e.target.value as Priority)}>
         {(["joint", "sun", "earth"] as const).map(key => <option key={key} value={key}>{labels[key]}</option>)}
       </select></label>
-      <details className="basis-full"><summary>{vi ? "Giới hạn giờ hạ cánh (tùy chọn)" : "Limit landing hours (optional)"}</summary>
-        <p>{vi ? "Chọn giờ tròn UTC. Đặt hai mốc bằng nhau để kiểm tra một giờ hạ cánh." : "Choose whole UTC hours. Set both limits to the same hour to check one landing."}</p>
+      <details className="basis-full" open={earliest || latest ? true : undefined}><summary>{vi ? "Giới hạn giờ hạ cánh (tùy chọn)" : "Limit landing hours (optional)"}</summary>
+        <p>{vi ? "Mô hình chỉ xét các giờ tròn nằm giữa hai mốc UTC, kể cả hai đầu. Đặt hai mốc bằng cùng một giờ tròn để kiểm tra một lần hạ cánh." : "The model tests whole UTC hours inside these inclusive bounds. Set both limits to the same whole hour to check one landing."}</p>
         <div className="request-fields">
-          <label className="field">{t("Earliest landing (UTC, inclusive)")}<input type="datetime-local" step="3600" name="savedEarliest" value={fields.earliest} onChange={e => change("earliest", e.target.value)} /></label>
-          <label className="field">{t("Latest landing (UTC, inclusive)")}<input type="datetime-local" step="3600" name="savedLatest" value={fields.latest} onChange={e => change("latest", e.target.value)} /></label>
+          <label className="field">{t("Earliest landing (UTC, inclusive)")}<input type="datetime-local" step="1" name="savedEarliest" value={fields.earliest} onChange={e => change("earliest", e.target.value)} /></label>
+          <label className="field">{t("Latest landing (UTC, inclusive)")}<input type="datetime-local" step="1" name="savedLatest" value={fields.latest} onChange={e => change("latest", e.target.value)} /></label>
         </div>
       </details>
       <button className="button primary" type="submit">{t("Search landing dates")}</button>
