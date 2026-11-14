@@ -8,13 +8,13 @@ Minh’s `8b53003` added offline QA, supplied overlap bands, a polar skyplot and
 
 English defaults with optional Vietnamese, lunar resources and local-time appearance. Compare dates at one site or sites within one UTC window. The timeline and local 3D sky follow the supplied samples. The NASA reference globe and photograph retain [credits](docs/CREDITS.md); the globe locates sites and does not calculate terrain or visibility. [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) passed texture, decoding and Canvas failures with comparison-preserving retry. Earlier native Safari checks covered JSON import, both languages, 320px width and window closure.
 
-The combined revision passed 58 frontend tests, eight offline QA gates, TypeScript and both production builds. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
+The combined revision passed 66 frontend tests, eight offline QA gates, TypeScript and both production builds. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
 
 The [synthetic regression](frontend/tests/observations.test.ts) preserves 0° markers. Chromium checked the JPL [single-site](qa/evidence/odysseus-hour-gap/README.md) and [two-site](qa/evidence/odysseus-athena-hour-gap/README.md) gap cases. Removing Athena’s 02:00 UTC row broke both paths and skipped that hour on the shared slider. Odysseus retained five original markers per body.
 
 ## Backend integration
 
-At 14:46 Hanoi the bounded aggregate returned 200. The bare URL returned 422 for its point limit with a misleading range title. Both weeks matched per-site endpoints across 672 site-hours. November 14–21 returned 33/139 overlap hours and November 21–28 returned 168/168. Custom jobs preserve unknown progress, verify the submitted or hourly-rounded UTC interval, and open the single-site result pinned to its run. One live job returned 202 and reopened with three matching UTC samples. The live chart shows the supplied horizon, per-site UTC positions, model flags and three full interval bands. Shared chart links restore the site and exact UTC after reload. Summary-only imports and offline comparisons work. The science team owns physical validation, the data team owns Colab. [Reproduction](docs/BACKEND_RECONCILIATION.md#aggregate-update-on-14-november).
+Checked at 15:16 Hanoi. The bare aggregate still reports a point limit as a date-range error. Both November weeks matched per-site endpoints across 672 site-hours (33/139 then 168/168 overlap hours). Shared live chart links restore the site and UTC. Two equal date windows at one site now open from one pinned link. At Athena, 1–4 and 18–21 December returned 0 and 72 joint hours. Custom jobs verify the submitted or hourly-rounded UTC range, preserve unknown progress and reopen a pinned run. One real job returned 202 with three matching samples. Summary-only imports and offline comparisons work. Science owns physical validation and the data team owns Colab. [Reproduction](docs/BACKEND_RECONCILIATION.md#aggregate-update-on-14-november).
 
 ## Open items and ownership
 
