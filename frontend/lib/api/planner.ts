@@ -8,6 +8,11 @@ import { getTerrainDateSites } from "./terrain-dates.ts";
 export type PlannerRun = {
   runId: string; start: string; end: string; stepSeconds: number; sites: Awaited<ReturnType<typeof getTerrainDateSites>>;
 };
+export type ReadyModelRun = {
+  runId: string; label: string; provider?: string; dem?: string; isDefault: boolean;
+  start: string; end: string; stepSeconds: number; siteCount: number;
+};
+export type ReadyModelRunsPage = { runs: ReadyModelRun[]; total: number; offset: number; limit: number };
 export type PlannerPriority = "joint" | "sun" | "earth";
 export type PlannerDateRequest = { from: string; to: string; priority: PlannerPriority };
 export type PlannerRanking = { ranking: CatalogRanking; evidence: TerrainSummary; recommendedIds: string[] };
@@ -19,11 +24,56 @@ function requireMatch(ok: unknown): asserts ok {
   if (!ok) throw new ApiError("The catalog ranking and its observation evidence do not match.", 502);
 }
 
+function safeRunId(id: unknown): id is string {
+  return typeof id === "string" && /^[A-Za-z0-9_.-]{1,64}$/.test(id) && id !== "." && id !== "..";
+}
+type RunSummary = components["schemas"]["RunSummary"];
+function requireReadyRun(run: RunSummary | undefined): asserts run is RunSummary {
+  requireRun(run && run.status === "ready" && safeRunId(run.run_id) &&
+    Number.isSafeInteger(run.step_s) && run.step_s > 0 && Number.isSafeInteger(run.n_samples) && run.n_samples > 0 &&
+    typeof run.start_utc === "string" && run.start_utc.length === 20 && typeof run.end_utc === "string" && run.end_utc.length === 20 &&
+    Array.isArray(run.site_ids) && run.n_sites === run.site_ids.length && run.n_sites > 0);
+  let span: bigint;
+  try { span = terrainUtcNanos(run.end_utc) - terrainUtcNanos(run.start_utc); }
+  catch { throw new ApiError("The model run or its site catalog is unavailable.", 502); }
+  requireRun(span === BigInt(run.step_s) * BigInt(run.n_samples) * 1_000_000_000n);
+}
+
+function displayText(value: unknown) {
+  if (typeof value !== "string") return undefined;
+  const text = value.trim();
+  return text && text.length <= 256 && !/[\u0000-\u001f\u007f]/.test(text) ? text : undefined;
+}
+
+export async function getReadyModelRuns(offset: number, signal?: AbortSignal): Promise<ReadyModelRunsPage> {
+  signal?.throwIfAborted();
+  if (!Number.isSafeInteger(offset) || offset < 0) throw new ApiError("Invalid run list offset.", 400);
+  const limit = 20;
+  const { data, error, response } = await producer.GET("/api/v1/runs", {
+    signal, params: { query: { kind: "precompute", status: "ready", offset, limit } },
+  });
+  signal?.throwIfAborted();
+  if (!response.ok) throw apiError(error, response);
+  requireRun(data && data.offset === offset && data.limit === limit && Number.isSafeInteger(data.total) && data.total >= 0 &&
+    Array.isArray(data.runs) && data.runs.length === Math.min(limit, Math.max(0, data.total - offset)) &&
+    (data.default_run_id === null || safeRunId(data.default_run_id)));
+  const seen = new Set<string>();
+  const runs = data.runs.map(run => {
+    requireReadyRun(run);
+    requireRun(run.kind === "precompute" && run.is_default === (data.default_run_id === run.run_id) && !seen.has(run.run_id) &&
+      run.site_ids.every(id => typeof id === "string" && /^[A-Za-z0-9_.:-]{1,64}$/.test(id)) && new Set(run.site_ids).size === run.n_sites);
+    seen.add(run.run_id);
+    return { runId: run.run_id, label: displayText(run.label) ?? run.run_id, provider: displayText(run.provider), dem: displayText(run.dem),
+      isDefault: run.is_default, start: run.start_utc, end: run.end_utc, stepSeconds: run.step_s, siteCount: run.n_sites };
+  });
+  return { runs, total: data.total, offset, limit };
+}
+
 export async function getPlannerRun(signal?: AbortSignal, pinnedRunId?: string): Promise<PlannerRun> {
   signal?.throwIfAborted();
-  let run: components["schemas"]["RunSummary"] | undefined;
+  let run: RunSummary | undefined;
   if (pinnedRunId !== undefined) {
-    requireRun(/^[A-Za-z0-9_.-]{1,64}$/.test(pinnedRunId) && pinnedRunId !== "." && pinnedRunId !== "..");
+    requireRun(safeRunId(pinnedRunId));
     const { data, error, response } = await producer.GET("/api/v1/runs/{run_id}", { signal, params: { path: { run_id: pinnedRunId } } });
     if (!response.ok) throw apiError(error, response);
     requireRun(data?.run_id === pinnedRunId);
@@ -35,12 +85,7 @@ export async function getPlannerRun(signal?: AbortSignal, pinnedRunId?: string):
     requireRun(run && data?.default_run_id === run.run_id && run.is_default === true);
   }
   signal?.throwIfAborted();
-  requireRun(run && run.status === "ready" &&
-    typeof run.run_id === "string" && /^[A-Za-z0-9_.-]{1,64}$/.test(run.run_id) &&
-    Number.isSafeInteger(run.step_s) && run.step_s > 0 && Number.isSafeInteger(run.n_samples) && run.n_samples > 0 &&
-    typeof run.start_utc === "string" && run.start_utc.length === 20 && typeof run.end_utc === "string" && run.end_utc.length === 20 &&
-    terrainUtcNanos(run.end_utc) - terrainUtcNanos(run.start_utc) === BigInt(run.step_s) * BigInt(run.n_samples) * 1_000_000_000n &&
-    Array.isArray(run.site_ids) && run.n_sites === run.site_ids.length && run.n_sites > 0);
+  requireReadyRun(run);
   const sites = await getTerrainDateSites(run.run_id, signal);
   signal?.throwIfAborted();
   const ids = new Set(run.site_ids);

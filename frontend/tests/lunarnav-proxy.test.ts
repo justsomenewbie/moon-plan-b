@@ -15,7 +15,7 @@ const post = (body: unknown): RequestInit => ({
 test("public integrations pin the producer origin, filter headers and keep source bytes", async () => {
   const key = freshKey();
   for (const path of [
-    "runs?limit=1", "sites?run_id=B2&format=geojson", "dataset?site_ids=apollo11&step_s=3600",
+    "runs?limit=1", "runs?kind=precompute&status=ready&limit=20&offset=20", "sites?run_id=B2&format=geojson", "dataset?site_ids=apollo11&step_s=3600",
     "ranking?weights=pct_sun%3A1", "sites/custom%3A0.0000%3A1.0000/instant?t=2026-11-14T00%3A00%3A00Z",
     "sites/apollo11", "runs/B2", "runs/B2/files/sites%2Fapollo11%2Fwindows.json", "export/summary.csv?run_id=B2",
     "sites/apollo11/export/windows.csv?kinds=both", "sites/apollo11/export/series.csv?fields=both_visible",

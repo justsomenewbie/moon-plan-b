@@ -9,7 +9,7 @@ const reads: [RegExp, string[]][] = [
   [new RegExp("^sites/" + id + "/export/series\\.csv$"), ["run_id", "start", "end", "fields"]],
   [new RegExp("^sites/" + id + "/export/windows\\.csv$"), ["run_id", "start", "end", "kinds"]],
   [/^ranking$/, ["run_id", "start", "end", "weights"]],
-  [/^runs$/, ["limit"]],
+  [/^runs$/, ["kind", "status", "limit", "offset"]],
   [new RegExp("^runs/" + id + "$"), []],
   [/^export\/summary\.csv$/, ["run_id"]],
 ];

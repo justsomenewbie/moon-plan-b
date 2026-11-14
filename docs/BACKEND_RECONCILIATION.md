@@ -42,6 +42,12 @@ Two production exports cover Odysseus for November 14–21, 2026 UTC. A2 reports
 
 The astronaut previously answered a question about the imported A2 file using the default B2 catalog. The current workspace and displayed pair now scope dated planning questions to the selected evidence in the browser. The user can open the full planner separately.
 
+### Live run directory and Earth visibility
+
+The [live data directory](https://moon-plan-b.vercel.app/data#live-model-runs) queries ready precomputed runs and opens the planner with the selected run ID. The producer currently returns B2 (SPICE + PGDA, default) and A2 (Horizons + Moon Trek). Both cover 23 sites from January 1, 2026 through the exclusive end of January 1, 2031 at hourly resolution. Custom jobs use their individual result links. The saved B2 archive remains available if the directory request fails.
+
+At Athena on November 7, 2026 at 13:00 UTC, B2 returns an Earth-centre clearance of −0.030582°, `earth.visible=false` and `earth.fraction=0.479104`. The UTC lookup displays the model's centre-clearance test and the visible area of the apparent Earth disc separately. The centre flag determines the Earth and joint visibility windows. The disc percentage is geometric and does not measure signal strength. [Producer observation](https://moon-plan-b.vercel.app/api/v1/sites/im2_athena/instant?run_id=B2_spice_pgda_bruteforce_2026_2030_fix676af9d&t=2026-11-07T13%3A00%3A00Z) · [Model definitions](../lunar-navigator/docs/OUTPUT_SPEC.md#visibility-rules-lunarnavvisibilitypy)
+
 ## Aggregate update on 14 November
 
 At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The frontend requests the following bounded comparison through its same-origin proxy. Changing the requested spacing affects the displayed series. Full visibility intervals still come from the source grid.
@@ -167,7 +173,7 @@ For a first comparison, obtain the run archive or a two-site slice with `RUN_INF
 
 The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The legacy draft importer expects a flat horizon and body centers. A producer release under the existing model can use the importer directly. Terrain exports now use the producer’s separate model and summary view. For discrepant rim sites, compare identical coordinates, observer height, window and visibility definition, then compare the horizon masks in the directions actually crossed by the Sun. For example, Table 1 in Gläser et al. lists 81.0% and 86.7% maximum average illumination at two different surface locations on Shackleton rim. Its separate solar visibility column measures the time any part of the Sun is visible. Compare like quantities and heights before choosing a pipeline. [Gläser et al., Table 1 and method](https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf)
 
-## Decisions to reconcile with Chung
+## Comparison with the initial backend plan (November 14)
 
 | Area | Backend plan | Current frontend / proposed next step |
 | --- | --- | --- |
@@ -177,7 +183,7 @@ The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The
 | Results | Separate runs/sites/horizon/series/windows/compare; implicit sample times, snapped bounds and downsampling | Existing `/dataset` envelope has explicit times and boundary/coverage checks. Use the agreed aggregate GET and map the versioned response in the client; retain actual bounds, gaps, clipping, cadence and provenance. |
 | Jobs | Cached 200, `succeeded`/`cancelled`, potentially unknown percentage, result references run/site | Current draft expects 202, `done`, a percentage and an embedded dataset. Revise types, validation, polling and result loading together. Unknown progress stays indeterminate; cancellation is not success. |
 
-Frontend answers already available: Next.js 16.4.6, TypeScript 5.9.3, TanStack Query 5.107.1, openapi-fetch 0.17.0, generated OpenAPI types and MSW. Same-origin `/api/*` proxy is prepared. Hosting is still undecided.
+The former draft used a mock service. The [public frontend](https://moon-plan-b.vercel.app/plan) now uses the Vercel same-origin relay and the producer’s published wire format. The frontend and [backend implementation](../lunar-navigator/) share this repository.
 
 The aggregate schema and two bounded responses have been checked. The production client also uses the producer’s custom-site job contract.
 
@@ -187,12 +193,10 @@ Opening the form fetches `GET /api/v1/capabilities` and checks the custom-site j
 
 ## Astronaut assistant and producer API
 
-The team backend supplies terrain geometry and visibility results. Its `spice` provider computes ephemerides. The Next.js application separately handles free-text questions at `POST /guide/chat` so they do not enter the `/api/*` proxy. The server uses a fixed loopback Ollama model to classify questions. A limited response schema identifies the topic, metric and relevant rows. The application reads the reported hours, UTC bounds and source IDs from the selected comparison. Missing totals and fictional data retain their labels.
+The team backend supplies terrain geometry and visibility results. Its `spice` provider computes ephemerides. The Next.js application separately handles free-text questions at `POST /guide/chat` so they do not enter the `/api/*` proxy. Questions that require model classification use a server-configured OpenAI provider, or loopback Ollama when no OpenAI key is configured. A limited response schema identifies the topic, metric and relevant rows. The application reads the reported hours, UTC bounds and source IDs from the selected comparison. Missing totals and fictional data retain their labels.
 
-Question text and imported labels are untrusted. The model has no tools, external destinations or ability to change the page. The client displays plain text and offers explicit controls for supported navigation and comparison modes. A user must choose a suggested control. The chat has no instrument feed or landing-safety model. See the [local runtime and data flow](../frontend/README.md#ask-the-astronaut).
+Question text and imported labels are untrusted. The model has no tools, external destinations or ability to change the page. The client displays plain text and offers explicit controls for supported navigation and comparison modes. A user must choose a suggested control. The chat has no instrument feed or landing-safety model. See the [provider configuration and data flow](../frontend/README.md#ask-the-astronaut).
 
-## Open feature path
+## Current integration scope
 
-Time-based appearance and credited lunar imagery can ship independently now. Terrain views, 3D, alternate-date search, richer criteria and AI explanations remain candidates as backend resources arrive. Add them in useful, reviewable slices without removing the working comparison or confusing reference imagery with scientific results.
-
-Next action: review the aggregate response definition and one small aggregate example when available; reconcile only the fields needed for the first real comparison.
+The live aggregate, alternate-date search, time-based appearance, credited reference globe and source-scoped astronaut planning are available in the frontend. Site-specific terrain close-ups remain a proposal. Engineering estimates for batteries, panel output and antenna pointing are provisional. The data team owns Colab execution and the science team owns independent model validation.

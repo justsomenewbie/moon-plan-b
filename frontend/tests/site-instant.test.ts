@@ -60,6 +60,23 @@ test("reads the containing model sample with pinned IDs and preserves visibility
   assert.equal((await getSiteInstant(run, site, inside, 3600, time)).sample_index, undefined);
 });
 
+test("Earth disc area is independent of the producer's centre-clearance and joint visibility flags", async t => {
+  // B2 Athena at 2026-11-07T13:00:00Z has part of its disc above the terrain while the centre is below.
+  const model = "B2_spice_pgda_bruteforce_2026_2030_fix676af9d", at = "2026-11-07T13:00:00Z";
+  const actualEarth = { az_deg: 335.975514, el_deg: -1.113499, horizon_el_deg: -1.082916, clearance_deg: -0.030582, visible: false };
+  let fraction: unknown = 0.479104;
+  t.mock.method(globalThis, "fetch", async () => Response.json({ ...sample, run_id: model, site_id: "im2_athena", t: at,
+    sample_utc: at, earth: { ...actualEarth, fraction }, both_visible: false }));
+  for (const raw of [0.479104, 0, 1, -0.001, 1.001, null, undefined, "0.5"]) {
+    fraction = raw;
+    const result = await getSiteInstant(model, "im2_athena", at, 3600, at);
+    assert.equal(result.earth.visible, false);
+    assert.equal(result.both_visible, false);
+    if (typeof raw === "number" && raw >= 0 && raw <= 1) assert.equal(result.earth.fraction, raw);
+    else assert.equal(Object.hasOwn(result.earth, "fraction"), false);
+  }
+});
+
 test("preserves supplied tracking irradiance and disc fraction independently of optional-field availability", async t => {
   // Run B Athena /instant at 2026-11-15T05:00:00Z, including the partially visible solar disc.
   const source = {
