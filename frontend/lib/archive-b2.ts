@@ -1,5 +1,6 @@
 import catalog from "../public/data/run-b2/catalog.json" with { type: "json" };
 import archive from "../public/data/run-b2/visibility.json" with { type: "json" };
+import { longestJointWindow } from "./joint-window.ts";
 
 type Priority = "joint" | "sun" | "earth";
 type Request = { from: string; to: string; priority: Priority };
@@ -41,6 +42,15 @@ function observed(edges: number[], start: number, end: number) {
     longest = Math.max(longest, overlap);
   }
   return { hours, longest };
+}
+
+export function savedB2JointWindows(from: string, to: string) {
+  if (!bounds({ from, to, priority: "joint" })) return null;
+  return archiveB2Run.sites.map(({ id, name }) => {
+    const edges = masks[id].both, windows = [];
+    for (let i = 0; i < edges.length; i += 2) windows.push({ start: iso(edges[i]), end: iso(edges[i + 1]) });
+    return { id, name, window: longestJointWindow(windows, from, to) };
+  });
 }
 
 // Counts and ties are hourly model samples. Each window is [start,end) in UTC.

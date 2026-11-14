@@ -1,5 +1,6 @@
 import catalog from "../public/data/run-b/catalog.json" with { type: "json" };
 import data from "./saved-planner-data.json" with { type: "json" };
+import { longestJointWindow } from "./joint-window.ts";
 
 type Priority = "joint" | "sun" | "earth";
 type Request = { from: string; to: string; priority: Priority };
@@ -31,6 +32,14 @@ function bounds(request: Request) {
 const field = { joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const;
 const format = (ms: number) => new Date(ms).toISOString().replace(".000Z", "Z");
 const ids = Object.keys(pair.intervals) as PairId[];
+export function savedJointWindows(from: string, to: string) {
+  const range = bounds({ from, to, priority: "joint" });
+  if (!range || range.start < Date.parse(pair.from) || range.end > Date.parse(pair.to)) return null;
+  return ids.map(id => ({
+    id, name: savedPlannerRun.sites.find(site => site.id === id)!.name,
+    window: longestJointWindow(pair.intervals[id].both.map(([start, end]) => ({ start, end })), from, to),
+  }));
+}
 const spans = new Map(ids.map(id => [id, Object.fromEntries(Object.entries(pair.intervals[id]).map(
   ([metric, list]) => [metric, list.map(([a, b]) => [Date.parse(a), Date.parse(b)])],
 )) as Record<"sun" | "earth" | "both", number[][]>]));
