@@ -23,6 +23,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .brand { font-size: 2rem; font-weight: 650; letter-spacing: -.04em; text-decoration: none; white-space: nowrap; }
 .app-header nav { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: flex-end; }
 .app-header nav a { text-decoration: none; font-size: 1rem; }
+.home-menu { display: none; }
 .active-link { color: var(--sun); }
 .button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 9px 18px; border: 1px solid var(--text); border-radius: 4px; font-size: .95rem; font-weight: 600; }
 .outline { background: transparent; color: var(--text); }
@@ -287,6 +288,11 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 @media (max-width: 1100px) { .workspace { grid-template-columns: 240px minmax(0, 1fr); gap: 22px; } .controls { padding-right: 20px; } .detail-row { grid-template-columns: 1fr; } .sky { border-right: 0; padding: 0 0 20px; border-bottom: 1px solid var(--line); } .sky svg { max-width: 420px; } }
 @media (max-width: 760px) {
   .app-shell { padding: 0 20px; } .app-header { align-items: flex-start; padding: 18px 0; gap: 16px; flex-direction: column; }
+  .home-header { flex-flow: row wrap; align-items: center; }
+  .home-menu { display: inline-flex; align-items: center; gap: .6em; min-height: 44px; padding: 0 .75rem; border: 1px solid var(--line); border-radius: 4px; }
+  .home-menu::after { content: ""; width: .5em; height: .5em; border: solid currentColor; border-width: 0 1px 1px 0; transform: translateY(-.13em) rotate(45deg); }
+  .home-menu[aria-expanded="true"]::after { transform: translateY(.13em) rotate(225deg); }
+  .home-menu[aria-expanded="false"] + nav { display: none; }
   .brand { font-size: 1.6rem; } .app-header nav { width: 100%; gap: 18px; flex-wrap: wrap; justify-content: flex-start; } .app-header nav a { font-size: .86rem; } .app-header nav .button { margin-left: auto; font-size: .85rem; padding: 7px 12px; }
   .intro { grid-template-columns: 1fr; gap: 32px; padding: 32px 0; } .lunar-frame { max-width: 260px; } .resource-links { grid-template-columns: 1fr; } .workspace { display: block; padding-top: 24px; } .controls { border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 24px; margin-bottom: 28px; }
   .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; } .mode-switch, .control-actions, .share-field, .controls > p, .controls > .text-button { grid-column: 1 / -1; }

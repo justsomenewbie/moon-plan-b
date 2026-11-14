@@ -178,6 +178,7 @@ export const vietnamese: Record<string, string> = {
   "Moon Plan B — Sun & Earth comparison": "Moon Plan B — So sánh Mặt Trời và Trái Đất",
   "Skip to comparison": "Chuyển đến phần so sánh",
   "Main": "Điều hướng chính",
+  "Menu": "Danh mục",
   "Compare": "So sánh",
   "Sources & method": "Nguồn và phương pháp",
   "Switch to dark appearance": "Chuyển sang giao diện tối",

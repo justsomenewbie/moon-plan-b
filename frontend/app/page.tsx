@@ -54,7 +54,7 @@ export default function Home() {
         </ol>
         <a href="/compare#observed-week">{t("Try the saved example")}</a>
       </section>
-      <section id="team" className="home-team" aria-labelledby="team-title">
+      <section id="team" className="home-team" tabIndex={-1} aria-labelledby="team-title">
         <h2 id="team-title">{t("Team members")}</h2>
         <ul>{["Nguyen Trong Chung", "Nguyen Thuy Trang", "Chu Hoang Lam", "Man Gia Minh", "Nguyen Nhu Son", "Nguyen Phuong Thao"].map(name => <li key={name}>{name}</li>)}</ul>
       </section>
