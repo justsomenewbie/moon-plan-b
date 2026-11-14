@@ -36,6 +36,12 @@ On run B2, November 14–21, 2026 UTC contains 168 hourly samples and 145 admiss
 
 These values were independently counted from the public producer aggregate windows and each site's original windows file. All 23 individual file hashes match the producer manifest. The app ranks complete site windows for the requested duration. The score counts visible time within one contiguous visit. Visibility may be interrupted during that visit. The earlier B archive identifies the sites it can evaluate for the selected range. [Native B2 archive](B2_VISIBILITY_ARCHIVE.md)
 
+### Planning from an imported run
+
+Two production exports cover Odysseus for November 14–21, 2026 UTC. A2 reports 42 hours of simultaneous Sun and Earth visibility, from November 19 at 06:00 until November 21 at 00:00. B2 reports 47 hours starting November 19 at 01:00. Both report 168 hours of Earth visibility. Use the [A2 aggregate](https://moon-plan-b.vercel.app/api/v1/dataset?run_id=A2_horizons_trek_raymarch_2026_2030_fix676af9d&site_ids=im1_odysseus&start=2026-11-14T00%3A00%3A00Z&end=2026-11-21T00%3A00%3A00Z&include=windows%2Cmetrics%2Ccriteria&criteria_hours=24%2C72%2C168) and the [equivalent B2 request](https://moon-plan-b.vercel.app/api/v1/dataset?run_id=B2_spice_pgda_bruteforce_2026_2030_fix676af9d&site_ids=im1_odysseus&start=2026-11-14T00%3A00%3A00Z&end=2026-11-21T00%3A00%3A00Z&include=windows%2Cmetrics%2Ccriteria&criteria_hours=24%2C72%2C168) to reproduce the comparison.
+
+The astronaut previously answered a question about the imported A2 file using the default B2 catalog. The current workspace and displayed pair now scope dated planning questions to the selected evidence in the browser. The user can open the full planner separately.
+
 ## Aggregate update on 14 November
 
 At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The frontend requests the following bounded comparison through its same-origin proxy. Changing the requested spacing affects the displayed series. Full visibility intervals still come from the source grid.
