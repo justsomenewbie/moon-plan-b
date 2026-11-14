@@ -42,6 +42,13 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .lunar-frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; background: #050609; touch-action: pan-y pinch-zoom; cursor: grab; }
 .lunar-frame canvas:active { cursor: grabbing; }
 .lunar-figure figcaption > button { display: block; margin: 0 auto 8px; font-size: .82rem; }
+.globe-marker { position: absolute; width: 14px; height: 14px; border: 2px solid #ffde83; border-radius: 50%; box-shadow: 0 0 0 1px #171717, inset 0 0 0 1px #171717; transform: translate(-50%, -50%); pointer-events: none; }
+.globe-locator { margin: 12px auto 0; text-align: start; font-size: .9rem; overflow-wrap: anywhere; }
+.globe-locator summary { color: var(--text); padding: 10px 0; }
+.globe-locator label { display: block; }
+.globe-locator select { width: 100%; min-height: 44px; padding: 6px; border: 1px solid var(--line); color: var(--text); background: var(--surface); }
+.globe-place { margin-top: 8px; }
+.globe-place button { margin: 8px 0; }
 .globe-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
 .globe-controls button { min-width: 44px; min-height: 44px; padding: 0 8px; font-size: .93rem; border: 1px solid var(--line); border-radius: 4px; }
 .globe-center { margin: 6px auto; font-variant-numeric: tabular-nums; }

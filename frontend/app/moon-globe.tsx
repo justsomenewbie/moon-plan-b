@@ -1,23 +1,55 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import { drawGlobe, globeCenter } from "../lib/moon-globe";
+import { comparisonLocation, diskPosition, missionSites } from "../lib/globe-sites";
+import type { GlobeSite, MapPoint } from "../lib/globe-sites";
+import type { Dataset } from "../lib/dataset";
 import { useLanguage } from "./language";
 
 const origin = { longitude: 0, latitude: 0 };
 const coordinates = (c: typeof origin) =>
   `${Math.abs(c.latitude).toFixed(0)}°${c.latitude < 0 ? "S" : "N"} · ${Math.abs(c.longitude).toFixed(0)}°${c.longitude < 0 ? "W" : "E"}`;
 
-export default function MoonGlobe() {
+type GlobeProps = {
+  primary?: GlobeSite;
+  alternative?: GlobeSite;
+  evidence?: Dataset["evidence"];
+  showSky: (alternative: boolean) => void;
+};
+
+type Target = {
+  key: string;
+  identity: GlobeSite | typeof missionSites[number];
+  name: string;
+  location: { point: MapPoint } | { reason: string };
+  source?: string;
+};
+
+export default function MoonGlobe({ primary, alternative, evidence, showSky }: GlobeProps) {
   const { t } = useLanguage();
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [center, setCenter] = useState(origin);
   const [announced, setAnnounced] = useState<typeof origin | null>(null);
+  const [chosen, setChosen] = useState<Pick<Target, "key" | "identity"> | null>(null);
+  const targets: Target[] = [];
+  if (evidence) {
+    for (const [key, site] of [["Primary", primary], ["Alternative", alternative]] as const) {
+      if (site) targets.push({ key, identity: site, name: site.name, location: comparisonLocation(site, evidence) });
+    }
+  }
+  for (const mission of missionSites) {
+    targets.push({ key: mission.name, identity: mission, name: mission.name, location: { point: mission }, source: mission.source });
+  }
+  const target = targets.find(item => item.key === chosen?.key && item.identity === chosen.identity);
+  const point = target && "point" in target.location ? target.location.point : undefined;
+  const marker = point && ready ? diskPosition(point, center) : null;
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<{ context: CanvasRenderingContext2D; texture: ImageData; frame: ImageData } | null>(null);
   const drag = useRef<{ id: number; x: number; y: number; scale: number; center: typeof origin } | null>(null);
 
+  const currentCenter = useEffectEvent(() => center);
   useEffect(() => { setEnabled(true); }, []);
 
   useEffect(() => {
@@ -42,7 +74,8 @@ export default function MoonGlobe() {
         source.drawImage(map, 0, 0);
         const texture = source.getImageData(0, 0, buffer.width, buffer.height);
         const frame = context.createImageData(context.canvas.width, context.canvas.height);
-        drawGlobe(texture, frame, 0, 0);
+        const initial = currentCenter();
+        drawGlobe(texture, frame, initial.longitude, initial.latitude);
         context.putImageData(frame, 0, 0);
         renderer.current = { context, texture, frame };
         setReady(true);
@@ -84,16 +117,22 @@ export default function MoonGlobe() {
     setCenter(next); setAnnounced(next);
   }
 
-  return <figure className="lunar-figure">
+  function locate(item: Target | undefined) {
+    setChosen(item ? { key: item.key, identity: item.identity } : null);
+    if (item && "point" in item.location) selectCenter(item.location.point);
+  }
+
+  return <figure className="lunar-figure" id="lunar-reference" tabIndex={-1}>
     <div className="lunar-frame">
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
         onPointerDown={startDrag} onPointerMove={moveDrag}
         onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} />}
+      {marker && <span className="globe-marker" aria-hidden="true" style={{ left: `${(1 + marker.x) * 50}%`, top: `${(1 + marker.y) * 50}%` }} />}
     </div>
     <figcaption>
       <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
-        setCenter(origin); setAnnounced(null); setReady(false); setFailed(false); setEnabled(!enabled);
+        setCenter(point ?? origin); setAnnounced(null); setReady(false); setFailed(false); setEnabled(!enabled);
       }}>{t(failed ? "Retry globe" : enabled ? "Return to photograph" : "Rotate the Moon")}</button>
       {ready && <div className="globe-controls" role="group" aria-label={t("Rotate the lunar globe")}>
         {([["←", "Look west", -30, 0], ["→", "Look east", 30, 0], ["↑", "Look north", 0, 30], ["↓", "Look south", 0, -30]] as const).map(([icon, label, dx, dy]) =>
@@ -105,6 +144,24 @@ export default function MoonGlobe() {
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>
       {ready ? <><a href="https://svs.gsfc.nasa.gov/4720/" target="_blank" rel="noreferrer">{t("LRO surface map")} · NASA’s Scientific Visualization Studio</a><br />{t("Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</> :
         <><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</>}
+      <details className="globe-locator">
+        <summary>{t("Locate a site")}</summary>
+        <label htmlFor="globe-site">{t("Location on the reference globe")}</label>
+        <select id="globe-site" value={target?.key ?? ""} onChange={event => locate(targets.find(item => item.key === event.target.value))}>
+          <option value="">{t("Choose a location")}</option>
+          {primary && <optgroup label={t("Current comparison")}>{targets.filter(item => !item.source).map(item =>
+            <option key={item.key} value={item.key}>{t(item.key)} · {item.name}</option>)}</optgroup>}
+          <optgroup label={t("Mission references")}>{missionSites.map(mission => <option key={mission.name}>{mission.name}</option>)}</optgroup>
+        </select>
+        {target && <div className="globe-place">
+          {"reason" in target.location ? <p>{t(target.location.reason)}</p> : <p>{t("Reported location")} · {target.location.point.latitude}° {t("latitude")} · {target.location.point.longitude}° {t("east longitude")}</p>}
+          {point && ready && <><button type="button" className="button outline" onClick={() => selectCenter(point)}>{t("Center on site")}</button>
+            <p>{t(marker ? "The ring marks the approximate site on the reference image." : "This site is outside the visible face.")}</p></>}
+          {target.source ? <a href={target.source} target="_blank" rel="noreferrer">{t("Landing site source")} ↗</a> :
+            <><a href="#local-sky" onClick={() => showSky(target.key === "Alternative")}>{t("Open this observation in 3D")}</a>{" · "}
+              <a href="#sources">{t("Sources & method")}</a></>}
+        </div>}
+      </details>
     </figcaption>
   </figure>;
 }

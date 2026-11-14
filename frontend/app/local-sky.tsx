@@ -27,9 +27,11 @@ function arc(orbit: number, at: (angle: number) => [number, number], end: number
   return points.join(" ");
 }
 
-export default function LocalSky({ data, a, b, offset }: { data: Dataset; a: Scenario; b?: Scenario; offset?: number }) {
+export default function LocalSky({ data, a, b, offset, alternative, setAlternative }: {
+  data: Dataset; a: Scenario; b?: Scenario; offset?: number;
+  alternative: boolean; setAlternative: (useAlternative: boolean) => void;
+}) {
   const { t } = useLanguage();
-  const [alternative, setAlternative] = useState(false);
   const [orbit, setOrbit] = useState(0);
   const grid = useMemo(() => ({
     meridians: meridians.map(az => ({

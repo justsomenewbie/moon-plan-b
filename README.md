@@ -29,6 +29,8 @@ Browser Back/Forward restores the comparison encoded in a shared URL, including 
 
 The opening photograph gives way to the rotatable lunar globe as soon as the surface map loads. **Return to photograph** switches back. Drag to turn the globe or use the four direction buttons and **Reset view**. Its center coordinates describe the view. The surface uses a fixed light and NASA’s photographic color map. [NASA CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/)
 
+Use **Locate a site** under the globe to find the published landing regions of Odysseus and Athena and open the corresponding source. These mission references are available without importing data. Select **Primary** or **Alternative** to open that observation in the local sky. The globe can also mark a sourced comparison site when its declared coordinate convention matches the map. [Coordinate handling](docs/METHOD.md)
+
 **Compare sites** starts with a published UTC window. Choose a joint visibility threshold to see every site’s supplied assessment, its longest joint interval when available, and the original explanation. Catalog sites without a result for those exact bounds appear separately. The primary and alternative selectors control the two tracks in the chart.
 
 Choose **Explore the 3D sky** to see the directions supplied for one site and UTC sample. Switch between primary and alternative observations, rotate the sky around the site, or move the timeline. A dashed ray points below the ideal horizon. The 2D tracks and sample table remain available for reading the values.

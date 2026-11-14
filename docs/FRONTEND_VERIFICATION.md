@@ -208,3 +208,9 @@ The local sky opens from the hero link. Pointer drag and keyboard orbit changed 
 Local evidence: `local-sky-desktop.png` and `local-sky-vi-320.png` in the existing task evidence directory. These checks used the frontend fixture. The science and backend team owns validation of its actual data.
 
 A separate browser run held the aggregate GET for a 7,200-second step. An edit back to 10,800 seconds retained its value and focus on completion. The shared result still used 7,200 and the next request sent 10,800. While a local file read was delayed, stale recovery controls were hidden and the requested release opened when the read finished. Requests used a controlled local response.
+
+## Globe site locator
+
+On the production frontend the two mission references displayed their reported coordinates and source links. Camera rotation carried the marker out of view and centering restored it. A forced map failure preserved the photograph. Selecting a different mission while Retry loaded centered the latest selection on recovery. Opening the alternative from the locator focused the 3D sky and retained the selected UTC sample and comparison.
+
+The default demo, a synthetic file with coordinates, an unsupported frame and a compatible zero coordinate were exercised independently. Replacing the release with one reusing the same site IDs cleared the old marker and showed the new coordinates and name. A rejected import preserved the accepted site. Keyboard activation, reduced motion and Vietnamese at 320 CSS pixels passed. All imported payloads in these checks were local QA inputs. The screenshot is `globe-locator-athena.png` in the existing task evidence directory.
