@@ -88,7 +88,7 @@ export function answerWorkspacePlanning(plan: PlanningIntent, locale: "en" | "vi
   if (plan.longestJoint) {
     entries.push(describeLongestJoint(complete.map(site => ({
       name: site.name, window: longestJointWindow(site.windows.both, from, to),
-    })), locale));
+    })), locale, { from, to, stepSeconds: retained.range.step_s }));
     return scoped(entries.join("\n"));
   }
   const result = rankRetainedMissionWindows(retained.run, retained.range, sites, { from, to, priority: plan.priority, missionHours: duration });

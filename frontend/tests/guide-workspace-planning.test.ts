@@ -49,7 +49,7 @@ test("the workspace ranks uninterrupted joint intervals within the retained site
   const plan = planningIntent(question)!;
   assert.equal(plan.longestJoint, true);
   const namedIntervals = (entries: number[][]) => ({ sun: spans(entries), earth: spans([[0,72]]), both: spans(entries) });
-  const retained = { ...terrain, sites: [
+  const retained = { ...terrain, range: { ...range, step_s: 1800, n_samples: 144 }, sites: [
     { ...terrain.sites[0], windows: namedIntervals([[20,34],[36,46]]) },
     { ...terrain.sites[1], windows: namedIntervals([[36,52]]) },
   ] };
@@ -59,13 +59,15 @@ test("the workspace ranks uninterrupted joint intervals within the retained site
   assert.match(answer.answer, /2\/2/);
   assert.match(answer.answer, /Athena/);
   assert.ok(answer.answer.includes(stamp(36)) && answer.answer.includes(stamp(48)));
-  assert.doesNotMatch(answer.answer, /Odysseus|23 sites/);
+  assert.match(answer.answer, /Visibility starts ±30 min/);
+  assert.doesNotMatch(answer.answer, /Odysseus|23 sites|Visibility ends/);
   assert.ok(answer.answer.includes(source));
 
   const withoutAthena = { ...retained, sites: [retained.sites[0], { ...retained.sites[1], coverage_in_range: "partial" as const }] };
   const partial = answerWorkspacePlanning(plan, "vi", context, withoutAthena).answer;
   assert.match(partial, /1\/2/);
   assert.match(partial, /Dữ liệu chưa đầy đủ · Athena/);
+  assert.match(partial, /Kết thúc cùng thấy ±30 min/);
   assert.ok(partial.includes(stamp(24)) && partial.includes(stamp(34)));
 
   const pairStates = [
@@ -79,9 +81,20 @@ test("the workspace ranks uninterrupted joint intervals within the retained site
   assert.match(tied, /2\/2/);
   assert.ok(tied.includes("Athena") && tied.includes("Odysseus"));
   assert.ok(tied.includes(stamp(24)) && tied.includes(stamp(48)));
+  assert.doesNotMatch(tied, /±/); // Visibility continues past both limits of this question.
+  const wider = planningIntent(question.replace("2026-11-15 to 2026-11-16", "2026-11-14 to 2026-11-17"))!;
+  const transitions = answerWorkspacePlanning(wider, "en", context, pair).answer;
+  for (const name of ["Athena", "Odysseus"]) {
+    assert.ok(transitions.includes(name + " · 48 h · " + stamp(12) + " → " + stamp(60) + " · Visibility starts and ends ±1 h"));
+  }
+  const clippedWindows = { ...namedIntervals([[30, 42]]), both: [{ ...spans([[30, 42]])[0], clipped_end: true }] };
+  const clipped = { ...retained, sites: [{ ...retained.sites[0], windows: clippedWindows }] };
+  const clippedAnswer = answerWorkspacePlanning(plan, "en", { ...context, rows: [context.rows[0]] }, clipped).answer;
+  assert.match(clippedAnswer, /Visibility starts ±30 min/);
+  assert.doesNotMatch(clippedAnswer, /ends/);
   const noIntervals = answerWorkspacePlanning(plan, "en", { ...context, kind:"scenario" }).answer;
   assert.match(noIntervals, /requires the site's joint intervals/);
-  assert.doesNotMatch(noIntervals, /20 h|12 h|Athena|Odysseus/);
+  assert.doesNotMatch(noIntervals, /20 h|12 h|Athena|Odysseus|±/);
 });
 
 test("local date and site searches return the earliest tied start for each equally scoring site in the selected scope", () => {

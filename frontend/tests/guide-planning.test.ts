@@ -24,11 +24,14 @@ test("the guide ranks uninterrupted visibility from intervals and keeps the winn
   const q = planningIntent("Which site has the longest uninterrupted visibility of the Sun and Earth from 2026-11-28 to 2026-12-12?")!;
   const saved = await answerPlanning(q, "en", signal, api, "saved-b2");
   assert.match(saved.answer, /23\/23[\s\S]*Odysseus[^\n]*92 h · 2026-11-28T00:00:00Z → 2026-12-01T20:00:00Z/);
-  assert.doesNotMatch(saved.answer, /Malapert/);
+  assert.match(saved.answer, /Visibility ends ±1 h/);
+  assert.doesNotMatch(saved.answer, /Malapert|Visibility starts/);
   assert.equal(new URL(saved.href, "https://example.org").searchParams.get("order"), "longest");
   const old = await answerPlanning(q, "vi", signal, api, "saved");
   assert.match(old.answer, /Bản lưu này không có các khoảng/);
-  assert.doesNotMatch(old.answer, /92 h|B2_/);
+  assert.doesNotMatch(old.answer, /92 h|B2_|±/);
+  const oldWeek = planningIntent("Địa điểm nào cùng thấy Mặt Trời và Trái Đất liên tục lâu nhất từ 2026-11-14 đến 2026-11-21?")!;
+  assert.match((await answerPlanning(oldWeek, "vi", signal, api, "saved")).answer, /Athena[^\n]*Bắt đầu cùng thấy ±1 h/);
 
   const s = "2026-11-28T00:00:00Z", mid = "2026-11-28T01:00:00Z", e = "2026-11-28T03:00:00Z";
   const complete = { coverage: "complete", coverage_in_range: "complete" };
@@ -41,9 +44,9 @@ test("the guide ranks uninterrupted visibility from intervals and keeps the winn
       { ...complete, id: "apollo11", name: "Apollo 11", windows: { both: [] } },
       { ...complete, coverage: "partial", id: "apollo15", name: "Apollo 15", windows: { both: [{ start: s, end: bounds.to }] } },
     ] } as unknown as PlannerRanking["evidence"];
-  } }, run);
+  } }, { ...run, stepSeconds: 1800 });
   assert.deepEqual(hits, [run.runId]);
-  assert.match(result.answer, /2\/3[\s\S]*Athena · 3 h/);
+  assert.match(result.answer, /2\/3[\s\S]*Athena · 3 h[^\n]*Visibility ends ±30 min/);
   assert.doesNotMatch(result.answer, /Apollo 15|92 h/);
   const failed = await answerPlanning(q, "en", signal, api, run);
   assert.match(failed.answer, /could not verify[\s\S]*fixture-run/);

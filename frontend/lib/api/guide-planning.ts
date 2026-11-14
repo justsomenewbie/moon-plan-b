@@ -56,14 +56,15 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   const noVisibility = tr("No evaluated option provides any hours of the requested visibility.", "Không có lựa chọn nào cho giờ quan sát đáp ứng tiêu chí này.");
   const key = ({ joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const)[plan.priority];
   const flatNote = translate(locale, "Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.");
-  function continuousReply(rows: { id: string; name: string; window: ReturnType<typeof longestJointWindow> }[], sites: PlannerRun["sites"], source: string) {
+  function continuousReply(rows: { id: string; name: string; window: ReturnType<typeof longestJointWindow> }[], run: Pick<PlannerRun, "sites" | "stepSeconds">, source: string) {
+    const { sites, stepSeconds } = run;
     const matches = matchSites(plan.siteText, sites);
     const eligible = rows.filter(row => !matches.length || matches.some(site => site.id === row.id));
     const count = eligible.length + "/" + (matches.length || sites.length);
     const scope = tr("Sites with complete interval coverage", "Địa điểm có đủ dữ liệu khoảng quan sát") + " · " + count;
     const longest = Math.max(0, ...eligible.map(row => row.window?.hours ?? 0));
     const flat = eligible.filter(row => longest > 0 && row.window?.hours === longest && usesSmoothSphere(sites.find(site => site.id === row.id)));
-    return reply([period, scope, describeLongestJoint(eligible, locale), ...flat.map(row => row.name + " — " + flatNote)].join("\n") + source);
+    return reply([period, scope, describeLongestJoint(eligible, locale, { from, to, stepSeconds }), ...flat.map(row => row.name + " — " + flatNote)].join("\n") + source);
   }
   function outsideRun(run: Pick<PlannerRun, "start" | "end" | "runId">) {
     return reply(tr("The requested dates are outside the model run. Available UTC range: ", "Ngày yêu cầu nằm ngoài phạm vi mô hình. Khoảng UTC có dữ liệu: ") + run.start + " → " + run.end + tr(" (exclusive)", " (không gồm mốc cuối)") + " · " + run.runId);
@@ -96,7 +97,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       const rows = legacy ? savedJointWindows(from, to) : savedB2JointWindows(from, to);
       if (!rows) return reply(tr("This archive has no joint visibility intervals covering the selected dates.", "Bản lưu này không có các khoảng cùng thấy Mặt Trời và Trái Đất bao phủ những ngày đã chọn.") + savedSource);
       const scope = legacy ? "\n" + tr("The earlier archive retains joint intervals only for Odysseus and Athena.", "Bản lưu trước chỉ có các khoảng quan sát đồng thời của Odysseus và Athena.") : "";
-      return continuousReply(rows, run.sites, scope + savedSource);
+      return continuousReply(rows, run, scope + savedSource);
     }
     if (matches.length > 1) return { ...reply(tr("Which catalog site do you mean? ", "Bạn muốn chọn địa điểm nào? ") + matches.map(s => s.name).join(" · ")), siteChoices: matches, choiceSource: fallback };
     if (plan.mode === "sites" && !matches.length && plan.missionHours !== null) {
@@ -149,7 +150,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       const evidence = await api.windows(run, { from, to, priority: "joint" }, signal);
       const rows = evidence.sites.filter(s => s.coverage === "complete" && s.coverage_in_range === "complete")
         .map(s => ({ id: s.id, name: s.name, window: longestJointWindow(s.windows.both, from, to) }));
-      return continuousReply(rows, run.sites, source);
+      return continuousReply(rows, run, source);
     }
     if (plan.mode === "sites" && !matches.length) {
       if (plan.missionHours !== null) {
