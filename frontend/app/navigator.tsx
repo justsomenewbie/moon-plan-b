@@ -42,10 +42,6 @@ export default function Navigator() {
   const [replayPair, setReplayPair] = useState(false);
   const [displayedPair, setDisplayedPair] = useState<DisplayedPair | null>(null);
   const [terrainView, setTerrainView] = useState({ siteIndex: 0, sample: 0, link: "" });
-  const observationTarget = useMemo(() => {
-    const target = terrain && terrainView.link ? readTerrainTarget(new URL(terrainView.link).searchParams) : undefined;
-    return target?.site_ids || target?.site_id ? target : undefined;
-  }, [terrain, terrainView.link]);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [loading, setLoading] = useState(true);
   const [importCompletion, setImportCompletion] = useState(0);
@@ -54,6 +50,8 @@ export default function Navigator() {
   const [loadLimit, setLoadLimit] = useState<ApiError | null>(null);
   const loadWait = useRetryCountdown(loadLimit ?? "");
   const [retryLoad, setRetryLoad] = useState<{ request: WindowRequest; jobId: string; target?: TerrainTarget; reset: boolean } | null>(null);
+  const observationTarget = useMemo(() => retryLoad?.target ?? (terrain && terrainView.link
+    ? readTerrainTarget(new URL(terrainView.link).searchParams) : undefined), [retryLoad, terrain, terrainView.link]);
   const [message, setMessage] = useState<Message>("");
   const [shareUrl, setShareUrl] = useState("");
   const [savedResult, setSavedResult] = useState(() => savedResultFromUrl(new URLSearchParams()));
@@ -214,6 +212,7 @@ export default function Navigator() {
       } else if (version !== null && !isMock) {
         throw new Error(needsRelease);
       } else {
+        setRequestWindow(request);
         void loadDemo(false, request, jobId, target);
         // Browser history owns focus/scroll; a request must not move it to results.
         loadFocus.current = null;

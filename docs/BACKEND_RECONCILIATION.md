@@ -222,6 +222,12 @@ For Athena on November 7–14, 2026, the B2 producer reports Earth visible from 
 
 At 12:30 UTC on November 7, `/instant` returned Earthset in 0.5 hours at 13:00, measured from the requested time. At 23:30 UTC on December 31, 2030, the same site’s Earthset had `at: null` and `lower_bound: true`. The remaining 0.5 hours describe time to the end of B2 coverage. [Producer timing rules](../lunar-navigator/docs/vi/FE_HANDOFF_API.md#4-quy-ước-chung).
 
+## Keeping the model when changing UTC dates
+
+The [comparison window check](../qa/check_observation_run.mjs) exercises a link that specifies a run and uses the default Odysseus and Athena pair. On November 15, reloading the unchanged November 14–21 UTC window on the previous frontend dropped the A2 run ID, so the producer returned B2. The revised form sends the resolved run ID on subsequent requests, including after changing dates. The response, Sources panel and shared observation link agree. Joint visibility for that week stays at 42 h and 140 h on A2, and 47 h and 139 h on B2 (Odysseus and Athena respectively).
+
+For November 18–20 UTC the producer returned 18 h and 48 h on A2, and 23 h and 48 h on B2. After a simulated first-load 404 for an A2 link covering November 18–21 UTC, the form kept both requested dates. Editing only the end to November 20 sent the A2 run ID and returned the same 18 h and 48 h. The successful requests used the live producer. [Producer’s run and cache rules](https://github.com/justsomenewbie/moon-plan-b/blob/45c188b656c3e3efffa6808198c194bc6a9943e2/lunar-navigator/docs/vi/FE_HANDOFF_API.md#L1013)
+
 ## Current integration scope
 
 On November 15 the authenticated producer OpenAPI matched the [checked-in full contract](../lunar-navigator/backend/contract/openapi.json) across 29 paths. The [frontend contract check](../qa/check_producer_openapi.py) matched all 17 consumed operations and 73 referenced components. The [public relay document](https://moon-plan-b.vercel.app/api-contract/lunarnav.json) matched the generated public subset of 13 operations and 56 schemas. The [integration handoff](../lunar-navigator/docs/vi/FE_HANDOFF_API.md) describes the deployed API. The [original backend plan](../lunar-navigator/docs/vi/WEB_BACKEND_PLAN.md) records the earlier design.
