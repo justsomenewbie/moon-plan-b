@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw/http";
 import { handlers } from "../lib/api/mock-handlers.ts";
-import { ApiError, apiError, createJob, defaultWindow, getDataset, getJob, jobPollInterval, retryQuery, validateJob, validateWindow, windowFromInputs } from "../lib/api/client.ts";
+import { ApiError, apiError, createJob, defaultWindow, getDataset, getJob, getTerrainWindow, jobPollInterval, retryQuery, validateJob, validateTerrainWindow, validateWindow, windowFromInputs } from "../lib/api/client.ts";
 const server = setupServer(...handlers);
 const fixture = JSON.parse(readFileSync(new URL("../public/data/demo.json", import.meta.url), "utf8"));
 const body = { ...defaultWindow, location: { latitudeDeg: 0, longitudeEastDeg: 0, elevationKm: 0, frame: "SYNTHETIC-FIXTURE", elevationDatum: "SYNTHETIC-FIXTURE" } };
@@ -67,4 +67,29 @@ test("window and job boundaries reject invalid or contradictory data", () => {
   assert.equal(retryQuery(2, new ApiError("temporary", 503)), false);
   assert.equal(retryQuery(0, new ApiError("invalid", 422)), false);
   assert.equal(apiError("<html>private stack</html>", 500).message.includes("private"), false);
+});
+
+
+test("terrain chart requests preserve the UTC range, drawing step, and versioned site", async t => {
+  const request = { from: "2026-11-14T00:00:00Z", to: "2026-11-21T00:00:00Z", resolutionSeconds: 21600 };
+  assert.throws(() => validateTerrainWindow({ ...request, resolutionSeconds: 3599 }), /sampling step/);
+  assert.throws(() => validateTerrainWindow({ ...request, resolutionSeconds: 2678401 }), /sampling step/);
+  assert.throws(() => validateTerrainWindow({ ...request, to: "2027-01-01T00:00:00Z" }), /31 days/);
+  server.listen({ onUnhandledFrame: "error" }); t.after(() => server.close());
+  const queries: URLSearchParams[] = [];
+  server.use(http.get("*/api/v1/dataset", ({ request }) => {
+    queries.push(new URL(request.url).searchParams);
+    return HttpResponse.json({ detail: "Test service unavailable" }, { status: 503 });
+  }));
+  const custom = { run_id: "unit-run", site_id: "custom:-84.7906:29.1957" };
+  await assert.rejects(getTerrainWindow(request), /Test service unavailable/);
+  await assert.rejects(getTerrainWindow({ ...request, resolutionSeconds: 3600 }, undefined, custom), /Test service unavailable/);
+  assert.equal(queries.length, 2);
+  assert.deepEqual(Object.fromEntries(queries[0]), {
+    start: request.from, end: request.to, site_ids: "im1_odysseus,im2_athena", step_s: "21600",
+    horizon_step_deg: "0.5", max_points: "10000", include: "horizon,series,windows,metrics",
+  });
+  assert.equal(queries[1].get("run_id"), custom.run_id);
+  assert.equal(queries[1].get("site_ids"), custom.site_id);
+  assert.equal(queries[1].get("step_s"), "3600");
 });

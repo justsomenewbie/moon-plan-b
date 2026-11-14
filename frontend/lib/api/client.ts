@@ -63,6 +63,13 @@ export function validateWindow(request: WindowRequest) {
   if (!Number.isInteger(request.resolutionSeconds) || request.resolutionSeconds < 60 || request.resolutionSeconds > 86400 || Math.ceil(span / (request.resolutionSeconds * 1000)) + 1 > 10000) throw new ApiError("Choose 60–86400 seconds per sample and at most 10,000 requested samples per series.", 422);
   return request;
 }
+export function validateTerrainWindow(request: WindowRequest) {
+  const span = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
+  if (span <= 0 || span > 31 * 86400000) throw new ApiError("Choose an increasing UTC range of up to 31 days for the catalog comparison.", 422);
+  if (!Number.isInteger(request.resolutionSeconds) || request.resolutionSeconds < 3600 || request.resolutionSeconds > 2678400)
+    throw new ApiError("Choose a track sampling step between 3,600 and 2,678,400 seconds.", 422);
+  return request;
+}
 export function windowFromInputs(from: string, to: string, resolution: string, validate = validateWindow) {
   const utc = (value: string) => {
     const timestamp = value.length === 16 ? `${value}:00` : value;
@@ -84,14 +91,18 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   return withinRequestedWindow(validateDataset(data), request);
 }
 export type TerrainTarget = { run_id: string; site_id?: string };
+const terrainSections = ["horizon", "series", "windows", "metrics"] as const;
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
   if (target?.site_id) validateCustomWindow(request);
-  else validateWindow(request);
+  else validateTerrainWindow(request);
   const siteIds = target?.site_id ?? "im1_odysseus,im2_athena";
   const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
-    run_id: target?.run_id, site_ids: siteIds, start: request.from, end: request.to, include: "windows,metrics",
+    run_id: target?.run_id, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
+    horizon_step_deg: 0.5, max_points: 10000, include: terrainSections.join(","),
   } } });
   if (!response.ok) throw apiError(error, response.status);
+  if (!Array.isArray(data?.include) || !terrainSections.every(section => data.include.includes(section)))
+    throw new ApiError("The server response is missing a requested dataset section.", 502);
   const result = parseTerrainSummary(data, request);
   if (target && result.run.run_id !== target.run_id) throw new ApiError("The returned model run differs from the shared link.", 502);
   if (result.sites.map(site => site.id).join(",") !== siteIds)

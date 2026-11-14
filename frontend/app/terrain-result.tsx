@@ -1,4 +1,5 @@
 import type { TerrainSummary } from "../lib/api/terrain-summary";
+import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
 
 function UtcTime({ value }: { value: string }) {
@@ -35,7 +36,10 @@ function SiteResult({ site }: { site: TerrainSummary["sites"][number] }) {
   </article>;
 }
 
-export default function TerrainResult({ result, onPrint, permalink }: { result: TerrainSummary; onPrint: () => void; permalink?: string }) {
+export default function TerrainResult({ result, view, onSelect, onPrint }: {
+  result: TerrainSummary; view: { siteIndex: number; sample: number; link: string };
+  onSelect: (siteIndex: number, sample: number) => void; onPrint: () => void;
+}) {
   const { t } = useLanguage();
   const { range, run, model, sources } = result;
   const clippedRange = range.start !== range.requested_start || range.end !== range.requested_end;
@@ -43,7 +47,7 @@ export default function TerrainResult({ result, onPrint, permalink }: { result: 
     <div className="section-heading">
       <h2 id="terrain-title">{t("Sun and Earth visibility above the terrain horizon")}</h2>
       <div className="terrain-print flex flex-wrap items-center gap-3">
-        {permalink && <a href={permalink} target="_blank" rel="noreferrer">{t("Open comparison in a new tab")}</a>}
+        {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t("Open comparison in a new tab")}</a>}
         <button type="button" className="button outline terrain-print" onClick={onPrint}>{t("Print report")}</button>
       </div>
     </div>
@@ -52,6 +56,8 @@ export default function TerrainResult({ result, onPrint, permalink }: { result: 
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
+
+    {result.sites.length > 0 && <TerrainObservations result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
 
     <section id="sources" className="sources-section" aria-labelledby="terrain-sources" tabIndex={-1}>
       <h2 id="terrain-sources">{t("Sources & method")}</h2>

@@ -48,10 +48,26 @@ The existing QA package covers strict elevation `> 0°`, half-open `[start,end)`
 - Artemis/STEM named presets were not added because no sourced named-site release exists; disabled storytelling would not exercise science.
 - The app uses Canvas 2D, not WebGL. Existing fallback code handles image/context failure, but a new browser-level forced-failure recording is still pending.
 - A static search supports zero direct JPL calls, but an exercised Playwright network capture is pending.
-- Leap-boundary, spoken screen-reader and final mobile-device evidence remain pending. Edge was exercised on the host configured for UTC+07, but a dedicated clock-boundary recording remains pending.
+- The original Edge run used a UTC+07 host. A [subsequent Chromium replay](#utc-boundary-retest) covers leap day and local clock changes. Spoken screen-reader and final mobile-device evidence remain pending.
 - Current host Node is 24.22.1, below the declared minimum 24.22.3. Tests/build passed, but this does not waive the engine requirement.
 - Chung's Python/OpenAPI wire contract remains unagreed. Do not connect or rename fields until the integration owner reviews it.
 
 ## Release decision
 
 Suitable for local judging/demo review with synthetic labeling. Not approved as a scientific product or competition release until real NASA/JPL-derived data, provenance, independent sample checks, contract agreement and remaining browser evidence are supplied.
+
+## UTC boundary retest
+
+On 14 November 2026 at 07:53 UTC, Playwright ran Chromium 158.0.8127.18 on the combined [production build at e4ea5dc](https://github.com/justsomenewbie/moon-plan-b/commit/e4ea5dcf2429d36313b1924bb230a55254de376a) with the mock startup API and local file imports. The [browser test](check_utc_boundaries.mjs) shifted a copy of Minh’s [two-site synthetic fixture](fixtures/normal.json) to each test date. The original file’s SHA-256 was `0f7773320fa3e8b3da60841aa88d02e9d03a34c213cbf0af9e441b724d0b92fb`.
+
+| Browser time zone | UTC samples selected with Right Arrow | Local clock hours at the same instants |
+| --- | --- | --- |
+| Asia/Ho_Chi_Minh | 28 Feb 23:00 → 29 Feb 00:00, 2024 | 06 → 07 |
+| Asia/Ho_Chi_Minh | 29 Feb 23:00 → 1 Mar 00:00, 2024 | 06 → 07 |
+| Asia/Ho_Chi_Minh | 29 Feb 16:00 → 17:00, 2024 | 23 → 00 |
+| America/New_York | 10 Mar 06:00 → 07:00, 2024 | 01 → 03 |
+| America/New_York | 3 Nov 05:00 → 06:00, 2024 | 01 → 01 |
+
+For both sites, the visible and accessible slider labels agreed with the expected UTC dates and hours. Left Arrow returned to the previous UTC sample even when the local clock repeated an hour. The exact-sample tables and selected sky timestamp retained ISO UTC values. Advancing the emulated device clock across each boundary also preserved the selected observation. Separate invalid imports of 29 February 2023 and leap-second notation (`23:59:60Z`) showed calendar errors and preserved the prior selection.
+
+Replay with `node qa/check_utc_boundaries.mjs <frontend-origin>` using Playwright Chromium. OpenAI Codex prepared and ran the browser test.

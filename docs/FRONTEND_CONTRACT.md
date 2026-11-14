@@ -1,6 +1,8 @@
 # Frontend API and import formats
 
-The [producer OpenAPI extract](../contracts/openapi.dataset.json) defines the live aggregate, capability discovery, custom-site job submission and status reads. It uses `lunarnav-dataset-1` with terrain-model metadata, site coverage and half-open UTC intervals. The [integration record](BACKEND_RECONCILIATION.md#aggregate-update-on-14-november) documents the request parameters and checked responses. Producer exports with windows and metrics open through the same summary validator.
+The [producer OpenAPI extract](../contracts/openapi.dataset.json) defines the live aggregate, capability discovery, custom-site job submission and status reads. It uses `lunarnav-dataset-1` with terrain-model metadata, site coverage and half-open UTC intervals. The [integration record](BACKEND_RECONCILIATION.md#aggregate-update-on-14-november) documents the request parameters and checked responses. Producer exports with windows and metrics open in the same viewer. A supplied `horizon` adds an azimuth/elevation profile and a supplied `series` adds a sample inspector. Each site has its own ordered UTC timestamps. A coarser request can retain extra samples at transitions. The inspector uses the timestamps actually returned, while the three visibility bands use the full supplied interval lists.
+
+Live observation links use `view_site` for the inspected site and `at` for its returned UTC. Only `site_id` changes the requested catalog for a custom result. The browser restores the selected observation after the pinned run loads. A site or timestamp absent from that response raises a selection error. Older links default to the first available observation. Local producer imports remain local.
 
 ## Synthetic API and legacy ideal-horizon imports
 

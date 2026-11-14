@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiError, createJob, getJob, isMock, jobPollInterval, validateCustomWindow, windowFromInputs } from "../lib/api/client";
+import { apiError, createJob, getJob, isMock, jobPollInterval, validateCustomWindow, validateTerrainWindow, windowFromInputs } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import type { Dataset } from "../lib/dataset";
 import CustomSiteJob from "./custom-site-job";
@@ -25,7 +25,7 @@ export function ApiControls({ request, loading, onLoad, onResult, onTerrainResul
     if (previous === request || preserveDraft) return;
     setInputs((current) => {
       try {
-        const draft = windowFromInputs(current.from, current.to, current.resolution);
+        const draft = windowFromInputs(current.from, current.to, current.resolution, isMock ? undefined : validateTerrainWindow);
         if (Date.parse(draft.from) === Date.parse(previous.from) && Date.parse(draft.to) === Date.parse(previous.to) && draft.resolutionSeconds === previous.resolutionSeconds) return windowInputs(request);
       } catch { /* An incomplete draft stays editable. */ }
       return current;
@@ -36,7 +36,7 @@ export function ApiControls({ request, loading, onLoad, onResult, onTerrainResul
     if (loading) editedWhileLoading.current = true;
     setInputs(current => ({ ...current, [key]: value }));
   }
-  const readRequest = () => windowFromInputs(inputs.from, inputs.to, inputs.resolution);
+  const readRequest = () => windowFromInputs(inputs.from, inputs.to, inputs.resolution, isMock ? undefined : validateTerrainWindow);
   return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{isMock ? t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.") : t("Compare Odysseus and Athena over up to 31 days. The team API returns full-resolution visibility intervals for the selected UTC range.")}</p>
     <form className="request-fields" onSubmit={(event) => {
       event.preventDefault();
@@ -44,7 +44,7 @@ export function ApiControls({ request, loading, onLoad, onResult, onTerrainResul
     }}>
       <label className="field">{t("From · UTC")}<input name="from" type="datetime-local" step="0.001" required value={inputs.from} onChange={(e) => changeInput("from", e.target.value)} /></label>
       <label className="field">{t("To · UTC")}<input name="to" type="datetime-local" step="0.001" required value={inputs.to} onChange={(e) => changeInput("to", e.target.value)} /></label>
-      {isMock && <label className="field">{t("Desired step · seconds")}<input name="resolution" type="number" min="60" max="86400" step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>}
+      <label className="field">{t(isMock ? "Desired step · seconds" : "Track sampling step · seconds")}<input name="resolution" type="number" min={isMock ? 60 : 3600} max={isMock ? 86400 : 2678400} step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>
       <button className="button outline" disabled={loading}>{t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}
   </details>{isMock ? <JobForm readRequest={readRequest} onResult={onResult} /> : <CustomSiteJob readRequest={() => windowFromInputs(inputs.from, inputs.to, "3600", validateCustomWindow)} onResult={onTerrainResult} />}</>;

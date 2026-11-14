@@ -1,0 +1,23 @@
+.observations { border-top: 1px solid var(--line); padding: 24px 0; min-width: 0; }
+.observations h4 { font-size: 1rem; font-weight: 650; }
+.control { display: block; margin: 12px 0; max-width: 44rem; }
+.control select { width: 100%; }
+.sky, .inspector { margin-top: 20px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0; font-size: .85rem; }
+.frame { margin: 6px 4px 6px 0; }
+.mask, .trail, .dots { fill: none; vector-effect: non-scaling-stroke; }
+.mask { stroke: var(--horizon); stroke-width: 2; }
+.trail, .dots { stroke: currentColor; stroke-width: 1.5; }
+.dots { stroke-width: 2.5; stroke-linecap: round; }
+.printSite { display: none; }
+@media screen and (max-width: 480px) {
+  .inspector th, .inspector td { padding-inline: 4px; font-size: .8rem; }
+  .inspector th, .inspector td:last-child { overflow-wrap: normal; }
+  .inspector th:first-child { white-space: nowrap; }
+  .inspector td:last-child { white-space: normal; }
+}
+@media print {
+  .control, .screenSite { display: none; }
+  .printSite { display: block; font-weight: 600; }
+  .sky, .inspector { break-inside: avoid; }
+}
