@@ -50,7 +50,7 @@ try {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(origin);
-  await page.getByRole("button", { name: "Import data", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Import data", exact: true, disabled: false }).waitFor();
   const observed = {};
   const cases = [["control", control], ["gap", gap]];
   if (paired) cases.push(["athena-primary", gap], ["odysseus-restored", gap]);
@@ -135,7 +135,15 @@ try {
         await slider.press("ArrowLeft");
         const after = await readAt(1);
         observed[name].arrowLeft = { before, after };
-        if (!athenaPrimary) observed[name].roles = { primary: scenarios[0].siteId, alternative: scenarios[1].siteId };
+        if (!athenaPrimary) {
+          observed[name].roles = { primary: scenarios[0].siteId, alternative: scenarios[1].siteId };
+          await slider.press("ArrowRight");
+          const right = await readAt(3);
+          await slider.press("ArrowLeft");
+          const left = await readAt(1);
+          assert.deepEqual(left, after);
+          observed[name].roundTrip = { start: after, right, left };
+        }
       }
     }
   }

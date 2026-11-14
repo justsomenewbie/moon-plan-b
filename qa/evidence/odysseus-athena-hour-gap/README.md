@@ -1,6 +1,6 @@
 # One missing hour in a two-site comparison
 
-Chromium 158.0.8127.18 displayed Odysseus as the **primary** site (solid lines) and Athena as the **alternative** (dashed lines) in **Compare sites** at 1280 × 860. The initial run used frontend `6505d9b`. The final replay used the local production build of [a76e42c](https://github.com/justsomenewbie/moon-plan-b/commit/a76e42cc5f70c5bd1c4631b4e348a9f4735b0d91).
+Chromium 158.0.8127.18 displayed Odysseus as the **primary** site (solid lines) and Athena as the **alternative** (dashed lines) in **Compare sites** at 1280 × 860. The initial run used frontend `6505d9b`. An early replay used the local production build of [a76e42c](https://github.com/justsomenewbie/moon-plan-b/commit/a76e42cc5f70c5bd1c4631b4e348a9f4735b0d91).
 
 Both sites originally have five hourly Sun and Earth observations from 00:00 through 04:00 UTC on 7 January 2026. The second import removes only Athena’s 02:00 row. Its original center elevations at that hour are 2.978801436° for the Sun and 5.176047085° for Earth.
 
@@ -16,6 +16,8 @@ The shared time slider skips from 01:00 to 03:00 in the second import. The exact
 With Athena still primary, a subsequent Chromium run started at a verified 03:00 UTC and pressed Left Arrow once. Both site labels returned directly to 01:00 UTC. The visible text and slider accessibility value before and after the keypress are recorded under `athena-primary.arrowLeft`. [Browser readouts](result.json)
 
 **Returning to Odysseus.** On the same loaded gap copy, selecting Odysseus again moved Athena to the alternative slot. At 03:00 UTC, pressing Left Arrow once returned the labels for both sites to 01:00 UTC. The visible times and the slider’s accessibility value agreed. The [browser record](result.json) includes both site IDs and the readouts under `odysseus-restored`.
+
+**Round trip after Chung’s API integration.** Chromium loaded the live terrain comparison on [main at d19989e](https://github.com/justsomenewbie/moon-plan-b/commit/d19989e00b7d938904e794a46fa48339aa517fae). The browser received HTTP 200 and schema `lunarnav-dataset-1` for both sites. After importing the [Horizons gap copy](gap.json) and returning Odysseus to primary, the test started at 01:00 UTC, pressed Right Arrow once, then Left Arrow once. Both site labels showed 03:00 and then 01:00. The visible and accessible readings at each step are under `odysseus-restored.roundTrip`. [Browser record](result.json)
 
 **Data.** The test reuses the archived [Odysseus ephemerides](../odysseus-hour-gap/README.md). New, unmodified JPL Horizons responses for [Athena’s Sun](sun-response.json) and [Earth](earth-response.json) use the same UTCs, one-hour cadence and airless apparent azimuth/elevation in degrees (quantity 4). The observer coordinates are 84.7906° S, 29.1957° E with height 5.321 km. The assumed height datum is the Horizons lunar reference sphere. Request URLs, retrieval instants, model and SHA-256 hashes are in the control. [LROC site coordinates](https://lroc.im-ldi.com/featured_sites/im2/flip-book)
 
