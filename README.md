@@ -47,7 +47,7 @@ The app opens a conspicuously labeled synthetic fixture. Switch between **Compar
 
 ### Ask the astronaut
 
-Open the astronaut in the lower-right corner, choose the saved comparison or the current workspace, and type a question in English or Vietnamese. You can ask which site has more joint visibility, check the source run, or request a change of comparison mode. Review the selected data before sending. The app sends the question, the preceding question if present, and a short summary to its own server. A suggested navigation or mode change takes effect when you choose it.
+Open the astronaut in the lower-right corner, and type a question in English or Vietnamese. When a ranked site pair is open, the guide uses those two sites. You can also select the loaded workspace or the saved comparison. You can ask which site has more joint visibility, check the source run, or request a change of comparison mode. Review the selected data before sending. The app sends the question, the preceding question if present, and a short summary to its own server. A suggested navigation or mode change takes effect when you choose it.
 
 Free-text questions use the Next.js server and a separately running Ollama instance with `qwen2.5:7b` at `127.0.0.1:11434` on that server. The model identifies the requested topic. The app formats measurements from the selected data. With the model offline the preset guide still works. For a non-loopback frontend, configure the exact public origin through the server-only `ASTRONAUT_CHAT_ORIGIN` setting. The local preview shares one request budget per Node process. A shared deployment needs a per-user or per-client limit at ingress so one visitor cannot exhaust that budget. Static-only hosting cannot run the chat route.
 

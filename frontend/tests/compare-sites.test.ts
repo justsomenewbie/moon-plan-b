@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { compareSites, type SiteComparisonRequest } from "../lib/api/compare-sites.ts";
+import { pairGuideContext } from "../lib/api/guide-chat.ts";
 import { ApiError } from "../lib/api/client.ts";
 import type { components } from "../lib/api/producer";
 
@@ -132,4 +133,28 @@ test("shorter dark intervals break an exact score tie before site IDs", async t 
   assert.equal((await compareSites(request)).ranking[0].site_id, "earth-only");
   response.ranking.reverse().forEach((r, i) => { r.rank = i + 1; });
   await assert.rejects(compareSites(request), (e: unknown) => e instanceof ApiError && e.status === 502);
+});
+
+test("the guide uses the displayed pair order, exact visible intervals and evaluated UTC range", async t => {
+  const response = example(), site = response.sites["earth-only"], row = response.ranking[0];
+  const at = "2026-11-14T01:00:00Z", [full] = site.windows!.earth!;
+  site.windows!.earth = [{ ...full, end: at, duration_h: 1 }, { ...full, start: at, duration_h: 23, state: false }];
+  site.metrics.pct_earth = row.pct_earth = 4.166667;
+  site.metrics.longest_earth_h = 1;
+  site.metrics.longest_comms_gap_h = row.longest_comms_gap_h = 23;
+  row.score = 1.25;
+  t.mock.method(globalThis, "fetch", async () => Response.json(response));
+  const requestWithin = { ...request, from: "2026-11-14T00:01:00Z" };
+  const complete = await compareSites(requestWithin);
+  const expected = { source: request.runId, from: start, to: end };
+  assert.deepEqual(pairGuideContext(complete, complete.ranking), { kind: "terrain", rows: [
+    { ...expected, site: "earth-only", sunHours: 0, earthHours: 1, bothHours: 0 },
+    { ...expected, site: "dark", sunHours: 0, earthHours: 0, bothHours: 0 },
+  ] });
+  response.sites.dark.windows!.sun = [];
+  const partial = await compareSites(requestWithin);
+  const context = pairGuideContext(partial, [...partial.ranking].reverse());
+  assert.deepEqual(context.rows[0], { ...expected, site: "dark", sunHours: null, earthHours: null, bothHours: null });
+  assert.equal(context.rows[1].earthHours, 1);
+  assert.equal(pairGuideContext(partial, [{ ...row, name: "www.example.org" }]).kind, "unavailable");
 });

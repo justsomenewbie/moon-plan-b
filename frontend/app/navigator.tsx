@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { defaultTerrainSites, defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateTerrainWindow, validateWindow } from "../lib/api/client";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
+import type { DisplayedPair } from "./terrain-pair";
 import TerrainResult from "./terrain-result";
 import type { TerrainTarget, WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
@@ -33,6 +34,7 @@ export default function Navigator() {
   const [sharedJobId, setSharedJobId] = useState("");
   const [data, setData] = useState<Dataset | null>(null);
   const [terrain, setTerrain] = useState<TerrainSummary | null>(null);
+  const [displayedPair, setDisplayedPair] = useState<DisplayedPair | null>(null);
   const [terrainView, setTerrainView] = useState({ siteIndex: 0, sample: 0, link: "" });
   const [selection, setSelection] = useState<Selection | null>(null);
   const [loading, setLoading] = useState(true);
@@ -396,7 +398,7 @@ export default function Navigator() {
     {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(locale === "vi" && error.syntax ? "JSON syntax error. Check the file before trying again." : error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target, true)}>{t("Retry API request")}</button> : null}{isMock ? <button className="button outline" onClick={() => void loadDemo(true, defaultWindow)}>{t("Reset to demonstration")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => { recoverPinnedImport.current = true; importDialog.current?.showModal(); }}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
-    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
+    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult onDisplayedPair={setDisplayedPair} result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
       <aside className="controls" aria-label={t("Comparison controls")}>
         <div className="mode-switch" role="group" aria-label={t("Comparison mode")}>{(["dates", "sites"] as const).map((mode) => <button key={mode} aria-pressed={selection.mode === mode} onClick={() => choose(a, mode)}>{mode === "dates" ? t("Compare dates") : t("Compare sites")}</button>)}</div>
         {selection.mode === "sites" && siteWindow ? <>
@@ -439,6 +441,7 @@ export default function Navigator() {
     </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>{t("No observation windows in this dataset")}</h2><p>{isMock ? t("Import a release containing scenarios, or explore the clearly labeled demonstration.") : t("Request another UTC range above, or import a release containing scenarios.")}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? t("Explore demonstration") : t("Load default date range")}</button></main> : null}
     {data && !loading ? <Sources data={data} a={a} b={b} /> : null}
     <AstronautGuide savedResult={savedResult} terrain={loading || error ? null : terrain} onSaved={chooseSavedResult}
+      pair={!loading && displayedPair && displayedPair.terrain === terrain ? displayedPair.context : undefined}
       workspace={guideContext} workspaceActions={{ workspace: comparisonHref, saved: "#observed-week",
         sources: !loading && (data || terrain) ? "#sources" : undefined,
         compareSites: guideMode("sites"), compareDates: guideMode("dates") }} />

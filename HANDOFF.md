@@ -22,7 +22,7 @@ Run B listed 23 sites. Apollo 11 date comparisons recovered after a catalog fail
 
 [Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The EN/VI astronaut opens live pair/date controls and can pause its blink and tilt. Lower/higher queries retain saved joint visibility (Odysseus 33 h, Athena 139 h), UTC and source. [Local Ollama](README.md#ask-the-astronaut).
+The EN/VI astronaut opens pair/date controls, reads the displayed pair and supports pausing its blink and tilt. Saved joint visibility: Odysseus 33 h, Athena 139 h, with UTC and source. [Local Ollama](README.md#ask-the-astronaut).
 
 ## Pending
 

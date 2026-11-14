@@ -7,7 +7,7 @@ import styles from "./guide-chat.module.css";
 
 const copy = {
   en: {
-    title: "Ask the astronaut", source: "Use data from", saved: "Saved comparison", workspace: "Current workspace",
+    title: "Ask the astronaut", source: "Use data from", saved: "Saved comparison", workspace: "Current workspace", pair: "Displayed site pair",
     kinds: { saved: "Saved team model", terrain: "Terrain model", scenario: "Supplied scenario", synthetic: "Simulated example", unavailable: "No shareable observation summary" },
     summary: "See UTC ranges and hours", sourceId: "Source", privacy: "Sending shares your question, the previous question if any, and the selected summary with this site's server. Your file stays on your device.",
     hours: "Hours visible · Sun / Earth / both", unknown: "unknown", invalid: "Edit the question and send it again.", prompt: "Your question", send: "Send", cancel: "Cancel", reset: "Clear chat", retry: "Try again",
@@ -16,7 +16,7 @@ const copy = {
     you: "You", guide: "Astronaut", actions: { workspace: "Open workspace", saved: "Open saved result", sources: "View sources", compareSites: "Compare sites", compareDates: "Compare dates" },
   },
   vi: {
-    title: "Hỏi phi hành gia", source: "Chọn dữ liệu để hỏi", saved: "Kết quả đã lưu", workspace: "Dữ liệu đang xem",
+    title: "Hỏi phi hành gia", source: "Chọn dữ liệu để hỏi", saved: "Kết quả đã lưu", workspace: "Dữ liệu đang xem", pair: "Cặp địa điểm đang so sánh",
     kinds: { saved: "Kết quả mô hình đã lưu", terrain: "Mô hình địa hình", scenario: "Kịch bản đã tải", synthetic: "Dữ liệu mô phỏng", unavailable: "Chưa có dữ liệu quan sát phù hợp để gửi" },
     summary: "Xem khoảng thời gian UTC và số giờ", sourceId: "Nguồn", privacy: "Khi bạn bấm Gửi, máy chủ của trang nhận câu hỏi, câu hỏi ngay trước đó (nếu có) và phần dữ liệu tóm tắt đã chọn. Tệp gốc vẫn nằm trên thiết bị của bạn.",
     hours: "Số giờ nhìn thấy · Mặt Trời / Trái Đất / cả hai", unknown: "chưa xác định", invalid: "Hãy sửa câu hỏi rồi gửi lại.", prompt: "Câu hỏi của bạn", send: "Gửi", cancel: "Hủy", reset: "Xóa cuộc trò chuyện", retry: "Thử lại",
@@ -28,22 +28,28 @@ const copy = {
 
 export type GuideDestination = string | (() => void);
 export type GuideActions = Partial<Record<GuideAction, GuideDestination>>;
-type Props = { saved: GuideContext; workspace?: GuideContext; savedActions: GuideActions; workspaceActions?: GuideActions };
+type Props = { saved: GuideContext; workspace?: GuideContext; pair?: GuideContext; savedActions: GuideActions; workspaceActions?: GuideActions };
 type Turn = GuideReply & { question: string };
 
-export default function GuideChat({ saved, workspace, savedActions, workspaceActions }: Props) {
+export default function GuideChat({ saved, workspace, pair, savedActions, workspaceActions }: Props) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const [opened, setOpened] = useState(false);
-  const [useSaved, setUseSaved] = useState(!workspace);
-  const context = (useSaved ? saved : workspace) ?? saved;
+  const [choice, setChoice] = useState<"pair" | "workspace" | "saved" | null>(null);
+  const scope = choice === "saved" ? "saved" : choice === "workspace" && workspace ? "workspace"
+    : pair ? "pair" : workspace ? "workspace" : "saved";
+  const context = (scope === "pair" ? pair : scope === "workspace" ? workspace : saved) ?? saved;
   return <details className={styles.chat} onToggle={event => setOpened(event.currentTarget.open)}>
     <summary>{labels.title}</summary>
     {opened && <>
-      {workspace && <label className={styles.label}>{labels.source}<select value={useSaved ? "saved" : "workspace"} onChange={e => setUseSaved(e.target.value === "saved")}>
+      {workspace && <label className={styles.label}>{labels.source}<select value={scope} onChange={e => {
+        const value = e.target.value;
+        if (value === "pair" || value === "workspace" || value === "saved") setChoice(value);
+      }}>
+        {pair && <option value="pair">{labels.pair}</option>}
         <option value="workspace">{labels.workspace}</option><option value="saved">{labels.saved}</option>
       </select></label>}
-      <Conversation key={locale + JSON.stringify(context) + useSaved} context={context} actions={useSaved ? savedActions : workspaceActions ?? {}} />
+      <Conversation key={locale + JSON.stringify(context) + scope} context={context} actions={scope === "saved" ? savedActions : workspaceActions ?? {}} />
     </>}
   </details>;
 }
