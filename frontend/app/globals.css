@@ -62,6 +62,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .theme-control select { border: 1px solid var(--line); border-radius: 4px; min-height: 44px; max-width: 100%; background: var(--surface); color: var(--text); padding: 7px 10px; font-size: .82rem; }
 .reference-resources { padding: 28px 0; border-top: 1px solid var(--line); }
 .observed-week { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.week-selection { display: block; max-width: 26rem; margin-top: 14px; }
 .week-sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px; margin: 16px 0; }
 .week-hours { font-size: 1.55rem; font-variant-numeric: tabular-nums; }
 .week-track { position: relative; height: 7px; margin: 6px 0; background: var(--grid); }

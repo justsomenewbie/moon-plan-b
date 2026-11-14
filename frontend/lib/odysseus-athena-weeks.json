@@ -1,0 +1,70 @@
+{
+  "runId": "B_spice_pgda_bruteforce_2026_2030",
+  "precisionHours": 1,
+  "weeks": [
+    {
+      "startUtc": "2026-11-14T00:00:00Z",
+      "endUtc": "2026-11-21T00:00:00Z",
+      "sites": [
+        {
+          "id": "im1_odysseus",
+          "name": "Odysseus · IM-1",
+          "sunHours": 33,
+          "earthHours": 168,
+          "overlap": {
+            "start": "2026-11-19T15:00:00Z",
+            "end": "2026-11-21T00:00:00Z",
+            "duration_h": 33,
+            "clipped_start": false,
+            "clipped_end": true
+          }
+        },
+        {
+          "id": "im2_athena",
+          "name": "Athena · IM-2",
+          "sunHours": 139,
+          "earthHours": 168,
+          "overlap": {
+            "start": "2026-11-15T05:00:00Z",
+            "end": "2026-11-21T00:00:00Z",
+            "duration_h": 139,
+            "clipped_start": false,
+            "clipped_end": true
+          }
+        }
+      ]
+    },
+    {
+      "startUtc": "2026-11-21T00:00:00Z",
+      "endUtc": "2026-11-28T00:00:00Z",
+      "sites": [
+        {
+          "id": "im1_odysseus",
+          "name": "Odysseus · IM-1",
+          "sunHours": 168,
+          "earthHours": 168,
+          "overlap": {
+            "start": "2026-11-21T00:00:00Z",
+            "end": "2026-11-28T00:00:00Z",
+            "duration_h": 168,
+            "clipped_start": true,
+            "clipped_end": true
+          }
+        },
+        {
+          "id": "im2_athena",
+          "name": "Athena · IM-2",
+          "sunHours": 168,
+          "earthHours": 168,
+          "overlap": {
+            "start": "2026-11-21T00:00:00Z",
+            "end": "2026-11-28T00:00:00Z",
+            "duration_h": 168,
+            "clipped_start": true,
+            "clipped_end": true
+          }
+        }
+      ]
+    }
+  ]
+}
