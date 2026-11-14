@@ -12468,7 +12468,7 @@
         "tags": [
           "export"
         ],
-        "description": "No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series.",
+        "description": "No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series. File name (Content-Disposition): <site>_<run>_series_<start>_<end>.csv with the snapped UTC range, e.g. ..._series_20261119T140000Z_20261119T160000Z.csv (end exclusive).",
         "parameters": [
           {
             "schema": {
@@ -12636,7 +12636,7 @@
         "tags": [
           "export"
         ],
-        "description": "Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows.",
+        "description": "Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows. File name (Content-Disposition): <site>_<run>_windows_<start>_<end>.csv with the snapped UTC range (end exclusive).",
         "parameters": [
           {
             "schema": {

@@ -252,12 +252,15 @@ describe('GET /sites/{id}/windows', () => {
 });
 
 describe('CSV exports', () => {
+  const stamp = (iso: string) => iso.replace(/[-:]/g, '');
+  const csvName = (kind: string, a: string, b: string) => `attachment; filename="${SYN.site_id}_${SYN.run_id}_${kind}_${stamp(a)}_${stamp(b)}.csv"`;
+
   it('series.csv streams every sample (booleans 1/0, null empty) and gzips', async () => {
     const r = await get(`${S}/export/series.csv?fields=sun_el_deg,sun_visible,hours_until_sunset`, { 'accept-encoding': 'gzip' });
     expect(r.statusCode).toBe(200);
     expect(r.headers['content-type']).toBe('text/csv; charset=utf-8');
     expect(r.headers['content-encoding']).toBe('gzip');
-    expect(r.headers['content-disposition']).toBe(`attachment; filename="${SYN.site_id}_${SYN.run_id}_series.csv"`);
+    expect(r.headers['content-disposition']).toBe(csvName('series', at(0), at(SYN.n))); // whole run: [first sample, run end)
     const text = gunzipSync(r.rawPayload).toString('utf8');
     const lines = text.trimEnd().split('\n');
     expect(lines[0]).toBe('time_utc,sun_el_deg,sun_visible,hours_until_sunset');
@@ -275,6 +278,17 @@ describe('CSV exports', () => {
     expect(rows).toHaveLength(10);
     expect(Object.keys(rows[0] ?? {})).toHaveLength(25);
     expect(rows[0]?.['time_utc']).toBe(at(10));
+    expect(r.headers['content-disposition']).toBe(csvName('series', at(10), at(20)));
+  });
+
+  it('different ranges get different file names (snapped UTC range in the name; FE report 14/11)', async () => {
+    const a = await get(`${S}/export/series.csv?fields=sun_el_deg&start=${at(10)}&end=${at(20)}`);
+    const b = await get(`${S}/export/series.csv?fields=sun_el_deg&start=${at(30)}&end=${at(40)}`);
+    expect(a.headers['content-disposition']).not.toBe(b.headers['content-disposition']);
+    const w1 = await get(`${S}/export/windows.csv?start=${at(10)}&end=${at(20)}`);
+    const w2 = await get(`${S}/export/windows.csv?start=${at(10)}&end=${at(21)}`);
+    expect(w1.headers['content-disposition']).toBe(csvName('windows', at(10), at(20)));
+    expect(w2.headers['content-disposition']).toBe(csvName('windows', at(10), at(21)));
   });
 
   it('series.csv errors are problem+json (checked before streaming)', async () => {
@@ -285,6 +299,7 @@ describe('CSV exports', () => {
   it('windows.csv', async () => {
     const r = await get(`${S}/export/windows.csv?kinds=earth,sun&start=${at(200)}&end=${at(400)}`);
     expect(r.statusCode).toBe(200);
+    expect(r.headers['content-disposition']).toBe(csvName('windows', at(200), at(400)));
     expect(r.body.trimEnd().split('\n')).toEqual([
       'kind,start,end,duration_h,state,truncated_start,truncated_end,clipped_start,clipped_end',
       `earth,${at(200)},${at(350)},150,0,0,0,1,0`,
