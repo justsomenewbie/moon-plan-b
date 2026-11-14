@@ -15,7 +15,7 @@ class ProducerOpenAPITest(unittest.TestCase):
 
     def test_unrelated_routes_methods_schemas_and_four_private_examples(self):
         self.full["paths"]["/new"] = {"get": {"operationId": "new"}}
-        self.full["paths"]["/api/v1/jobs/{job_id}"]["delete"] = {"operationId": "cancel"}
+        self.full["paths"]["/api/v1/jobs/{job_id}"]["head"] = {"operationId": "inspectHeaders"}
         schemas = self.full["components"]["schemas"]
         schemas["Unused"] = {"type": "string"}
         for name in ("CreateJobRequest", "Job", "JobAccepted", "Problem"):
