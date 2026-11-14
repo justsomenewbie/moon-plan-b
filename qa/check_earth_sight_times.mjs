@@ -62,6 +62,15 @@ try {
     await page.goto(url("/plan/site", { source: "saved", site: "apollo11", from: "2026-11-14", to: "2026-11-15", priority: "earth" }));
     await inspect(page, report, copy, "absent");
 
+    await page.goto(url("/plan", { mode: "dates", source: "saved-b2", site: "a3_nobile_rim_1", from: "2026-11-14", to: "2026-11-21", missionHours: "24", priority: "joint" }));
+    const candidate = page.locator(".plan-results tbody tr").first();
+    const earth = candidate.locator("details.earth-sight-times");
+    await earth.locator("summary").press("Enter");
+    assert.match(await earth.locator("summary").innerText(), /^18 /);
+    assert.deepEqual(await earth.locator("li time").evaluateAll(times => times.map(time => time.dateTime)),
+      ["2026-11-19T21:00:00Z", "2026-11-20T15:00:00Z"]);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Opened candidate overflows page");
+
     const dataset = page.waitForResponse(response => new URL(response.url()).pathname === "/api/v1/dataset" && response.ok());
     await page.goto(url("/compare", { run_id: "B2_spice_pgda_bruteforce_2026_2030_fix676af9d",
       site_id: "im2_athena", view_site: "im2_athena", from: from + "T00:00:00Z", to: to + "T00:00:00Z", resolutionSeconds: "3600" }) + "#terrain-observations");

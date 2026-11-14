@@ -115,7 +115,7 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
       </> : <p role="status">{vi
         ? `Cả ${result.nEvaluated} giờ hạ cánh đều cho 0 giờ theo ưu tiên này. Chưa có giờ hạ cánh phù hợp.`
         : `All ${result.nEvaluated} landing times have 0 hours of the selected visibility. No landing time is recommended.`}</p>}
-      <p className="muted text-sm">{t("Run ID")} · <a href={b2 ? "/data/run-b2/manifest.json" : "/data/run-b/manifest.json"}>{result.runId}</a> · {vi ? "Bước thời gian mô hình" : "Model step"} 1 h</p>
+      <p className="muted text-sm">{t("Run ID")} · <a className="wrap-anywhere" href={b2 ? "/data/run-b2/manifest.json" : "/data/run-b/manifest.json"}>{result.runId}</a> · {vi ? "Bước thời gian mô hình" : "Model step"} 1 h</p>
     </section>}
   </section>;
 }
