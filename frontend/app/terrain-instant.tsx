@@ -31,7 +31,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
     active.current = controller;
     setLookup({ status: "pending" });
     try {
-      const value = await getSiteInstant(runId, site.id, input, range.step_s, range.start, controller.signal);
+      const value = await getSiteInstant(runId, site.id, input, range.step_s, range.start, controller.signal, site.series);
       if (!controller.signal.aborted) setLookup({ status: "ready", value });
     } catch (error) {
       if (!controller.signal.aborted) setLookup({ status: "error", message: error instanceof Error ? error.message : "The request could not be completed. Retry or check the connection." });
