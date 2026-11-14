@@ -10,6 +10,11 @@
 import { z } from 'zod';
 
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json';
+/**
+ * Base of the RFC 9457 `type` URI. `.example` is a reserved, never-resolving TLD (RFC 2606): the `type` is a
+ * stable identifier only, not a documentation link (clients should branch on `code`). Kept as-is because the
+ * deployed API (api.lunavigator.com) and the frontend fixtures already use it.
+ */
 export const PROBLEM_TYPE_BASE = 'https://lunarnav.example/errors/';
 
 /** Every machine-readable error code (plan section 6.4) -> HTTP status + human title. */

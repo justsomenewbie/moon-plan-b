@@ -1,5 +1,5 @@
 /**
- * pm2 process file for the VPS (docs/DEPLOY_VPS.md).
+ * pm2 process file for the VPS (docs/vi/DEPLOY_VPS.md).
  *
  *   pm2 startOrReload backend/deploy/ecosystem.config.cjs && pm2 save
  *

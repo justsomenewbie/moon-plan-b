@@ -33,7 +33,7 @@ export const HealthResponse = z
         time_utc: '2026-11-14T09:30:00Z',
         uptime_s: 12.5,
         mongo: { ok: true, latency_ms: 0.8, db: 'lunarnav_dev' },
-        python: { ok: true, bin: 'D:\\UAV\\lunar-navigator\\.venv\\Scripts\\python.exe', lunarnav_code_version: '0.1.0' },
+        python: { ok: true, bin: '/opt/lunarnav/py/.venv/bin/python', lunarnav_code_version: '0.1.0' },
         default_run_id: 'pf_21c3f3f6dc56b1e1',
       },
     ],

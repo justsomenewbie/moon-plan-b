@@ -19,7 +19,7 @@ errors that A and B could share (convention, sign or time-scale mistakes), with 
 ## 1. How to reproduce
 
 ```bash
-cd /d/UAV/lunar-navigator
+cd <repo>    # the lunar-navigator folder
 # full report: 6 sites x 3 time sets x 3 methods + negative controls + Apollo 11 + lunar day
 ./.venv/Scripts/python -m lunarnav.validate --no-terrain     # or: lunarnav validate -- --no-terrain
 #   options: --offline (Horizons from disk cache only), --no-horizons (B vs C only), --quick, --out DIR

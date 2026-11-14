@@ -1,5 +1,5 @@
 /**
- * Result TTL (plan 7.2 "dọn dẹp mỗi giờ"): delete expired jobs together with their custom runs.
+ * Result TTL (plan 7.2 "hourly cleanup"): delete expired jobs together with their custom runs.
  *  1. jobs with expires_at <= now: purge the run documents (series/windows/site_runs/horizons/cache/runs),
  *     remove DATA_DIR/runs/job_<id>/ and DATA_DIR/jobs/<id>/, delete the job.
  *  2. orphan custom runs (`runs._id` = job_<id>) whose job is gone (the Mongo TTL monitor may delete a

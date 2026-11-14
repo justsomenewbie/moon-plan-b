@@ -1,93 +1,96 @@
-# Notebook Google Colab: `lunar_navigator_colab.ipynb`
+# Google Colab notebook: `lunar_navigator_colab.ipynb`
 
-Notebook chạy toàn bộ pipeline nặng (heavy run) trên Google Colab: lấy code, mount Google Drive, tải Moon Trek
-LOLA DEM, chạy test, precompute bằng hai phương pháp độc lập, kiểm tra kết quả, validation, bảng PASS/FAIL, biểu đồ kiểm
-tra nhanh và zip kết quả lên Drive.
+This notebook runs the whole heavy pipeline (heavy run) on Google Colab: get the code, mount Google Drive, download the
+Moon Trek LOLA DEMs, run the tests, precompute with two independent methods, check the results, run the validation,
+build a PASS/FAIL table, draw quick sanity plots and zip the results to Drive.
 
-## 1. Chuẩn bị code
+## 1. Preparing the code
 
-Chọn **một** trong hai cách:
+Choose **one** of the two options:
 
-* **Git:** đặt `REPO_URL` (và `REPO_BRANCH` nếu cần) trong ô `PARAMS`. Notebook `git clone` vào `/content/lunar-navigator`.
-* **Zip bundle** (khi chưa có repo online): trên máy dev chạy
+* **Git:** set `REPO_URL` (and `REPO_BRANCH` if needed) in the `PARAMS` cell. The notebook runs `git clone` into
+  `/content/lunar-navigator`.
+* **Zip bundle** (when the repository is not online): on the development machine run
 
   ```bash
   ./.venv/Scripts/python scripts/make_colab_bundle.py
-  # -> dist/lunarnav_colab_bundle.zip: chỉ code + tests + docs, không có data/, output/, .venv/
+  # -> dist/lunarnav_colab_bundle.zip: code + tests + docs only, no data/, output/, .venv/
   ```
 
-  rồi đặt file vào Drive ở `MyDrive/lunarnav/lunarnav_colab_bundle.zip`, hoặc vào `/content/`, hoặc để trống và
-  upload khi notebook hỏi. Zip có tính tất định (deterministic: cùng code thì cùng byte) và chứa `BUNDLE_INFO.json`
-  với `code_sha256`. Script từ chối mọi file > 5 MB, để DEM hay cache không lọt vào.
+  then put the file on Drive at `MyDrive/lunarnav/lunarnav_colab_bundle.zip`, or in `/content/`, or leave it out and
+  upload it when the notebook asks. The zip is deterministic (same code gives the same bytes) and contains
+  `BUNDLE_INFO.json` with `code_sha256`. The script refuses any file > 5 MB, so DEMs and caches cannot slip in.
 
-Sau đó notebook chạy `pip install -e ".[dev,notebook]"`. Không cần restart runtime: notebook thêm repo vào `sys.path`,
-và mọi subprocess (CLI, pytest) nhận `PYTHONPATH`.
+The notebook then runs `pip install -e ".[dev,notebook]"`. No runtime restart is needed: the notebook adds the
+repository to `sys.path`, and every subprocess (CLI, pytest) receives `PYTHONPATH`.
 
-## 2. Các tham số chính (ô PARAMS)
+## 2. Main parameters (PARAMS cell)
 
-| Tham số | Mặc định (full) | Ý nghĩa |
+| Parameter | Default (full) | Meaning |
 |---|---|---|
-| `LIGHT_MODE` | `True` | `True` = smoke test vài phút; `False` = full run |
-| `SITES` | `"all"` | cả catalog: south pole + reference + Apollo + far side (23 sites); hoặc `group:apollo`, danh sách id |
-| `START_UTC`, `END_UTC`, `STEP_MIN` | 2026-01-01, 2031-01-01 (exclusive), 60 | 5 năm hàng giờ = 43 824 mẫu / site |
-| `PRIMARY` | Horizons + `trek` + `raymarch` | phương pháp A (Resources tab) |
-| `CROSSCHECK` | SPICE + `pgda` + `bruteforce` | phương pháp B, DEM khác, thuật toán horizon khác |
-| `DEM_FALLBACK` | `flat` | sites ngoài DEM cực nhận horizon mặt cầu nhẵn (ghi trong `dem_source`) |
-| `TREK_LABELS` | 3 file Trek (5 m, 30 m, 100 m) | ~4.6 GB tổng |
-| `DEM_LOCAL_COPY` | `True` | chép DEM từ Drive sang ổ local `/content` để đọc nhanh |
+| `LIGHT_MODE` | `True` | `True` = smoke test of a few minutes; `False` = full run |
+| `SITES` | `"all"` | the whole catalog: south pole + reference + Apollo + far side (23 sites); or `group:apollo`, a list of ids |
+| `START_UTC`, `END_UTC`, `STEP_MIN` | 2026-01-01, 2031-01-01 (exclusive), 60 | 5 years hourly = 43 824 samples / site |
+| `PRIMARY` | Horizons + `trek` + `raymarch` | method A (Resources tab) |
+| `CROSSCHECK` | SPICE + `pgda` + `bruteforce` | method B: different DEM, different horizon algorithm |
+| `DEM_FALLBACK` | `flat` | sites outside the polar DEMs get a smooth-sphere horizon (recorded in `dem_source`) |
+| `TREK_LABELS` | 3 Trek files (5 m, 30 m, 100 m) | ~4.6 GB in total |
+| `DEM_LOCAL_COPY` | `True` | copy the DEMs from Drive to the local `/content` disk for fast reads |
 | `RUN_TESTS`, `TEST_MARKERS` | `True`, `"not slow"` | pytest |
 | `RUN_VALIDATION`, `RUN_TERRAIN_VALIDATION` | `True`, `True` | `validate.run_all` + `validate_terrain.run` |
-| `RESUME` | `True` | `--resume` cho precompute |
-| `FAIL_ON_ERROR` | `True` | ô cuối raise nếu có check bắt buộc FAIL |
+| `RESUME` | `True` | `--resume` for precompute |
+| `FAIL_ON_ERROR` | `True` | the last cell raises if a required check FAILs |
 
-`LIGHT_MODE = True` ghi đè (override): 2 sites (`ref_connecting_ridge_c1`, `apollo11`), 3 ngày (2026-01-07..10, có một
-lần Earth lặn ở C1), PGDA cho cả A và B, bán kính 60 km, không tải Trek, test `-m "not slow and not network"`, terrain
-validation nhẹ (header Trek + Trek ImageServer vs PGDA tại 1 site) thay cho `validate_terrain.run`.
+`LIGHT_MODE = True` overrides: 2 sites (`ref_connecting_ridge_c1`, `apollo11`), 3 days (2026-01-07..10, with one
+earthset at C1), PGDA for both A and B, 60 km radius, no Trek download, tests `-m "not slow and not network"`, and a
+light terrain validation (Trek header + Trek ImageServer vs PGDA at 1 site) instead of `validate_terrain.run`.
 
-## 3. Bố trí trên Google Drive
+## 3. Layout on Google Drive
 
 ```
 MyDrive/lunarnav/
-  lunarnav_colab_bundle.zip   (nếu dùng bundle)
-  data/                        LUNARNAV_DATA (bền): cache/ (Horizons, PGDA, Trek header...), kernels/ (SPICE), dem/ (Trek DEM)
-  output/                      LUNARNAV_OUTPUT: <run>_A_..., <run>_B_..., <run>_validation/ (báo cáo, checks.csv, PNG)
-  exports/<run>.zip            zip của 3 thư mục trên + RUN_INFO.json
+  lunarnav_colab_bundle.zip   (when using the bundle)
+  data/                        LUNARNAV_DATA (persistent): cache/ (Horizons, PGDA, Trek header...), kernels/ (SPICE), dem/ (Trek DEM)
+  output/                      LUNARNAV_OUTPUT: <run>_A_..., <run>_B_..., <run>_validation/ (reports, checks.csv, PNG)
+  exports/<run>.zip            zip of the 3 folders above + RUN_INFO.json
 ```
 
-Với `DEM_LOCAL_COPY=True`, `LUNARNAV_DATA=/content/lunarnav_data`: `cache/` và `kernels/` là symlink sang Drive, còn
-`dem/` là bản sao local (Drive FUSE đọc ngẫu nhiên chậm). DEM tải về được lưu thêm một bản lên Drive, nên phiên sau chỉ
-cần chép lại (~1-2 phút) chứ không phải tải lại.
+With `DEM_LOCAL_COPY=True`, `LUNARNAV_DATA=/content/lunarnav_data`: `cache/` and `kernels/` are symlinks to Drive,
+while `dem/` is a local copy (random reads through Drive FUSE are slow). A downloaded DEM is also saved to Drive, so a
+later session only has to copy it back (~1-2 minutes) instead of downloading it again.
 
-Dung lượng cần: ~4.6 GB DEM trên Drive (và trên ổ local Colab), kết quả khoảng 4-5 MB mỗi site cho 5 năm hàng giờ (A + B
-≈ 0.2 GB cho 23 sites).
+Space needed: ~4.6 GB of DEMs on Drive (and on the local Colab disk); results are about 4-5 MB per site for 5 years
+hourly (A + B ≈ 0.2 GB for 23 sites).
 
-## 4. Kết quả kiểm tra (PASS/FAIL)
+## 4. Check results (PASS/FAIL)
 
-Mỗi kiểm tra là một dòng trong bảng, lưu ở `<run>_validation/checks.csv`:
+Each check is one row of the table, saved in `<run>_validation/checks.csv`:
 
-* `PASS` / `FAIL`: kiểm tra bắt buộc (test suite, precompute exit code, `check_output` 0 violations, A vs B ephemeris,
-  validation A/B/C, negative controls, Apollo 11, lunar day, raymarch vs bruteforce, so với bản đồ NASA...).
-* `KNOWN`: sai khác đã biết và đã giải thích, không phải lỗi code. Hiện có: chiếu sáng của người quan sát 0 m so với
-  bản đồ NASA (xem `docs/VALIDATION_TERRAIN.md` §2.3).
-* `REVIEW`: tiêu chí mềm cần người xem (% nắng A vs B ở site có địa hình > 5 pp; Trek vs PGDA vượt 2 m / 0.5° / 3 pp).
-* `INFO`, `SKIP`: thông tin, bỏ qua.
+* `PASS` / `FAIL`: required checks (test suite, precompute exit code, `check_output` 0 violations, A vs B ephemeris,
+  validation A/B/C, negative controls, Apollo 11, lunar day, raymarch vs bruteforce, comparison with NASA maps...).
+* `KNOWN`: a known, explained difference, not a code error. Currently: illumination of a 0 m observer compared with the
+  NASA map (see `docs/VALIDATION_TERRAIN.md` §2.3).
+* `REVIEW`: soft criteria that need a human look (% sun A vs B at sites with terrain > 5 pp; Trek vs PGDA beyond 2 m /
+  0.5° / 3 pp).
+* `INFO`, `SKIP`: information, skipped.
 
-## 5. Thời gian dự kiến
+## 5. Expected run time
 
-* LIGHT_MODE: ~2 phút trên máy dev với cache nóng (smoke run 2026-11-13: ~2 phút, 33 PASS, 0 FAIL); trên Colab cache
-  lạnh thêm vài phút (SPICE kernels ~45 MB, block PGDA, header Trek ~16 MB).
-* Full: tải DEM 4.6 GB (tuỳ băng thông Moon Trek, không resume được), test ~2-5 phút, terrain validation ~25 phút
-  (cache lạnh), precompute A và B nhiều giờ (chưa đo trên Colab). Session Colab có giới hạn thời gian: chạy lại
-  *Run all* sau khi mất kết nối, `--resume` bỏ qua các site đã xong.
+* LIGHT_MODE: ~2 minutes on the development machine with a warm cache (smoke run on 2026-11-13: ~2 minutes, 33 PASS,
+  0 FAIL); on Colab with a cold cache add a few minutes (SPICE kernels ~45 MB, PGDA blocks, Trek headers ~16 MB).
+* Full: 4.6 GB DEM download (depends on Moon Trek bandwidth, cannot be resumed), tests ~2-5 minutes, terrain
+  validation ~25 minutes (cold cache), precompute A and B several hours (not yet measured on Colab). Colab sessions
+  have a time limit: run *Run all* again after a disconnect; `--resume` skips the sites that are already done.
 
-## 6. Smoke test local (không phải Colab)
+## 6. Local smoke test (not Colab)
 
-Ngoài Colab, notebook tự bỏ qua các ô mount Drive / clone / pip (phát hiện bằng `"google.colab" in sys.modules`),
-dùng repo chứa notebook (hoặc env `LUNARNAV_REPO`) và `LUNARNAV_DATA` / `LUNARNAV_OUTPUT` nếu đã đặt (mặc định `data/`,
-`output/` của repo). Chạy bằng nbclient:
+Outside Colab the notebook skips the Drive mount / clone / pip cells by itself (detected with
+`"google.colab" in sys.modules`), uses the repository that contains the notebook (or the `LUNARNAV_REPO` environment
+variable) and `LUNARNAV_DATA` / `LUNARNAV_OUTPUT` if set (default: the repository's `data/` and `output/`). Run it
+with nbclient from the repository root:
 
 ```bash
-cd /d/UAV/lunar-navigator
+cd lunar-navigator
 ./.venv/Scripts/python -m pip install -e ".[dev,notebook]"
 ./.venv/Scripts/python - <<'EOF'
 import asyncio, sys, nbformat
@@ -101,5 +104,7 @@ print("OK")
 EOF
 ```
 
-Notebook phải để `LIGHT_MODE = True` khi chạy local. Ở full mode, `download_product` từ chối tải file Trek > 100 MB ngoài
-Colab, và bước tải sẽ ghi `FAIL`.
+(`./.venv/Scripts/python` is the Windows virtual-environment layout; on Linux/macOS use `./.venv/bin/python`.)
+
+Keep `LIGHT_MODE = True` when running locally. In full mode `download_product` refuses to download Trek files larger
+than 100 MB outside Colab, and the download step records `FAIL`.

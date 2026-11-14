@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy / update the lunarnav API on the VPS (see docs/DEPLOY_VPS.md).
+# Deploy / update the lunarnav API on the VPS (see docs/vi/DEPLOY_VPS.md).
 #
 #   deploy.sh push [user@]host   FROM THE DEV MACHINE (Git Bash / Linux / macOS): upload the working tree
 #                                (git-tracked + untracked-not-ignored files, so no node_modules/.venv/data/

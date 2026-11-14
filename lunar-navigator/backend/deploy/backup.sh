@@ -7,7 +7,7 @@
 #   (credentials of the `backup`-role user come from /etc/lunarnav/mongodump.yaml - never on the command line)
 # - plus DATA_DIR/runs/job_* (custom-job output directories, small) as DIR/job-runs-<ts>.tar.gz
 #   Imported precompute runs are NOT tarred: they are re-importable from the Colab zip.
-# - keeps the newest N of each kind (default 7). Restore: docs/DEPLOY_VPS.md section "Backup / restore".
+# - keeps the newest N of each kind (default 7). Restore: docs/vi/DEPLOY_VPS.md section "Backup / restore".
 #
 # Environment: LUNARNAV_DUMP_CONFIG, LUNARNAV_BACKUP_DIR, LUNARNAV_BACKUP_KEEP, LUNARNAV_DB, LUNARNAV_DATA_DIR
 set -euo pipefail

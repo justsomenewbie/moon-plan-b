@@ -1,5 +1,7 @@
 # Tích hợp Frontend (Next.js) với backend lunarnav
 
+> Note: backend/fe-starter was removed on 2026-11-14; the frontend lives in frontend/ of the team repo.
+
 > Dành cho dev FE của **Lunar Landing Site Navigator** (NASA Space Apps 2026). Đọc file này là đủ để gọi API;
 > chi tiết từng field nằm trong spec OpenAPI. Ngày viết: 14-11-2026, API `v1` (`api_version` 1.0.0).
 

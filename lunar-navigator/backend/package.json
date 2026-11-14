@@ -2,7 +2,13 @@
   "name": "lunarnav-backend",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Lunar Landing Site Navigator - web backend (Fastify 5 + zod 4 + MongoDB)",
+  "aiDisclosure": {
+    "tool": "Anthropic Claude (Claude Code)",
+    "scope": "code, tests, documentation",
+    "doc": "../docs/AI_DISCLOSURE.md"
+  },
   "type": "module",
   "engines": {
     "node": ">=24"

@@ -1,1 +1,0 @@
-{"status":"ok","api_version":"1.0.0","node_version":"v24.16.0","time_utc":"2026-11-14T06:13:45Z","uptime_s":844.2,"mongo":{"ok":true,"latency_ms":10.1,"db":"lunarnav_dev"},"python":{"ok":true,"bin":"D:\\UAV\\lunar-navigator\\.venv\\Scripts\\python.exe","lunarnav_code_version":"0.1.0"},"default_run_id":"pf_21c3f3f6dc56b1e1"}
