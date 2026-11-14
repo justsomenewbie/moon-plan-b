@@ -286,3 +286,9 @@ The live client rejects a response that omits a requested dataset section. A sim
 ## Shared terrain observation
 
 On the November 14–21 comparison with six-hour spacing, the original link lost the selected Athena transition at 05:00 UTC on November 15 and opened Odysseus at 00:00 UTC on November 14. Chromium verified the repaired link against the live service and replayed producer responses. Opening a tab, reloading it and traversing browser history restored the exact site, UTC, angles and visibility flags. Both a catalog link and a three-sample custom run scrolled to the rendered chart. A normal homepage visit stayed at the top. Changing the sample updated the URL without an API request. Unavailable sites, unreturned timestamps and duplicate fields displayed a selection error. Summary-only local imports exposed no remote link. Minh’s UTC boundary checks passed on the combined build.
+
+## Same-site date comparison
+
+Chromium opened the pinned Athena comparison for December 1–4 and December 18–21 UTC. The standalone page issued two one-site summary GETs to the team service. Each returned 72 hourly samples’ coverage. Sun/Earth/joint totals were 0/72/0 hours for the first window and 72/72/72 for the second. The latter listed one joint interval clipped at both ends. The page retained the model name, run and attribution. The two [source windows were independently checked](BACKEND_RECONCILIATION.md#two-dates-at-one-site).
+
+The catalog form accepted the same two windows and reopened the result link. Browser history returned to the catalog and restored the date report. An unequal-duration link and a duplicate site field produced errors before any API request. At 320 CSS pixels the Vietnamese page did not overflow, and the English and Vietnamese PDFs each fit one A4 page. A controlled replay verified partial coverage, cancellation during an edit and preservation of UTC seconds. Physical model validation and native Safari printing remain open.
