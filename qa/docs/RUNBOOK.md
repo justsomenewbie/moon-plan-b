@@ -45,13 +45,14 @@ Record only consented, minimal observations; avoid names, recordings and persona
 
 - [x] Frontend integration uses the selected Next.js stack and Chung’s same-origin aggregate API. [Contract and Chromium retest](../README.md#frontend-integration-retest).
 - [ ] At freeze, record Chung and Son’s acceptance of the release build and producer schema, and Trang’s sign-off on model assumptions, units and independent JPL sample checks.
-- [ ] Sourced production package validates with `--release`; true query receipts, raw exports, parser compatibility and source authenticity reviewed. Synthetic labels remain on mocks.
+- [ ] At the frozen commit, rebuild the native B2 archive with `qa/build_archive_b2.py --verify` and compare its three public files byte for byte. Follow the [B2 reproduction steps](../../docs/B2_VISIBILITY_ARCHIVE.md#verify-the-published-files) and retain the result.
+- [ ] Review source authenticity, query receipts, original exports and parser compatibility for the data being released. For any `frontend-draft-2` Horizons dataset included in the release, run `qa/verify_json_contract.py --release` with its QA sidecar. Keep the synthetic labels on fixtures.
 - [ ] Supported-runtime install, full frontend test/typecheck/build and production-preview checks pass at the frozen commit; no unsupported Node waiver.
 - [ ] Manual resilience/network/accessibility evidence and three real-user sessions recorded; no unresolved P0/P1 or scientific correctness defect. Exceptions require named human acceptance.
 - [ ] Before submitting the Final Project or demo, review the public roster and contact block against the [NASA participant terms](https://www.spaceappschallenge.org/legal/). The working site shows team names. Exclude identifiable names and likenesses of anyone under 18 and personal phone numbers from the submission. Keep the portrait preview private.
 - [ ] Licence/third-party notices, source and AI disclosures, current official rules and public links checked. Team Owner verifies portal rights, submits and retains receipt; Save Progress is not submission.
 
-Next handoff input: one agreed, versioned two-site producer export with original requests/raw responses. Run the package validator, report incompatibilities, then let integration owners approve any adapter before changing shared contracts.
+For the data handoff, identify the run and archive links tested, the commit, and any differences from the original responses. Integration owners review contract changes. Science and release owners record their decisions separately.
 
 ## Tool routing record
 

@@ -14,6 +14,8 @@ In `visibility.json`, each site's `sun`, `earth` and `both` arrays contain conse
 
 The site comparison sums visible hours in the selected range. A site-first search considers each whole-hour start for which the entire requested mission fits. Starts tied for greatest visibility share the same standing, with earlier times shown first. These are model samples with one-hour resolution. Surface hazard, solar power and radio performance require their own evidence.
 
+## Verify the published files
+
 To reproduce, save the B2 responses into one local directory from the [production team API](https://api.lunavigator.com). Save `GET /api/v1/runs/{run_id}` as `run.json`, `GET /api/v1/sites?run_id={run_id}&format=json` as `catalog.json` and the run's original manifest as `manifest.json`. For every site ID in that manifest, fetch its listed `sites/{site_id}/windows.json` from the run-file endpoint using the URL-encoded file path. Save each response as `windows-{site_id}.json`. The following check reads local files and compares the generated archive byte for byte.
 
 ```sh
@@ -21,3 +23,20 @@ python3 -B qa/build_archive_b2.py --verify /path/to/b2-responses
 ```
 
 The archived source files contained 2,018,290 original bytes in total for the 23 sites. All masks tiled their source time range, reproduced the catalog percentages and satisfied the simultaneous Sun/Earth overlap check. Additional production aggregate and ranking calls were compared at every site for 2026-11-14 to 2026-11-15, 2026-12-01 to 2026-12-04 and 2028-04-17 to 2028-04-23. OpenAI Codex assisted archive compilation, frontend queries and tests. The producer supplied the visibility observations.
+
+After the local rebuild passes, compare the hosted downloads with the verified files from the repository root.
+
+```sh
+python3 - <<'PYTHON'
+from pathlib import Path
+from urllib.request import urlopen
+
+for name in ("manifest.json", "catalog.json", "visibility.json"):
+    with urlopen(f"https://moon-plan-b.vercel.app/data/run-b2/{name}", timeout=30) as response:
+        if response.read() != (Path("frontend/public/data/run-b2") / name).read_bytes():
+            raise SystemExit(f"Published bytes differ for {name}")
+    print(f"Matched {name}")
+PYTHON
+```
+
+On November 15, 2026, the native rebuild reproduced the three files from 23 original site-window exports covering 1,007,952 site-hours. All three hosted downloads matched those files (76,630 bytes total). The manifest lists 94 source paths. This check covers the 23 original window files used to compute the archive, plus the run record, catalog and manifest. Git preserves the bytes of the five published B and B2 JSON files on checkout. All five matched their tracked hashes both with and without automatic CRLF conversion enabled.
