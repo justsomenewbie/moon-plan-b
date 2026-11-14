@@ -13,3 +13,20 @@
 .plan-results table { min-width: 32rem; }
 .plan-main code { overflow-wrap: anywhere; }
 .hero-actions a:not(.button) { align-self: center; text-decoration: underline; }
+
+.plan-site-map { margin: 1rem 0; padding: clamp(.75rem, 2vw, 1.25rem); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.plan-site-map h4 { margin-bottom: .75rem; font-size: 1.15rem; font-weight: 700; }
+.plan-map-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 1.25rem; }
+.plan-map-surface { display: block; width: 100%; aspect-ratio: 2; border-radius: 4px; background: #1a1e25; }
+.plan-map-point { cursor: pointer; }
+.map-leader { fill: #ffce50; stroke: #191911; stroke-width: 2; }
+.map-other { fill: #d4e9ff; stroke: #18354d; stroke-width: 2; }
+.map-legend, .plan-map-zoom { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; }
+.map-legend, .plan-site-map figcaption { margin-top: .5rem; font-size: .85rem; }
+.map-legend b { color: var(--sun); }
+.map-legend span + span b { color: var(--earth); }
+.plan-map-inspector { display: grid; align-content: start; gap: .6rem; min-width: 0; overflow-wrap: anywhere; }
+.plan-map-inspector select { width: 100%; min-width: 0; }
+.plan-map-zoom button { min-height: 44px; min-width: 44px; border: 1px solid var(--line); border-radius: 5px; }
+.plan-map-zoom button:disabled { opacity: .45; }
+@media (max-width: 700px) { .plan-map-layout { grid-template-columns: minmax(0, 1fr); gap: .75rem; } }

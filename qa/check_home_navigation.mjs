@@ -16,6 +16,13 @@ try {
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
     const primary = page.locator(".hero-actions .primary");
     assert.equal(await primary.innerText(), "Compare Athena and Odysseus");
+    const guideLink = page.locator('.hero-actions a[href="#home-guide"]');
+    assert.equal(await page.locator(".hero-actions a").count(), 2);
+    await guideLink.press("Enter");
+    await page.waitForFunction(() => document.activeElement.id === "home-guide");
+    for (const mode of ["sites", "dates"]) {
+      assert.ok(await page.locator(`#home-guide a[href="/plan?mode=${mode}"]`).isVisible());
+    }
     assert.ok(await page.getByRole("img", { name: /Low sunlight reaches the left rim/ }).isVisible());
     await page.route("**/api/**", route => route.abort());
     await primary.press("Enter");
@@ -44,6 +51,7 @@ try {
     }
     await nav.getByLabel("Language").selectOption("vi");
     assert.equal(await primary.innerText(), "So sánh Athena và Odysseus");
+    assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
     assert.deepEqual(await nav.getByRole("link").allTextContents(),
       ["So sánh", "Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);
     for (const id of ["team", "about", "resources"]) {

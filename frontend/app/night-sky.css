@@ -16,7 +16,8 @@
     opacity: .55;
   }
   :root[data-theme="light"] body::before {
-    background: linear-gradient(170deg, #a5cee8, #ebf3f6 70%, #f3f5f4);
+    background: radial-gradient(ellipse at 77% 21%, rgb(255 252 242 / 52%), transparent 68%),
+      linear-gradient(177deg, #9bc6e2, #c9e1ed 46%, #edf3f2 79%, #f3f4f0);
   }
   .sky-clouds, .night-stars {
     position: fixed;
@@ -26,10 +27,6 @@
     overflow: hidden;
   }
   .sky-clouds { display: block; }
-  :root[data-theme="light"] .sky-clouds span {
-    filter: contrast(.75) brightness(1.16);
-    opacity: .66;
-  }
   .sky-clouds span {
     position: absolute;
     width: clamp(155px, 24vw, 370px);
@@ -54,6 +51,21 @@
     left: 15%; bottom: 2%; width: clamp(140px, 20vw, 310px); aspect-ratio: 1280 / 445;
     background-image: url("/images/cloud-trail.webp");
   }
+  :root[data-theme="light"] .sky-clouds span { filter: contrast(.86) brightness(1.15) saturate(.76); }
+  :root[data-theme="light"] .sky-clouds span:nth-child(1) {
+    left: -12%; top: 6%; width: clamp(340px, 48vw, 820px); opacity: .6;
+    mask-image: linear-gradient(to top, transparent, black 38%);
+  }
+  :root[data-theme="light"] .sky-clouds span:nth-child(2) {
+    right: -2%; top: 7%; width: clamp(300px, 45vw, 770px); opacity: .37;
+  }
+  :root[data-theme="light"] .sky-clouds span:nth-child(3) {
+    right: -13%; top: 59%; width: clamp(350px, 49vw, 840px); opacity: .46;
+    mask-image: linear-gradient(to top, transparent, black 45%);
+  }
+  :root[data-theme="light"] .sky-clouds span:nth-child(4) {
+    left: 8%; bottom: 2%; width: clamp(320px, 43vw, 720px); opacity: .21;
+  }
   .sky-appearance { display: block; }
   :root[data-theme="dark"] .night-stars { display: block; }
   .night-stars i {
@@ -71,6 +83,12 @@
   .night-stars i:nth-child(4) { left: 28%; top: 35%; }
   .sky-appearance label, .night-credit { display: none; }
   :root[data-theme="dark"] .night-credit { display: inline; }
+}
+@media screen and (max-width: 600px) {
+  :root[data-theme="light"] .sky-clouds span:nth-child(1) { width: 96vw; left: -57%; top: 8%; opacity: .46; }
+  :root[data-theme="light"] .sky-clouds span:nth-child(2) { width: 82vw; right: -34%; top: 14%; }
+  :root[data-theme="light"] .sky-clouds span:nth-child(3) { width: 106vw; right: -50%; top: 54%; }
+  :root[data-theme="light"] .sky-clouds span:nth-child(4) { width: 80vw; left: -30%; bottom: 10%; }
 }
 /* Match the 16:9 projected sky texture to the viewport and display density. */
 @media screen and (min-width: 1025px), screen and (min-height: 577px), screen and (min-resolution: 1.5dppx) {

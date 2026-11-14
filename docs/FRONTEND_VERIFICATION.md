@@ -345,3 +345,12 @@ Chromium downloaded six real CSV attachments for bounded result cards and matche
 Eleven Chromium checks exercised the live catalog, a retained custom result and the two-date page. They matched each displayed 24-, 72- and 168-hour assessment to the producer, including the real Odysseus 24-hour borderline case, Athena’s zero and boundary-clipped 72 hours in December, and a request clamped to six evaluated hours. Opening the assessment showed the exact reason in English and Vietnamese interfaces. An older export still opened without criteria. At 320 CSS pixels the Vietnamese page had no horizontal overflow. The English A4 report fit one page and the Vietnamese report used two, retaining both clipped edges and the 72-hour interval. Closed disclosures printed their thresholds and verdicts.
 
 Native Safari 26.6.2 opened the live two-date link in a separate WebDriver session. It displayed all six December assessments. On the November 30 Odysseus request it showed the near-threshold verdict in English and Vietnamese and the exact producer reason. The first Safari date request displayed a connection error. The repeat against the same proxy succeeded. The checks establish frontend agreement with producer responses. The physical model and native Safari printing remain outside this check.
+
+
+### Planner result map and homepage guide
+
+The date-first planner maps the sites in the returned ranking on the credited [NASA LRO mosaic](https://svs.gsfc.nasa.gov/4720/). Gold diamonds identify every positive top result for the selected visibility criterion. The inspector shows the site, hours and coordinates, supports 1–8× zoom, and links to the corresponding LROC location. Live coordinates are checked against the dataset conventions and run catalog. The map also works with the bundled B and B2 archives.
+
+Chromium checked the B2 joint-visibility ranking for November 14–21, 2026 UTC (Vikram, 162 h), November 15–16 (Apollo 17 and Vikram, 24 h each), and November 13–14 (all 23 at 0 h). The [map regression check](../qa/check_planner_map.mjs) replays those windows. English and Vietnamese browser checks also covered missing and inconsistent coordinates, incomplete coverage, unsupported frames, image failure, and narrow screens. The live response edge cases used controlled API responses.
+
+The homepage links directly to the saved comparison and quick guide; the guide contains both planner entry points. Mobile and desktop Chromium checks covered keyboard navigation and the softer daytime cloud layers, including pause and reduced motion.

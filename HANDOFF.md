@@ -18,13 +18,13 @@ Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body 
 
 Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup labels optional solar-disc fraction and Sun-facing irradiance. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Site selection: comparisons. [Sky projection](docs/CREDITS.md#night-theme-star-map), cloud shading and four meteor paths.
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Homepage links to guide and comparison. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
 The astronaut waves, greets on opening and glances sideways while answering. Pause and reduced motion use still expressions. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [OpenAI/Ollama configuration](frontend/README.md#ask-the-astronaut).
 
-**Plan and data:** The public explorer lists 13 supported team API operations. Saved planning runs on-device. B2 covers 23 sites and 43,824 hourly samples per site. /data links [B2 originals](docs/B2_VISIBILITY_ARCHIVE.md) with hashes and preserves B archives. Live and offline /plan use the reported run. On November 14–21 Odysseus saw both bodies for 47 h on B2 and 33 h on historical B; Athena saw both for 139 h on each. Downloads and NASA credits remain traceable.
+**Plan and data:** The public explorer lists 13 supported team API operations. Saved planning runs on-device. /plan maps positive leaders and ties. B2 covers 23 sites and 43,824 hourly samples per site. /data links [B2 originals](docs/B2_VISIBILITY_ARCHIVE.md) with hashes and preserves B archives. Live and offline /plan use the reported run. On November 14–21 Odysseus saw both bodies for 47 h on B2 and 33 h on historical B; Athena saw both for 139 h on each.
 
 ## Pending
 
