@@ -8,7 +8,7 @@
 # Caddy (official apt, automatic HTTPS), Python venv for lunarnav, ufw (22/80/443 only).
 # Creates: unix user `lunar`, /opt/lunarnav/*, MongoDB users lunarnav_admin / lunarnav_app / lunarnav_backup,
 # /etc/lunarnav/{api.env, mongodump.yaml, mongorestore.yaml, mongo-admin.env}, nightly backup cron, logrotate.
-# Does NOT deploy the code (deploy.sh push) or import data (import-run.sh). See docs/DEPLOY_VPS.md.
+# Does NOT deploy the code (deploy.sh push) or import data (import-run.sh). See docs/vi/DEPLOY_VPS.md.
 #
 # Options:
 #   --api-domain DOMAIN   (required) API host name; its DNS A/AAAA record must point at this VPS

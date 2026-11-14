@@ -679,7 +679,7 @@ Ví dụ: hai site, một tuần, chỉ metrics + windows (request nhẹ, khuy�
 ```
 GET /api/lunar/dataset?site_ids=ref_shackleton_rim,a3_haworth&start=2026-03-01T00:00:00Z&end=2026-03-08T00:00:00Z&include=metrics,windows
 ```
-Response mẫu thật (trích `docs/dataset_sample_response.json`: `site_ids=ref_connecting_ridge_c1,apollo11`, 2026-01-07 → 2026-01-14,
+Response mẫu thật (trích `backend/contract/examples/dataset_sample.json`: `site_ids=ref_connecting_ridge_c1,apollo11`, 2026-01-07 → 2026-01-14,
 chụp trên run B **trước** khi sửa địa hình, nên `run_id` cũ và chưa có `mean_power_*_pct`; production trả `run_id`
 `B2_...`, số có thể lệch nhẹ). Đã rút gọn: `conventions`, `sources`, `horizon`, phần lớn mảng `series`, site thứ hai.
 ```json

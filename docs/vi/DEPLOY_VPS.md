@@ -1,7 +1,7 @@
 # Deploy backend lên Linux VPS qua SSH (runbook)
 
 > Stack: **Ubuntu 24.04 LTS + Node 24 (NodeSource) + MongoDB 8.0 (apt chính thức, auth, bindIp 127.0.0.1) +
-> Python venv (lunarnav) + pm2 + reverse proxy HTTPS**. Không Docker. Kế hoạch gốc: `docs/WEB_BACKEND_PLAN.md` §10.
+> Python venv (lunarnav) + pm2 + reverse proxy HTTPS**. Không Docker. Kế hoạch gốc: `docs/vi/WEB_BACKEND_PLAN.md` §10.
 > Reverse proxy có hai cách:
 > - **nginx + certbot sau Cloudflare** (đang dùng ở production, xem bảng dưới): VPS đã có nginx phục vụ landing page.
 > - **Caddy** (HTTPS tự động): cách thay thế khi **VPS chưa có web server khác**.
@@ -61,7 +61,7 @@ Bố cục trên VPS **[cập nhật 14/11]**:
 
 Trong các lệnh dưới: `VPS` = IP hoặc tên máy (production: `<VPS_IP>`), `api.example.org` = domain API
 (production: `api.lunavigator.com`), `$KEY` = một khoá API hợp lệ (§1.3). Chạy lệnh "máy dev" trong **Git Bash** tại
-`D:\UAV\lunar-navigator` (`cd /d/UAV/lunar-navigator`).
+`<repo>` (`cd <repo>`).
 
 ---
 
@@ -414,7 +414,7 @@ trên VPS, kết quả như nhau).
   ssh root@VPS "sed -i 's|^CORS_ORIGINS=.*|CORS_ORIGINS=https://my-fe.vercel.app,http://localhost:3001|' /etc/lunarnav/api.env"
   ssh lunar@VPS 'pm2 reload lunarnav-api'      # env đọc lại khi process khởi động (node --env-file)
   ```
-  FE đặt `NEXT_PUBLIC_API_ORIGIN=https://api.example.org` (xem `docs/FE_INTEGRATION.md` §9).
+  FE đặt `NEXT_PUBLIC_API_ORIGIN=https://api.example.org` (xem `docs/vi/FE_INTEGRATION.md` §9).
 - **Next.js trên cùng VPS (same-origin, chỉ cách Caddy)**: provision với `--app-domain app.example.org` (hoặc bỏ tiền tố
   `#APP# ` trong `/etc/caddy/Caddyfile`, thay domain, `sudo systemctl reload caddy`). Build app Next.js và chạy ở `127.0.0.1:3001`:
   ```bash

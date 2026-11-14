@@ -179,7 +179,8 @@ describe('review fixes: units', () => {
             }
           }
         }
-        await rm(dir, { recursive: true, force: true });
+        // Windows may hold the cwd of the just-killed process for a moment (EBUSY): retry.
+        await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
       }
     },
     60_000,

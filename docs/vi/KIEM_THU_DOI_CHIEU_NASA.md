@@ -261,4 +261,4 @@ Trước khi báo, bạn tự kiểm lại 3 điều:
 
 ---
 
-*Muốn kiểm sâu hơn (46 cặp số Horizons, cách tính góc che của núi, giải thích kỹ thuật)? Xem bản chi tiết `KIEM_THU_DOI_CHIEU_NASA_CHI_TIET.md`. Bản đó dành cho người có nền kỹ thuật, không bắt buộc.*
+*Muốn kiểm sâu hơn (cách tính góc che của núi, giải thích kỹ thuật)? Xem `../VALIDATION.md` và `../VALIDATION_TERRAIN.md` (tiếng Anh). Bản tiếng Anh của phiếu này: `../NASA_TOOLS_CROSSCHECK.md`.*

@@ -14,7 +14,8 @@ Upload the zip to Colab (or to Google Drive at ``MyDrive/lunarnav/lunarnav_colab
 What is packed
 --------------
 * Only the entries in :data:`INCLUDE` (package, tests and their small fixtures, docs, notebooks,
-  scripts, pyproject.toml, README.md, .gitignore), all under one top folder ``lunar-navigator/``.
+  scripts, pyproject.toml, README.md, LICENSE, THIRD_PARTY_NOTICES.md, .gitignore), all under one
+  top folder ``lunar-navigator/``.
 * Never: the top-level data/, output/, dist/, .venv/ and .git/ (not in INCLUDE), any
   :data:`EXCLUDE_DIRS` folder (byte-code and tool caches, notebook checkpoints) and
   :data:`EXCLUDE_SUFFIXES` (byte code, partial downloads, DEM rasters).  The heavy data (Moon Trek
@@ -50,6 +51,8 @@ INCLUDE: tuple[str, ...] = (
     "scripts",
     "pyproject.toml",
     "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     ".gitignore",
 )
 #: Directory names skipped at any depth inside the INCLUDE folders.  (The top-level data/, output/,

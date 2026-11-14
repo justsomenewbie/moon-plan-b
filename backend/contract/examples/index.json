@@ -44,7 +44,7 @@
       "content_type": "application/json; charset=utf-8",
       "headers": {
         "content-type": "application/json; charset=utf-8",
-        "etag": "W/\"44818e4c495e2b18b8b09bb977462d5e\"",
+        "etag": "W/\"cc7de07de9b4a6d63fad3bd3d7efe123\"",
         "cache-control": "public, max-age=30",
         "x-ratelimit-limit": "300"
       },
@@ -247,7 +247,7 @@
       "content_type": "application/json; charset=utf-8",
       "headers": {
         "content-type": "application/json; charset=utf-8",
-        "etag": "W/\"1faf0e2b57707ff2751270881c74fe63\"",
+        "etag": "W/\"ccd8764e51801244bbab255fbac8a1dc\"",
         "cache-control": "public, max-age=30",
         "x-ratelimit-limit": "300"
       },

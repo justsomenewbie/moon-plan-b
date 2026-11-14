@@ -8,3 +8,6 @@ data/
 *.log
 .mms-*.tmp.mjs
 !.env.*.example
+
+# captured output of scripts/e2e-curl.sh (regenerated locally, not published)
+contract/examples/e2e/

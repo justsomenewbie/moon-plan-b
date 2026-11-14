@@ -9,7 +9,7 @@ file was downloaded).
 ## Reproduce
 
 ```bash
-cd /d/UAV/lunar-navigator
+cd <repo>    # the lunar-navigator folder
 ./.venv/Scripts/python -m lunarnav.validate_terrain            # full report, ~6 min warm cache (~25 min cold)
 ./.venv/Scripts/python -m lunarnav.validate_terrain --quick    # 8+8 pixels, 5-yr period, 4 directions
 ./.venv/Scripts/python -m pytest -q tests/test_crosscheck_terrain.py               # all 15 tests (5 need network, 3 of them slow)
@@ -376,7 +376,7 @@ therefore be made on the exact landing ellipse, never on a region centre.
 The full 2026-2030 runs A (Moon Trek + raymarch) and B (PGDA + brute force) disagreed at rim sites
 (`compare_A_B.csv`: Shackleton rim A 55.0 vs B 87.6 % sun, de Gerlache rim 63.2 vs 84.3, Mons
 Mouton 33.9 vs 26.0, Cabeus B 61.1 vs 53.2, Nobile rim 1 25.6 vs 28.8). The diagnosis
-(`D:/UAV/lunarnav_runs/diag/REPORT.md`, scripts and logs under `diag/h1_nearfield`, `diag/h2_eq`,
+(`<runs_dir>/diag/REPORT.md` in the local run folder, not published; scripts and logs under `diag/h1_nearfield`, `diag/h2_eq`,
 `diag/h3_codepath`, `diag/synth`) found three causes, none of them a code error:
 
 | # | Cause | Effect |

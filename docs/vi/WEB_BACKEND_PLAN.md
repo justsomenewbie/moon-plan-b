@@ -90,10 +90,10 @@ Nguyên tắc:
 5. Tên field **snake_case giống hệt OUTPUT_SPEC** (`sun_el_deg`, `pct_sun`, `longest_dark_h`…); thời gian ISO-8601 UTC có `Z`; thiếu = `null` (không NaN); kinh độ east [0, 360).
 
 ### 2.2 Vị trí code: **thư mục `backend\` trong repo hiện tại** (khuyến nghị)
-Lý do: bridge Python import `lunarnav` cùng phiên bản; parity test dùng fixture sinh bởi `lunarnav`; contract + code + spec dữ liệu (`docs/OUTPUT_SPEC.md`) cùng version git. Repo `D:\UAV\lunar-navigator` là git nhưng **chưa có commit** → nên commit Python trước, rồi mới thêm `backend/`. FE ở repo riêng, chỉ cần file `backend/contract/openapi.json` (copy hoặc fetch `/api/v1/openapi.json`).
+Lý do: bridge Python import `lunarnav` cùng phiên bản; parity test dùng fixture sinh bởi `lunarnav`; contract + code + spec dữ liệu (`docs/OUTPUT_SPEC.md`) cùng version git. Repo `<repo>` là git nhưng **chưa có commit** → nên commit Python trước, rồi mới thêm `backend/`. FE ở repo riêng, chỉ cần file `backend/contract/openapi.json` (copy hoặc fetch `/api/v1/openapi.json`).
 
 ```
-D:\UAV\lunar-navigator\
+<repo>\
   lunarnav\  tests\  docs\  ...           (Python — KHÔNG sửa trong việc làm backend)
   .venv\Scripts\python.exe                (venv đã có — dùng làm PYTHON_BIN trên Windows)
   backend\
@@ -457,9 +457,9 @@ HOST=127.0.0.1
 NODE_ENV=development
 LOG_LEVEL=info
 MONGODB_URI=mongodb://127.0.0.1:27017/lunarnav
-DATA_DIR=D:\UAV\lunar-navigator\backend\data          # VPS: /opt/lunarnav/data
-PYTHON_BIN=D:\UAV\lunar-navigator\.venv\Scripts\python.exe   # VPS: /opt/lunarnav/py/.venv/bin/python
-PYTHON_CWD=D:\UAV\lunar-navigator                       # VPS: /opt/lunarnav/lunar-navigator
+DATA_DIR=<repo>\backend\data          # VPS: /opt/lunarnav/data
+PYTHON_BIN=<repo>\.venv\Scripts\python.exe   # VPS: /opt/lunarnav/py/.venv/bin/python
+PYTHON_CWD=<repo>                       # VPS: /opt/lunarnav/lunar-navigator
 JOB_CONCURRENCY=1
 JOB_QUEUE_MAX=20
 JOB_TIMEOUT_MS=1200000
@@ -524,12 +524,12 @@ Dọn dẹp mỗi giờ: run custom quá expires_at → xoá series/windows/... 
 ### 7.3 Windows vs Linux
 | | Windows (dev) | Linux (VPS) |
 |---|---|---|
-| `PYTHON_BIN` | `D:\UAV\lunar-navigator\.venv\Scripts\python.exe` | `/opt/lunarnav/py/.venv/bin/python` |
+| `PYTHON_BIN` | `<repo>\.venv\Scripts\python.exe` | `/opt/lunarnav/py/.venv/bin/python` |
 | Đường dẫn | luôn `path.join`/`path.resolve`, không ghép chuỗi `/` | như trái |
 | Spawn | args array, **không** `shell:true` | như trái |
 | Kill cây process | lunarnav hiện **không dùng multiprocessing** (chỉ `subprocess` gọi git) → kill của execa đủ. Nếu sau này có process con: `taskkill /PID <pid> /T /F` | spawn `detached:true` + `process.kill(-pid)` |
 | Encoding | `PYTHONIOENCODING=utf-8` bắt buộc | vô hại |
-| Dữ liệu SPICE/LOLA | `D:\UAV\lunar-navigator\data\{kernels,dem,cache}` | copy sang `/opt/lunarnav/data` (đo dung lượng trước) |
+| Dữ liệu SPICE/LOLA | `<repo>\data\{kernels,dem,cache}` | copy sang `/opt/lunarnav/data` (đo dung lượng trước) |
 
 ---
 

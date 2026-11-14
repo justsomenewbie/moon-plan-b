@@ -24,7 +24,7 @@ export interface RunOnDisk {
 /**
  * Directory that holds the files of an imported run. A copied run (the default import, and every job
  * output) lives at DATA_DIR/runs/<run_id>/ - use that whenever it exists, so a database moved to
- * another machine (mongodump on Windows -> mongorestore on the VPS, docs/DEPLOY_VPS.md 4.3) still finds
+ * another machine (mongodump on Windows -> mongorestore on the VPS, docs/vi/DEPLOY_VPS.md 4.3) still finds
  * its files although `runs.source_dir` holds the old absolute path. `source_dir` is the fallback for
  * runs imported in place (--no-copy).
  */
