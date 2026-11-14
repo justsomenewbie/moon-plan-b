@@ -872,6 +872,306 @@
           }
         }
       }
+    },
+    "/api/v1/sites/{site_id}/export/series.csv": {
+      "get": {
+        "operationId": "exportSiteSeriesCsv",
+        "summary": "Download the series of a site as CSV (streamed, every sample of the range)",
+        "tags": [
+          "export"
+        ],
+        "description": "No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "example": "pf_21c3f3f6dc56b1e1",
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "description": "Run to read; default = the run flagged is_default (GET /api/v1/runs)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+            },
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "description": "UTC instant, ISO 8601 with `Z` (e.g. `2026-01-01T00:00:00Z`). Snapped to the sample grid by the server."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+            },
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "description": "EXCLUSIVE end"
+          },
+          {
+            "schema": {
+              "default": "sun_az_deg,sun_el_deg,sun_dist_km,sun_semidiam_deg,horizon_el_sun_deg,sun_clearance_deg,sun_fraction,sun_visible,power_horizontal,power_tracking,irradiance_tracking_wm2,earth_az_deg,earth_el_deg,earth_dist_km,earth_semidiam_deg,horizon_el_earth_deg,earth_clearance_deg,earth_fraction,earth_visible,both_visible,hours_until_sunset,hours_until_sunrise,hours_until_earthset,hours_until_earthrise",
+              "type": "string",
+              "pattern": "^[\\s,]*(?:sun_az_deg|sun_el_deg|sun_dist_km|sun_semidiam_deg|horizon_el_sun_deg|sun_clearance_deg|sun_fraction|sun_visible|power_horizontal|power_tracking|irradiance_tracking_wm2|earth_az_deg|earth_el_deg|earth_dist_km|earth_semidiam_deg|horizon_el_earth_deg|earth_clearance_deg|earth_fraction|earth_visible|both_visible|hours_until_sunset|hours_until_sunrise|hours_until_earthset|hours_until_earthrise)(?:\\s*,[\\s,]*(?:sun_az_deg|sun_el_deg|sun_dist_km|sun_semidiam_deg|horizon_el_sun_deg|sun_clearance_deg|sun_fraction|sun_visible|power_horizontal|power_tracking|irradiance_tracking_wm2|earth_az_deg|earth_el_deg|earth_dist_km|earth_semidiam_deg|horizon_el_earth_deg|earth_clearance_deg|earth_fraction|earth_visible|both_visible|hours_until_sunset|hours_until_sunrise|hours_until_earthset|hours_until_earthrise))*[\\s,]*$"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma separated columns (default: all visibility columns); time_utc is always first"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,64}$"
+            },
+            "example": "ref_connecting_ridge_c1",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV, one row per sample: time_utc + requested columns (booleans 1/0, missing empty) - same format as visibility.csv.gz",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "examples": [
+                    "time_utc,sun_el_deg,sun_visible\n2026-01-01T00:00:00Z,0.805135,1\n2026-01-01T01:00:00Z,0.805347,1\n"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable (SERVICE_UNAVAILABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sites/{site_id}/export/windows.csv": {
+      "get": {
+        "operationId": "exportSiteWindowsCsv",
+        "summary": "Download the visibility windows of a site as CSV",
+        "tags": [
+          "export"
+        ],
+        "description": "Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "example": "pf_21c3f3f6dc56b1e1",
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "description": "Run to read; default = the run flagged is_default (GET /api/v1/runs)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+            },
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "description": "UTC instant, ISO 8601 with `Z` (e.g. `2026-01-01T00:00:00Z`). Snapped to the sample grid by the server."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+            },
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "description": "EXCLUSIVE end"
+          },
+          {
+            "schema": {
+              "default": "sun,earth,both",
+              "type": "string",
+              "pattern": "^[\\s,]*(?:sun|earth|both)(?:\\s*,[\\s,]*(?:sun|earth|both))*[\\s,]*$"
+            },
+            "in": "query",
+            "name": "kinds",
+            "required": false,
+            "description": "Comma separated window kinds"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,64}$"
+            },
+            "example": "ref_connecting_ridge_c1",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV, one row per (clipped) window: kind,start,end,duration_h,state,truncated_start,truncated_end,clipped_start,clipped_end",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "examples": [
+                    "kind,start,end,duration_h,state,truncated_start,truncated_end,clipped_start,clipped_end\nsun,2026-01-01T00:00:00Z,2026-03-29T00:00:00Z,2088,1,1,0,0,0\n"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable (SERVICE_UNAVAILABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

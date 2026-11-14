@@ -141,6 +141,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sites/{site_id}/export/series.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download the series of a site as CSV (streamed, every sample of the range)
+         * @description No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series.
+         */
+        get: operations["exportSiteSeriesCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sites/{site_id}/export/windows.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download the visibility windows of a site as CSV
+         * @description Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows.
+         */
+        get: operations["exportSiteWindowsCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2959,6 +2999,208 @@ export interface operations {
             };
             /** @description Internal error (INTERNAL) */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    exportSiteSeriesCsv: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Run to read; default = the run flagged is_default (GET /api/v1/runs)
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id?: string;
+                /** @description UTC instant, ISO 8601 with `Z` (e.g. `2026-01-01T00:00:00Z`). Snapped to the sample grid by the server. */
+                start?: string;
+                /** @description EXCLUSIVE end */
+                end?: string;
+                /** @description Comma separated columns (default: all visibility columns); time_utc is always first */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+                 * @example ref_connecting_ridge_c1
+                 */
+                site_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV, one row per sample: time_utc + requested columns (booleans 1/0, missing empty) - same format as visibility.csv.gz */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    exportSiteWindowsCsv: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Run to read; default = the run flagged is_default (GET /api/v1/runs)
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id?: string;
+                /** @description UTC instant, ISO 8601 with `Z` (e.g. `2026-01-01T00:00:00Z`). Snapped to the sample grid by the server. */
+                start?: string;
+                /** @description EXCLUSIVE end */
+                end?: string;
+                /** @description Comma separated window kinds */
+                kinds?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+                 * @example ref_connecting_ridge_c1
+                 */
+                site_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV, one row per (clipped) window: kind,start,end,duration_h,state,truncated_start,truncated_end,clipped_start,clipped_end */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
