@@ -9,6 +9,20 @@
 .plan-main caption { text-align: start; font-weight: 600; }
 
 .plan-presets { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1rem; margin: 1rem 0; }
+@media screen {
+  .request-fields.catalog-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .catalog-fields .field, .catalog-fields button { margin-bottom: 0; }
+  .catalog-fields .field input, .catalog-fields .field select { height: 46px; min-width: 0; }
+}
+@media screen and (min-width: 620px) {
+  .request-fields.catalog-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: .35rem; }
+  .catalog-fields .field { display: grid; grid-template-rows: subgrid; grid-row: span 3; }
+  .catalog-fields .field input, .catalog-fields .field select { margin-top: 0; }
+}
+@media screen and (min-width: 1000px) {
+  .request-fields.catalog-fields { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; }
+  .catalog-fields button { grid-column: 5; grid-row: 2; }
+}
 .plan-source, .plan-presets { overflow-wrap: anywhere; }
 .plan-results table { min-width: 32rem; }
 .plan-main code { overflow-wrap: anywhere; }
@@ -31,7 +45,13 @@
 .plan-map-zoom button:disabled { opacity: .45; }
 @media (max-width: 700px) { .plan-map-layout { grid-template-columns: minmax(0, 1fr); gap: .75rem; } }
 
-.plan-map-modes { display: flex; gap: .35rem; margin-bottom: .75rem; }
+.plan-regional-view { max-width: 32rem; margin-inline: auto; }
+.plan-regional-image { position: relative; aspect-ratio: 1; background: var(--bg); }
+.plan-regional-image img { display: block; width: 100%; height: auto; }
+.plan-regional-center, .plan-regional-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.plan-regional-center { width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #111, inset 0 0 0 1px #111; }
+.plan-regional-view .plan-map-zoom { margin-block: .5rem; }
+.plan-map-modes { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .75rem; }
 .plan-map-modes button { min-height: 44px; padding: .3rem .85rem; border: 1px solid var(--line); border-radius: 4px; }
 .plan-map-modes button[aria-pressed="true"] { border-color: currentColor; font-weight: 650; }
 #planner-lunar-globe .site-pin { width: 0; height: 0; border: 0; }

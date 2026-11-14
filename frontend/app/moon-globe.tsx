@@ -29,7 +29,7 @@ type GlobeProps = {
   evidence?: Dataset["evidence"];
   savedResult?: string;
   pairSites?: readonly PairLocation[];
-  terrainView?: { siteId: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[] };
+  terrainView?: { siteId: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[]; onCloseUp?: (point: MapPoint) => void };
   showSky?: (alternative: boolean) => void;
 };
 
@@ -369,6 +369,11 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     expandButton.current?.focus({ preventScroll: true });
   }
 
+  const closeUpButton = terrainView?.onCloseUp && <button type="button" className="button outline" onClick={() => {
+    if (expanded) collapseGlobe();
+    terrainView.onCloseUp?.(center);
+  }}>{t("Close-up at map center")}</button>;
+
   return <figure className={terrainView && !plannerLeaders ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
     id={plannerLeaders ? "planner-lunar-globe" : terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
     {home ? frame : <div className="globe-view-slot">
@@ -385,6 +390,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
             <output>{zoom}×</output>
             <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => setZoom(value => clampZoom(value * 2))}>+</button>
           </div>
+          {closeUpButton}
           <p id={zoomHelpId + "-expanded"}>{t("Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.")}</p>
         </div>
       </dialog>
@@ -426,6 +432,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         </div>}
       </div>}
       {ready && <p id={zoomHelpId}>{t(home ? "Scroll or pinch to zoom the reference map (1–4×). With the globe focused, use + or − to zoom." : "Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.")}</p>}
+      {ready && closeUpButton}
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)} · {zoom}×</p>}
       <p role="status">{failed ? t("Globe unavailable. The photograph is shown. Try again to reload the map.") : enabled && !ready ? t("Loading lunar surface map…") :
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>

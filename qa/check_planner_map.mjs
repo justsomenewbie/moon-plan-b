@@ -31,6 +31,69 @@ try {
     await globe.getByRole("button", { name: /Inspect Apollo 11/ }).waitFor();
     await globe.getByRole("button", { name: "Zoom in", exact: true }).click();
     await globe.locator(".globe-center").getByText(/2×/).waitFor();
+    if (from === "14") {
+      const requests = [];
+      await page.route("https://wms.im-ldi.com/**", route => {
+        requests.push(new URL(route.request().url()).searchParams);
+        if (requests.length === 1) return route.abort();
+        return route.fulfill({contentType: "image/png", body: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jtwAAAABJRU5ErkJggg==", "base64")});
+      });
+      const fields = page.locator(".catalog-fields :is(input,select)");
+      for (const width of [375, 1100]) {
+        await page.setViewportSize({width, height: 810});
+        const boxes = await fields.evaluateAll(els => els.map(el => {
+          const r = el.getBoundingClientRect(); return [r.width, r.height, r.top];
+        }));
+        assert.equal(boxes.length, 4);
+        for (const [w, h, y] of boxes) {
+          assert.ok(Math.abs(w - boxes[0][0]) < 1 && h === boxes[0][1]);
+          if (width === 1100) assert.equal(y, boxes[0][2]);
+        }
+      }
+      await page.setViewportSize({width: 375, height: 810});
+      await map.getByRole("button", {name: "Surface close-up", exact: true}).click();
+      const region = map.locator(".plan-regional-view");
+      await region.getByRole("button", {name: "Retry image"}).click();
+      await region.locator(".plan-regional-center").waitFor();
+      assert.equal(requests[1].get("BBOX"), "-40000,-40000,40000,40000");
+      assert.equal(requests[1].get("SRS"), requests[0].get("SRS"));
+      await region.getByRole("button", {name: "Zoom in"}).click();
+      await region.locator(".plan-regional-center").waitFor();
+      assert.equal(requests.at(-1).get("BBOX"), "-20000,-20000,20000,20000");
+      assert.ok(await region.getByRole("button", {name: "Zoom in"}).isDisabled());
+      const far = catalog.sites.find(s => s.id === "change4");
+      await selector.selectOption(far.id);
+      await region.getByRole("img", {name: "Lunar surface around " + far.name}).waitFor();
+      await region.locator(".plan-regional-center").waitFor();
+      assert.equal(requests.at(-1).get("SRS"), `IAU2000:30166,9001,${far.lon_deg},${far.lat_deg}`);
+      await region.getByRole("button", {name: "Terrain relief", exact: true}).click();
+      await region.locator(".plan-regional-center").waitFor();
+      assert.equal(requests.at(-1).get("LAYERS"), "luna_wac_dtm");
+      assert.equal(requests.at(-1).get("BBOX"), "-20000,-20000,20000,20000");
+      assert.equal(requests.at(-1).get("SRS"), `IAU2000:30166,9001,${far.lon_deg},${far.lat_deg}`);
+      for (const width of [80, 160]) {
+        await region.getByRole("button", {name: "Zoom out"}).click();
+        await region.locator(".plan-regional-center").waitFor();
+        assert.equal(await region.locator("output").innerText(), width + " km across");
+      }
+      assert.ok(await region.getByRole("button", {name: "Zoom out"}).isDisabled());
+      await selector.selectOption("apollo11");
+      await region.locator(".plan-regional-center").waitFor();
+      const siteSrs = requests.at(-1).get("SRS");
+      await map.getByRole("button", {name: "3D globe", exact: true}).click();
+      await globe.locator("canvas").waitFor();
+      await globe.getByRole("button", {name: "Look east"}).click();
+      await globe.getByRole("button", {name: "Close-up at map center"}).click();
+      await region.locator(".plan-regional-center").waitFor();
+      assert.notEqual(requests.at(-1).get("SRS"), siteSrs);
+      assert.match(await region.locator("figcaption strong").innerText(), /Map location/);
+      await map.getByRole("button", {name: "Flat map", exact: true}).click();
+      await map.locator(".plan-map-surface image").click({position: {x: 15, y: 20}});
+      await region.locator(".plan-regional-center").waitFor();
+      assert.match(await region.locator("figcaption strong").innerText(), /Map location/);
+      assert.equal(await selector.inputValue(), "apollo11");
+    }
     await map.getByRole("button", { name: "Flat map", exact: true }).click();
     assert.equal(await selector.inputValue(), "apollo11");
     assert.equal(await map.locator(".plan-map-point").count(), catalog.sites.length);

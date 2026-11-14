@@ -7,6 +7,17 @@ export function lrocSiteUrl(point: MapPoint) {
   return `https://data.lroc.im-ldi.com/lroc/?projection=ORTHO&c_lon=${point.longitude}&c_lat=${point.latitude}&x=0&y=0&resolution=73.05454999604635&layers=LUNA_WAC_GLOBAL`;
 }
 
+// Lunaserv orthographic coordinates are lunar metres about the selected longitude and latitude.
+export function lrocRegionalImageUrl(point: MapPoint, widthKm: number, relief: boolean) {
+  const radius = widthKm * 500;
+  const params = new URLSearchParams({
+    SERVICE: "WMS", VERSION: "1.1.1", REQUEST: "GetMap", LAYERS: relief ? "luna_wac_dtm" : "luna_wac_global", STYLES: "",
+    FORMAT: "image/png", TRANSPARENT: "true", SRS: `IAU2000:30166,9001,${point.longitude},${point.latitude}`,
+    BBOX: [-radius, -radius, radius, radius].join(","), WIDTH: "512", HEIGHT: "512",
+  });
+  return `https://wms.im-ldi.com/?${params}`;
+}
+
 type TerrainCoordinates = { id: string; lat_deg: number | null; lon_deg: number | null };
 export type PairLocation = { id: string; name: string; reported?: MapPoint; location: { point: MapPoint } | { reason: string } };
 

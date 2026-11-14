@@ -1,6 +1,6 @@
 # Current handoff — 15 November 2026
 
-Sơn selected the 3D globe as the default planner map, with a flat-map toggle. Both share the inspector, site selection and ranking table. The inspector and table link to the selected site’s saved report or hourly live observations. Home links to Compare, Plan and the illustrated guide. Its three steps open by default. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers, saved site reports and date presets [preserve the live run](qa/check_planner_run_links.mjs) on return. The [guide](frontend/tests/guide-planning.test.ts) asks for one mission length when visitors give a range. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
+Sơn selected the 3D globe as the default planner map, with a flat-map toggle. A surface close-up uses LROC imagery or elevation relief at a site or chosen map position. The inspector and table link to the selected site’s saved report or hourly live observations. Home links to Compare, Plan and the illustrated guide. Its three steps open by default. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers, saved site reports and date presets [preserve the live run](qa/check_planner_run_links.mjs) on return. The [guide](frontend/tests/guide-planning.test.ts) asks for one mission length when visitors give a range. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
 
 ## Live comparison
 

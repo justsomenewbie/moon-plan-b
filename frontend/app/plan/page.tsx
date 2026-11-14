@@ -116,7 +116,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
   }
   return <section aria-labelledby="catalog-question">
     <h2 id="catalog-question">{t("Which site fits my dates?")}</h2>
-    <form className="request-fields print:hidden" onChange={clear} onSubmit={async e => {
+    <form className="request-fields catalog-fields print:hidden" onChange={clear} onSubmit={async e => {
       e.preventDefault();
       if (pending || wait) return;
       const form = new FormData(e.currentTarget);
