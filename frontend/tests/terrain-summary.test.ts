@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiError, getTerrainWindow } from "../lib/api/client.ts";
 import { guideObservation } from "../lib/guide-observation.ts";
-import { parseTerrainSummary } from "../lib/api/terrain-summary.ts";
+import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary.ts";
 
 const stamp = (hour: number) => `2026-01-01T${String(hour).padStart(2, "0")}:00:00Z`;
 const interval = (from: number, to: number) => ({
@@ -210,4 +210,16 @@ test("requires a closed uniform horizon and bounds its elevations by the source 
   assert.throws(() => parseTerrainSummary(d), /source horizon minimum/);
   h.min_el_deg = h.max_el_deg = 0;
   assert.equal(parseTerrainSummary(d).sites[0].horizon?.el_deg.length, 361);
+});
+
+test("shared terrain observations select an actual timestamp of the named site", () => {
+  const d = plotted(), second = { ...d.sites[0], id: "second-site" };
+  const result = parseTerrainSummary({ ...d, sites: [d.sites[0], second] });
+  const read = (params: Record<string, string>) => readTerrainObservation(new URLSearchParams(params), result);
+  assert.deepEqual(read({}), { siteIndex: 0, sample: 0 });
+  assert.deepEqual(read({ view_site: second.id }), { siteIndex: 1, sample: 0 });
+  assert.deepEqual(read({ view_site: second.id, at: stamp(7) }), { siteIndex: 1, sample: 6 });
+  assert.throws(() => read({ view_site: second.id, at: stamp(6) }), /sample/);
+  assert.throws(() => read({ at: stamp(7) }), /site/);
+  assert.throws(() => read({ view_site: "unknown" }), /site/);
 });

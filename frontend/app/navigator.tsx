@@ -3,7 +3,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateTerrainWindow, validateWindow } from "../lib/api/client";
-import { parseTerrainSummary } from "../lib/api/terrain-summary";
+import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainResult from "./terrain-result";
 import type { TerrainTarget, WindowRequest } from "../lib/api/client";
@@ -30,7 +30,7 @@ export default function Navigator() {
   const [sharedJobId, setSharedJobId] = useState("");
   const [data, setData] = useState<Dataset | null>(null);
   const [terrain, setTerrain] = useState<TerrainSummary | null>(null);
-  const [terrainLink, setTerrainLink] = useState("");
+  const [terrainView, setTerrainView] = useState({ siteIndex: 0, sample: 0, link: "" });
   const [selection, setSelection] = useState<Selection | null>(null);
   const [loading, setLoading] = useState(true);
   const [importCompletion, setImportCompletion] = useState(0);
@@ -79,7 +79,7 @@ export default function Navigator() {
   }
 
   function acceptDataset(next: Dataset, reset: boolean) {
-    setTerrain(null); setTerrainLink("");
+    setTerrain(null);
     setData(next); setSkyAlternative(false); setTick(0); setPlaying(false); setShareUrl("");
     if (reset) replaceUrl(window.location.pathname);
     try {
@@ -89,19 +89,30 @@ export default function Navigator() {
     }
   }
 
+  function showObservation(result: TerrainSummary, siteIndex: number, sample: number, url?: URL, updateAddress = false) {
+    const site = result.sites[siteIndex];
+    if (url && site) {
+      url.searchParams.set("view_site", site.id);
+      const at = site.series?.t[sample];
+      if (at) url.searchParams.set("at", at);
+      else url.searchParams.delete("at");
+      url.hash = "terrain-observations";
+    }
+    setTerrainView({ siteIndex, sample, link: url?.href ?? "" });
+    if (updateAddress) replaceUrl(url?.href ?? window.location.pathname);
+  }
+
   function acceptTerrain(next: TerrainSummary, reset: boolean, request?: WindowRequest, target?: TerrainTarget) {
-    setData(null); setSelection(null); setTerrain(next); setSharedJobId(""); setShareUrl(""); setError(""); setPlaying(false);
+    const { siteIndex, sample } = !reset && request ? readTerrainObservation(new URLSearchParams(window.location.search), next) : { siteIndex: 0, sample: 0 };
+    let url: URL | undefined;
     if (request) {
-      const url = new URL(window.location.pathname, window.location.origin);
+      url = new URL(window.location.pathname, window.location.origin);
       url.search = new URLSearchParams({ from: request.from, to: request.to, resolutionSeconds: String(request.resolutionSeconds), run_id: next.run.run_id }).toString();
       if (target?.site_id) url.searchParams.set("site_id", target.site_id);
       url.hash = "workspace";
-      setTerrainLink(url.href);
-      if (reset) replaceUrl(url.href);
-    } else {
-      setTerrainLink("");
-      if (reset) replaceUrl(window.location.pathname);
     }
+    setData(null); setSelection(null); setTerrain(next); setSharedJobId(""); setShareUrl(""); setError(""); setPlaying(false);
+    showObservation(next, siteIndex, sample, url, reset);
   }
 
   async function loadDemo(reset = false, request: WindowRequest = requestWindow, jobId = "", target?: TerrainTarget) {
@@ -144,8 +155,11 @@ export default function Navigator() {
     setRetryLoad(null); setSelection(null); setTick(0); setPlaying(false); setShareUrl(""); setMessage(""); setError("");
     const params = new URLSearchParams(window.location.search);
     setQaEnabled(params.get("qa") === "true");
+    const hasObservation = params.has("view_site") || params.has("at");
+    if (hasObservation) setTerrain(null);
     try {
-      for (const key of ["from", "to", "resolutionSeconds", "job", "run_id", "site_id"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
+      if (hasObservation && !params.get("run_id")) throw new Error("The shared observation needs a pinned model run.");
+      for (const key of ["from", "to", "resolutionSeconds", "job", "run_id", "site_id", "view_site", "at"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
       const validateRange = isMock ? validateWindow : params.has("site_id") ? validateCustomWindow : validateTerrainWindow;
       const request = ["from", "to", "resolutionSeconds"].some((key) => params.has(key)) ? validateRange({ from: params.get("from") ?? "", to: params.get("to") ?? "", resolutionSeconds: Number(params.get("resolutionSeconds")) }) : defaultWindow;
       const jobId = params.get("job") ?? "";
@@ -337,7 +351,7 @@ export default function Navigator() {
     {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target)}>{t("Retry API request")}</button> : null}{isMock || !retryLoad ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? t("Reset to demonstration") : t("Retry API request")}</button> : null}<button className="button outline" onClick={() => fileInput.current?.click()}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
-    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult result={terrain} permalink={terrainLink || undefined} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
+    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult result={terrain} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
       <aside className="controls" aria-label={t("Comparison controls")}>
         <div className="mode-switch" role="group" aria-label={t("Comparison mode")}>{(["dates", "sites"] as const).map((mode) => <button key={mode} aria-pressed={selection.mode === mode} onClick={() => choose(a, mode)}>{mode === "dates" ? t("Compare dates") : t("Compare sites")}</button>)}</div>
         {selection.mode === "sites" && siteWindow ? <>

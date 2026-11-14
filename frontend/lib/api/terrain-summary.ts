@@ -305,3 +305,14 @@ export type TerrainSummary = {
   sites: ReturnType<typeof readSite>[];
   sources: { id: string; title: string; url: string | null; sha256: string | null }[];
 };
+
+export function readTerrainObservation(params: URLSearchParams, result: TerrainSummary) {
+  const siteId = params.get("view_site"), at = params.get("at");
+  if (siteId === null && at === null) return { siteIndex: 0, sample: 0 };
+  const siteIndex = result.sites.findIndex(site => site.id === siteId);
+  if (siteIndex < 0) throw new Error("The shared observation site is unavailable in this result.");
+  const times = result.sites[siteIndex].series?.t;
+  const sample = at === null ? 0 : times?.indexOf(at) ?? -1;
+  if (sample < 0) throw new Error("The shared UTC sample was not returned for this site.");
+  return { siteIndex, sample };
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 import styles from "./terrain-observations.module.css";
@@ -96,10 +96,11 @@ function VisibilityBands({ site, range, selected }: { site: Site; range: Range; 
   </section>;
 }
 
-function SiteObservations({ site, range }: { site: Site; range: Range }) {
+function SiteObservations({ site, range, sample, onSample }: {
+  site: Site; range: Range; sample: number; onSample: (sample: number) => void;
+}) {
   const { t } = useLanguage();
-  const [index, setIndex] = useState(0);
-  const series = site.series, count = series?.t.length ?? 0, sample = Math.max(0, Math.min(index, count - 1));
+  const series = site.series, count = series?.t.length ?? 0;
   const selected = series?.t[sample];
   return <>
     <p className={styles.printSite}>{site.name}</p>
@@ -110,7 +111,7 @@ function SiteObservations({ site, range }: { site: Site; range: Range }) {
         {series.decimated && <> · {t("Downsampled with transition samples retained")}</>}</p>
       <label className={styles.control}><span>{t("Observation sample")}</span>
         <input type="range" min="0" max={count - 1} step="1" value={sample} disabled={count < 2} aria-valuetext={utc(selected)}
-          onChange={event => setIndex(Number(event.target.value))} /></label>
+          onChange={event => onSample(Number(event.target.value))} /></label>
       <time id="terrain-sample-utc" className="mono" dateTime={selected}>{utc(selected)}</time>
       <div className="table-scroll"><table aria-label={t("Selected observation")}>
         <thead><tr>{["Body", "Azimuth", "Elevation angle", "Visibility"].map(key => <th key={key} scope="col">{t(key)}</th>)}</tr></thead>
@@ -123,17 +124,18 @@ function SiteObservations({ site, range }: { site: Site; range: Range }) {
   </>;
 }
 
-export default function TerrainObservations({ result }: { result: TerrainSummary }) {
+export default function TerrainObservations({ result, siteIndex, sample, onSelect }: {
+  result: TerrainSummary; siteIndex: number; sample: number; onSelect: (siteIndex: number, sample: number) => void;
+}) {
   const { t } = useLanguage();
-  const [siteId, setSiteId] = useState("");
-  const site = result.sites.find(s => s.id === siteId) ?? result.sites[0];
+  const site = result.sites[siteIndex];
   if (!site) return null;
   return <section id="terrain-observations" className={styles.observations} aria-labelledby="terrain-observations-title">
     <h3 id="terrain-observations-title">{t("Sky observations and visibility")}</h3>
     {result.sites.length > 1 ? <label className={`field ${styles.control}`}>{t("Observation site")}
-      <select value={site.id} onChange={event => setSiteId(event.target.value)}>
+      <select value={site.id} onChange={event => onSelect(event.currentTarget.selectedIndex, 0)}>
         {result.sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
       </select></label> : <p className={styles.screenSite}>{site.name}</p>}
-    <SiteObservations key={result.dataset_id + "/" + site.id} site={site} range={result.range} />
+    <SiteObservations site={site} range={result.range} sample={sample} onSample={next => onSelect(siteIndex, next)} />
   </section>;
 }

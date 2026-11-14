@@ -6,6 +6,9 @@ export const savedLocale = (value: string | null): Locale => value === "vi" ? "v
 
 // Translate interface text only; producer evidence is rendered verbatim.
 export const vietnamese: Record<string, string> = {
+  "The shared observation needs a pinned model run.": "Cần mã lần chạy mô hình để mở quan trắc được chia sẻ.",
+  "The shared observation site is unavailable in this result.": "Kết quả này không có địa điểm quan trắc được chia sẻ.",
+  "The shared UTC sample was not returned for this site.": "Dữ liệu của địa điểm này không có mẫu tại thời điểm UTC được chia sẻ.",
   "The shared selection is invalid.": "Lựa chọn được chia sẻ không hợp lệ.",
   "The shared job has not completed. Retry when its result is ready.": "Tác vụ được chia sẻ chưa hoàn tất. Hãy thử lại khi có kết quả.",
   "This backend does not yet serve the comparison dataset. Import a compatible JSON release or retry after the backend adds the route.": "Backend chưa có đường dẫn cho bộ dữ liệu so sánh. Hãy nhập tệp JSON tương thích hoặc thử lại khi backend bổ sung đường dẫn này.",
