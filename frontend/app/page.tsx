@@ -87,7 +87,7 @@ export default function Home() {
               <strong>{t(title)}</strong>
               <p>{t(instruction)}</p>
               <img src={`/images/guide/plan-step-${index + 1}-${locale}.webp`} width={640}
-                height={(locale === "vi" ? [594, 340, 734] : [510, 340, 618])[index]} alt="" loading="lazy" />
+                height={(locale === "vi" ? [594, 340, 780] : [510, 340, 780])[index]} alt="" loading="lazy" />
             </li>)}
           </ol>
         </details>

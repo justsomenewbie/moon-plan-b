@@ -18,6 +18,21 @@ try {
     await page.goto(new URL("/plan?" + params, origin).href);
     const map = page.locator(".plan-site-map");
     await map.waitFor();
+    assert.equal(await map.getByRole("button", { name: "3D globe", exact: true }).getAttribute("aria-pressed"), "true");
+    const globe = map.locator("#planner-lunar-globe");
+    await globe.locator("canvas").waitFor();
+    const selector = map.getByRole("combobox");
+    for (const id of winners) {
+      await selector.selectOption(id);
+      await globe.locator(`.site-pin[data-site="${id}"][data-leading="true"] button[aria-pressed="true"]`).waitFor();
+    }
+    if (!winners.length) assert.equal(await globe.locator('[data-leading="true"]').count(), 0);
+    await selector.selectOption("apollo11");
+    await globe.getByRole("button", { name: /Inspect Apollo 11/ }).waitFor();
+    await globe.getByRole("button", { name: "Zoom in", exact: true }).click();
+    await globe.locator(".globe-center").getByText(/2×/).waitFor();
+    await map.getByRole("button", { name: "Flat map", exact: true }).click();
+    assert.equal(await selector.inputValue(), "apollo11");
     assert.equal(await map.locator(".plan-map-point").count(), catalog.sites.length);
     const diamonds = await map.locator(".map-leader").evaluateAll(nodes => nodes.map(el => el.parentElement.dataset.site).sort());
     assert.deepEqual(diamonds, winners);

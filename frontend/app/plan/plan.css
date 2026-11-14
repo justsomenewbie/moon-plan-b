@@ -30,3 +30,21 @@
 .plan-map-zoom button { min-height: 44px; min-width: 44px; border: 1px solid var(--line); border-radius: 5px; }
 .plan-map-zoom button:disabled { opacity: .45; }
 @media (max-width: 700px) { .plan-map-layout { grid-template-columns: minmax(0, 1fr); gap: .75rem; } }
+
+.plan-map-modes { display: flex; gap: .35rem; margin-bottom: .75rem; }
+.plan-map-modes button { min-height: 44px; padding: .3rem .85rem; border: 1px solid var(--line); border-radius: 4px; }
+.plan-map-modes button[aria-pressed="true"] { border-color: currentColor; font-weight: 650; }
+#planner-lunar-globe .site-pin { width: 0; height: 0; border: 0; }
+#planner-lunar-globe .site-pin button {
+  inset: 0 auto auto 0; transform: translate(-50%, -50%);
+  display: grid; place-items: center; width: 26px; height: 26px;
+  padding: 0; border: 0; background: transparent;
+}
+#planner-lunar-globe .site-pin button::after {
+  content: ""; width: 9px; height: 9px; border-radius: 50%; background: #d4e9ff; border: 1.5px solid #18354d;
+}
+#planner-lunar-globe .site-pin[data-leading="true"] button::after {
+  width: 12px; height: 12px; border-radius: 0; transform: rotate(45deg); background: #ffce50; border-color: #191911;
+}
+#planner-lunar-globe .site-pin button[aria-pressed="true"] { border: 2px solid white; border-radius: 50%; }
+#planner-lunar-globe .lunar-frame { box-shadow: 0 0 0 1px var(--line); }

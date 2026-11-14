@@ -1,6 +1,9 @@
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { lrocSiteUrl, type MapPoint, type PairLocation } from "../../lib/globe-sites";
 import { useLanguage } from "../language";
+
+const MoonGlobe = dynamic(() => import("../moon-globe"));
 
 type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null };
 
@@ -16,6 +19,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   const { t } = useLanguage();
   const [selectedId, setSelectedId] = useState(initialSite);
   const [zoom, setZoom] = useState(1);
+  const [globe, setGlobe] = useState(true);
   const [imageFailed, setImageFailed] = useState(false);
   const isLeader = (site: MapSite) => leaders.includes(site.id) && (site.hours?.[column] ?? 0) > 0;
   const selected = sites.find(site => site.id === selectedId) ?? sites.find(isLeader) ?? sites[0];
@@ -37,7 +41,13 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
     <h4 id="plan-site-map-title">{t("Sites on the Moon")}</h4>
     <div className="plan-map-layout">
       <div>
-        {imageFailed ? <p role="status">{t("The map image could not load. Select a site to see its coordinates.")}</p> :
+        {mapped.length > 0 && <div className="plan-map-modes" role="group" aria-label={t("Map view")}>
+          <button type="button" aria-pressed={globe} onClick={() => setGlobe(true)}>{t("3D globe")}</button>
+          <button type="button" aria-pressed={!globe} onClick={() => setGlobe(false)}>{t("Flat map")}</button>
+        </div>}
+        {globe && mapped.length > 0 ? <MoonGlobe pairSites={sites} terrainView={{
+          siteId: selected.id, onSelect: setSelectedId, plannerLeaders: sites.filter(isLeader).map(site => site.id),
+        }} /> : imageFailed ? <p role="status">{t("The map image could not load. Select a site to see its coordinates.")}</p> :
           <svg className="plan-map-surface" viewBox={`${left} ${top} ${width} ${height}`} role="group" aria-labelledby="plan-site-map-title">
             <image width="720" height="360" href="/images/lroc-color-2k.jpg" onError={() => setImageFailed(true)} />
             <path d="M0 180H720 M360 0V360" stroke="white" opacity=".3" fill="none" strokeDasharray="3 5" vectorEffect="non-scaling-stroke" />
@@ -74,7 +84,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
         </div>
         {details && <a href={details}>{t("Site details")}</a>}
         {point && <>
-          {!imageFailed && <div className="plan-map-zoom">
+          {!imageFailed && !globe && <div className="plan-map-zoom">
             <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => setZoom(zoom / 2)}>−</button>
             <span>{zoom}×</span>
             <button type="button" aria-label={t("Zoom in")} disabled={zoom === 8} onClick={() => setZoom(zoom * 2)}>+</button>

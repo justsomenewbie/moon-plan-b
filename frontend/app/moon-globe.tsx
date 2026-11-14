@@ -29,7 +29,7 @@ type GlobeProps = {
   evidence?: Dataset["evidence"];
   savedResult?: string;
   pairSites?: readonly PairLocation[];
-  terrainView?: { siteId: string; onSelect: (id: string) => void };
+  terrainView?: { siteId: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[] };
   showSky?: (alternative: boolean) => void;
 };
 
@@ -45,6 +45,7 @@ type Target = {
 export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, terrainView, showSky }: GlobeProps) {
   const { t } = useLanguage();
   const terrainSiteId = terrainView?.siteId;
+  const plannerLeaders = terrainView?.plannerLeaders;
   const zoomHelpId = terrainView ? "terrain-globe-zoom-help" : pairSites ? "pair-globe-zoom-help" : "globe-zoom-help";
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
@@ -336,14 +337,14 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         const position = diskPosition(item.location.point, center, zoom);
         if (!position) return null;
         const selectedPin = terrainView && target?.key === item.key;
-        return <span key={item.key} className="site-pin" data-pin={index} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined }}>
+        return <span key={item.key} className="site-pin" data-pin={index} data-site={item.key} data-leading={plannerLeaders?.includes(item.key)} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined }}>
           <button type="button" title={item.name} aria-label={t("Inspect {site}", {site: item.name})}
             aria-pressed={orbit ? orbit.site.id === item.missionId : target?.key === item.key}
             onClick={event => {
               if (event.detail && pinGesture.current) return;
               if (orbit && item.missionId) orbit.onSite(item.missionId);
               locate(item);
-            }}>{orbit ? item.name.split(" · ")[0] : index + 1}</button>
+            }}>{orbit ? item.name.split(" · ")[0] : plannerLeaders ? null : index + 1}</button>
         </span>;
       })}
     </div>;
@@ -368,14 +369,14 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     expandButton.current?.focus({ preventScroll: true });
   }
 
-  return <figure className={terrainView ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
-    id={terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
+  return <figure className={terrainView && !plannerLeaders ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
+    id={plannerLeaders ? "planner-lunar-globe" : terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
     {home ? frame : <div className="globe-view-slot">
       <dialog open ref={viewer} className="globe-view" role={expanded ? undefined : "group"} aria-label={t("Lunar surface globe")}
         onCancel={event => { event.preventDefault(); collapseGlobe(); }}>
         <div className="globe-full-bar">
           <strong>{target?.name ?? t("Lunar surface globe")}</strong>
-          <button className="globe-close button outline" type="button" onClick={collapseGlobe}>{t("Close expanded view")}</button>
+          <button className="globe-close button outline" type="button" onClick={collapseGlobe}>{t(plannerLeaders ? "Back to planner" : "Close expanded view")}</button>
         </div>
         <div className="globe-viewport">{frame}</div>
         <div className="globe-full-footer">
@@ -396,17 +397,17 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
       {ready && <><button type="button" onClick={() => { selectCenter(orbit.site); setZoom(1); }}>{t("Center on site")}</button>
         <span className="sr-only" role="status">{t("View center")} · {coordinates(center)} · {zoom}×</span></>}
     </figcaption> : <figcaption>
-      <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
+      {(!plannerLeaders || failed) && <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
         setRotating(false);
         setCenter(point ?? origin); setZoom(1); setAnnounced(null); setSunUtc(""); setReady(false); setFailed(false); setEnabled(!enabled);
-      }}>{t(failed ? "Retry globe" : enabled ? "Return to photograph" : "Rotate the Moon")}</button>
+      }}>{t(failed ? "Retry globe" : enabled ? "Return to photograph" : "Rotate the Moon")}</button>}
       {ready && <div className="globe-controls" role="group" aria-label={t("Rotate the lunar globe")}>
         {!home && !reducedMotion && <button type="button" onClick={() => setRotating(active => !active)}>{t(rotating ? "Pause rotation" : "Resume rotation")}</button>}
         {!home && directions.map(([, icon, label, dx, dy]) =>
           <button type="button" key={label} aria-label={t(label)} title={t(label)} onClick={() => selectCenter(globeCenter(center.longitude + dx, center.latitude + dy))}>{icon}</button>)}
         <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => { setRotating(false); setZoom(value => clampZoom(value / 2)); }}>−</button>
         <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => { setRotating(false); setZoom(value => clampZoom(value * 2)); }}>+</button>
-        <button type="button" onClick={() => { setZoom(1); selectCenter(origin); }}>{t("Reset view")}</button>
+        <button type="button" onClick={() => { setZoom(1); selectCenter(plannerLeaders ? point ?? origin : origin); }}>{t("Reset view")}</button>
       </div>}
       {ready && solarChoices.length > 0 && <div className="globe-sunlight">
         <label>{t("Modeled sunlight")}<select value={sun?.utc ?? ""} onChange={event => {
@@ -433,7 +434,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
           : sun ? "Drag or use the arrows to rotate the sunlight map."
           : "Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</span></> :
         <><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</>}
-      {!home && <div className="globe-locator">
+      {!home && !plannerLeaders && <div className="globe-locator">
         {terrainView ? <label>{t("Inspect a site")}
           <select value={terrainSiteId} onChange={event => locate(targets.find(item => item.key === event.target.value))}>
             {targets.map((item, index) => <option key={item.key} value={item.key}>{index + 1} · {item.name}</option>)}
