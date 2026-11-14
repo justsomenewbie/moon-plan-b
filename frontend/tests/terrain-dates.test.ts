@@ -3,6 +3,8 @@ import test from "node:test";
 import { ApiError } from "../lib/api/client.ts";
 import { getTerrainDates, validateTerrainDates } from "../lib/api/terrain-dates.ts";
 
+import { readTerrainDateLink, terrainDatesHref } from "../lib/terrain-date-link.ts";
+
 const request = {
   siteId: "im2_athena",
   first: { from: "2026-12-01T00:00:00Z", to: "2026-12-04T00:00:00Z" },
@@ -95,4 +97,20 @@ test("rejects unsuitable date pairs and stops before the next GET on error or ca
   assert.equal(calls, 2);
   await assert.rejects(getTerrainDates(request, controller.signal), { name: "AbortError" });
   assert.equal(calls, 2);
+});
+
+test("shared date links restore one pinned run and both exact UTC windows", () => {
+  const pinned = { ...request, runId: "test-run" };
+  const url = new URL(terrainDatesHref(pinned), "https://example.org");
+  assert.equal(url.pathname, "/compare-dates");
+  assert.deepEqual(readTerrainDateLink(url.searchParams), pinned);
+  for (const key of ["site_id", "run_id", "from", "to", "from2", "to2"]) {
+    const params = new URLSearchParams(url.searchParams);
+    params.delete(key);
+    assert.throws(() => readTerrainDateLink(params), /requires/);
+    params.append(key, "first");
+    params.append(key, "second");
+    assert.throws(() => readTerrainDateLink(params), /requires/);
+  }
+  assert.throws(() => terrainDatesHref(request), /model run/);
 });

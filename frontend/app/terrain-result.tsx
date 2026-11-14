@@ -2,41 +2,11 @@ import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
 
-function UtcTime({ value }: { value: string }) {
-  return <time dateTime={value}>{value.replace("T", " ").replace(/Z$/, " UTC")}</time>;
-}
+import { SiteResult, TimeRange } from "./terrain-site-result";
+import TerrainDates from "./terrain-dates";
 
-function TimeRange({ start, end }: { start: string; end: string }) {
-  return <><UtcTime value={start} /> → <UtcTime value={end} /></>;
-}
-
-function SiteResult({ site }: { site: TerrainSummary["sites"][number] }) {
-  const { t } = useLanguage();
-  const complete = site.coverage_in_range === "complete";
-  const metrics = complete ? site.metrics : null;
-  const intervals = site.windows.both;
-  return <article className="min-w-0">
-    <h3>{site.name}</h3>
-    <p className="muted text-sm">{t("Requested coverage")} · {t(site.coverage)}<br />
-      {t("Evaluated coverage")} · {t(site.coverage_in_range)}</p>
-    {metrics ? <dl className="metadata mt-4">
-      <div><dt>{t("Total time with both visible")}</dt><dd><strong>{metrics.both_hours} h</strong> / {metrics.duration_h} h</dd></div>
-      <div><dt>{t("Longest joint window")}</dt><dd>{metrics.longest_both_h} h</dd></div>
-      <div><dt>{t("Sun visible")}</dt><dd>{metrics.sun_hours} h</dd></div>
-      <div><dt>{t("Earth visible")}</dt><dd>{metrics.earth_hours} h</dd></div>
-    </dl> : <p className="data-notice my-4">{t("Coverage is incomplete. The total and longest overlap for the evaluated range are unknown.")}</p>}
-    <h4 className="font-semibold">{t("Sun and Earth overlap intervals")}</h4>
-    {intervals.length ? <ol className="interval-list list-decimal space-y-2">
-      {intervals.map(window => <li key={window.start} className="break-inside-avoid">
-        <TimeRange start={window.start} end={window.end} /> · <b>{window.duration_h} h</b>
-        {window.clipped_start && <p className="muted">{t("Start clipped. The overlap may have begun earlier.")}</p>}
-        {window.clipped_end && <p className="muted">{t("End clipped. The overlap may have continued later.")}</p>}
-      </li>)}
-    </ol> : <p className="muted">{t(complete ? "No simultaneous visibility in the evaluated range." : "No overlap intervals were supplied for the available coverage.")}</p>}
-  </article>;
-}
-
-export default function TerrainResult({ result, view, onSelect, onPrint }: {
+export default function TerrainResult({ result, view, onSelect, onPrint, catalogWindow }: {
+  catalogWindow?: { from: string; to: string };
   result: TerrainSummary; view: { siteIndex: number; sample: number; link: string };
   onSelect: (siteIndex: number, sample: number) => void; onPrint: () => void;
 }) {
@@ -56,6 +26,8 @@ export default function TerrainResult({ result, view, onSelect, onPrint }: {
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
+
+    {catalogWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={catalogWindow} />}
 
     {result.sites.length > 0 && <TerrainObservations result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
 
