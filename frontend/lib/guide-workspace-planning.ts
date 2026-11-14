@@ -2,6 +2,7 @@ import type { SiteComparison } from "./api/compare-sites.ts";
 import type { GuideContext } from "./api/guide-chat.ts";
 import type { TerrainSummary } from "./api/terrain-summary.ts";
 import { hasPlanningQualifications, matchSites, validDay, type PlanningIntent } from "./guide-planning.ts";
+import { describeLongestJoint, longestJointWindow } from "./joint-window.ts";
 import { rankRetainedMissionWindows, type RetainedSiteWindows } from "./mission-window-ranking.ts";
 
 export type WorkspacePlanningEvidence = TerrainSummary | SiteComparison;
@@ -23,7 +24,7 @@ export function retainedWindows(evidence: WorkspacePlanningEvidence, coverage: "
 }
 
 const hour = 3600000;
-const allSites = /\b(?:where|which\s+(?:lunar\s+|landing\s+)?(?:site|place|location|destination)s?|best\s+(?:site|place|destination))\b|địa điểm nào|nơi nào|ở đâu|đi đâu|chỗ nào|điểm nào/i;
+const allSites = /\b(?:where|(?:which|what)\s+(?:lunar\s+|landing\s+)?(?:site|place|location|destination)s?|best\s+(?:site|place|destination))\b|địa điểm nào|nơi nào|ở đâu|đi đâu|chỗ nào|điểm nào/i;
 const metric = { joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const;
 
 export function answerWorkspacePlanning(plan: PlanningIntent, locale: "en" | "vi", context: GuideContext, evidence?: WorkspacePlanningEvidence | null) {
@@ -32,6 +33,10 @@ export function answerWorkspacePlanning(plan: PlanningIntent, locale: "en" | "vi
   if (context.kind === "synthetic") return reply(tr("This workspace contains a fictional demonstration. Planning requires model data.", "Không gian này chứa dữ liệu minh họa giả lập. Cần dữ liệu mô hình để lập kế hoạch."));
   if (!context.rows.length || context.kind === "unavailable") return reply(tr("No verified comparison is open in this workspace.", "Không gian này chưa có kết quả so sánh đã xác minh."));
   if (context.kind === "scenario") {
+    if (plan.longestJoint) return reply(tr(
+      "The guide has summary totals for this scenario. Ranking uninterrupted visibility requires the site's joint intervals. Open the comparison to inspect the recorded windows.",
+      "Phi hành gia chỉ có số giờ tổng hợp cho kịch bản này. Để xếp hạng tầm nhìn liên tục cần các khoảng đồng thời của từng địa điểm. Hãy mở kết quả so sánh để xem các khoảng đã ghi."
+    ), "workspace");
     const available = tr("This scenario records totals for these exact site windows: ", "Kịch bản có số giờ tổng hợp cho các địa điểm và khoảng sau: ") +
       context.rows.map(row => row.site + " · " + row.from + " → " + row.to + " UTC · " + row.source).join("\n");
     const from = plan.from + "T00:00:00Z", to = plan.to + "T00:00:00Z";
@@ -62,7 +67,7 @@ export function answerWorkspacePlanning(plan: PlanningIntent, locale: "en" | "vi
   const period = (from: string, to: string) => from + " → " + to + tr(" (UTC, end excluded)", " (UTC, không gồm mốc cuối)");
   const source = tr("Selected model run", "Lần chạy đã chọn") + " · " + retained.run;
   const scoped = (answer: string) => reply(answer + "\n" + source, "workspace");
-  if (hasPlanningQualifications(plan.siteText)) return scoped(tr("This search can count hours of Sun, Earth or joint visibility. The extra condition needs a separate evaluation.", "Phép tính này chỉ đếm giờ nhìn thấy Mặt Trời, Trái Đất hoặc cả hai. Điều kiện bổ sung cần được đánh giá riêng."));
+  if (!plan.longestJoint && hasPlanningQualifications(plan.siteText)) return scoped(tr("This search can count hours of Sun, Earth or joint visibility. The extra condition needs a separate evaluation.", "Phép tính này chỉ đếm giờ nhìn thấy Mặt Trời, Trái Đất hoặc cả hai. Điều kiện bổ sung cần được đánh giá riêng."));
   if (!validDay(plan.from) || !validDay(plan.to) || plan.dateProblem || plan.from >= plan.to) return scoped(
     tr("Give the UTC start and exclusive end dates inside the retained window: ", "Hãy ghi ngày bắt đầu và ngày kết thúc (không tính ngày cuối) theo UTC trong khoảng đã lưu: ") + period(retained.range.start, retained.range.end));
   const from = plan.from + "T00:00:00Z", to = plan.to + "T00:00:00Z";
@@ -77,10 +82,17 @@ export function answerWorkspacePlanning(plan: PlanningIntent, locale: "en" | "vi
   if (!matches.length && (plan.mode !== "sites" || !allSites.test(plan.siteText))) return scoped(
     tr("Which retained site should I check? Available sites: ", "Bạn muốn kiểm tra địa điểm nào đã lưu? Các địa điểm có dữ liệu: ") + retained.sites.map(s => s.name).join(" · "));
   const sites = matches.length ? retained.sites.filter(s => s.id === matches[0].id) : retained.sites;
+  const complete = sites.filter(site => site.complete), incomplete = sites.filter(site => !site.complete);
+  const entries = [period(from, to), tr("Sites with complete coverage in this selection", "Địa điểm đủ dữ liệu trong phạm vi đã chọn") + " · " + complete.length + "/" + sites.length];
+  if (incomplete.length) entries.push(tr("Incomplete coverage", "Dữ liệu chưa đầy đủ") + " · " + incomplete.map(site => site.name).join(" · "));
+  if (plan.longestJoint) {
+    entries.push(describeLongestJoint(complete.map(site => ({
+      name: site.name, window: longestJointWindow(site.windows.both, from, to),
+    })), locale));
+    return scoped(entries.join("\n"));
+  }
   const result = rankRetainedMissionWindows(retained.run, retained.range, sites, { from, to, priority: plan.priority, missionHours: duration });
   if (!result) return scoped(tr("The retained intervals cannot support this request on the model grid.", "Không thể tính yêu cầu này từ các khoảng đã lưu trên lưới thời gian của mô hình."));
-  const entries = [period(from, to), tr("Sites with complete coverage in this selection", "Địa điểm đủ dữ liệu trong phạm vi đã chọn") + " · " + result.rows.length + "/" + sites.length];
-  if (result.excludedIds.length) entries.push(tr("Incomplete coverage", "Dữ liệu chưa đầy đủ") + " · " + sites.filter(s => result.excludedIds.includes(s.id)).map(s => s.name).join(" · "));
   if (!result.rows.length) return scoped(entries.join("\n"));
   const objective = metric[plan.priority];
   const winners = result.rows.filter(row => result.leaders.includes(row.id));
