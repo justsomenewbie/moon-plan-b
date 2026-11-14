@@ -144,7 +144,7 @@ try {
   assert.ok(await caption.evaluate(p => p.scrollWidth <= p.clientWidth && p.scrollHeight <= p.clientHeight));
   await mask.press("ArrowLeft");
   assert.equal(await mask.inputValue(), "1.9");
-  assert.match(await mask.getAttribute("aria-valuetext"), /^Ngưỡng thông thoáng đồng đều mô phỏng 1[,.]9°$/);
+  assert.match(await mask.getAttribute("aria-valuetext"), /^Ngưỡng góc cao giả định ở mọi hướng: 1[,.]9°$/);
   await checkSideAngle("earth", 1, 1.9);
   await mask.press("ArrowRight");
   assert.equal(await mask.inputValue(), "2");

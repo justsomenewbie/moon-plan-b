@@ -28,8 +28,8 @@ const utc = hour => "2026-01-07T0" + hour + ":00:00Z";
 async function checkSelection(page, locale, hour) {
   const vi = locale === "vi";
   assert.equal(await page.locator("html").getAttribute("lang"), locale);
-  assert.equal(await page.getByLabel(vi ? /^Vị trí chính/ : /^Primary site/).inputValue(), athena.id);
-  assert.equal(await page.getByLabel(vi ? /^Vị trí đối chiếu/ : /^Alternative site/).inputValue(), odysseus.id);
+  assert.equal(await page.getByLabel(vi ? /^Địa điểm chính/ : /^Primary site/).inputValue(), athena.id);
+  assert.equal(await page.getByLabel(vi ? /^Địa điểm đối chiếu/ : /^Alternative site/).inputValue(), odysseus.id);
   const time = vi ? "0" + hour + ":00 07 thg 1, 2026 UTC" : "07 Jan 2026, 0" + hour + ":00 UTC";
   const a = vi ? "Chính" : "Primary", b = vi ? "Đối chiếu" : "Alternative";
   assert.equal(await page.locator(".sample-time").innerText(), a + ": " + time + " · " + b + ": " + time);
