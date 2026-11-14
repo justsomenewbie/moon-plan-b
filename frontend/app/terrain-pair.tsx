@@ -8,6 +8,7 @@ import { getTerrainDateSites } from "../lib/api/terrain-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 import { SiteCsvLinks, TimeRange } from "./terrain-site-result";
+import PairCatalogRanking from "./catalog-ranking";
 
 const weightLabels = [
   ["pct_sun", "Sun visible"], ["pct_earth", "Earth visible"],
@@ -125,6 +126,7 @@ export default function TerrainPair({ result, onDisplayedPair }: {
           <SiteCsvLinks siteId={row.site_id} runId={comparison.run_id} range={comparison.range} />
         </article>;
       })}</div>
+      {opened && completePair && <PairCatalogRanking comparison={comparison} />}
     </section>}
   </details>;
 }
