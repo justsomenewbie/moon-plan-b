@@ -1,0 +1,119 @@
+{
+ "both": [
+  {
+   "duration_h": 336.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": true
+  }
+ ],
+ "data_sources": [
+  {
+   "name": "Synthetic toy geometry (tests only, NOT physical-grade)",
+   "sha256": null,
+   "url": null
+  }
+ ],
+ "earth": [
+  {
+   "duration_h": 63.0,
+   "end": "2027-01-03T15:00:00Z",
+   "end_index": 63,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 273.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-03T15:00:00Z",
+   "start_index": 63,
+   "state": true,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ],
+ "metrics": {
+  "duration_h": 336.0,
+  "longest_comms_gap_h": 63.0,
+  "longest_comms_gap_truncated": true,
+  "longest_dark_h": 281.0,
+  "longest_dark_truncated": true,
+  "longest_earth_h": 273.0,
+  "longest_earth_truncated": true,
+  "longest_sun_h": 55.0,
+  "longest_sun_truncated": true,
+  "mean_power_horizontal": 0.0,
+  "mean_power_tracking": 0.002642,
+  "mean_sun_el_lit_deg": -0.327104,
+  "n_comms_gaps": 1,
+  "n_dark_windows": 1,
+  "n_earth_windows": 1,
+  "n_sun_windows": 1,
+  "pct_both": 0.0,
+  "pct_earth": 81.25,
+  "pct_sun": 16.369048,
+  "pct_sun_no_earth": 16.369048
+ },
+ "min_earth_clearance_deg": 0.0,
+ "n_samples": 336,
+ "params_fingerprint": "4f3cc38f60e01d0e",
+ "range_end_utc": "2027-01-15T00:00:00Z",
+ "range_start_utc": "2027-01-01T00:00:00Z",
+ "site_id": "ref_shackleton_rim",
+ "site_record": {
+  "dem_source": "none",
+  "files": {
+   "ephemeris": "sites/ref_shackleton_rim/ephemeris_synthetic.csv.gz",
+   "horizon": "sites/ref_shackleton_rim/horizon_flat.csv",
+   "visibility": "sites/ref_shackleton_rim/visibility.csv.gz",
+   "windows": "sites/ref_shackleton_rim/windows.json"
+  },
+  "group": "reference",
+  "height_m_input": null,
+  "horizon_max_el_deg": -0.086937,
+  "horizon_method": "flat",
+  "horizon_min_el_deg": -0.086937,
+  "horizon_radius_km": 2.636,
+  "id": "ref_shackleton_rim",
+  "lat_deg": -89.7849,
+  "lon_deg": 203.97,
+  "name": "Shackleton crater rim, point S",
+  "note": "Mazarico et al. (2011): 86.7% at 89.78 S, 204.27 E (240 m DEM). Published illumination depends strongly on DEM resolution, period and observer height (same point: 76% at 20 m/px vs 89% at 240 m/px); compare with tolerance ~10 percentage points.",
+  "observer_height_above_sphere_m": 2.0,
+  "observer_height_m": 2.0,
+  "origin": "catalog",
+  "source": "Glaser et al. (2018) PSS 162, Table 1 (Shackleton S, surface level, 2017-2037): 81.0%",
+  "surface_height_m": 0.0
+ },
+ "step_s": 3600,
+ "sun": [
+  {
+   "duration_h": 55.0,
+   "end": "2027-01-03T07:00:00Z",
+   "end_index": 55,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 281.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-03T07:00:00Z",
+   "start_index": 55,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ]
+}

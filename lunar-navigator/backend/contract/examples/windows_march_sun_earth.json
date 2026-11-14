@@ -1,0 +1,102 @@
+{
+  "run_id": "pf_21c3f3f6dc56b1e1",
+  "step_s": 3600,
+  "precision_h": 1,
+  "site_id": "ref_connecting_ridge_c1",
+  "start": "2026-03-01T00:00:00Z",
+  "end": "2026-04-01T00:00:00Z",
+  "sun": [
+    {
+      "start": "2026-03-01T00:00:00Z",
+      "end": "2026-03-29T00:00:00Z",
+      "duration_h": 672,
+      "state": true,
+      "truncated_start": true,
+      "truncated_end": false,
+      "clipped_start": true,
+      "clipped_end": false
+    },
+    {
+      "start": "2026-03-29T00:00:00Z",
+      "end": "2026-03-30T02:00:00Z",
+      "duration_h": 26,
+      "state": false,
+      "truncated_start": false,
+      "truncated_end": false,
+      "clipped_start": false,
+      "clipped_end": false
+    },
+    {
+      "start": "2026-03-30T02:00:00Z",
+      "end": "2026-03-30T05:00:00Z",
+      "duration_h": 3,
+      "state": true,
+      "truncated_start": false,
+      "truncated_end": false,
+      "clipped_start": false,
+      "clipped_end": false
+    },
+    {
+      "start": "2026-03-30T05:00:00Z",
+      "end": "2026-03-30T10:00:00Z",
+      "duration_h": 5,
+      "state": false,
+      "truncated_start": false,
+      "truncated_end": false,
+      "clipped_start": false,
+      "clipped_end": false
+    },
+    {
+      "start": "2026-03-30T10:00:00Z",
+      "end": "2026-04-01T00:00:00Z",
+      "duration_h": 38,
+      "state": true,
+      "truncated_start": false,
+      "truncated_end": true,
+      "clipped_start": false,
+      "clipped_end": false
+    }
+  ],
+  "earth": [
+    {
+      "start": "2026-03-01T00:00:00Z",
+      "end": "2026-03-03T09:00:00Z",
+      "duration_h": 57,
+      "state": true,
+      "truncated_start": false,
+      "truncated_end": false,
+      "clipped_start": true,
+      "clipped_end": false
+    },
+    {
+      "start": "2026-03-03T09:00:00Z",
+      "end": "2026-03-16T18:00:00Z",
+      "duration_h": 321,
+      "state": false,
+      "truncated_start": false,
+      "truncated_end": false,
+      "clipped_start": false,
+      "clipped_end": false
+    },
+    {
+      "start": "2026-03-16T18:00:00Z",
+      "end": "2026-03-30T16:00:00Z",
+      "duration_h": 334,
+      "state": true,
+      "truncated_start": false,
+      "truncated_end": false,
+      "clipped_start": false,
+      "clipped_end": false
+    },
+    {
+      "start": "2026-03-30T16:00:00Z",
+      "end": "2026-04-01T00:00:00Z",
+      "duration_h": 32,
+      "state": false,
+      "truncated_start": false,
+      "truncated_end": true,
+      "clipped_start": false,
+      "clipped_end": false
+    }
+  ]
+}

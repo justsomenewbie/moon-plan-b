@@ -1,0 +1,51 @@
+{
+  "run_id": "pf_21c3f3f6dc56b1e1",
+  "step_s": 3600,
+  "precision_h": 1,
+  "sites": [
+    {
+      "id": "a3_de_gerlache_rim_2",
+      "name": "Artemis III region: de Gerlache Rim 2",
+      "group": "south_pole",
+      "origin": "catalog",
+      "lat_deg": -88.222637,
+      "lon_deg": 296.565051,
+      "map": {
+        "projection": "south_polar_stereographic_R1737.4km",
+        "x_km": -48.21,
+        "y_km": 24.105
+      },
+      "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+      "horizon_method": "raymarch",
+      "rank": 4,
+      "score": 35.12963,
+      "pct_sun": 41.851852,
+      "pct_earth": 49.027778,
+      "pct_both": 12.268519,
+      "longest_dark_h": 430,
+      "longest_comms_gap_h": 352
+    },
+    {
+      "id": "a3_haworth",
+      "name": "Artemis III region: Haworth",
+      "group": "south_pole",
+      "origin": "catalog",
+      "lat_deg": -86.752966,
+      "lon_deg": 336.328186,
+      "map": {
+        "projection": "south_polar_stereographic_R1737.4km",
+        "x_km": -39.542,
+        "y_km": 90.201
+      },
+      "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+      "horizon_method": "raymarch",
+      "rank": 5,
+      "score": 23.662037,
+      "pct_sun": 32.87037,
+      "pct_earth": 35.046296,
+      "pct_both": 0,
+      "longest_dark_h": 479,
+      "longest_comms_gap_h": 445
+    }
+  ]
+}

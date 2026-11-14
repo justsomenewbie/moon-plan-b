@@ -1,0 +1,63 @@
+{
+  "run_id": "pf_21c3f3f6dc56b1e1",
+  "step_s": 3600,
+  "precision_h": 1,
+  "site_id": "ref_connecting_ridge_c1",
+  "t": "2026-03-14T05:30:00Z",
+  "sample_utc": "2026-03-14T05:00:00Z",
+  "sample_index": 1733,
+  "sun": {
+    "az_deg": 11.454255,
+    "el_deg": 0.14242,
+    "horizon_el_deg": -0.499418,
+    "clearance_deg": 0.641838,
+    "fraction": 1,
+    "visible": true,
+    "power_horizontal": 0.002486,
+    "power_tracking": 1,
+    "irradiance_tracking_wm2": 1380.858,
+    "dist_km": 148518305.766
+  },
+  "earth": {
+    "az_deg": 132.467647,
+    "el_deg": -5.401922,
+    "horizon_el_deg": -1.952841,
+    "clearance_deg": -3.449082,
+    "fraction": 0,
+    "visible": false,
+    "dist_km": 396348.989
+  },
+  "both_visible": false,
+  "hours_until": {
+    "sunset": 355,
+    "sunrise": 0,
+    "earthset": 0,
+    "earthrise": 61
+  },
+  "next_events": {
+    "sunset": {
+      "hours": 354.5,
+      "at": "2026-03-29T00:00:00Z",
+      "state_now": true,
+      "lower_bound": false
+    },
+    "sunrise": {
+      "hours": 0,
+      "at": "2026-03-14T05:30:00Z",
+      "state_now": true,
+      "lower_bound": false
+    },
+    "earthset": {
+      "hours": 0,
+      "at": "2026-03-14T05:30:00Z",
+      "state_now": false,
+      "lower_bound": false
+    },
+    "earthrise": {
+      "hours": 60.5,
+      "at": "2026-03-16T18:00:00Z",
+      "state_now": false,
+      "lower_bound": false
+    }
+  }
+}

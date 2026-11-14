@@ -1,0 +1,229 @@
+{
+ "both": [
+  {
+   "duration_h": 2160.0,
+   "end": "2026-04-01T00:00:00Z",
+   "end_index": 2160,
+   "start": "2026-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": true
+  }
+ ],
+ "data_sources": [
+  {
+   "name": "DEM pgda: bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+   "sha256": null,
+   "url": "https://pgda.gsfc.nasa.gov/"
+  }
+ ],
+ "earth": [
+  {
+   "duration_h": 109.0,
+   "end": "2026-01-05T13:00:00Z",
+   "end_index": 109,
+   "start": "2026-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 445.0,
+   "end": "2026-01-24T02:00:00Z",
+   "end_index": 554,
+   "start": "2026-01-05T13:00:00Z",
+   "start_index": 109,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 213.0,
+   "end": "2026-02-01T23:00:00Z",
+   "end_index": 767,
+   "start": "2026-01-24T02:00:00Z",
+   "start_index": 554,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 437.0,
+   "end": "2026-02-20T04:00:00Z",
+   "end_index": 1204,
+   "start": "2026-02-01T23:00:00Z",
+   "start_index": 767,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 220.0,
+   "end": "2026-03-01T08:00:00Z",
+   "end_index": 1424,
+   "start": "2026-02-20T04:00:00Z",
+   "start_index": 1204,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 437.0,
+   "end": "2026-03-19T13:00:00Z",
+   "end_index": 1861,
+   "start": "2026-03-01T08:00:00Z",
+   "start_index": 1424,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 215.0,
+   "end": "2026-03-28T12:00:00Z",
+   "end_index": 2076,
+   "start": "2026-03-19T13:00:00Z",
+   "start_index": 1861,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 84.0,
+   "end": "2026-04-01T00:00:00Z",
+   "end_index": 2160,
+   "start": "2026-03-28T12:00:00Z",
+   "start_index": 2076,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ],
+ "metrics": {
+  "duration_h": 2160.0,
+  "longest_comms_gap_h": 445.0,
+  "longest_comms_gap_truncated": false,
+  "longest_dark_h": 479.0,
+  "longest_dark_truncated": false,
+  "longest_earth_h": 220.0,
+  "longest_earth_truncated": false,
+  "longest_sun_h": 252.0,
+  "longest_sun_truncated": false,
+  "mean_power_horizontal": 0.009677,
+  "mean_power_tracking": 0.322023,
+  "mean_sun_el_lit_deg": 1.479417,
+  "n_comms_gaps": 4,
+  "n_dark_windows": 4,
+  "n_earth_windows": 4,
+  "n_sun_windows": 3,
+  "pct_both": 0.0,
+  "pct_earth": 35.046296,
+  "pct_sun": 32.87037,
+  "pct_sun_no_earth": 32.87037
+ },
+ "min_earth_clearance_deg": 0.0,
+ "n_samples": 2160,
+ "params_fingerprint": "21c3f3f6dc56b1e1",
+ "range_end_utc": "2026-04-01T00:00:00Z",
+ "range_start_utc": "2026-01-01T00:00:00Z",
+ "site_id": "a3_haworth",
+ "site_record": {
+  "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+  "files": {
+   "ephemeris": "sites/a3_haworth/ephemeris_spice.csv.gz",
+   "horizon": "sites/a3_haworth/horizon_raymarch.csv",
+   "visibility": "sites/a3_haworth/visibility.csv.gz",
+   "windows": "sites/a3_haworth/windows.json"
+  },
+  "group": "south_pole",
+  "height_m_input": null,
+  "horizon_max_el_deg": 7.712368,
+  "horizon_method": "raymarch",
+  "horizon_min_el_deg": -3.436978,
+  "horizon_radius_km": 150.0,
+  "id": "a3_haworth",
+  "lat_deg": -86.752966,
+  "lon_deg": 336.328186,
+  "name": "Artemis III region: Haworth",
+  "note": "Centre of an extended candidate region (~20-50 km); use for regional comparison only.",
+  "observer_height_above_sphere_m": 1558.432,
+  "observer_height_m": 2.0,
+  "origin": "catalog",
+  "source": "Bertone, S. et al. (2026), Enhanced Topography Models for Selected Lunar South Pole Regions with Shape-from-Shading, PSJ; data: Zenodo doi:10.5281/zenodo.17954508 (region table); region list: NASA release 24-136 (2024-10-28)",
+  "surface_height_m": 1556.432
+ },
+ "step_s": 3600,
+ "sun": [
+  {
+   "duration_h": 123.0,
+   "end": "2026-01-06T03:00:00Z",
+   "end_index": 123,
+   "start": "2026-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 252.0,
+   "end": "2026-01-16T15:00:00Z",
+   "end_index": 375,
+   "start": "2026-01-06T03:00:00Z",
+   "start_index": 123,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 463.0,
+   "end": "2026-02-04T22:00:00Z",
+   "end_index": 838,
+   "start": "2026-01-16T15:00:00Z",
+   "start_index": 375,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 236.0,
+   "end": "2026-02-14T18:00:00Z",
+   "end_index": 1074,
+   "start": "2026-02-04T22:00:00Z",
+   "start_index": 838,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 479.0,
+   "end": "2026-03-06T17:00:00Z",
+   "end_index": 1553,
+   "start": "2026-02-14T18:00:00Z",
+   "start_index": 1074,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 222.0,
+   "end": "2026-03-15T23:00:00Z",
+   "end_index": 1775,
+   "start": "2026-03-06T17:00:00Z",
+   "start_index": 1553,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 385.0,
+   "end": "2026-04-01T00:00:00Z",
+   "end_index": 2160,
+   "start": "2026-03-15T23:00:00Z",
+   "start_index": 1775,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ]
+}

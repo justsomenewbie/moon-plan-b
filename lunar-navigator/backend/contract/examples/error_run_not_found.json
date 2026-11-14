@@ -1,0 +1,9 @@
+{
+  "type": "https://lunarnav.example/errors/run-not-found",
+  "title": "Run not found",
+  "status": 404,
+  "code": "RUN_NOT_FOUND",
+  "detail": "run \"pf_0000000000000000\" does not exist",
+  "instance": "/api/v1/sites",
+  "hint": "GET /api/v1/runs lists runs"
+}

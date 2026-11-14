@@ -1,0 +1,4 @@
+# Byte-exact precompute runs: each manifest.json lists the sha256 of every file, so git must never
+# convert their line endings (core.autocrlf=true on Windows would break the importer checksum gate).
+fixtures/** -text
+importer/fixtures/** -text

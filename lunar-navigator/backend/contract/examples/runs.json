@@ -1,0 +1,168 @@
+{
+  "default_run_id": "pf_21c3f3f6dc56b1e1",
+  "total": 5,
+  "limit": 50,
+  "offset": 0,
+  "runs": [
+    {
+      "run_id": "pf_21c3f3f6dc56b1e1",
+      "kind": "precompute",
+      "is_default": true,
+      "label": "spice + pgda raymarch, 2026-01-01..2026-04-01 (6 sites)",
+      "status": "ready",
+      "imported_at": "2026-11-14T05:09:22Z",
+      "expires_at": null,
+      "params_fingerprint": "21c3f3f6dc56b1e1",
+      "code_version": "0.1.0",
+      "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+      "run_timestamp_utc": "2026-11-14T00:00:00Z",
+      "provider": "spice",
+      "dem": "pgda",
+      "horizon_method": "raymarch",
+      "start_utc": "2026-01-01T00:00:00Z",
+      "end_utc": "2026-04-01T00:00:00Z",
+      "step_s": 3600,
+      "n_samples": 2160,
+      "observer_height_m": 2,
+      "min_earth_clearance_deg": 0,
+      "rank_weights": {
+        "pct_sun": 0.4,
+        "pct_earth": 0.3,
+        "pct_both": 0.3
+      },
+      "site_ids": [
+        "ref_connecting_ridge_c1",
+        "ref_shackleton_rim",
+        "a3_haworth",
+        "a3_de_gerlache_rim_2",
+        "apollo11",
+        "change6"
+      ],
+      "n_sites": 6
+    },
+    {
+      "run_id": "job_j_h0dsx15pou8j",
+      "kind": "custom",
+      "is_default": false,
+      "label": "custom:-89.6000:215.0000",
+      "status": "ready",
+      "imported_at": "2026-11-14T06:02:58Z",
+      "expires_at": "2026-12-14T06:02:58Z",
+      "params_fingerprint": "fd2af4e94daa6b47",
+      "code_version": "0.1.0",
+      "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+      "run_timestamp_utc": "2026-11-14T06:02:57Z",
+      "provider": "spice",
+      "dem": "none",
+      "horizon_method": "flat",
+      "start_utc": "2024-07-01T00:00:00Z",
+      "end_utc": "2024-07-02T00:00:00Z",
+      "step_s": 3600,
+      "n_samples": 24,
+      "observer_height_m": 2,
+      "min_earth_clearance_deg": 0,
+      "rank_weights": {
+        "pct_sun": 0.4,
+        "pct_earth": 0.3,
+        "pct_both": 0.3
+      },
+      "site_ids": [
+        "custom:-89.6000:215.0000"
+      ],
+      "n_sites": 1
+    },
+    {
+      "run_id": "job_j_uz4uv10u1pys",
+      "kind": "custom",
+      "is_default": false,
+      "label": "custom:-89.6000:215.0000",
+      "status": "ready",
+      "imported_at": "2026-11-14T06:02:07Z",
+      "expires_at": "2026-12-14T06:02:07Z",
+      "params_fingerprint": "1a1486de6f6dd782",
+      "code_version": "0.1.0",
+      "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+      "run_timestamp_utc": "2026-11-14T06:02:00Z",
+      "provider": "spice",
+      "dem": "pgda",
+      "horizon_method": "raymarch",
+      "start_utc": "2025-07-01T00:00:00Z",
+      "end_utc": "2025-08-01T00:00:00Z",
+      "step_s": 3600,
+      "n_samples": 744,
+      "observer_height_m": 2,
+      "min_earth_clearance_deg": 0,
+      "rank_weights": {
+        "pct_sun": 0.4,
+        "pct_earth": 0.3,
+        "pct_both": 0.3
+      },
+      "site_ids": [
+        "custom:-89.6000:215.0000"
+      ],
+      "n_sites": 1
+    },
+    {
+      "run_id": "job_j_hiwwzz068pj7",
+      "kind": "custom",
+      "is_default": false,
+      "label": "E2E custom site",
+      "status": "ready",
+      "imported_at": "2026-11-14T06:00:33Z",
+      "expires_at": "2026-12-14T06:00:32Z",
+      "params_fingerprint": "09a020e8238f6949",
+      "code_version": "0.1.0",
+      "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+      "run_timestamp_utc": "2026-11-14T06:00:24Z",
+      "provider": "spice",
+      "dem": "pgda",
+      "horizon_method": "raymarch",
+      "start_utc": "2025-11-01T00:00:00Z",
+      "end_utc": "2025-12-01T00:00:00Z",
+      "step_s": 3600,
+      "n_samples": 720,
+      "observer_height_m": 2,
+      "min_earth_clearance_deg": 0,
+      "rank_weights": {
+        "pct_sun": 0.4,
+        "pct_earth": 0.3,
+        "pct_both": 0.3
+      },
+      "site_ids": [
+        "custom:-89.6000:215.0000"
+      ],
+      "n_sites": 1
+    },
+    {
+      "run_id": "job_j_e6h7tadeb4ge",
+      "kind": "custom",
+      "is_default": false,
+      "label": "E2E custom site",
+      "status": "ready",
+      "imported_at": "2026-11-14T05:10:12Z",
+      "expires_at": "2026-12-14T05:10:12Z",
+      "params_fingerprint": "a9aa40b9ed693524",
+      "code_version": "0.1.0",
+      "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+      "run_timestamp_utc": "2026-11-14T05:10:04Z",
+      "provider": "spice",
+      "dem": "pgda",
+      "horizon_method": "raymarch",
+      "start_utc": "2026-01-01T00:00:00Z",
+      "end_utc": "2026-02-01T00:00:00Z",
+      "step_s": 3600,
+      "n_samples": 744,
+      "observer_height_m": 2,
+      "min_earth_clearance_deg": 0,
+      "rank_weights": {
+        "pct_sun": 0.4,
+        "pct_earth": 0.3,
+        "pct_both": 0.3
+      },
+      "site_ids": [
+        "custom:-89.6000:215.0000"
+      ],
+      "n_sites": 1
+    }
+  ]
+}

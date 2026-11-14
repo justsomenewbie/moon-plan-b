@@ -1,0 +1,1 @@
+{"type":"https://lunarnav.example/errors/job-not-cancellable","title":"Job already finished","status":409,"code":"JOB_NOT_CANCELLABLE","detail":"job j_uy2p0zvmm7fp already succeeded","instance":"/api/v1/jobs/j_uy2p0zvmm7fp","job_status":"succeeded"}

@@ -1,0 +1,153 @@
+{
+ "both": [
+  {
+   "duration_h": 2160.0,
+   "end": "2026-04-01T00:00:00Z",
+   "end_index": 2160,
+   "start": "2026-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": true
+  }
+ ],
+ "data_sources": [],
+ "earth": [
+  {
+   "duration_h": 2160.0,
+   "end": "2026-04-01T00:00:00Z",
+   "end_index": 2160,
+   "start": "2026-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": true
+  }
+ ],
+ "metrics": {
+  "duration_h": 2160.0,
+  "longest_comms_gap_h": 2160.0,
+  "longest_comms_gap_truncated": true,
+  "longest_dark_h": 353.0,
+  "longest_dark_truncated": false,
+  "longest_earth_h": 0.0,
+  "longest_earth_truncated": false,
+  "longest_sun_h": 361.0,
+  "longest_sun_truncated": false,
+  "mean_power_horizontal": 0.236118,
+  "mean_power_tracking": 0.494577,
+  "mean_sun_el_lit_deg": 29.417333,
+  "n_comms_gaps": 1,
+  "n_dark_windows": 4,
+  "n_earth_windows": 0,
+  "n_sun_windows": 3,
+  "pct_both": 0.0,
+  "pct_earth": 0.0,
+  "pct_sun": 49.722222,
+  "pct_sun_no_earth": 49.722222
+ },
+ "min_earth_clearance_deg": 0.0,
+ "n_samples": 2160,
+ "params_fingerprint": "21c3f3f6dc56b1e1",
+ "range_end_utc": "2026-04-01T00:00:00Z",
+ "range_start_utc": "2026-01-01T00:00:00Z",
+ "site_id": "change6",
+ "site_record": {
+  "dem_source": "none:outside-pgda-coverage",
+  "files": {
+   "ephemeris": "sites/change6/ephemeris_spice.csv.gz",
+   "horizon": "sites/change6/horizon_flat.csv",
+   "visibility": "sites/change6/visibility.csv.gz",
+   "windows": "sites/change6/windows.json"
+  },
+  "group": "far_side",
+  "height_m_input": null,
+  "horizon_max_el_deg": -0.086937,
+  "horizon_method": "flat",
+  "horizon_min_el_deg": -0.086937,
+  "horizon_radius_km": 2.636,
+  "id": "change6",
+  "lat_deg": -41.6385,
+  "lon_deg": 206.0148,
+  "name": "Chang'e-6 lander (Statio Tianjiang, Apollo basin)",
+  "note": "Landed point on the far side (= 153.9852 W). Earth is never above the geometric horizon.",
+  "observer_height_above_sphere_m": 2.0,
+  "observer_height_m": 2.0,
+  "origin": "catalog",
+  "source": "LROC featured image 'First Look: Chang'e 6' (2024): 41.6385 S, 206.0148 E (+-30 m), -5256 m",
+  "surface_height_m": 0.0
+ },
+ "step_s": 3600,
+ "sun": [
+  {
+   "duration_h": 188.0,
+   "end": "2026-01-08T20:00:00Z",
+   "end_index": 188,
+   "start": "2026-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 361.0,
+   "end": "2026-01-23T21:00:00Z",
+   "end_index": 549,
+   "start": "2026-01-08T20:00:00Z",
+   "start_index": 188,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 351.0,
+   "end": "2026-02-07T12:00:00Z",
+   "end_index": 900,
+   "start": "2026-01-23T21:00:00Z",
+   "start_index": 549,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 358.0,
+   "end": "2026-02-22T10:00:00Z",
+   "end_index": 1258,
+   "start": "2026-02-07T12:00:00Z",
+   "start_index": 900,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 353.0,
+   "end": "2026-03-09T03:00:00Z",
+   "end_index": 1611,
+   "start": "2026-02-22T10:00:00Z",
+   "start_index": 1258,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 355.0,
+   "end": "2026-03-23T22:00:00Z",
+   "end_index": 1966,
+   "start": "2026-03-09T03:00:00Z",
+   "start_index": 1611,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 194.0,
+   "end": "2026-04-01T00:00:00Z",
+   "end_index": 2160,
+   "start": "2026-03-23T22:00:00Z",
+   "start_index": 1966,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ]
+}

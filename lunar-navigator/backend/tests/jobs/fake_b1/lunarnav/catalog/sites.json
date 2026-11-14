@@ -1,0 +1,7 @@
+{"sites": [
+ {"id": "apollo11", "name": "Apollo 11", "group": "apollo", "lat_deg": 0.67416, "lon_deg": 23.47314},
+ {"id": "ref_shackleton_rim", "name": "Shackleton rim", "group": "reference", "lat_deg": -89.68, "lon_deg": 197.0},
+ {"id": "ref_connecting_ridge_c1", "name": "Connecting ridge C1", "group": "reference", "lat_deg": -89.45, "lon_deg": 222.69},
+ {"id": "a3_haworth", "name": "Haworth", "group": "south_pole", "lat_deg": -86.8, "lon_deg": 335.0},
+ {"id": "a3_nobile_rim_1", "name": "Nobile rim 1", "group": "south_pole", "lat_deg": -85.2, "lon_deg": 37.0}
+]}

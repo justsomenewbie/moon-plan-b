@@ -1,0 +1,70 @@
+# Caddy 2 config for the VPS (installed to /etc/caddy/Caddyfile by provision-ubuntu.sh, which replaces
+# api.example.org / app.example.org / admin@example.org). HTTPS certificates are automatic: the DNS A/AAAA
+# record of each domain must point at this VPS and ports 80 + 443 must be open.
+# Check / apply:  sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
+
+{
+	email admin@example.org
+}
+
+(lunarnav_api) {
+	# Compress here (the API runs with COMPRESS=false in production). text/event-stream is NOT listed,
+	# so SSE progress events (GET /api/v1/jobs/{id}/events) are streamed unbuffered.
+	encode {
+		zstd
+		gzip
+		match {
+			header Content-Type application/json*
+			header Content-Type application/geo+json*
+			header Content-Type application/problem+json*
+			header Content-Type text/csv*
+			header Content-Type text/html*
+			header Content-Type text/css*
+			header Content-Type text/javascript*
+			header Content-Type application/javascript*
+		}
+	}
+	reverse_proxy 127.0.0.1:3000 {
+		# Fastify trusts X-Forwarded-For from loopback (trustProxy) -> rate limits use the real client IP.
+		flush_interval -1
+	}
+}
+
+# ---- API on its own subdomain (FE elsewhere, e.g. Vercel: add its origin to CORS_ORIGINS) -----------
+api.example.org {
+	@api path /api/* /docs /docs/*
+	handle @api {
+		import lunarnav_api
+	}
+	handle {
+		respond "Not found" 404
+	}
+	header -Server
+	log {
+		output file /var/log/caddy/lunarnav-api.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}
+
+# ---- OPTIONAL: Next.js on the same VPS, same origin (no CORS) -----------------------------------
+# Uncomment (provision-ubuntu.sh --app-domain does it) when the FE runs here on 127.0.0.1:3001.
+# /api/* and /docs go straight to the backend, everything else to Next.js.
+#APP# app.example.org {
+#APP# 	@api path /api/* /docs /docs/*
+#APP# 	handle @api {
+#APP# 		import lunarnav_api
+#APP# 	}
+#APP# 	handle {
+#APP# 		encode zstd gzip
+#APP# 		reverse_proxy 127.0.0.1:3001
+#APP# 	}
+#APP# 	header -Server
+#APP# 	log {
+#APP# 		output file /var/log/caddy/lunarnav-app.log {
+#APP# 			roll_size 20MiB
+#APP# 			roll_keep 5
+#APP# 		}
+#APP# 	}
+#APP# }

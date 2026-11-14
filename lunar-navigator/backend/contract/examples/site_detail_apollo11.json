@@ -1,0 +1,78 @@
+{
+  "run_id": "pf_21c3f3f6dc56b1e1",
+  "step_s": 3600,
+  "precision_h": 1,
+  "site": {
+    "id": "apollo11",
+    "name": "Apollo 11 LM Eagle (Tranquility Base)",
+    "lat_deg": 0.67416,
+    "lon_deg": 23.47314,
+    "origin": "catalog",
+    "group": "apollo",
+    "source": "NASA NSSDCA Master Catalog 1969-059C (LM landing site from LRO images, DE421 mean Earth/polar axis frame)",
+    "note": "Landed point; landing time 1969-07-20T20:17:40 UTC (NSSDCA).",
+    "height_m_input": null,
+    "surface_height_m": 0,
+    "observer_height_m": 2,
+    "observer_height_above_sphere_m": 2,
+    "horizon_method": "flat",
+    "dem_source": "none:outside-pgda-coverage",
+    "horizon_radius_km": 2.636,
+    "horizon_min_el_deg": -0.086937,
+    "horizon_max_el_deg": -0.086937
+  },
+  "extra": {
+    "kind": "landed",
+    "mission": "Apollo 11",
+    "landing_time_utc": "1969-07-20T20:17:40",
+    "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C",
+    "frame": "MOON_ME (DE421 mean-Earth/polar-axis), from LRO images, as stated by NSSDCA",
+    "accuracy": {
+      "kind": "landed_point",
+      "horizontal_m": 20,
+      "description": "Lunar Module descent stage located on LROC NAC images (NSSDCA, DE421 ME frame)."
+    },
+    "secondary_urls": [
+      "https://planetarynames.wr.usgs.gov/Feature/5684"
+    ],
+    "iau_statio_latlon": [
+      0.6741,
+      23.4732
+    ]
+  },
+  "map": null,
+  "range": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-04-01T00:00:00Z",
+    "step_s": 3600,
+    "n_samples": 2160
+  },
+  "metrics": {
+    "duration_h": 2160,
+    "pct_sun": 50.972222,
+    "pct_earth": 100,
+    "pct_both": 50.972222,
+    "pct_sun_no_earth": 0,
+    "longest_dark_h": 354,
+    "longest_dark_truncated": false,
+    "longest_comms_gap_h": 0,
+    "longest_comms_gap_truncated": false,
+    "longest_sun_h": 357,
+    "longest_sun_truncated": false,
+    "longest_earth_h": 2160,
+    "longest_earth_truncated": true,
+    "n_sun_windows": 4,
+    "n_dark_windows": 3,
+    "n_earth_windows": 1,
+    "n_comms_gaps": 0,
+    "mean_sun_el_lit_deg": 45.906382,
+    "mean_power_horizontal": 0.328234,
+    "mean_power_tracking": 0.508127
+  },
+  "rank": 3,
+  "score": 65.680555,
+  "warnings": [
+    "smooth-sphere horizon (dem_source none:outside-pgda-coverage)",
+    "flat horizon: terrain shadowing not modelled"
+  ]
+}

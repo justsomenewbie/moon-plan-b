@@ -1,0 +1,22 @@
+{
+  "type": "https://lunarnav.example/errors/validation-error",
+  "title": "Invalid request",
+  "status": 400,
+  "code": "VALIDATION_ERROR",
+  "detail": "querystring validation failed: start: expected an ISO 8601 UTC time ending in Z, e.g. 2026-01-01T00:00:00Z; fields.1: Invalid option: expected one of \"sun_az_deg\"|\"sun_el_deg\"|\"sun_dist_km\"|\"sun_semidiam_deg\"|\"horizon_el_sun_deg\"|\"sun_clearance_deg\"|\"sun_fraction\"|\"sun_visible\"|\"power_horizontal\"|\"power_tracking\"|\"irradiance_tracking_wm2\"|\"earth_az_deg\"|\"earth_el_deg\"|\"earth_dist_km\"|\"earth_semidiam_deg\"|\"horizon_el_earth_deg\"|\"earth_clearance_deg\"|\"earth_fraction\"|\"earth_visible\"|\"both_visible\"|\"hours_until_sunset\"|\"hours_until_sunrise\"|\"hours_until_earthset\"|\"hours_until_earthrise\"",
+  "instance": "/api/v1/sites/ref_connecting_ridge_c1/series",
+  "errors": [
+    {
+      "path": "start",
+      "in": "querystring",
+      "message": "expected an ISO 8601 UTC time ending in Z, e.g. 2026-01-01T00:00:00Z",
+      "code": "invalid_format"
+    },
+    {
+      "path": "fields.1",
+      "in": "querystring",
+      "message": "Invalid option: expected one of \"sun_az_deg\"|\"sun_el_deg\"|\"sun_dist_km\"|\"sun_semidiam_deg\"|\"horizon_el_sun_deg\"|\"sun_clearance_deg\"|\"sun_fraction\"|\"sun_visible\"|\"power_horizontal\"|\"power_tracking\"|\"irradiance_tracking_wm2\"|\"earth_az_deg\"|\"earth_el_deg\"|\"earth_dist_km\"|\"earth_semidiam_deg\"|\"horizon_el_earth_deg\"|\"earth_clearance_deg\"|\"earth_fraction\"|\"earth_visible\"|\"both_visible\"|\"hours_until_sunset\"|\"hours_until_sunrise\"|\"hours_until_earthset\"|\"hours_until_earthrise\"",
+      "code": "invalid_value"
+    }
+  ]
+}

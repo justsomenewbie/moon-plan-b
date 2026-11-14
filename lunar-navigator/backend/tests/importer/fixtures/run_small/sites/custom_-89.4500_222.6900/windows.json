@@ -1,0 +1,139 @@
+{
+ "both": [
+  {
+   "duration_h": 67.0,
+   "end": "2027-01-03T19:00:00Z",
+   "end_index": 67,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 62.0,
+   "end": "2027-01-06T09:00:00Z",
+   "end_index": 129,
+   "start": "2027-01-03T19:00:00Z",
+   "start_index": 67,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": false
+  },
+  {
+   "duration_h": 207.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-06T09:00:00Z",
+   "start_index": 129,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ],
+ "data_sources": [
+  {
+   "name": "Synthetic toy geometry (tests only, NOT physical-grade)",
+   "sha256": null,
+   "url": null
+  }
+ ],
+ "earth": [
+  {
+   "duration_h": 67.0,
+   "end": "2027-01-03T19:00:00Z",
+   "end_index": 67,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 269.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-03T19:00:00Z",
+   "start_index": 67,
+   "state": true,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ],
+ "metrics": {
+  "duration_h": 336.0,
+  "longest_comms_gap_h": 67.0,
+  "longest_comms_gap_truncated": true,
+  "longest_dark_h": 207.0,
+  "longest_dark_truncated": true,
+  "longest_earth_h": 269.0,
+  "longest_earth_truncated": true,
+  "longest_sun_h": 129.0,
+  "longest_sun_truncated": true,
+  "mean_power_horizontal": 3.3e-05,
+  "mean_power_tracking": 0.18136,
+  "mean_sun_el_lit_deg": -0.102493,
+  "n_comms_gaps": 1,
+  "n_dark_windows": 1,
+  "n_earth_windows": 1,
+  "n_sun_windows": 1,
+  "pct_both": 18.452381,
+  "pct_earth": 80.059524,
+  "pct_sun": 38.392857,
+  "pct_sun_no_earth": 19.940476
+ },
+ "min_earth_clearance_deg": 0.0,
+ "n_samples": 336,
+ "params_fingerprint": "4f3cc38f60e01d0e",
+ "range_end_utc": "2027-01-15T00:00:00Z",
+ "range_start_utc": "2027-01-01T00:00:00Z",
+ "site_id": "custom:-89.4500:222.6900",
+ "site_record": {
+  "dem_source": "none",
+  "files": {
+   "ephemeris": "sites/custom_-89.4500_222.6900/ephemeris_synthetic.csv.gz",
+   "horizon": "sites/custom_-89.4500_222.6900/horizon_flat.csv",
+   "visibility": "sites/custom_-89.4500_222.6900/visibility.csv.gz",
+   "windows": "sites/custom_-89.4500_222.6900/windows.json"
+  },
+  "group": "",
+  "height_m_input": null,
+  "horizon_max_el_deg": -0.086937,
+  "horizon_method": "flat",
+  "horizon_min_el_deg": -0.086937,
+  "horizon_radius_km": 2.636,
+  "id": "custom:-89.4500:222.6900",
+  "lat_deg": -89.45,
+  "lon_deg": 222.69,
+  "name": "Custom site 89.4500S 222.6900E",
+  "note": "custom site; coordinates as entered (planetocentric, MOON_ME), rounded to 1e-4 deg",
+  "observer_height_above_sphere_m": 2.0,
+  "observer_height_m": 2.0,
+  "origin": "custom",
+  "source": "user-defined",
+  "surface_height_m": 0.0
+ },
+ "step_s": 3600,
+ "sun": [
+  {
+   "duration_h": 129.0,
+   "end": "2027-01-06T09:00:00Z",
+   "end_index": 129,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": true,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 207.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-06T09:00:00Z",
+   "start_index": 129,
+   "state": false,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ]
+}
