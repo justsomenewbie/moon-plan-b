@@ -26,6 +26,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const [stoppedFollowing, setStoppedFollowing] = useState(false);
   const cancelling = useRef(false);
   const cancel = useMutation({
+    networkMode: "always",
     mutationFn: () => cancelCustomSiteJob(accepted!.job_id, accepted!.site_id, create.variables!),
     retry: false,
   });
