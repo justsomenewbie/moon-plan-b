@@ -1,4 +1,5 @@
 import snapshot from "./odysseus-athena-weeks.json" with { type: "json" };
+import { planningIntent } from "./guide-planning.ts";
 import { utcMillis } from "./dataset.ts";
 
 const kinds = ["saved", "terrain", "scenario", "synthetic", "unavailable"] as const;
@@ -163,6 +164,11 @@ const fixed = {
 
 export function answerGuide(input: GuideRequest, plan: Plan): GuideReply {
   const copy = fixed[input.locale];
+  // Chat clients resolve planning against the team's current run. A direct request to
+  // this displayed-summary endpoint must never substitute unrelated loaded dates.
+  if (planningIntent(input.question)) return { answer: input.locale === "en"
+    ? "This question needs a lookup for your chosen site and UTC dates. Open the mission planner to check the team’s current model run."
+    : "Câu hỏi này cần tra địa điểm và khoảng ngày UTC bạn muốn. Mở công cụ lập kế hoạch để kiểm tra run hiện tại của nhóm.", action: null };
   let { topic } = plan;
   const { measure } = plan;
   // An explicit comparison can be clearer than the classifier’s choice of minimum or maximum.
