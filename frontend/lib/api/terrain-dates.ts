@@ -10,7 +10,12 @@ export type TerrainDateRequest = {
 
 const siteIdPattern = /^[A-Za-z0-9_.:-]{1,64}$/;
 
-export async function getTerrainDateSites(runId: string, signal?: AbortSignal) {
+type TerrainDateSite = {
+  id: string; name: string; demSource: string; horizonMethod: string;
+  lat_deg: number | null; lon_deg: number | null;
+};
+
+export async function getTerrainDateSites(runId: string, signal?: AbortSignal): Promise<TerrainDateSite[]> {
   const { data, error, response } = await producer.GET("/api/v1/sites", {
     params: { query: { run_id: runId, format: "json" } }, signal,
   });
