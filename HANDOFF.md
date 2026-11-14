@@ -22,7 +22,7 @@ Run B listed 23 sites. Apollo 11 date comparisons recovered after a catalog fail
 
 [Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The EN/VI astronaut uses local Ollama. Lower/higher questions preserve saved joint visibility: Odysseus 33 h, Athena 139 h, UTC and source. [Runtime](README.md#ask-the-astronaut).
+The EN/VI astronaut opens live pair/date controls. Lower/higher questions preserve saved joint visibility: Odysseus 33 h, Athena 139 h, UTC and source. [Local Ollama](README.md#ask-the-astronaut).
 
 ## Pending
 
