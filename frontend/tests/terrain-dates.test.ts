@@ -13,8 +13,9 @@ const request = {
 
 // Invented source responses exercise the zero, clipped and partially covered paths.
 function example(range: typeof request.first, visible: boolean) {
-  const windows = visible ? [{ start: range.from, end: range.to, clipped_start: true, clipped_end: true, duration_h: 72 }] : [];
-  const hours = visible ? 72 : 0, percent = visible ? 100 : 0;
+  const duration = (Date.parse(range.to) - Date.parse(range.from)) / 3600000;
+  const windows = visible ? [{ start: range.from, end: range.to, clipped_start: true, clipped_end: true, duration_h: duration }] : [];
+  const hours = visible ? duration : 0, percent = visible ? 100 : 0;
   return {
     schema_version: "lunarnav-dataset-1", evidence: "computed-ephemeris", dataset_id: "unit-range", attribution: "Unit test",
     include: ["windows", "metrics"], sources: [],
@@ -22,12 +23,12 @@ function example(range: typeof request.first, visible: boolean) {
     run: { run_id: "test-run", label: "Test", provider: "test", dem: "test", horizon_method: "test", code_version: "test",
       run_timestamp_utc: range.from, observer_height_m: 2, min_earth_clearance_deg: 0, git_commit: null,
       manifest_sha256: "a".repeat(64), manifest_url: "/api/v1/runs/test-run/files/manifest.json" },
-    range: { start: range.from, end: range.to, requested_start: range.from, requested_end: range.to, step_s: 3600, n_samples: 72 },
+    range: { start: range.from, end: range.to, requested_start: range.from, requested_end: range.to, step_s: 3600, n_samples: duration },
     sites: [{ id: request.siteId, name: "Catalog site", coverage: "complete", coverage_in_range: "complete",
       windows: { sun: windows, earth: windows, both: windows }, metrics: {
-        duration_h: 72, sun_hours: hours, earth_hours: hours, both_hours: hours,
-        longest_sun_h: hours, longest_earth_h: hours, longest_both_h: hours, longest_dark_h: 72 - hours,
-        longest_comms_gap_h: 72 - hours, pct_sun: percent, pct_earth: percent, pct_both: percent,
+        duration_h: duration, sun_hours: hours, earth_hours: hours, both_hours: hours,
+        longest_sun_h: hours, longest_earth_h: hours, longest_both_h: hours, longest_dark_h: duration - hours,
+        longest_comms_gap_h: duration - hours, pct_sun: percent, pct_earth: percent, pct_both: percent,
       } }],
   };
 }
@@ -53,6 +54,15 @@ test("requests two bounded one-site summaries, pins both when given a run, prese
     assert.equal(second.sites[0].metrics?.both_hours, 72);
     assert.equal(second.sites[0].windows.both[0].clipped_end, true);
   }
+});
+
+test("rejects different date requests that resolve to the same model window", async t => {
+  const utc = (clock: string) => `2026-11-14T${clock}:00Z`;
+  const hour = { from: utc("00:00"), to: utc("01:00") };
+  t.mock.method(globalThis, "fetch", async () => Response.json(example(hour, false)));
+  const first = { from: utc("00:05"), to: utc("00:25") };
+  const second = { from: utc("00:30"), to: utc("00:50") };
+  await assert.rejects(getTerrainDates({ ...request, first, second }), /same model window/);
 });
 
 test("preserves partial coverage and rejects a stale site, run, manifest or UTC range", async t => {

@@ -22,6 +22,7 @@ export const vietnamese: Record<string, string> = {
   "Choose valid UTC bounds for both windows.": "Chọn mốc UTC hợp lệ cho cả hai khoảng.",
   "Choose Odysseus or Athena for the date comparison.": "Chọn Odysseus hoặc Athena để so sánh hai khoảng thời gian.",
   "Choose two different UTC ranges of equal duration.": "Chọn hai khoảng UTC khác nhau có cùng thời lượng.",
+  "Both requests resolve to the same model window. Choose dates farther apart.": "Cả hai yêu cầu đều cho cùng một khoảng thời gian trên mô hình. Hãy chọn hai mốc thời gian cách xa nhau hơn.",
   "The two ranges have different source manifests or sampling steps.": "Hai khoảng dùng bản kê nguồn hoặc bước lấy mẫu khác nhau.",
   "This link requires one site, one model run and two UTC ranges.": "Đường dẫn này cần một địa điểm, một lần chạy mô hình và hai khoảng UTC.",
   "This comparison requires a live team backend.": "Phép so sánh này cần kết nối với backend của nhóm.",

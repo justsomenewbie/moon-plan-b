@@ -43,5 +43,7 @@ export async function getTerrainDates(request: TerrainDateRequest, signal?: Abor
   const second = await load(request.second, first.run.run_id);
   if (first.run.manifest_sha256 !== second.run.manifest_sha256 || first.range.step_s !== second.range.step_s)
     throw new ApiError("The two ranges have different source manifests or sampling steps.", 502);
+  if (first.range.start === second.range.start && first.range.end === second.range.end)
+    throw new ApiError("Both requests resolve to the same model window. Choose dates farther apart.", 422);
   return { first, second };
 }
