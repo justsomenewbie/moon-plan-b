@@ -6,39 +6,15 @@ import { getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type Planne
 import { rankSavedMissionWindows, type MissionWindowRanking } from "../mission-window-ranking.ts";
 import { usesSmoothSphere } from "../site-horizon.ts";
 import { translate } from "../i18n.ts";
-import type { PlanningIntent } from "../guide-planning.ts";
+import { hasPlanningQualifications, matchSites, type PlanningIntent } from "../guide-planning.ts";
+export { matchSites } from "../guide-planning.ts";
 
 type Locale = "en" | "vi";
 export type PlanningArchive = "saved" | "saved-b2";
 export type PlanningSource = PlanningArchive | PlannerRun;
-type Site = { id: string; name: string };
 export type PlanningAnswer = { answer: string; href: string };
 type Services = { run: typeof getPlannerRun; ranking: typeof getPlannerRanking; missionRanking: typeof getPlannerMissionRanking; dates: typeof findAltDates; observation: typeof getTerrainAggregate; online: boolean };
 const services: Services = { run: getPlannerRun, ranking: getPlannerRanking, missionRanking: getPlannerMissionRanking, dates: findAltDates, observation: getTerrainAggregate, online: !isMock };
-
-const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, " ").trim();
-export function matchSites(text: string, sites: readonly Site[]) {
-  const query = " " + normalize(text) + " ";
-  // Prefer a mission designation or exact site name over a shared term such as “Apollo” or “Nobile”.
-  const exact = sites.map(site => {
-    const title = normalize(site.name.split("(")[0].split(":").at(-1) ?? "");
-    const designation = title.match(/^(?:apollo|im|chang e|chandrayaan) ?\d+/)?.[0];
-    const matched = [normalize(site.id), title, designation].filter((p): p is string => Boolean(p && query.includes(" " + p + " ")));
-    return { site, matched };
-  }).filter(row => row.matched.length);
-  if (exact.length) {
-    // A longer catalog name can contain a shorter one, such as “Mons Mouton Plateau”.
-    const longest = exact.filter(row => row.matched.some(p => !exact.some(other => other.site !== row.site &&
-      other.matched.some(full => full.length > p.length && (" " + full + " ").includes(" " + p + " ")))));
-    return longest.map(row => row.site);
-  }
-  return sites.filter(site => {
-    const tokens = normalize(site.name.split("(")[0] + " " + site.id).split(" ");
-    return tokens.some(token => token.length >= 4
-      && !["region", "artemis", "site", "landing", "connecting", "crater", "point", "near", "peak", "plain", "plateau", "slope", "ridge", "mons"].includes(token)
-      && query.includes(" " + token + " "));
-  });
-}
 
 function plannerHref(plan: PlanningIntent, site?: string, source?: PlanningSource) {
   const params = new URLSearchParams({ mode: plan.mode === "dates" ? "dates" : "sites", priority: plan.priority });
@@ -67,8 +43,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   const from = plan.from + "T00:00:00Z", to = plan.to + "T00:00:00Z";
   const span = (Date.parse(to) - Date.parse(from)) / 3600000;
   const period = from + " → " + to + tr(" (exclusive)", " (không gồm mốc cuối)");
-  const qualifications = /\b(?:at least|at most|without|except|least|fewest|shortest|minimum|exclude|not|battery|fuel|power)\b|ngoại trừ|ít nhất|ít hơn|ngắn hơn|tối thiểu|tối đa|không (?:có|gồm)|pin sống|nhiên liệu|công suất/i;
-  if (qualifications.test(plan.siteText)) {
+  if (hasPlanningQualifications(plan.siteText)) {
     href = plannerHref({ ...plan, missionHours: null }, undefined, selected ?? (api.online ? undefined : fallback));
     return reply(tr("The chat search ranks only total Sun, Earth or joint visibility. Open the planner to check your additional conditions for ", "Chat chỉ xếp hạng theo tổng thời gian thấy Mặt Trời, Trái Đất hoặc cả hai. Hãy mở công cụ lập kế hoạch để kiểm tra điều kiện bổ sung cho ") + period + ".");
   }

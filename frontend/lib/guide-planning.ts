@@ -86,3 +86,32 @@ export function planningIntent(question: string, previous?: PlanningIntent): Pla
   return { mode, from, to, dateProblem, missionHours, priority: sun || earth ? (sun && earth ? "joint" : sun ? "sun" : "earth") : followup ? previous.priority : "joint",
     siteText: followup ? [previous.siteText, question].join(" ").slice(-1000) : question };
 }
+
+const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, " ").trim();
+export function matchSites<S extends { id: string; name: string }>(text: string, sites: readonly S[]) {
+  const query = " " + normalize(text) + " ";
+  // Prefer a mission designation or exact site name over a shared term such as “Apollo” or “Nobile”.
+  const exact = sites.map(site => {
+    const title = normalize(site.name.split("(")[0].split(":").at(-1) ?? "");
+    const designation = title.match(/^(?:apollo|im|chang e|chandrayaan) ?\d+/)?.[0];
+    const matched = [normalize(site.id), title, designation].filter((p): p is string => Boolean(p && query.includes(" " + p + " ")));
+    return { site, matched };
+  }).filter(row => row.matched.length);
+  if (exact.length) {
+    // A longer catalog name can contain a shorter one, such as “Mons Mouton Plateau”.
+    const longest = exact.filter(row => row.matched.some(p => !exact.some(other => other.site !== row.site &&
+      other.matched.some(full => full.length > p.length && (" " + full + " ").includes(" " + p + " ")))));
+    return longest.map(row => row.site);
+  }
+  return sites.filter(site => {
+    const tokens = normalize(site.name.split("(")[0] + " " + site.id).split(" ");
+    return tokens.some(token => token.length >= 4
+      && !["region", "artemis", "site", "landing", "connecting", "crater", "point", "near", "peak", "plain", "plateau", "slope", "ridge", "mons"].includes(token)
+      && query.includes(" " + token + " "));
+  });
+}
+
+const qualifications = /\b(?:at least|at most|without|except|least|fewest|shortest|minimum|exclude|not|battery|fuel|power)\b|ngoại trừ|ít nhất|ít hơn|ngắn hơn|tối thiểu|tối đa|không (?:có|gồm)|pin sống|nhiên liệu|công suất/i;
+export function hasPlanningQualifications(text: string) {
+  return qualifications.test(text);
+}
