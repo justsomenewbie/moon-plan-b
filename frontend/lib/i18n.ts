@@ -530,6 +530,8 @@ export const vietnamese: Record<string, string> = {
   "Loading observation…": "Đang tải quan trắc…",
   "Observation at the requested time": "Quan trắc tại thời điểm yêu cầu",
   "Angles and visibility come from the model sample. Each sample covers {step} seconds.": "Góc và trạng thái nhìn thấy lấy từ mẫu mô hình. Mỗi mẫu đại diện cho {step} giây.",
+  "Visible share of the solar disc": "Tỷ lệ đĩa Mặt Trời nhìn thấy",
+  "Modeled irradiance on a Sun-facing surface": "Suất bức xạ theo mô hình trên bề mặt hướng thẳng về Mặt Trời",
   "Horizon elevation at this azimuth": "Góc cao đường chân trời ở phương vị này",
   "Body centre above horizon": "Góc cao của tâm thiên thể so với đường chân trời",
   "Choose a time within the evaluated UTC range, before its end.": "Chọn thời điểm trong khoảng UTC đã tính và trước mốc kết thúc.",
