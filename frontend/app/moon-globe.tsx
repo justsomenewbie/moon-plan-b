@@ -29,6 +29,7 @@ type GlobeProps = {
   evidence?: Dataset["evidence"];
   savedResult?: string;
   pairSites?: readonly PairLocation[];
+  terrainView?: { siteId: string; onSelect: (id: string) => void };
   showSky?: (alternative: boolean) => void;
 };
 
@@ -41,8 +42,10 @@ type Target = {
   missionId?: string;
 };
 
-export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, showSky }: GlobeProps) {
+export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, terrainView, showSky }: GlobeProps) {
   const { t } = useLanguage();
+  const terrainSiteId = terrainView?.siteId;
+  const zoomHelpId = terrainView ? "terrain-globe-zoom-help" : pairSites ? "pair-globe-zoom-help" : "globe-zoom-help";
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -88,8 +91,8 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
   useEffect(() => {
     const mission = missionSites.find(item => item.id === savedResult);
     if (pairSites) {
-      const first = pairSites.find(site => "point" in site.location);
-      const second = pairSites.find(site => site !== first && "point" in site.location);
+      const first = terrainSiteId ? pairSites.find(site => site.id === terrainSiteId) : pairSites.find(site => "point" in site.location);
+      const second = !terrainSiteId && pairSites.find(site => site !== first && "point" in site.location);
       setChosen(first ? { key: first.id, identity: first } : null);
       setCenter(first && "point" in first.location ? pairCenter(first.location.point,
         second && "point" in second.location ? second.location.point : undefined) : origin);
@@ -98,7 +101,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
       setChosen({ key: mission.name, identity: mission }); setCenter(mission); setRotating(false);
     } else { setChosen(null); setCenter(origin); }
     setZoom(1); setAnnounced(null); setSunUtc("");
-  }, [savedResult, pairSites]);
+  }, [savedResult, pairSites, terrainSiteId]);
 
   const orbitSite = orbit?.site;
   useEffect(() => {
@@ -265,16 +268,18 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
   function locate(item: Target | undefined) {
     setRotating(false);
     setChosen(item ? { key: item.key, identity: item.identity } : null);
+    if (item) terrainView?.onSelect(item.key);
     if (item && !item.missionId) setSunUtc("");
     if (item && "point" in item.location) selectCenter(item.location.point);
   }
 
-  return <figure className="lunar-figure" id={pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
-    <div className="lunar-frame">
+  return <figure className={terrainView ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
+    id={terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
+    <div className={terrainView ? "lunar-frame w-full" : "lunar-frame"}>
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
         tabIndex={0} onKeyDown={turnWithKeyboard}
-        aria-describedby={orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : "globe-zoom-help"}
+        aria-describedby={orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : zoomHelpId}
         onPointerDown={startDrag} onPointerMove={moveDrag}
         onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} />}
       {ready && !orbit && sunMarker && <span className="subsolar-marker" aria-hidden="true"
@@ -283,7 +288,8 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         if (!("point" in item.location)) return null;
         const position = diskPosition(item.location.point, center, zoom);
         if (!position) return null;
-        return <span key={item.key} className="site-pin" data-pin={index} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%` }}>
+        const selectedPin = terrainView && target?.key === item.key;
+        return <span key={item.key} className="site-pin" data-pin={index} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined }}>
           <button type="button" title={item.name} aria-label={t("Inspect {site}", {site: item.name})}
             aria-pressed={orbit ? orbit.site.id === item.missionId : target?.key === item.key}
             onClick={() => { if (orbit && item.missionId) orbit.onSite(item.missionId); locate(item); }}>{orbit ? item.name.split(" · ")[0] : index + 1}</button>
@@ -325,7 +331,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
           <a href={sunlight.query} target="_blank" rel="noreferrer">JPL Horizons · {t("Sun direction")} ↗</a>
         </div>}
       </div>}
-      {ready && <p id="globe-zoom-help">{t("Scroll or pinch to zoom the reference map (1–4×). With the globe focused, use + or − to zoom.")}</p>}
+      {ready && <p id={zoomHelpId}>{t("Scroll or pinch to zoom the reference map (1–4×). With the globe focused, use + or − to zoom.")}</p>}
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)} · {zoom}×</p>}
       <p role="status">{failed ? t("Globe unavailable. The photograph is shown. Try again to reload the map.") : enabled && !ready ? t("Loading lunar surface map…") :
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>
@@ -335,13 +341,17 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
           : "Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</span></> :
         <><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</>}
       {!home && <div className="globe-locator">
-        <div className="site-pin-key" role="group" aria-label={t("Locate a site")}>
+        {terrainView ? <label>{t("Inspect a site")}
+          <select value={terrainSiteId} onChange={event => locate(targets.find(item => item.key === event.target.value))}>
+            {targets.map((item, index) => <option key={item.key} value={item.key}>{index + 1} · {item.name}</option>)}
+          </select>
+        </label> : <div className="site-pin-key" role="group" aria-label={t("Locate a site")}>
           {pins.map((item, index) => <button type="button" key={item.key} data-pin={index}
             aria-pressed={target?.key === item.key} onClick={() => locate(item)}>
             <b>{index + 1}</b> {item.name}
             {"point" in item.location && <small>{coordinates(item.location.point, false)}</small>}
           </button>)}
-        </div>
+        </div>}
         {!pairSites && <><label htmlFor="globe-site">{t("Location on the reference globe")}</label>
         <select id="globe-site" value={target?.key ?? ""} onChange={event => locate(targets.find(item => item.key === event.target.value))}>
           <option value="">{t("Choose a location")}</option>

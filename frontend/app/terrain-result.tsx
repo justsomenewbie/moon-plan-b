@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import { pairLocation } from "../lib/globe-sites";
+import MoonGlobe from "./moon-globe";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
@@ -16,11 +19,21 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
   const { t } = useLanguage();
   const { range, run, model, sources } = result;
   const observationSite = result.sites[view.siteIndex];
+  const placements = useMemo(() => result.sites.map(site =>
+    pairLocation({ site_id: site.id, name: site.name }, [], [site], result.conventions)), [result]);
+  const hasGlobe = placements.some(site => "point" in site.location);
+  const hasSky = !result.summaryOnly && result.sites.some(site => site.series?.t.length);
+  function selectGlobeSite(id: string) {
+    const index = result.sites.findIndex(site => site.id === id);
+    if (index >= 0 && index !== view.siteIndex) onSelect(index, 0);
+  }
   const clippedRange = range.start !== range.requested_start || range.end !== range.requested_end;
   return <main id="workspace" className="terrain-result" aria-labelledby="terrain-title" tabIndex={-1}>
     <div className="section-heading">
       <h2 id="terrain-title">{t("Sun and Earth visibility above the site horizon")}</h2>
       <div className="terrain-print flex flex-wrap items-center gap-3">
+        {hasGlobe && <a className="button outline" href="#terrain-lunar-reference">{t("Lunar surface globe")}</a>}
+        {hasSky && <a className="button outline" href="#local-sky">{t("Explore the 3D sky")}</a>}
         {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t(result.summaryOnly ? "Open this visibility summary in a new tab" : "Open selected observation in a new tab")}</a>}
         {liveWindow && <ComparisonDownload result={result} />}
         <button type="button" className="button outline terrain-print" onClick={onPrint}>{t(printingPair ? "Print ranked pair" : "Print report")}</button>
@@ -32,6 +45,10 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     <p>{t("Evaluated UTC range")} · <TimeRange start={range.start} end={range.end} /></p>
     {clippedRange && <p>{t("Requested UTC range on the model grid")} · <TimeRange start={range.requested_start} end={range.requested_end} /></p>}
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>
+    {hasGlobe && observationSite && <section className="my-6 print:hidden" aria-labelledby="terrain-globe-heading">
+      <h3 id="terrain-globe-heading">{t("Sites on the Moon")}</h3>
+      <MoonGlobe pairSites={placements} terrainView={{ siteId: observationSite.id, onSelect: selectGlobeSite }} />
+    </section>}
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} source={result} liveResult={liveWindow ? result : undefined} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
 
