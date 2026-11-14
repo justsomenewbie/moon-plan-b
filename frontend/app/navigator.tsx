@@ -5,6 +5,7 @@ import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError, defaultWindow, getDataset, getJob, getTerrainWindow, isMock, terrainSummaryRequested, validateTerrainTargetWindow, validateWindow } from "../lib/api/client";
+import { runDataCache } from "../lib/api/run-data-cache";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { readTerrainTarget, terrainSiteIds, writeTerrainTarget } from "../lib/terrain-target";
@@ -160,7 +161,7 @@ export default function Navigator() {
         const job = await getJob(jobId, request, signal);
         if (job.status !== "done") throw new Error(job.status === "failed" ? job.problem.detail : "The shared job has not completed. Retry when its result is ready.");
         return job.result;
-      }, networkMode: isMock ? "online" : "always", staleTime: reset || refresh ? 0 : 60000 });
+      }, networkMode: isMock ? "online" : "always", ...runDataCache(!isMock && !jobId ? target?.run_id : undefined, reset || refresh) });
       if (generation === loadGeneration.current) {
         setRequestWindow(request);
         if ("schema_version" in next) {

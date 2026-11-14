@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { getRunFiles } from "../lib/api/run-files";
+import { runDataCache } from "../lib/api/run-data-cache";
 import { useLanguage } from "./language";
 
 export function ComparisonDownload({ result }: { result: TerrainSummary }) {
@@ -26,7 +27,7 @@ export function RunDownloads({ run }: { run: TerrainSummary["run"] }) {
   const [opened, setOpened] = useState(false);
   const [selected, setSelected] = useState("");
   const files = useQuery({ queryKey: ["source-files", run.run_id, run.manifest_sha256],
-    queryFn: ({ signal }) => getRunFiles(run, signal), retry: false,
+    queryFn: ({ signal }) => getRunFiles(run, signal), ...runDataCache(run.run_id), retry: false,
     enabled: query => opened && !hasRetryDeadline(query.state.error) });
   const wait = useRetryCountdown(files.error ?? "");
   const file = files.data?.find(f => f.path === selected) ?? files.data?.[0];
