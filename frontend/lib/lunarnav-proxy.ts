@@ -1,8 +1,30 @@
 // Server-side relay for the public team's authenticated data service.
+import { createHash } from "node:crypto";
 import { BodyLimitError, readBoundedJson } from "./guide-chat.ts";
 import { publicRoute } from "./lunarnav-scope.ts";
 
 const origin = "https://api.lunavigator.com";
+
+const fingerprint = (value: string) => createHash("sha256").update(value).digest("hex").slice(0, 16);
+const utcPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/;
+
+function attachmentName(path: string, query: URLSearchParams) {
+  const parts = decodeURIComponent(path).split("/");
+  const basename = parts.at(-1)!;
+  if (path.startsWith("runs/")) return basename;
+
+  // Only contract-shaped values are printed literally. Keep the original request untouched.
+  const part = (value: string | null, pattern: RegExp, omitted: string) => value === null ? omitted
+    : pattern.test(value) ? value.replaceAll(":", "") : "@value-" + fingerprint(value);
+  const run = part(query.get("run_id"), /^[A-Za-z0-9_.-]{1,64}$/, "@default");
+  if (basename === "summary.csv") return "summary~" + run + ".csv";
+  const kind = basename.slice(0, -4);
+  const name = [kind, parts[1].replaceAll(":", "+"), run,
+    part(query.get("start"), utcPattern, "@start"), part(query.get("end"), utcPattern, "@end")];
+  const projection = query.get(kind === "series" ? "fields" : "kinds");
+  if (projection !== null) name.push(fingerprint(projection));
+  return name.join("~") + ".csv";
+}
 
 function problem(status: number, detail: string) {
   return Response.json({ status, detail }, { status, headers: { "cache-control": "no-store" } });
@@ -62,7 +84,7 @@ export async function proxyLunarnav(request: Request, key: string | undefined, s
     if (value) outgoing.set(name, value);
   }
   if (download && upstream.ok) {
-    const filename = decodeURIComponent(match.path).split("/").at(-1);
+    const filename = attachmentName(match.path, url.searchParams);
     outgoing.set("content-disposition", `attachment; filename="${filename}"`);
   }
   return new Response(upstream.body, { status: upstream.status, headers: outgoing });

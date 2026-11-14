@@ -120,3 +120,37 @@ test("public Swagger operations match the relay and retain producer parameter de
   assert.equal(published.components.schemas.CreateJobRequest, undefined);
   assert.equal(published.components.schemas.Job, undefined);
 });
+
+test("public CSV filenames distinguish site, run, requested UTC bounds and selected columns", async () => {
+  const bytes = new Uint8Array([0xef, 0xbb, 0xbf, 0x61, 0x2c, 0x62, 0x0d, 0x0a]);
+  async function download(path: string, fields: Record<string, string> = {}) {
+    const query = new URLSearchParams(fields);
+    const target = path + (query.size ? "?" + query : "");
+    const response = await proxyLunarnav(request(target), freshKey(), async url => {
+      assert.equal(String(url), "https://api.lunavigator.com/api/v1/" + target);
+      return new Response(bytes, { headers: { "content-type": "text/csv",
+        "content-disposition": 'attachment; filename="untrusted.csv"' } });
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(new Uint8Array(await response.arrayBuffer()), bytes);
+    return response.headers.get("content-disposition");
+  }
+  const date = { run_id: "B2", start: "2026-11-14T14:00:00.123456789Z", end: "2026-11-14T15:00:00.500Z" };
+  const base = "sites/apollo11/export/";
+  for (const [kind, field, selection] of [["series", "fields", "sun_visible"], ["windows", "kinds", "both"]]) {
+    const path = base + kind + ".csv", query = { ...date, [field]: selection };
+    const original = await download(path, query);
+    assert.match(original!, new RegExp('^attachment; filename="' + kind + '~apollo11~B2~2026-11-14T140000\\.123456789Z~2026-11-14T150000\\.500Z~[a-f0-9]{16}\\.csv"$'));
+    assert.equal(await download(path, { [field]: selection, end: date.end, run_id: date.run_id, start: date.start }), original);
+    for (const changed of [{ ...query, run_id: "B" }, { ...query, start: date.start.replace("789", "788") },
+      { ...query, end: date.end.replace("500", "501") }, { ...query, [field]: selection + ",earth" }])
+      assert.notEqual(await download(path, changed), original);
+    assert.notEqual(await download(path.replace("apollo11", "apollo15"), query), original);
+  }
+  assert.equal(await download("export/summary.csv", { run_id: "B2" }), 'attachment; filename="summary~B2.csv"');
+  assert.equal(await download("export/summary.csv"), 'attachment; filename="summary~@default.csv"');
+  assert.notEqual(await download("export/summary.csv", { run_id: "B" }), await download("export/summary.csv", { run_id: "B2" }));
+  assert.equal(await download("runs/B2/files/sites%2Fapollo11%2Fhorizon.csv"), 'attachment; filename="horizon.csv"');
+  const unsafe = await download(base + "series.csv", { run_id: '../bad"\r\nX-Test:1', start: "../../bad", end: 'bad";extra=1' });
+  assert.match(unsafe!, /^attachment; filename="series~apollo11~@value-[a-f0-9]{16}~@value-[a-f0-9]{16}~@value-[a-f0-9]{16}\.csv"$/);
+});

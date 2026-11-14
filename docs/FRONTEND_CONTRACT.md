@@ -42,6 +42,8 @@ Submitting the live landing-date form sends one `POST /api/v1/alt-dates` for the
 
 For each live site, the aggregate supplies `minimum_hours`, `longest_both_h` as the metric, `value_h`, `value_clipped`, `result` and `reason`. Live requests check all requested thresholds. The importer accepts other threshold lists supplied by the producer and older exports without a criteria section. The display retains the reason in its original language.
 
+On the public frontend, series and windows CSV filenames identify the site, run and requested UTC bounds, including fractional seconds. A short suffix distinguishes the requested fields or visibility kinds. Summary CSV filenames identify the requested run. Omitted parameters are labeled as defaults. Original run files keep their published basename. The relay streams the producer’s original file bytes.
+
 ## Synthetic API and legacy ideal-horizon imports
 
 The structural definition for this format is [`contracts/openapi.draft.json`](../contracts/openapi.draft.json), OpenAPI 3.1. `npm run generate:api` produces `frontend/lib/api/schema.d.ts`; API types must not be handwritten. Semantic checks remain in [`frontend/lib/dataset.ts`](../frontend/lib/dataset.ts) and `frontend/lib/api/client.ts`; generated TypeScript is not runtime validation. The OpenAPI response example and [`frontend/public/data/demo.json`](../frontend/public/data/demo.json) are **invented UI fixtures**, never NASA datasets.
