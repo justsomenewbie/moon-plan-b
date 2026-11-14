@@ -1,10 +1,12 @@
-import { getSavedPlannerDates, getSavedPlannerRanking, savedPlannerRun } from "../saved-planner.ts";
+import { archiveB2Run, rankArchiveB2, searchArchiveB2 } from "../archive-b2.ts";
+import { getSavedPlannerDates, getSavedPlannerRanking, savedPlannerRun, savedPlannerWindows } from "../saved-planner.ts";
 import { findAltDates } from "./alt-dates.ts";
 import { getTerrainAggregate, isMock } from "./client.ts";
 import { getPlannerRanking, getPlannerRun } from "./planner.ts";
 import type { PlanningIntent } from "../guide-planning.ts";
 
 type Locale = "en" | "vi";
+export type PlanningArchive = "saved" | "saved-b2";
 type Site = { id: string; name: string };
 export type PlanningAnswer = { answer: string; href: string };
 type Services = { run: typeof getPlannerRun; ranking: typeof getPlannerRanking; dates: typeof findAltDates; observation: typeof getTerrainAggregate; online: boolean };
@@ -34,8 +36,9 @@ export function matchSites(text: string, sites: readonly Site[]) {
   });
 }
 
-function plannerHref(plan: PlanningIntent, site?: string) {
+function plannerHref(plan: PlanningIntent, site?: string, archive?: PlanningArchive) {
   const params = new URLSearchParams({ mode: plan.mode === "dates" ? "dates" : "sites", priority: plan.priority });
+  if (archive) params.set("source", archive);
   if (plan.from) params.set("from", plan.from);
   if (plan.to) params.set("to", plan.to);
   if (site) params.set("site", site);
@@ -43,10 +46,11 @@ function plannerHref(plan: PlanningIntent, site?: string) {
   return "/plan?" + params;
 }
 
-export async function answerPlanning(plan: PlanningIntent, locale: Locale, signal: AbortSignal, api: Services = services): Promise<PlanningAnswer> {
+export async function answerPlanning(plan: PlanningIntent, locale: Locale, signal: AbortSignal, api: Services = services, archive?: PlanningArchive): Promise<PlanningAnswer> {
   signal.throwIfAborted();
   const tr = (en: string, vi: string) => locale === "en" ? en : vi;
-  let href = plannerHref(plan);
+  let fallback: PlanningArchive = archive ?? "saved-b2";
+  let href = plannerHref(plan, undefined, archive ?? (api.online ? undefined : fallback));
   const reply = (text: string) => ({ answer: text, href });
   const metric = { joint: tr("joint Sun and Earth visibility", "thấy đồng thời Mặt Trời và Trái Đất"), sun: tr("Sun visibility", "thấy Mặt Trời"), earth: tr("Earth visibility", "thấy Trái Đất") }[plan.priority];
   if (!plan.from || !plan.to || plan.dateProblem) return reply(tr("What start and end dates should I check? Use UTC dates with the year, e.g. 2026-11-21 to 2026-11-28. The end is exclusive.", "Bạn muốn kiểm tra khoảng ngày nào? Hãy ghi đủ năm, ví dụ 2026-11-21 đến 2026-11-28 theo UTC. Ngày kết thúc không được tính."));
@@ -61,30 +65,38 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   const unavailable = tr("I could not verify team-model results for ", "Mình chưa xác minh được kết quả mô hình của nhóm cho ") + period + tr(". Reopen the planner to retry.", ". Bạn có thể mở công cụ lập kế hoạch để thử lại.");
   const noVisibility = tr("No evaluated option provides any hours of the requested visibility.", "Không có lựa chọn nào cho giờ quan sát đáp ứng tiêu chí này.");
   function offline() {
-    const savedSource = "\n" + tr("Saved run", "Run đã lưu") + " · " + savedPlannerRun.runId;
-    const matches = matchSites(plan.siteText, savedPlannerRun.sites);
+    const legacy = fallback === "saved";
+    const run = legacy ? savedPlannerRun : archiveB2Run;
+    href = plannerHref(plan, undefined, fallback);
+    const savedSource = "\n" + tr("Saved run", "Run đã lưu") + " · " + run.runId;
+    const matches = matchSites(plan.siteText, run.sites);
     const key = ({ joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const)[plan.priority];
     if (matches.length > 1) return reply(tr("Which catalog site do you mean? ", "Bạn muốn chọn địa điểm nào? ") + matches.map(s => s.name).join(" · "));
     if (plan.mode === "dates") {
       if (!matches.length) return reply(tr("Which catalog site should I check? Please give its name or ID.", "Bạn muốn tra địa điểm nào trong danh mục? Hãy ghi tên hoặc mã."));
       const site = matches[0];
-      href = plannerHref(plan, site.id);
-      const search = getSavedPlannerDates({ ...plan, from, to, siteId: site.id, missionHours: plan.missionHours! });
-      if (!search) return reply(unavailable);
-      const first = search.rows[0], ties = search.rows.filter(r => r[key] === first[key]).length;
+      href = plannerHref(plan, site.id, fallback);
+      const lookup = legacy ? getSavedPlannerDates : searchArchiveB2;
+      const search = lookup({ ...plan, from, to, siteId: site.id, missionHours: plan.missionHours! });
+      if (!search) return reply(unavailable + savedSource);
+      const first = search.rows[0], ties = "ties" in search ? search.ties : search.rows.filter(r => r[key] === first[key]).length;
       if (!first[key]) return reply(site.name + "\n" + period + "\n" + noVisibility + savedSource);
       return reply(tr("Saved hourly observations", "Các mẫu giờ đã lưu") + " · " + site.name + "\n" + period
         + "\n" + tr("Earliest highest-visibility mission window", "Khoảng nhiệm vụ sớm nhất đạt mức quan sát cao nhất") + " · " + first.start + " → " + first.end
         + "\n" + metric + " · " + first[key] + " h · " + tr(ties + " tied starts out of " + search.nEvaluated, ties + " mốc đồng hạng trong " + search.nEvaluated + " mốc") + savedSource);
     }
-    const ranking = getSavedPlannerRanking({ ...plan, from, to });
-    if (!ranking) return reply(unavailable);
+    const ranking = (legacy ? getSavedPlannerRanking : rankArchiveB2)({ ...plan, from, to });
+    if (!ranking) return reply(unavailable + savedSource);
     const scope = ranking.scope === "catalog" ? tr("Saved catalog · 23 sites", "Danh mục đã lưu · 23 địa điểm")
       : tr("Saved comparison only · Odysseus and Athena", "Chỉ xét kết quả so sánh đã lưu · Odysseus và Athena");
     const site = matches[0];
     if (site || plan.mode === "observation") {
       const row = ranking.rows.find(r => r.id === site?.id);
-      if (!row) return reply(unavailable);
+      if (!row) return reply(unavailable + savedSource);
+      const hours = savedPlannerWindows.pair;
+      const canInspectMission = !legacy || (hours.siteIds.includes(row.id) && hours.from <= from && to <= hours.to);
+      href = canInspectMission ? plannerHref({ ...plan, mode: "dates", missionHours: span }, row.id, fallback)
+        : plannerHref(plan, row.id, fallback);
       return reply(scope + "\n" + row.name + "\n" + period + "\n" + tr("Sun / Earth / both", "Mặt Trời / Trái Đất / cả hai") + " · "
         + [row.sunHours, row.earthHours, row.bothHours].join(" / ") + " h" + savedSource);
     }
@@ -92,9 +104,10 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     return reply(scope + "\n" + period + "\n" + metric + " · " + ranking.rows.filter(r => ranking.leaders.includes(r.id))
       .map(r => r.name + " · " + r[key] + " h").join("\n") + savedSource);
   }
-  if (!api.online) return offline();
+  if (archive || !api.online) return offline();
   try {
     const run = await api.run(signal);
+    if (run.runId === savedPlannerRun.runId) fallback = "saved";
     if (Date.parse(from) < Date.parse(run.start) || Date.parse(to) > Date.parse(run.end)) return reply(tr("The requested dates are outside the model run. Available UTC range: ", "Ngày yêu cầu nằm ngoài phạm vi mô hình. Khoảng UTC có dữ liệu: ") + run.start + " → " + run.end + " · " + run.runId);
     const matches = matchSites(plan.siteText, run.sites);
     const source = "\n" + tr("Source run", "Run nguồn") + " · " + run.runId;

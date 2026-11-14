@@ -144,6 +144,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
       source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialObjective={priority === "joint" ? "both" : priority} />}
+    <AstronautGuide planningArchive={source === "live" ? undefined : source} savedResult={savedResultFromUrl(new URLSearchParams())} terrain={null} comparisonPath="/compare" />
   </>;
 }
 
@@ -159,6 +160,6 @@ export default function PlanPage() {
     <a className="skip-link" href="#plan-title">{t("Skip to content")}</a>
     <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label={t("Main")}><a href="/data">{t("Data catalog")}</a><a href="/compare">{t("Compare")}</a><LanguageControl /><ThemeControl /></nav></header>
     <main className="plan-main"><h1 id="plan-title" tabIndex={-1}>{t("Plan a lunar visit")}</h1>{seed && <Planner key={seed.toString()} seed={seed} />}</main>
-    <AstronautGuide savedResult={savedResultFromUrl(new URLSearchParams())} terrain={null} comparisonPath="/compare" /><SiteFooter />
+    <SiteFooter />
   </div>;
 }

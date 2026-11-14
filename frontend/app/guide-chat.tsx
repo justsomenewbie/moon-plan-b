@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { askGuide, GuideRequestError, type GuideErrorKey, type GuideAction, type GuideContext, type GuideReply } from "../lib/api/guide-chat";
 import { planningIntent, type PlanningIntent } from "../lib/guide-planning";
-import { answerPlanning } from "../lib/api/guide-planning";
+import { answerPlanning, type PlanningArchive } from "../lib/api/guide-planning";
 import { useLanguage } from "./language";
 import { isSavedResultLink } from "./observed-week";
 import styles from "./guide-chat.module.css";
@@ -32,7 +32,7 @@ const copy = {
 export type GuideDestination = string | (() => void);
 export type GuideActions = Partial<Record<GuideAction, GuideDestination>>;
 export type GuideScope = "saved" | "workspace" | "pair";
-type Props = { choice: GuideScope | null; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; pair?: GuideContext; savedActions: GuideActions; workspaceActions?: GuideActions };
+type Props = { planningArchive?: PlanningArchive; choice: GuideScope | null; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; pair?: GuideContext; savedActions: GuideActions; workspaceActions?: GuideActions };
 type Turn = GuideReply & { question: string; plan?: PlanningIntent; href?: string };
 
 function subscribeToLocation(notify: () => void) {
@@ -46,7 +46,7 @@ function subscribeToLocation(notify: () => void) {
 
 const savedRoute = () => isSavedResultLink(window.location);
 
-export default function GuideChat({ choice, onChoice, saved, workspace, pair, savedActions, workspaceActions }: Props) {
+export default function GuideChat({ planningArchive, choice, onChoice, saved, workspace, pair, savedActions, workspaceActions }: Props) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const onSavedRoute = useSyncExternalStore(subscribeToLocation, savedRoute, () => false);
@@ -54,8 +54,10 @@ export default function GuideChat({ choice, onChoice, saved, workspace, pair, sa
   const scope = choice === "saved" || (choice === "workspace" && workspace) || (choice === "pair" && pair)
     ? choice : defaultScope;
   const context = (scope === "pair" ? pair : scope === "workspace" ? workspace : saved) ?? saved;
+  const archive = planningArchive ?? (scope === "saved" && (choice === "saved" || onSavedRoute) ? "saved" : undefined);
   return <section className={styles.chat} aria-label={labels.title}>
     <h3>{labels.title}</h3>
+      {archive && <p className={styles.notice}>{locale === "en" ? "Travel planning uses saved run " : "Câu hỏi lập kế hoạch dùng lần chạy đã lưu "}{archive === "saved" ? "B" : "B2"}.</p>}
       {workspace && <label className={styles.label}>{labels.source}<select value={scope} onChange={e => {
         const value = e.target.value;
         if (value === "pair" || value === "workspace" || value === "saved") onChoice(value);
@@ -63,11 +65,11 @@ export default function GuideChat({ choice, onChoice, saved, workspace, pair, sa
         {pair && <option value="pair">{labels.pair}</option>}
         <option value="workspace">{labels.workspace}</option><option value="saved">{labels.saved}</option>
       </select></label>}
-      <Conversation key={locale + JSON.stringify(context) + scope} context={context} actions={scope === "saved" ? savedActions : workspaceActions ?? {}} />
+      <Conversation key={locale + JSON.stringify(context) + scope + archive} archive={archive} context={context} actions={scope === "saved" ? savedActions : workspaceActions ?? {}} />
   </section>;
 }
 
-function Conversation({ context, actions }: { context: GuideContext; actions: GuideActions }) {
+function Conversation({ context, actions, archive }: { archive?: PlanningArchive; context: GuideContext; actions: GuideActions }) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const input = useId();
@@ -93,7 +95,7 @@ function Conversation({ context, actions }: { context: GuideContext; actions: Gu
     try {
       const previous = turns.at(-1);
       const plan = planningIntent(text, previous?.plan);
-      const reply = plan ? { ...await answerPlanning(plan, locale, controller.signal), plan, action: null }
+      const reply = plan ? { ...await answerPlanning(plan, locale, controller.signal, undefined, archive), plan, action: null }
         : await askGuide({ locale, question: text, previousQuestion: previous?.question, context }, controller.signal);
       if (request.current !== controller || controller.signal.aborted) return;
       setTurns(old => [...old.slice(-3), { question: text, ...reply }]);
