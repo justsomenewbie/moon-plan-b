@@ -77,7 +77,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
     {accepted && create.variables && <div className="job-status">
       <p><code>{accepted.job_id}</code> · {create.variables.start} → {create.variables.end}</p>
       {accepted.cached && <p>{t("The backend reused a matching job.")}</p>}
-      <p role="status">{t(labels[job?.status ?? accepted.status])}</p>
+      {!status.error && <p role="status">{t(labels[job?.status ?? accepted.status])}</p>}
       {job?.status === "running" && <p><progress aria-label={t("Job progress")} max={100} value={job.progress.pct ?? undefined} /> {job.progress.pct === null ? t("Progress percentage unavailable.") : `${job.progress.pct}%`}</p>}
       {status.error && <div role="alert"><p>{t(status.error.message)}</p><button type="button" className="button outline" disabled={status.isFetching} onClick={() => void status.refetch()}>{t("Retry job status")}</button></div>}
       {job?.status === "failed" && job.error && <p role="alert">{job.error.code} · {job.error.message}</p>}
