@@ -56,7 +56,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
   const noVisibility = tr("No evaluated option provides any hours of the requested visibility.", "Không có lựa chọn nào cho giờ quan sát đáp ứng tiêu chí này.");
   const key = ({ joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const)[plan.priority];
   const flatNote = translate(locale, "Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.");
-  function continuousReply(rows: NonNullable<ReturnType<typeof savedJointWindows>>, sites: PlannerRun["sites"], source: string) {
+  function continuousReply(rows: { id: string; name: string; window: ReturnType<typeof longestJointWindow> }[], sites: PlannerRun["sites"], source: string) {
     const matches = matchSites(plan.siteText, sites);
     const eligible = rows.filter(row => !matches.length || matches.some(site => site.id === row.id));
     const count = eligible.length + "/" + (matches.length || sites.length);
