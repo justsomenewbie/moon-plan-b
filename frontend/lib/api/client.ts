@@ -242,4 +242,5 @@ export async function getJob(id: string, request: WindowRequest, signal?: AbortS
   if (job.status === "done") withinRequestedWindow(job.result, request);
   return job;
 }
-export const jobPollInterval = (job?: Job) => job?.status === "done" || job?.status === "failed" ? false : 1500;
+export const jobPollMs = 2000;
+export const jobPollInterval = (job?: Job) => job?.status === "done" || job?.status === "failed" ? false : jobPollMs;

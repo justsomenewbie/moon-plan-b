@@ -30,7 +30,7 @@ test("typed client, mock contract and problem responses work end to end", async 
   ] as const) {
     server.use(http.get("*/api/v1/jobs/:id", () => HttpResponse.json({ jobId: accepted.jobId, status, progressPct, result, problem })));
     const job = await getJob(accepted.jobId, defaultWindow);
-    assert.equal(job.status, status); assert.equal(jobPollInterval(job), status === "running" ? 1500 : false);
+    assert.equal(job.status, status); assert.equal(jobPollInterval(job), status === "running" ? 2000 : false);
   }
   const outside = { ...defaultWindow, from: "2026-12-01T00:00:00Z", to: "2026-12-02T00:00:00Z" };
   server.use(http.get("*/api/v1/jobs/:id", () => HttpResponse.json({ jobId: accepted.jobId, status: "done", progressPct: 100, result: fixture, problem: null })));

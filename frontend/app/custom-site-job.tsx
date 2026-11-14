@@ -1,7 +1,7 @@
 import { ApiProblemText } from "./api-problem-text";
 import { useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ApiError, jobReceiptUncertain } from "../lib/api/client";
+import { ApiError, jobPollMs, jobReceiptUncertain } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import type { Message } from "../lib/i18n";
 import { cancelCustomSiteJob, createCustomSite, getCustomSiteCapability, getCustomSiteJob } from "../lib/api/custom-site";
@@ -37,7 +37,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
     queryFn: ({ signal }) => getCustomSiteJob(accepted!.job_id, accepted!.site_id, signal, create.variables),
     refetchInterval: query => {
       const state = query.state.data?.status;
-      return query.state.error || (state !== "queued" && state !== "running") ? false : 1500;
+      return query.state.error || (state !== "queued" && state !== "running") ? false : jobPollMs;
     },
     staleTime: 0,
   });
