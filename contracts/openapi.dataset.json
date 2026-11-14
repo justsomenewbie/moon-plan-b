@@ -12,7 +12,7 @@
         "tags": [
           "analysis"
         ],
-        "description": "Defaults: default run, every site of the run, the whole run range, data step (3600 s), max_points 10000, horizon_step_deg 1, criteria_hours 24,72,168, include all. Series are decimated per site to <= max_points while keeping both samples around every visibility transition (see DatasetSeries). Windows / metrics / criteria are computed from the full-resolution windows over the requested range (whole run -> exactly summary.csv / windows.json). Payload limit: the series points of all sites together (regular + transition samples, exactly as returned) must be <= 50000 (about 4.5 MB of JSON, ~1 MB gzip), else 422 OUT_OF_RANGE with the numbers and a fitting max_points; first check (before any read): sites x min(max_points, n_samples / k) - so a call with no parameters on a 23-site 5-year run is 422; e.g. all 23 sites x 31 days hourly = 17 112 points is fine, the whole 5-year run for many sites needs max_points <= 50000 / n_sites or fewer site_ids (a large step_s alone may not be enough: transition samples are always kept). Windows and horizon bytes are not counted. Without `series` in include there is no point limit (whole run, 23 sites: ~0.7 MB, ~0.2 s); a whole-run series for all sites takes ~8 s, so request series for <= 1 year or a few sites. A range partly outside the run is clamped (coverage = partial); no overlap -> 422 OUT_OF_RANGE. Unknown site id -> 404 SITE_NOT_FOUND.",
+        "description": "Defaults: default run, every site of the run, the whole run range, data step (3600 s), max_points 10000, horizon_step_deg 1, criteria_hours 24,72,168, include horizon,series,windows,metrics,criteria (opt-in: pointing -> sites[].now = where to point the panel and the antenna at range.start, as GET /sites/{site_id}/pointing; survival_hint -> sites[].survival_hint = longest dark period + the battery a reference night_load_w needs; their assumptions are in `assumptions`). metrics also carry energy proxies mean_power_tracking_pct / mean_power_horizontal_pct over the range. Series are decimated per site to <= max_points while keeping both samples around every visibility transition (see DatasetSeries). Windows / metrics / criteria are computed from the full-resolution windows over the requested range (whole run -> exactly summary.csv / windows.json). Payload limit: the series points of all sites together (regular + transition samples, exactly as returned) must be <= 50000 (about 4.5 MB of JSON, ~1 MB gzip), else 422 OUT_OF_RANGE (title \"Series point limit exceeded\") with the numbers and a fitting max_points; first check (before any read): sites x min(max_points, n_samples / k) - so a call with no parameters on a 23-site 5-year run is 422; e.g. all 23 sites x 31 days hourly = 17 112 points is fine, the whole 5-year run for many sites needs max_points <= 50000 / n_sites or fewer site_ids (a large step_s alone may not be enough: transition samples are always kept). Windows and horizon bytes are not counted. Without `series` in include there is no point limit (whole run, 23 sites: ~0.7 MB, ~0.2 s); a whole-run series for all sites takes ~8 s, so request series for <= 1 year or a few sites. A range partly outside the run is clamped (coverage = partial); no overlap -> 422 OUT_OF_RANGE. Unknown site id -> 404 SITE_NOT_FOUND.",
         "parameters": [
           {
             "schema": {
@@ -75,7 +75,7 @@
             "in": "query",
             "name": "max_points",
             "required": false,
-            "description": "Cap on series points per site (default and max 10000), transition samples included. Also: the series points of all sites together must be <= 50000, else 422 OUT_OF_RANGE."
+            "description": "Cap on series points per site (default and max 10000), transition samples included. Also: the series points of all sites together must be <= 50000, else 422 OUT_OF_RANGE with title \"Series point limit exceeded\"."
           },
           {
             "schema": {
@@ -105,12 +105,23 @@
             "schema": {
               "default": "horizon,series,windows,metrics,criteria",
               "type": "string",
-              "pattern": "^[\\s,]*(?:horizon|series|windows|metrics|criteria)(?:\\s*,[\\s,]*(?:horizon|series|windows|metrics|criteria))*[\\s,]*$"
+              "pattern": "^[\\s,]*(?:horizon|series|windows|metrics|criteria|pointing|survival_hint)(?:\\s*,[\\s,]*(?:horizon|series|windows|metrics|criteria|pointing|survival_hint))*[\\s,]*$"
             },
             "in": "query",
             "name": "include",
             "required": false,
-            "description": "Comma separated parts of each site to return: horizon, series, windows, metrics, criteria (default: all). Omitted parts are absent from sites[]."
+            "description": "Comma separated parts of each site to return: horizon, series, windows, metrics, criteria, pointing, survival_hint (default: horizon,series,windows,metrics,criteria; pointing and survival_hint are opt-in). Omitted parts are absent from sites[]. pointing -> sites[].now = where to point the solar panel and the antenna at range.start (same block as GET /sites/{site_id}/pointing); survival_hint -> sites[].survival_hint = the longest dark period of the range and the battery a night_load_w load needs to bridge it."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000000
+            },
+            "in": "query",
+            "name": "night_load_w",
+            "required": false,
+            "description": "Reference load while the Sun is hidden, W (include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival."
           }
         ],
         "responses": {
@@ -648,12 +659,163 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "site_id": {
+            "description": "Catalog site id or canonical custom id - XOR lat_deg/lon_deg",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "lat_deg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Planetocentric latitude, deg [-90, 90]"
+          },
+          "lon_deg": {
+            "description": "Longitude, deg; EAST-positive (west-negative values are converted to [0, 360))",
+            "type": "number",
+            "minimum": -360,
+            "maximum": 360
+          },
+          "earliest": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "Earliest landing (inclusive); snapped UP to the step grid"
+          },
+          "latest": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "Latest landing (inclusive); snapped DOWN to the step grid; <= 366 days after earliest"
+          },
+          "mission_h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 8784,
+            "description": "Mission duration, h; a whole number of steps (else 422 BAD_MISSION_LENGTH)"
+          },
+          "max_results": {
+            "default": 10,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "constraints": {
+            "default": {
+              "min_sun_pct": 0,
+              "min_earth_pct": 0,
+              "min_both_pct": 0,
+              "require_sun_at_landing": true,
+              "require_earth_at_landing": false,
+              "min_continuous_sun_h": 0,
+              "min_continuous_earth_h": 0,
+              "max_dark_gap_h": null,
+              "max_comms_gap_h": null,
+              "min_sun_el_at_landing_deg": null,
+              "objective": "balanced",
+              "min_separation_h": 12
+            },
+            "$ref": "#/components/schemas/DateConstraintsInput"
+          },
+          "step_min": {
+            "default": 60,
+            "description": "Time step, minutes",
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "provider": {
+            "default": "spice",
+            "type": "string",
+            "enum": [
+              "spice",
+              "horizons",
+              "analytic"
+            ],
+            "description": "Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)"
+          },
+          "dem": {
+            "default": "pgda",
+            "type": "string",
+            "enum": [
+              "pgda",
+              "trek",
+              "none"
+            ],
+            "description": "Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)"
+          },
+          "horizon_method": {
+            "default": "raymarch",
+            "description": "Forced to 'flat' when dem = none",
+            "type": "string",
+            "enum": [
+              "raymarch",
+              "bruteforce",
+              "flat"
+            ]
+          },
+          "radius_km": {
+            "default": 150,
+            "description": "Horizon search radius, km",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 300
+          },
+          "az_step_deg": {
+            "default": 0.5,
+            "description": "Horizon azimuth step, deg",
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 10
+          },
+          "observer_height_m": {
+            "default": 2,
+            "description": "Mast height above local terrain, m",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_clearance_deg": {
+            "default": 0,
+            "description": "Earth must be this many deg above the horizon",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "dem_fallback": {
+            "default": "flat",
+            "type": "string",
+            "enum": [
+              "flat",
+              "error"
+            ],
+            "description": "Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job"
+          },
+          "near_exclusion_m": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "auto"
+              },
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 5000
+              }
+            ],
+            "description": "raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m"
           }
         },
         "required": [
-          "type"
+          "type",
+          "earliest",
+          "latest",
+          "mission_h"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "lunarnav alt-dates recomputed by Python for one site with full options. Output: Job.output (candidates) + artifact alt_dates.json."
       },
       "AltDatesRequest": {
         "type": "object",
@@ -972,12 +1134,167 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "sites": {
+            "default": [],
+            "description": "Catalog / custom site selectors (give sites and/or custom_sites)",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?:all|group:[A-Za-z0-9_.-]{1,64}|[A-Za-z0-9_.:-]{1,64})$",
+                "description": "Catalog site id, canonical custom id `custom:<lat>:<lon>`, `all` (whole catalog) or `group:<name>` (catalog group, e.g. group:south_pole)",
+                "examples": [
+                  "group:south_pole"
+                ]
+              },
+              {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:all|group:[A-Za-z0-9_.-]{1,64}|[A-Za-z0-9_.:-]{1,64})$",
+                  "description": "Catalog site id, canonical custom id `custom:<lat>:<lon>`, `all` (whole catalog) or `group:<name>` (catalog group, e.g. group:south_pole)",
+                  "examples": [
+                    "group:south_pole"
+                  ]
+                }
+              }
+            ]
+          },
+          "custom_sites": {
+            "default": [],
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lat_deg": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90,
+                  "description": "Planetocentric latitude, deg [-90, 90]"
+                },
+                "lon_deg": {
+                  "type": "number",
+                  "minimum": -360,
+                  "maximum": 360,
+                  "description": "Longitude, deg; EAST-positive (west-negative values are converted to [0, 360))"
+                }
+              },
+              "required": [
+                "lat_deg",
+                "lon_deg"
+              ],
+              "additionalProperties": false,
+              "description": "A custom coordinate; its site id is the canonical custom:<lat>:<lon> (4 decimals)"
+            }
+          },
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "Snapped DOWN to the step grid"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "EXCLUSIVE end; snapped UP to the step grid"
+          },
+          "step_min": {
+            "default": 60,
+            "description": "Time step, minutes",
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "provider": {
+            "default": "spice",
+            "type": "string",
+            "enum": [
+              "spice",
+              "horizons",
+              "analytic"
+            ],
+            "description": "Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)"
+          },
+          "dem": {
+            "default": "pgda",
+            "type": "string",
+            "enum": [
+              "pgda",
+              "trek",
+              "none"
+            ],
+            "description": "Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)"
+          },
+          "horizon_method": {
+            "default": "raymarch",
+            "description": "Forced to 'flat' when dem = none",
+            "type": "string",
+            "enum": [
+              "raymarch",
+              "bruteforce",
+              "flat"
+            ]
+          },
+          "radius_km": {
+            "default": 150,
+            "description": "Horizon search radius, km",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 300
+          },
+          "az_step_deg": {
+            "default": 0.5,
+            "description": "Horizon azimuth step, deg",
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 10
+          },
+          "observer_height_m": {
+            "default": 2,
+            "description": "Mast height above local terrain, m",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_clearance_deg": {
+            "default": 0,
+            "description": "Earth must be this many deg above the horizon",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "dem_fallback": {
+            "default": "flat",
+            "type": "string",
+            "enum": [
+              "flat",
+              "error"
+            ],
+            "description": "Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job"
+          },
+          "near_exclusion_m": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "auto"
+              },
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 5000
+              }
+            ],
+            "description": "raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m"
           }
         },
         "required": [
-          "type"
+          "type",
+          "start",
+          "end"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "lunarnav analyse: rank sites over a period (no import). Output: Job.output.ranking + artifact ranking.json."
       },
       "Availability": {
         "type": "object",
@@ -1360,12 +1677,27 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "run_id": {
+            "description": "Imported run to verify; default = the run flagged is_default (GET /api/v1/runs)",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
           }
         },
         "required": [
           "type"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Verify the files of an imported run against docs/OUTPUT_SPEC.md (lunarnav check). Never cached: every job re-reads the files.",
+        "examples": [
+          {
+            "type": "check",
+            "run_id": "pf_21c3f3f6dc56b1e1"
+          }
+        ]
       },
       "CompareRunsJobRequest": {
         "type": "object",
@@ -1379,12 +1711,102 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "run_a": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run A (differences are A - B)",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "run_b": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run B; must differ from run_a",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "site_ids": {
+            "default": null,
+            "description": "Sites to compare (each must be in both runs); null = every site the two runs share",
+            "anyOf": [
+              {
+                "minItems": 1,
+                "maxItems": 300,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+                  "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+                  "examples": [
+                    "ref_connecting_ridge_c1"
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
-          "type"
+          "type",
+          "run_a",
+          "run_b"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Compare two imported runs site by site (ephemeris, horizon, visibility flags, metrics)",
+        "examples": [
+          {
+            "type": "compare_runs",
+            "run_a": "pf_aec206eb",
+            "run_b": "pf_21c3f3f6dc56b1e1"
+          }
+        ]
+      },
+      "Compass": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "N",
+              "NNE",
+              "NE",
+              "ENE",
+              "E",
+              "ESE",
+              "SE",
+              "SSE",
+              "S",
+              "SSW",
+              "SW",
+              "WSW",
+              "W",
+              "WNW",
+              "NW",
+              "NNW"
+            ],
+            "description": "16-point compass code (N, NNE, NE, ... NNW)"
+          },
+          "en": {
+            "type": "string",
+            "description": "English name, e.g. \"northeast\""
+          },
+          "vi": {
+            "type": "string",
+            "description": "Vietnamese name, e.g. \"Đông Bắc\""
+          }
+        },
+        "required": [
+          "code",
+          "en",
+          "vi"
+        ],
+        "additionalProperties": false,
+        "description": "16-point compass direction of an azimuth: sector i is centred on i * 22.5 deg (+- 11.25 deg; a boundary belongs to the clockwise sector)"
       },
       "CreateJobRequest": {
         "oneOf": [
@@ -1708,6 +2130,32 @@
             "type": "number",
             "minimum": 0,
             "description": "Longest continuous period without Earth, h"
+          },
+          "mean_power_tracking_pct": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Energy proxy: mean output of a 2-axis Sun-tracking panel over the stored samples of the range, % of its output in full sunlight (= 100 * mean power_tracking = 100 * mean sun_fraction; whole run -> 100 * summary.csv mean_power_tracking). null when no sample is stored"
+          },
+          "mean_power_horizontal_pct": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Energy proxy: mean output of a flat-lying panel, % of a panel facing the Sun in full sunlight (= 100 * mean power_horizontal = 100 * mean sun_fraction * max(0, sin el); tiny near the poles where the Sun is low). null when no sample is stored"
           }
         },
         "required": [
@@ -1722,7 +2170,9 @@
           "longest_earth_h",
           "longest_both_h",
           "longest_dark_h",
-          "longest_comms_gap_h"
+          "longest_comms_gap_h",
+          "mean_power_tracking_pct",
+          "mean_power_horizontal_pct"
         ],
         "additionalProperties": false,
         "description": "Over the REQUESTED range (clamped to the run). Whole run -> pct_* / longest_* equal summary.csv exactly."
@@ -1866,9 +2316,46 @@
                 "series",
                 "windows",
                 "metrics",
-                "criteria"
+                "criteria",
+                "pointing",
+                "survival_hint"
               ]
             }
+          },
+          "night_load_w": {
+            "description": "include=survival_hint: the night_load_w used (null when not given)",
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assumptions": {
+            "description": "Present when include has pointing or survival_hint: every assumption behind those numbers, in plain English",
+            "type": "object",
+            "properties": {
+              "pointing": {
+                "description": "Assumptions of sites[].now (include=pointing)",
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "survival_hint": {
+                "description": "Assumptions of sites[].survival_hint and of metrics.mean_power_* (include=survival_hint)",
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
           },
           "sites": {
             "type": "array",
@@ -2145,6 +2632,28 @@
             "items": {
               "$ref": "#/components/schemas/DatasetCriterion"
             }
+          },
+          "now": {
+            "description": "include=pointing: where to point the solar panel and the antenna at range.start (t = sample_utc = range.start; the same block as GET /sites/{site_id}/pointing). null when that sample is not stored",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PointingCore"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "survival_hint": {
+            "description": "include=survival_hint; null when coverage = missing",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DatasetSurvivalHint"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2190,6 +2699,90 @@
           "sha256"
         ],
         "additionalProperties": false
+      },
+      "DatasetSurvivalHint": {
+        "type": "object",
+        "properties": {
+          "longest_dark_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Longest continuous period without Sun inside the range, h (= metrics.longest_dark_h)"
+          },
+          "longest_dark_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "First sample of that dark period inside the range (the first one when several are equally long); null when the range has no dark sample"
+          },
+          "longest_dark_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "EXCLUSIVE end of that dark period inside the range (the sunrise sample, or range.end)"
+          },
+          "longest_dark_clipped": {
+            "type": "boolean",
+            "description": "A dark period of length longest_dark_h is cut by the range or the run boundary: the real longest night may be longer, so longest_dark_h and required_battery_wh are LOWER bounds"
+          },
+          "night_load_w": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reference night load of the request (query night_load_w); null when not given"
+          },
+          "required_battery_wh": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Smallest usable battery capacity (starting full, allowed down to 0) that runs night_load_w through EVERY dark period of the range when the panel refills it during each lit period; = night_load_w * longest_dark_h. null when night_load_w is not given"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/PlainSummary"
+          }
+        },
+        "required": [
+          "longest_dark_h",
+          "longest_dark_start",
+          "longest_dark_end",
+          "longest_dark_clipped",
+          "night_load_w",
+          "required_battery_wh",
+          "summary"
+        ],
+        "additionalProperties": false,
+        "description": "Battery sizing hint for a reference night load (include=survival_hint). Simplified on purpose; POST /mission/survival simulates a real panel, day load and state of charge hour by hour."
       },
       "DatasetWindow": {
         "type": "object",
@@ -2493,12 +3086,124 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "site_id": {
+            "description": "Catalog id or canonical custom id (custom:<lat>:<lon>) - XOR lat_deg/lon_deg",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "run_id": {
+            "description": "Only with site_id: imported run whose site record supplies the coordinates (and heights for the ephemeris). Default: the default run, when it contains the site; otherwise the lunarnav catalog.",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "lat_deg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Planetocentric latitude, deg [-90, 90]"
+          },
+          "lon_deg": {
+            "type": "number",
+            "minimum": -360,
+            "maximum": 360,
+            "description": "Longitude, deg; EAST-positive (west-negative values are converted to [0, 360))"
+          },
+          "dem": {
+            "default": "pgda",
+            "type": "string",
+            "enum": [
+              "pgda",
+              "trek",
+              "none"
+            ],
+            "description": "Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)"
+          },
+          "method": {
+            "default": "raymarch",
+            "description": "Forced to 'flat' when dem = none",
+            "type": "string",
+            "enum": [
+              "raymarch",
+              "bruteforce",
+              "flat"
+            ]
+          },
+          "radius_km": {
+            "default": 150,
+            "description": "Search radius, km (150 = what precompute runs use)",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 300
+          },
+          "az_step_deg": {
+            "default": 0.5,
+            "description": "Azimuth step, deg (must divide 360)",
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 10
+          },
+          "observer_height_m": {
+            "default": 2,
+            "description": "Mast height above the surface, m",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "near_exclusion_m": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "auto"
+              },
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 5000
+              }
+            ],
+            "description": "raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m"
+          },
+          "dem_fallback": {
+            "default": "flat",
+            "type": "string",
+            "enum": [
+              "flat",
+              "error"
+            ],
+            "description": "Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job"
+          },
+          "rounding": {
+            "default": "run_files",
+            "type": "string",
+            "enum": [
+              "run_files",
+              "none"
+            ],
+            "description": "run_files = rounded like the precompute run files (angles 1e-6 deg, distances 1 m; azimuth wrapped to [0, 360)) so values compare exactly with imported runs; none = full float64"
           }
         },
         "required": [
           "type"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Terrain horizon mask of one point as a job (async POST /tools/horizon without its radius / step / method limits). Result: artifact horizon.json",
+        "examples": [
+          {
+            "type": "horizon_mask",
+            "site_id": "ref_shackleton_rim",
+            "dem": "pgda",
+            "method": "raymarch",
+            "radius_km": 150,
+            "az_step_deg": 0.5
+          }
+        ]
       },
       "Job": {
         "type": "object",
@@ -2958,6 +3663,293 @@
         ],
         "additionalProperties": false
       },
+      "PlainSummary": {
+        "type": "object",
+        "properties": {
+          "en": {
+            "type": "string",
+            "description": "One line in plain English"
+          },
+          "vi": {
+            "type": "string",
+            "description": "One line in plain Vietnamese"
+          }
+        },
+        "required": [
+          "en",
+          "vi"
+        ],
+        "additionalProperties": false
+      },
+      "PointingAntenna": {
+        "type": "object",
+        "properties": {
+          "azimuth_deg": {
+            "type": "number",
+            "description": "Direction to point the antenna = Earth centre azimuth, deg clockwise from local north [0, 360)"
+          },
+          "compass": {
+            "$ref": "#/components/schemas/Compass"
+          },
+          "elevation_deg": {
+            "type": "number",
+            "description": "Antenna elevation = Earth centre elevation, deg"
+          },
+          "earth_visible": {
+            "type": "boolean",
+            "description": "Earth centre more than min_earth_clearance_deg above the terrain horizon (direct-to-Earth link possible)"
+          },
+          "clearance_deg": {
+            "type": "number",
+            "description": "Earth centre elevation minus terrain horizon elevation at the Earth azimuth"
+          },
+          "hours_until_earthset": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hours from t until the Earth is hidden (comms gap starts) (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h."
+          },
+          "earthset_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hours_until_earthrise": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hours from t until the Earth is visible again (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h."
+          },
+          "earthrise_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "distance_km": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Observer -> Earth centre distance, km (for a link budget)"
+          }
+        },
+        "required": [
+          "azimuth_deg",
+          "compass",
+          "elevation_deg",
+          "earth_visible",
+          "clearance_deg",
+          "hours_until_earthset",
+          "earthset_utc",
+          "hours_until_earthrise",
+          "earthrise_utc",
+          "distance_km"
+        ],
+        "additionalProperties": false
+      },
+      "PointingCore": {
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Requested instant (normalised to whole seconds)",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "sample_utc": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Start of the hourly sample that was read (<= t)",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "panel": {
+            "$ref": "#/components/schemas/PointingPanel"
+          },
+          "antenna": {
+            "$ref": "#/components/schemas/PointingAntenna"
+          },
+          "hours_to_run_end": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Hours from t to the run end (the horizon of every hours_until_* value)"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/PlainSummary"
+          }
+        },
+        "required": [
+          "t",
+          "sample_utc",
+          "panel",
+          "antenna",
+          "hours_to_run_end",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "PointingPanel": {
+        "type": "object",
+        "properties": {
+          "azimuth_deg": {
+            "type": "number",
+            "description": "Direction the panel must FACE = Sun azimuth, deg clockwise from local north [0, 360)"
+          },
+          "compass": {
+            "$ref": "#/components/schemas/Compass"
+          },
+          "tilt_from_vertical_deg": {
+            "type": "number",
+            "description": "For a panel whose face points at the Sun: tilt back from vertical = Sun elevation (near the poles the Sun is low, so the panel stands almost upright; negative = the Sun centre is below the horizontal plane, lean forward)"
+          },
+          "tilt_from_horizontal_deg": {
+            "type": "number",
+            "description": "= 90 - tilt_from_vertical_deg (the same panel measured from the ground)"
+          },
+          "panel_normal_elevation_deg": {
+            "type": "number",
+            "description": "Elevation of the panel normal = Sun centre elevation, deg"
+          },
+          "sun_visible": {
+            "type": "boolean",
+            "description": "Upper limb of the Sun above the TERRAIN horizon (not el > 0)"
+          },
+          "sun_fraction": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Visible fraction of the solar disc above the terrain horizon"
+          },
+          "sun_clearance_deg": {
+            "type": "number",
+            "description": "Sun centre elevation minus terrain horizon elevation at the Sun azimuth (negative = hidden by terrain)"
+          },
+          "power_tracking": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Relative output of a Sun-tracking panel at this sample (= sun_fraction)"
+          },
+          "power_horizontal": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Relative output of a flat-lying panel (= sun_fraction * max(0, sin el))"
+          },
+          "irradiance_tracking_wm2": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Irradiance on the Sun-tracking panel, W/m2 (solar distance and visible fraction included)"
+          },
+          "hours_until_sunset": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hours from t until the Sun is hidden (dark window starts) (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h."
+          },
+          "sunset_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Instant of the next sunset (= t when already dark); null when none before the run end"
+          },
+          "hours_until_sunrise": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hours from t until the Sun is visible again (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h."
+          },
+          "sunrise_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+                "examples": [
+                  "2026-01-01T00:00:00Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Instant of the next sunrise (= t when already lit); null when none before the run end"
+          }
+        },
+        "required": [
+          "azimuth_deg",
+          "compass",
+          "tilt_from_vertical_deg",
+          "tilt_from_horizontal_deg",
+          "panel_normal_elevation_deg",
+          "sun_visible",
+          "sun_fraction",
+          "sun_clearance_deg",
+          "power_tracking",
+          "power_horizontal",
+          "irradiance_tracking_wm2",
+          "hours_until_sunset",
+          "sunset_utc",
+          "hours_until_sunrise",
+          "sunrise_utc"
+        ],
+        "additionalProperties": false
+      },
       "PrecomputeJobRequest": {
         "type": "object",
         "properties": {
@@ -2970,12 +3962,173 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "sites": {
+            "default": [],
+            "description": "Catalog / custom site selectors (give sites and/or custom_sites)",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?:all|group:[A-Za-z0-9_.-]{1,64}|[A-Za-z0-9_.:-]{1,64})$",
+                "description": "Catalog site id, canonical custom id `custom:<lat>:<lon>`, `all` (whole catalog) or `group:<name>` (catalog group, e.g. group:south_pole)",
+                "examples": [
+                  "group:south_pole"
+                ]
+              },
+              {
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?:all|group:[A-Za-z0-9_.-]{1,64}|[A-Za-z0-9_.:-]{1,64})$",
+                  "description": "Catalog site id, canonical custom id `custom:<lat>:<lon>`, `all` (whole catalog) or `group:<name>` (catalog group, e.g. group:south_pole)",
+                  "examples": [
+                    "group:south_pole"
+                  ]
+                }
+              }
+            ]
+          },
+          "custom_sites": {
+            "default": [],
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lat_deg": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90,
+                  "description": "Planetocentric latitude, deg [-90, 90]"
+                },
+                "lon_deg": {
+                  "type": "number",
+                  "minimum": -360,
+                  "maximum": 360,
+                  "description": "Longitude, deg; EAST-positive (west-negative values are converted to [0, 360))"
+                }
+              },
+              "required": [
+                "lat_deg",
+                "lon_deg"
+              ],
+              "additionalProperties": false,
+              "description": "A custom coordinate; its site id is the canonical custom:<lat>:<lon> (4 decimals)"
+            }
+          },
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "Snapped DOWN to the step grid"
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+            "description": "EXCLUSIVE end; snapped UP to the step grid"
+          },
+          "step_min": {
+            "default": 60,
+            "description": "Time step, minutes",
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "provider": {
+            "default": "spice",
+            "type": "string",
+            "enum": [
+              "spice",
+              "horizons",
+              "analytic"
+            ],
+            "description": "Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)"
+          },
+          "dem": {
+            "default": "pgda",
+            "type": "string",
+            "enum": [
+              "pgda",
+              "trek",
+              "none"
+            ],
+            "description": "Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)"
+          },
+          "horizon_method": {
+            "default": "raymarch",
+            "description": "Forced to 'flat' when dem = none",
+            "type": "string",
+            "enum": [
+              "raymarch",
+              "bruteforce",
+              "flat"
+            ]
+          },
+          "radius_km": {
+            "default": 150,
+            "description": "Horizon search radius, km",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 300
+          },
+          "az_step_deg": {
+            "default": 0.5,
+            "description": "Horizon azimuth step, deg",
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 10
+          },
+          "observer_height_m": {
+            "default": 2,
+            "description": "Mast height above local terrain, m",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "min_clearance_deg": {
+            "default": 0,
+            "description": "Earth must be this many deg above the horizon",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "dem_fallback": {
+            "default": "flat",
+            "type": "string",
+            "enum": [
+              "flat",
+              "error"
+            ],
+            "description": "Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job"
+          },
+          "near_exclusion_m": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "auto"
+              },
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 5000
+              }
+            ],
+            "description": "raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m"
+          },
+          "run_label": {
+            "description": "Label of the imported run (run picker); default: name or a generated label",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
           }
         },
         "required": [
-          "type"
+          "type",
+          "start",
+          "end"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "lunarnav precompute for catalog and/or custom sites; the output is imported as a run of kind precompute (result.run_id). Limits: GET /api/v1/capabilities job_types[type=precompute].limits."
       },
       "Problem": {
         "type": "object",
@@ -3098,12 +4251,45 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "mode": {
+            "default": "quick",
+            "type": "string",
+            "enum": [
+              "quick",
+              "full"
+            ],
+            "description": "quick = 2 sites x 1 month (minutes); full = every validation site and time set"
+          },
+          "offline": {
+            "default": false,
+            "description": "Horizons answers from the server disk cache only (fails when something is not cached)",
+            "type": "boolean"
+          },
+          "no_horizons": {
+            "default": false,
+            "description": "Skip Method A (JPL Horizons): SPICE vs analytic only, no network",
+            "type": "boolean"
+          },
+          "no_terrain": {
+            "default": false,
+            "description": "Skip the terrain hook (lunarnav.validate_terrain; slow, reads PGDA / Moon Trek)",
+            "type": "boolean"
           }
         },
         "required": [
           "type"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Cross-method validation report (lunarnav validate)",
+        "examples": [
+          {
+            "type": "validate",
+            "mode": "quick",
+            "no_horizons": true,
+            "no_terrain": true
+          }
+        ]
       },
       "ValidateTerrainJobRequest": {
         "type": "object",
@@ -3117,12 +4303,28 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Display name (not part of the job identity)"
+          },
+          "mode": {
+            "default": "quick",
+            "type": "string",
+            "enum": [
+              "quick",
+              "full"
+            ],
+            "description": "quick = 8 + 8 pixels over 5 years (~minutes when cached); full = 30 + 30 pixels over 18.6 years"
           }
         },
         "required": [
           "type"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Terrain / horizon / visibility validation report (lunarnav.validate_terrain). Reads PGDA tiles and the Moon Trek ImageServer (network unless cached)",
+        "examples": [
+          {
+            "type": "validate_terrain",
+            "mode": "quick"
+          }
+        ]
       }
     }
   }

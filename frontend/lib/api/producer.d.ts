@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * Everything the comparison page needs in one call: run, model, per-site horizon, series, windows, metrics, criteria
-         * @description Defaults: default run, every site of the run, the whole run range, data step (3600 s), max_points 10000, horizon_step_deg 1, criteria_hours 24,72,168, include all. Series are decimated per site to <= max_points while keeping both samples around every visibility transition (see DatasetSeries). Windows / metrics / criteria are computed from the full-resolution windows over the requested range (whole run -> exactly summary.csv / windows.json). Payload limit: the series points of all sites together (regular + transition samples, exactly as returned) must be <= 50000 (about 4.5 MB of JSON, ~1 MB gzip), else 422 OUT_OF_RANGE with the numbers and a fitting max_points; first check (before any read): sites x min(max_points, n_samples / k) - so a call with no parameters on a 23-site 5-year run is 422; e.g. all 23 sites x 31 days hourly = 17 112 points is fine, the whole 5-year run for many sites needs max_points <= 50000 / n_sites or fewer site_ids (a large step_s alone may not be enough: transition samples are always kept). Windows and horizon bytes are not counted. Without `series` in include there is no point limit (whole run, 23 sites: ~0.7 MB, ~0.2 s); a whole-run series for all sites takes ~8 s, so request series for <= 1 year or a few sites. A range partly outside the run is clamped (coverage = partial); no overlap -> 422 OUT_OF_RANGE. Unknown site id -> 404 SITE_NOT_FOUND.
+         * @description Defaults: default run, every site of the run, the whole run range, data step (3600 s), max_points 10000, horizon_step_deg 1, criteria_hours 24,72,168, include horizon,series,windows,metrics,criteria (opt-in: pointing -> sites[].now = where to point the panel and the antenna at range.start, as GET /sites/{site_id}/pointing; survival_hint -> sites[].survival_hint = longest dark period + the battery a reference night_load_w needs; their assumptions are in `assumptions`). metrics also carry energy proxies mean_power_tracking_pct / mean_power_horizontal_pct over the range. Series are decimated per site to <= max_points while keeping both samples around every visibility transition (see DatasetSeries). Windows / metrics / criteria are computed from the full-resolution windows over the requested range (whole run -> exactly summary.csv / windows.json). Payload limit: the series points of all sites together (regular + transition samples, exactly as returned) must be <= 50000 (about 4.5 MB of JSON, ~1 MB gzip), else 422 OUT_OF_RANGE (title "Series point limit exceeded") with the numbers and a fitting max_points; first check (before any read): sites x min(max_points, n_samples / k) - so a call with no parameters on a 23-site 5-year run is 422; e.g. all 23 sites x 31 days hourly = 17 112 points is fine, the whole 5-year run for many sites needs max_points <= 50000 / n_sites or fewer site_ids (a large step_s alone may not be enough: transition samples are always kept). Windows and horizon bytes are not counted. Without `series` in include there is no point limit (whole run, 23 sites: ~0.7 MB, ~0.2 s); a whole-run series for all sites takes ~8 s, so request series for <= 1 year or a few sites. A range partly outside the run is clamped (coverage = partial); no overlap -> 422 OUT_OF_RANGE. Unknown site id -> 404 SITE_NOT_FOUND.
          */
         get: operations["getDataset"];
         put?: never;
@@ -105,11 +105,97 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description lunarnav alt-dates recomputed by Python for one site with full options. Output: Job.output (candidates) + artifact alt_dates.json. */
         AltDatesPythonJobRequest: {
             /** @constant */
             type: "alt_dates_python";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description Catalog site id or canonical custom id - XOR lat_deg/lon_deg
+             * @example ref_connecting_ridge_c1
+             */
+            site_id?: string;
+            /** @description Planetocentric latitude, deg [-90, 90] */
+            lat_deg?: number;
+            /** @description Longitude, deg; EAST-positive (west-negative values are converted to [0, 360)) */
+            lon_deg?: number;
+            /** @description Earliest landing (inclusive); snapped UP to the step grid */
+            earliest: string;
+            /** @description Latest landing (inclusive); snapped DOWN to the step grid; <= 366 days after earliest */
+            latest: string;
+            /** @description Mission duration, h; a whole number of steps (else 422 BAD_MISSION_LENGTH) */
+            mission_h: number;
+            /** @default 10 */
+            max_results: number;
+            /**
+             * @default {
+             *       "min_sun_pct": 0,
+             *       "min_earth_pct": 0,
+             *       "min_both_pct": 0,
+             *       "require_sun_at_landing": true,
+             *       "require_earth_at_landing": false,
+             *       "min_continuous_sun_h": 0,
+             *       "min_continuous_earth_h": 0,
+             *       "max_dark_gap_h": null,
+             *       "max_comms_gap_h": null,
+             *       "min_sun_el_at_landing_deg": null,
+             *       "objective": "balanced",
+             *       "min_separation_h": 12
+             *     }
+             */
+            constraints: components["schemas"]["DateConstraintsInput"];
+            /**
+             * @description Time step, minutes
+             * @default 60
+             */
+            step_min: number;
+            /**
+             * @description Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)
+             * @default spice
+             * @enum {string}
+             */
+            provider: "spice" | "horizons" | "analytic";
+            /**
+             * @description Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)
+             * @default pgda
+             * @enum {string}
+             */
+            dem: "pgda" | "trek" | "none";
+            /**
+             * @description Forced to 'flat' when dem = none
+             * @default raymarch
+             * @enum {string}
+             */
+            horizon_method: "raymarch" | "bruteforce" | "flat";
+            /**
+             * @description Horizon search radius, km
+             * @default 150
+             */
+            radius_km: number;
+            /**
+             * @description Horizon azimuth step, deg
+             * @default 0.5
+             */
+            az_step_deg: number;
+            /**
+             * @description Mast height above local terrain, m
+             * @default 2
+             */
+            observer_height_m: number;
+            /**
+             * @description Earth must be this many deg above the horizon
+             * @default 0
+             */
+            min_clearance_deg: number;
+            /**
+             * @description Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job
+             * @default flat
+             * @enum {string}
+             */
+            dem_fallback: "flat" | "error";
+            /** @description raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m */
+            near_exclusion_m?: "auto" | number;
         };
         /**
          * @example {
@@ -322,11 +408,79 @@ export interface components {
             /** @description Empty = no feasible date (still 200; see rejected_by) */
             candidates: components["schemas"]["LandingCandidate"][];
         };
+        /** @description lunarnav analyse: rank sites over a period (no import). Output: Job.output.ranking + artifact ranking.json. */
         AnalyseJobRequest: {
             /** @constant */
             type: "analyse";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description Catalog / custom site selectors (give sites and/or custom_sites)
+             * @default []
+             */
+            sites: string | string[];
+            /** @default [] */
+            custom_sites: {
+                /** @description Planetocentric latitude, deg [-90, 90] */
+                lat_deg: number;
+                /** @description Longitude, deg; EAST-positive (west-negative values are converted to [0, 360)) */
+                lon_deg: number;
+            }[];
+            /** @description Snapped DOWN to the step grid */
+            start: string;
+            /** @description EXCLUSIVE end; snapped UP to the step grid */
+            end: string;
+            /**
+             * @description Time step, minutes
+             * @default 60
+             */
+            step_min: number;
+            /**
+             * @description Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)
+             * @default spice
+             * @enum {string}
+             */
+            provider: "spice" | "horizons" | "analytic";
+            /**
+             * @description Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)
+             * @default pgda
+             * @enum {string}
+             */
+            dem: "pgda" | "trek" | "none";
+            /**
+             * @description Forced to 'flat' when dem = none
+             * @default raymarch
+             * @enum {string}
+             */
+            horizon_method: "raymarch" | "bruteforce" | "flat";
+            /**
+             * @description Horizon search radius, km
+             * @default 150
+             */
+            radius_km: number;
+            /**
+             * @description Horizon azimuth step, deg
+             * @default 0.5
+             */
+            az_step_deg: number;
+            /**
+             * @description Mast height above local terrain, m
+             * @default 2
+             */
+            observer_height_m: number;
+            /**
+             * @description Earth must be this many deg above the horizon
+             * @default 0
+             */
+            min_clearance_deg: number;
+            /**
+             * @description Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job
+             * @default flat
+             * @enum {string}
+             */
+            dem_fallback: "flat" | "error";
+            /** @description raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m */
+            near_exclusion_m?: "auto" | number;
         };
         Availability: {
             available: boolean;
@@ -417,17 +571,64 @@ export interface components {
                 [key: string]: components["schemas"]["Availability"];
             };
         };
+        /**
+         * @description Verify the files of an imported run against docs/OUTPUT_SPEC.md (lunarnav check). Never cached: every job re-reads the files.
+         * @example {
+         *       "type": "check",
+         *       "run_id": "pf_21c3f3f6dc56b1e1"
+         *     }
+         */
         CheckJobRequest: {
             /** @constant */
             type: "check";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description Imported run to verify; default = the run flagged is_default (GET /api/v1/runs)
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id?: string;
         };
+        /**
+         * @description Compare two imported runs site by site (ephemeris, horizon, visibility flags, metrics)
+         * @example {
+         *       "type": "compare_runs",
+         *       "run_a": "pf_aec206eb",
+         *       "run_b": "pf_21c3f3f6dc56b1e1"
+         *     }
+         */
         CompareRunsJobRequest: {
             /** @constant */
             type: "compare_runs";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description Run A (differences are A - B)
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_a: string;
+            /**
+             * @description Run B; must differ from run_a
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_b: string;
+            /**
+             * @description Sites to compare (each must be in both runs); null = every site the two runs share
+             * @default null
+             */
+            site_ids: string[] | null;
+        };
+        /** @description 16-point compass direction of an azimuth: sector i is centred on i * 22.5 deg (+- 11.25 deg; a boundary belongs to the clockwise sector) */
+        Compass: {
+            /**
+             * @description 16-point compass code (N, NNE, NE, ... NNW)
+             * @enum {string}
+             */
+            code: "N" | "NNE" | "NE" | "ENE" | "E" | "ESE" | "SE" | "SSE" | "S" | "SSW" | "SW" | "WSW" | "W" | "WNW" | "NW" | "NNW";
+            /** @description English name, e.g. "northeast" */
+            en: string;
+            /** @description Vietnamese name, e.g. "Đông Bắc" */
+            vi: string;
         };
         /** @description Discriminated on `type`. Types this server cannot run answer 501 JOB_TYPE_UNAVAILABLE (see GET /api/v1/capabilities). */
         CreateJobRequest: components["schemas"]["CustomSiteJobRequest"] | components["schemas"]["PrecomputeJobRequest"] | components["schemas"]["AnalyseJobRequest"] | components["schemas"]["AltDatesPythonJobRequest"] | components["schemas"]["CheckJobRequest"] | components["schemas"]["ValidateJobRequest"] | components["schemas"]["ValidateTerrainJobRequest"] | components["schemas"]["CompareRunsJobRequest"] | components["schemas"]["HorizonMaskJobRequest"];
@@ -531,6 +732,10 @@ export interface components {
             longest_dark_h: number;
             /** @description Longest continuous period without Earth, h */
             longest_comms_gap_h: number;
+            /** @description Energy proxy: mean output of a 2-axis Sun-tracking panel over the stored samples of the range, % of its output in full sunlight (= 100 * mean power_tracking = 100 * mean sun_fraction; whole run -> 100 * summary.csv mean_power_tracking). null when no sample is stored */
+            mean_power_tracking_pct: number | null;
+            /** @description Energy proxy: mean output of a flat-lying panel, % of a panel facing the Sun in full sunlight (= 100 * mean power_horizontal = 100 * mean sun_fraction * max(0, sin el); tiny near the poles where the Sun is low). null when no sample is stored */
+            mean_power_horizontal_pct: number | null;
         };
         DatasetModel: {
             /** @description Stable id of the visibility model */
@@ -583,7 +788,16 @@ export interface components {
             range: components["schemas"]["DatasetRange"];
             conventions: components["schemas"]["DatasetConventions"];
             criteria_hours: number[];
-            include: ("horizon" | "series" | "windows" | "metrics" | "criteria")[];
+            include: ("horizon" | "series" | "windows" | "metrics" | "criteria" | "pointing" | "survival_hint")[];
+            /** @description include=survival_hint: the night_load_w used (null when not given) */
+            night_load_w?: number | null;
+            /** @description Present when include has pointing or survival_hint: every assumption behind those numbers, in plain English */
+            assumptions?: {
+                /** @description Assumptions of sites[].now (include=pointing) */
+                pointing?: string[];
+                /** @description Assumptions of sites[].survival_hint and of metrics.mean_power_* (include=survival_hint) */
+                survival_hint?: string[];
+            };
             sites: components["schemas"]["DatasetSite"][];
             sources: components["schemas"]["DatasetSource"][];
         };
@@ -670,12 +884,32 @@ export interface components {
             metrics?: components["schemas"]["DatasetMetrics"] | null;
             /** @description One per criteria_hours value; empty when coverage = missing */
             criteria?: components["schemas"]["DatasetCriterion"][];
+            /** @description include=pointing: where to point the solar panel and the antenna at range.start (t = sample_utc = range.start; the same block as GET /sites/{site_id}/pointing). null when that sample is not stored */
+            now?: components["schemas"]["PointingCore"] | null;
+            /** @description include=survival_hint; null when coverage = missing */
+            survival_hint?: components["schemas"]["DatasetSurvivalHint"] | null;
         };
         DatasetSource: {
             id: string;
             title: string;
             url: string | null;
             sha256: string | null;
+        };
+        /** @description Battery sizing hint for a reference night load (include=survival_hint). Simplified on purpose; POST /mission/survival simulates a real panel, day load and state of charge hour by hour. */
+        DatasetSurvivalHint: {
+            /** @description Longest continuous period without Sun inside the range, h (= metrics.longest_dark_h) */
+            longest_dark_h: number;
+            /** @description First sample of that dark period inside the range (the first one when several are equally long); null when the range has no dark sample */
+            longest_dark_start: string | null;
+            /** @description EXCLUSIVE end of that dark period inside the range (the sunrise sample, or range.end) */
+            longest_dark_end: string | null;
+            /** @description A dark period of length longest_dark_h is cut by the range or the run boundary: the real longest night may be longer, so longest_dark_h and required_battery_wh are LOWER bounds */
+            longest_dark_clipped: boolean;
+            /** @description Reference night load of the request (query night_load_w); null when not given */
+            night_load_w: number | null;
+            /** @description Smallest usable battery capacity (starting full, allowed down to 0) that runs night_load_w through EVERY dark period of the range when the panel refills it during each lit period; = night_load_w * longest_dark_h. null when night_load_w is not given */
+            required_battery_wh: number | null;
+            summary: components["schemas"]["PlainSummary"];
         };
         DatasetWindow: {
             /**
@@ -787,11 +1021,77 @@ export interface components {
              */
             min_separation_h: number;
         };
+        /**
+         * @description Terrain horizon mask of one point as a job (async POST /tools/horizon without its radius / step / method limits). Result: artifact horizon.json
+         * @example {
+         *       "type": "horizon_mask",
+         *       "site_id": "ref_shackleton_rim",
+         *       "dem": "pgda",
+         *       "method": "raymarch",
+         *       "radius_km": 150,
+         *       "az_step_deg": 0.5
+         *     }
+         */
         HorizonMaskJobRequest: {
             /** @constant */
             type: "horizon_mask";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description Catalog id or canonical custom id (custom:<lat>:<lon>) - XOR lat_deg/lon_deg
+             * @example ref_connecting_ridge_c1
+             */
+            site_id?: string;
+            /**
+             * @description Only with site_id: imported run whose site record supplies the coordinates (and heights for the ephemeris). Default: the default run, when it contains the site; otherwise the lunarnav catalog.
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id?: string;
+            /** @description Planetocentric latitude, deg [-90, 90] */
+            lat_deg?: number;
+            /** @description Longitude, deg; EAST-positive (west-negative values are converted to [0, 360)) */
+            lon_deg?: number;
+            /**
+             * @description Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)
+             * @default pgda
+             * @enum {string}
+             */
+            dem: "pgda" | "trek" | "none";
+            /**
+             * @description Forced to 'flat' when dem = none
+             * @default raymarch
+             * @enum {string}
+             */
+            method: "raymarch" | "bruteforce" | "flat";
+            /**
+             * @description Search radius, km (150 = what precompute runs use)
+             * @default 150
+             */
+            radius_km: number;
+            /**
+             * @description Azimuth step, deg (must divide 360)
+             * @default 0.5
+             */
+            az_step_deg: number;
+            /**
+             * @description Mast height above the surface, m
+             * @default 2
+             */
+            observer_height_m: number;
+            /** @description raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m */
+            near_exclusion_m?: "auto" | number;
+            /**
+             * @description Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job
+             * @default flat
+             * @enum {string}
+             */
+            dem_fallback: "flat" | "error";
+            /**
+             * @description run_files = rounded like the precompute run files (angles 1e-6 deg, distances 1 m; azimuth wrapped to [0, 360)) so values compare exactly with imported runs; none = full float64
+             * @default run_files
+             * @enum {string}
+             */
+            rounding: "run_files" | "none";
         };
         Job: {
             /**
@@ -916,11 +1216,154 @@ export interface components {
             mean_power_horizontal: number;
             mean_power_tracking: number;
         };
+        PlainSummary: {
+            /** @description One line in plain English */
+            en: string;
+            /** @description One line in plain Vietnamese */
+            vi: string;
+        };
+        PointingAntenna: {
+            /** @description Direction to point the antenna = Earth centre azimuth, deg clockwise from local north [0, 360) */
+            azimuth_deg: number;
+            compass: components["schemas"]["Compass"];
+            /** @description Antenna elevation = Earth centre elevation, deg */
+            elevation_deg: number;
+            /** @description Earth centre more than min_earth_clearance_deg above the terrain horizon (direct-to-Earth link possible) */
+            earth_visible: boolean;
+            /** @description Earth centre elevation minus terrain horizon elevation at the Earth azimuth */
+            clearance_deg: number;
+            /** @description Hours from t until the Earth is hidden (comms gap starts) (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h. */
+            hours_until_earthset: number | null;
+            earthset_utc: string | null;
+            /** @description Hours from t until the Earth is visible again (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h. */
+            hours_until_earthrise: number | null;
+            earthrise_utc: string | null;
+            /** @description Observer -> Earth centre distance, km (for a link budget) */
+            distance_km: number;
+        };
+        PointingCore: {
+            /**
+             * @description Requested instant (normalised to whole seconds)
+             * @example 2026-01-01T00:00:00Z
+             */
+            t: string;
+            /**
+             * @description Start of the hourly sample that was read (<= t)
+             * @example 2026-01-01T00:00:00Z
+             */
+            sample_utc: string;
+            panel: components["schemas"]["PointingPanel"];
+            antenna: components["schemas"]["PointingAntenna"];
+            /** @description Hours from t to the run end (the horizon of every hours_until_* value) */
+            hours_to_run_end: number;
+            summary: components["schemas"]["PlainSummary"];
+        };
+        PointingPanel: {
+            /** @description Direction the panel must FACE = Sun azimuth, deg clockwise from local north [0, 360) */
+            azimuth_deg: number;
+            compass: components["schemas"]["Compass"];
+            /** @description For a panel whose face points at the Sun: tilt back from vertical = Sun elevation (near the poles the Sun is low, so the panel stands almost upright; negative = the Sun centre is below the horizontal plane, lean forward) */
+            tilt_from_vertical_deg: number;
+            /** @description = 90 - tilt_from_vertical_deg (the same panel measured from the ground) */
+            tilt_from_horizontal_deg: number;
+            /** @description Elevation of the panel normal = Sun centre elevation, deg */
+            panel_normal_elevation_deg: number;
+            /** @description Upper limb of the Sun above the TERRAIN horizon (not el > 0) */
+            sun_visible: boolean;
+            /** @description Visible fraction of the solar disc above the terrain horizon */
+            sun_fraction: number;
+            /** @description Sun centre elevation minus terrain horizon elevation at the Sun azimuth (negative = hidden by terrain) */
+            sun_clearance_deg: number;
+            /** @description Relative output of a Sun-tracking panel at this sample (= sun_fraction) */
+            power_tracking: number;
+            /** @description Relative output of a flat-lying panel (= sun_fraction * max(0, sin el)) */
+            power_horizontal: number;
+            /** @description Irradiance on the Sun-tracking panel, W/m2 (solar distance and visible fraction included) */
+            irradiance_tracking_wm2: number;
+            /** @description Hours from t until the Sun is hidden (dark window starts) (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h. */
+            hours_until_sunset: number | null;
+            /** @description Instant of the next sunset (= t when already dark); null when none before the run end */
+            sunset_utc: string | null;
+            /** @description Hours from t until the Sun is visible again (0 = already in that state); null = it does not happen before the run end (so at least hours_to_run_end). Accurate to +- precision_h. */
+            hours_until_sunrise: number | null;
+            /** @description Instant of the next sunrise (= t when already lit); null when none before the run end */
+            sunrise_utc: string | null;
+        };
+        /** @description lunarnav precompute for catalog and/or custom sites; the output is imported as a run of kind precompute (result.run_id). Limits: GET /api/v1/capabilities job_types[type=precompute].limits. */
         PrecomputeJobRequest: {
             /** @constant */
             type: "precompute";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description Catalog / custom site selectors (give sites and/or custom_sites)
+             * @default []
+             */
+            sites: string | string[];
+            /** @default [] */
+            custom_sites: {
+                /** @description Planetocentric latitude, deg [-90, 90] */
+                lat_deg: number;
+                /** @description Longitude, deg; EAST-positive (west-negative values are converted to [0, 360)) */
+                lon_deg: number;
+            }[];
+            /** @description Snapped DOWN to the step grid */
+            start: string;
+            /** @description EXCLUSIVE end; snapped UP to the step grid */
+            end: string;
+            /**
+             * @description Time step, minutes
+             * @default 60
+             */
+            step_min: number;
+            /**
+             * @description Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)
+             * @default spice
+             * @enum {string}
+             */
+            provider: "spice" | "horizons" | "analytic";
+            /**
+             * @description Terrain: pgda (LOLA 20 m tiles, downloaded on demand), trek (local Moon Trek GeoTIFF only), none (smooth sphere)
+             * @default pgda
+             * @enum {string}
+             */
+            dem: "pgda" | "trek" | "none";
+            /**
+             * @description Forced to 'flat' when dem = none
+             * @default raymarch
+             * @enum {string}
+             */
+            horizon_method: "raymarch" | "bruteforce" | "flat";
+            /**
+             * @description Horizon search radius, km
+             * @default 150
+             */
+            radius_km: number;
+            /**
+             * @description Horizon azimuth step, deg
+             * @default 0.5
+             */
+            az_step_deg: number;
+            /**
+             * @description Mast height above local terrain, m
+             * @default 2
+             */
+            observer_height_m: number;
+            /**
+             * @description Earth must be this many deg above the horizon
+             * @default 0
+             */
+            min_clearance_deg: number;
+            /**
+             * @description Sites outside the DEM coverage: flat = smooth-sphere horizon (recorded in dem_source), error = fail the job
+             * @default flat
+             * @enum {string}
+             */
+            dem_fallback: "flat" | "error";
+            /** @description raymarch: ignore terrain closer than this many metres; 'auto' = lunarnav default. Only when capabilities.cli.near_exclusion_m */
+            near_exclusion_m?: "auto" | number;
+            /** @description Label of the imported run (run picker); default: name or a generated label */
+            run_label?: string;
         };
         /** @description RFC 9457 problem details. Extra members (e.g. `max_latest`, `limits`) may be present. */
         Problem: {
@@ -958,17 +1401,60 @@ export interface components {
             /** @description zod issue code, e.g. "too_big", "invalid_type" */
             code?: string;
         };
+        /**
+         * @description Cross-method validation report (lunarnav validate)
+         * @example {
+         *       "type": "validate",
+         *       "mode": "quick",
+         *       "no_horizons": true,
+         *       "no_terrain": true
+         *     }
+         */
         ValidateJobRequest: {
             /** @constant */
             type: "validate";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description quick = 2 sites x 1 month (minutes); full = every validation site and time set
+             * @default quick
+             * @enum {string}
+             */
+            mode: "quick" | "full";
+            /**
+             * @description Horizons answers from the server disk cache only (fails when something is not cached)
+             * @default false
+             */
+            offline: boolean;
+            /**
+             * @description Skip Method A (JPL Horizons): SPICE vs analytic only, no network
+             * @default false
+             */
+            no_horizons: boolean;
+            /**
+             * @description Skip the terrain hook (lunarnav.validate_terrain; slow, reads PGDA / Moon Trek)
+             * @default false
+             */
+            no_terrain: boolean;
         };
+        /**
+         * @description Terrain / horizon / visibility validation report (lunarnav.validate_terrain). Reads PGDA tiles and the Moon Trek ImageServer (network unless cached)
+         * @example {
+         *       "type": "validate_terrain",
+         *       "mode": "quick"
+         *     }
+         */
         ValidateTerrainJobRequest: {
             /** @constant */
             type: "validate_terrain";
             /** @description Display name (not part of the job identity) */
             name?: string;
+            /**
+             * @description quick = 8 + 8 pixels over 5 years (~minutes when cached); full = 30 + 30 pixels over 18.6 years
+             * @default quick
+             * @enum {string}
+             */
+            mode: "quick" | "full";
         };
     };
     responses: never;
@@ -995,14 +1481,16 @@ export interface operations {
                 end?: string;
                 /** @description Desired spacing of the series, seconds (default = the data step, 3600). The server keeps every k-th sample, k = floor(step_s / data step), PLUS both samples around every Sun/Earth visibility transition, and raises k further if needed so a site never exceeds max_points. The spacing actually used is series.step_s. */
                 step_s?: number;
-                /** @description Cap on series points per site (default and max 10000), transition samples included. Also: the series points of all sites together must be <= 50000, else 422 OUT_OF_RANGE. */
+                /** @description Cap on series points per site (default and max 10000), transition samples included. Also: the series points of all sites together must be <= 50000, else 422 OUT_OF_RANGE with title "Series point limit exceeded". */
                 max_points?: number;
                 /** @description Azimuth step of the returned horizon curve: 1 (default, 361 points 0..360) or 0.5 (721 points, ~4 KB per site). The stored silhouette is 0.5 deg for most sites: 1 POINT-SAMPLES it at whole degrees (the half-degree samples are dropped, so a narrow peak between two whole degrees is not drawn and a Sun / Earth marker can appear on the wrong side of the drawn curve near it). Only 0.5 is exactly consistent with sun_visible / earth_visible; prefer it for rim sites (or all sites) when drawing markers against the horizon. */
                 horizon_step_deg?: 0.5 | 1;
                 /** @description Comma separated minimum durations in hours (> 0, max 30; deduplicated and sorted ascending). Each one is evaluated against longest_both_h. */
                 criteria_hours?: string;
-                /** @description Comma separated parts of each site to return: horizon, series, windows, metrics, criteria (default: all). Omitted parts are absent from sites[]. */
+                /** @description Comma separated parts of each site to return: horizon, series, windows, metrics, criteria, pointing, survival_hint (default: horizon,series,windows,metrics,criteria; pointing and survival_hint are opt-in). Omitted parts are absent from sites[]. pointing -> sites[].now = where to point the solar panel and the antenna at range.start (same block as GET /sites/{site_id}/pointing); survival_hint -> sites[].survival_hint = the longest dark period of the range and the battery a night_load_w load needs to bridge it. */
                 include?: string;
+                /** @description Reference load while the Sun is hidden, W (include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival. */
+                night_load_w?: number;
             };
             header?: never;
             path?: never;
