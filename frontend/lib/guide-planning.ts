@@ -3,7 +3,7 @@ export type PlanningMode = "sites" | "dates" | "observation";
 export type PlanningSite = { id: string; name: string };
 export type PlanningIntent = {
   mode: PlanningMode; from: string | null; to: string | null; missionHours: number | null;
-  priority: "joint" | "sun" | "earth"; siteText: string; dateProblem: boolean; continuesSiteChoice?: true;
+  priority: "joint" | "sun" | "earth"; siteText: string; dateProblem: boolean; continuesSiteChoice?: true; longestJoint?: true;
 };
 const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 const monthPattern = months.map(m => m.slice(0, 3) + "(?:" + m.slice(3) + ")?").join("|");
@@ -43,13 +43,24 @@ const durationPattern = new RegExp("(?<![\\p{L}\\d.,])(" + amount + ")\\s*[- ]?\
 const durationRangePrefix = new RegExp("(?<![\\p{L}\\d])(?:" + amount + ")\\s+(?:to|or|hoặc|đến|tới)$"
   + "|(?:between|giữa)\\s+(?:" + amount + ")\\s+(?:and|và)$", "u");
 
+const longest = /\blongest\b|(?:dài|lâu) nhất/iu;
+const continuity = /\b(?:continuous(?:ly)?|uninterrupted|consecutive|unbroken|in a row|without (?:a |any )?(?:gaps?|interruptions?|breaks?))\b|liên (?:tục|tiếp)|không (?:bị )?(?:gián đoạn|ngắt quãng)/iu;
+const longestInterval = /\blongest (?:[\w-]+ ){0,3}(?:window|interval|stretch|streak|overlap)\b|(?:khoảng|chuỗi) (?:chồng lấn|trùng nhau|quan sát đồng thời) (?:dài|lâu) nhất/iu;
+const jointWindow = /\b(?:joint|simultaneous) (?:visibility|window|interval)|\b(?:visibility overlap|overlap (?:window|interval))\b|khoảng (?:chồng lấn|trùng nhau)|(?:nhìn|quan sát) thấy đồng thời/iu;
+const separateObjectives = /\b(?:either|separately|individually|versus|vs\.?)\b|\b(?:sun(?:light)?|earth)\s+or\s+(?:the\s+)?(?:sun(?:light)?|earth)\b|(?:mặt trời|trái đất)\s+(?:hay|hoặc)\s+(?:mặt trời|trái đất)|riêng (?:biệt|lẻ)/iu;
+const qualifications = /\b(?:at least|at most|without|except|least|fewest|shortest|minimum|exclude|not|battery|fuel|power)\b|ngoại trừ|ít nhất|ít hơn|ngắn hơn|tối thiểu|tối đa|không (?:có|gồm)|pin sống|nhiên liệu|công suất/i;
+
+export function hasPlanningQualifications(text: string) {
+  return qualifications.test(text) || continuity.test(text) || longestInterval.test(text);
+}
+
 export function planningIntent(question: string, previous?: PlanningIntent, siteChoices?: readonly PlanningSite[]): PlanningIntent | null {
   const q = question.trim().toLowerCase().normalize("NFC");
   const dates = calendarDays(q);
   const mentionsDate = dates.length > 0 || /\b20\d{2}\b|\d\s*\/\s*\d|tháng\s+\d|\b(?:today|tomorrow|next week)\b|ngày mai|hôm nay|tuần tới/.test(q)
     || new RegExp("\\b(?:" + monthPattern + ")\\b[^?!]{0,12}\\d|\\d[^?!]{0,12}\\b(?:" + monthPattern + ")\\b").test(q);
   const when = /\bwhen\b|best (?:date|time|window)|khi nào|lúc nào|bao giờ|thời điểm nào|ngày nào|thời gian nào/.test(q);
-  const where = /\b(?:best site|best place|best destination)\b|\bwhere\b|\bwhich (?:lunar |landing )?(?:site|place|location|destination)s?\b|địa điểm nào|nơi nào|ở đâu|đi đâu|chỗ nào|điểm nào/.test(q);
+  const where = /\b(?:best site|best place|best destination)\b|\bwhere\b|\b(?:which|what) (?:lunar |landing )?(?:site|place|location|destination)s?\b|địa điểm nào|nơi nào|ở đâu|đi đâu|chỗ nào|điểm nào/.test(q);
   const visiting = /\b(go|visit|trip|travel|land|mission|choose|recommend)\b|muốn đi|muon di|nên đi|hạ cánh|ghé|lựa chọn|nên chọn|gợi ý/.test(q);
   const durations = [...q.matchAll(durationPattern)];
   const duration = durations[0];
@@ -64,7 +75,10 @@ export function planningIntent(question: string, previous?: PlanningIntent, site
     !when && !where && !visiting && (mentionsDate || duration || (previous.mode !== "sites" && q.split(/\s+/).length <= 5 && !/[?]/.test(q))));
   const continuesSiteChoice = Boolean(followup && choiceReply);
   const specificWhere = /\b(?:best site|which (?:site|location) (?:is |would be )?best)\b|địa điểm nào (?:oke|ok|ổn|tốt)|nơi nào (?:phù hợp|ổn|tốt)/.test(q);
-  if (!(when || where && (mentionsDate || visiting || specificWhere) || visiting && mentionsDate || mentionsDate && /sun|earth|visibility|lunar|moon|mặt trời|trái đất|mặt trăng|thấy/.test(q) || followup)) return null;
+  const sun = /sun(?:light)?|solar|mặt trời|ánh sáng|nắng/.test(q);
+  const earth = /earth|radio|trái đất|liên lạc/.test(q);
+  const asksLongest = longest.test(q) && (continuity.test(q) || longestInterval.test(q));
+  if (!(when || where && (mentionsDate || visiting || specificWhere || asksLongest && (sun || earth || jointWindow.test(q))) || visiting && mentionsDate || mentionsDate && /sun|earth|visibility|lunar|moon|mặt trời|trái đất|mặt trăng|thấy/.test(q) || followup)) return null;
   const namedObservation = !visiting && !where && !when && mentionsDate && !/\b(?:where|which|best site)\b|địa điểm|nơi nào/.test(q);
   const mode: PlanningMode = followup ? previous.mode : when ? "dates" : where ? "sites" : namedObservation ? "observation" : "sites";
   let from = followup ? previous.from : null, to = followup ? previous.to : null;
@@ -77,8 +91,6 @@ export function planningIntent(question: string, previous?: PlanningIntent, site
     to = !from ? null : dates[1] ?? new Date(Date.parse(from + "T00:00:00Z") + 86400000).toISOString().slice(0, 10);
     if (from && to && from >= to) { from = null; to = null; dateProblem = true; }
   }
-  const sun = /sun(?:light)?|solar|mặt trời|ánh sáng|nắng/.test(q);
-  const earth = /earth|radio|trái đất|liên lạc/.test(q);
   let missionHours = followup ? previous.missionHours : null;
   if (duration) {
     const unit = duration[2], count = numberWords[duration[1]] ?? Number(duration[1].replace(",", ".").replace("−", "-"));
@@ -94,8 +106,14 @@ export function planningIntent(question: string, previous?: PlanningIntent, site
     siteText = choices.length ? choices.map(site => site.id).join(" ") : previous.siteText;
     if (hasPlanningQualifications(question)) siteText += " " + question;
   } else if (followup) siteText = [previous.siteText, question].join(" ").slice(-1000);
-  return { mode, from, to, dateProblem, missionHours, priority: sun || earth ? (sun && earth ? "joint" : sun ? "sun" : "earth") : followup ? previous.priority : "joint",
-    siteText, ...(continuesSiteChoice ? { continuesSiteChoice: true as const } : {}) };
+  const priority = sun || earth ? (sun && earth ? "joint" : sun ? "sun" : "earth") : followup ? previous.priority : "joint";
+  // An uninterrupted maximum is a different objective from a fixed visit or total hours.
+  const asksJoint = where && asksLongest && (sun && earth || jointWindow.test(q));
+  const keepsJoint = followup && previous.longestJoint && mentionsDate && !sun && !earth;
+  const longestJoint = mode === "sites" && missionHours === null && priority === "joint" && (asksJoint || keepsJoint) &&
+    !separateObjectives.test(siteText) && !qualifications.test(siteText.replace(/\bwithout (?:a |any )?(?:gaps?|interruptions?|breaks?)\b/gi, ""));
+  return { mode, from, to, dateProblem, missionHours, priority, siteText,
+    ...(longestJoint ? { longestJoint: true as const } : {}), ...(continuesSiteChoice ? { continuesSiteChoice: true as const } : {}) };
 }
 
 const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, " ").trim();
@@ -120,9 +138,4 @@ export function matchSites<S extends { id: string; name: string }>(text: string,
       && !["region", "artemis", "site", "landing", "connecting", "crater", "point", "near", "peak", "plain", "plateau", "slope", "ridge", "mons"].includes(token)
       && query.includes(" " + token + " "));
   });
-}
-
-const qualifications = /\b(?:at least|at most|without|except|least|fewest|shortest|minimum|exclude|not|battery|fuel|power)\b|ngoại trừ|ít nhất|ít hơn|ngắn hơn|tối thiểu|tối đa|không (?:có|gồm)|pin sống|nhiên liệu|công suất/i;
-export function hasPlanningQualifications(text: string) {
-  return qualifications.test(text);
 }
