@@ -34,7 +34,11 @@ try {
     assert.equal(await table.locator("tbody tr").count(), catalog.sites.length);
     assert.ok(await table.evaluate(el => el.getBoundingClientRect().top >= document.querySelector(".plan-site-map").getBoundingClientRect().bottom));
     const detail = catalog.sites.find(s => s.id === "apollo11");
-    await table.getByRole("link", { name: detail.name, exact: true }).click();
+    const detailLink = map.getByRole("link", {name:"Site details", exact:true});
+    assert.equal(await detailLink.getAttribute("href"), await table.getByRole("link", {name:site.name, exact:true}).getAttribute("href"));
+    await map.getByRole("combobox").selectOption(detail.id);
+    assert.equal(await detailLink.getAttribute("href"), await table.getByRole("link", {name:detail.name, exact:true}).getAttribute("href"));
+    await (from === "14" ? detailLink : table.getByRole("link", {name:detail.name, exact:true})).click();
     await page.waitForURL(url => url.pathname === "/plan/site" && url.searchParams.get("site") === detail.id);
     assert.equal(await page.locator("#site-title").innerText(), detail.name);
     await page.getByRole("link", { name: "Back to these site results" }).click();

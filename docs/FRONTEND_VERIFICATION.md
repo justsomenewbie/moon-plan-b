@@ -357,7 +357,7 @@ The homepage uses the original globe, saved Athena/Odysseus comparison and compa
 
 ### Site details and orbit view
 
-Site names in the table open the saved site report or the live hourly comparison for the selected run and UTC dates. Returning from a saved site report selects that site on the flat map. Live results include the longest joint window supplied by the producer. Chromium checked the restored production build at 375 and 1321 px against the public frontend relay. The four catalog, site, dataset and ranking requests returned 200. The November 14–21 live table had five columns and 23 rows, with 162 h of joint visibility for Vikram. The saved planner, homepage navigation and standalone orbit checks passed, as did all 173 frontend tests.
+The map inspector and the site names in the table open the same saved site report or live hourly comparison for the selected run and UTC dates. The [browser check](../qa/check_planner_map.mjs) changes the selected site and follows the inspector link for the single-leader B2 window. Returning from a saved site report selects that site on the flat map. Live results include the longest joint window supplied by the producer. Chromium checked the restored production build at 375 and 1321 px against the public frontend relay. The four catalog, site, dataset and ranking requests returned 200. The November 14–21 live table had five columns and 23 rows, with 162 h of joint visibility for Vikram. The saved planner, homepage navigation and standalone orbit checks passed, as did all 173 frontend tests.
 
 The standalone `/orbit` route displays a dated globe and observer sky for Athena and Odysseus. Both weekly B2 comparisons remain available there. The historical run B example remains separately labeled.
 

@@ -775,6 +775,7 @@ export const vietnamese: Record<string, string> = {
   "Sites on the Moon": "Vị trí các địa điểm trên Mặt Trăng",
   "Top for this window": "Đứng đầu trong khoảng đã chọn",
   "Other sites": "Địa điểm khác",
+  "Site details": "Chi tiết",
   "Inspect a site": "Xem địa điểm",
   "The map image could not load. Select a site to see its coordinates.": "Không tải được ảnh bản đồ. Chọn địa điểm để xem tọa độ.",
   "Ranking measures visibility. Landing safety requires a separate assessment.": "Thứ hạng dựa trên số giờ nhìn thấy thiên thể đã chọn. Độ an toàn khi hạ cánh cần được đánh giá riêng.",

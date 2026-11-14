@@ -9,8 +9,9 @@ function project(point: MapPoint) {
   return { x: ((point.longitude + 180) % 360) * 2, y: (90 - point.latitude) * 2 };
 }
 
-export default function SiteMap({ sites, leaders, column, criterion, initialSite }: {
+export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref }: {
   sites: MapSite[]; leaders: string[]; column: number; criterion: string; initialSite: string | null;
+  detailHref: (siteId: string) => string | undefined;
 }) {
   const { t } = useLanguage();
   const [selectedId, setSelectedId] = useState(initialSite);
@@ -19,6 +20,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   const isLeader = (site: MapSite) => leaders.includes(site.id) && (site.hours?.[column] ?? 0) > 0;
   const selected = sites.find(site => site.id === selectedId) ?? sites.find(isLeader) ?? sites[0];
   if (!selected) return null;
+  const details = detailHref(selected.id);
   const point = "point" in selected.location ? selected.location.point : null;
   const focus = point ? project(point) : { x: 360, y: 180 };
   const width = 720 / zoom, height = 360 / zoom;
@@ -69,6 +71,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           {point ? <p>{point.latitude}° {t("latitude")} · {point.longitude}° {t("east longitude")}</p> :
             "reason" in selected.location && <p>{t(selected.location.reason)}</p>}
         </div>
+        {details && <a href={details}>{t("Site details")}</a>}
         {point && <>
           {!imageFailed && <div className="plan-map-zoom">
             <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => setZoom(zoom / 2)}>−</button>

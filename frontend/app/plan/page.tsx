@@ -57,6 +57,17 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
   function clear() { active.current?.abort(); setPending(false); if (!wait) setError(""); setResult(null); }
   const best = result?.rows.filter(r => result.leaders.includes(r.id)) ?? [];
   const column = { sun: 0, earth: 1, joint: 2 }[metric];
+  function detailHref(siteId: string) {
+    if (!result) return undefined;
+    if (source !== "live") return "/plan/site?" + new URLSearchParams({
+      source, site: siteId, from: result.from.slice(0, 10), to: result.to.slice(0, 10), priority: metric,
+    });
+    if (run.stepSeconds !== 3600) return undefined;
+    const longWindow = Date.parse(result.to) - Date.parse(result.from) > 366 * DAY;
+    const params = new URLSearchParams({ run_id: run.runId, site_id: siteId, view_site: siteId,
+      from: result.from, to: result.to, resolutionSeconds: String(run.stepSeconds) });
+    return "/compare?" + params + (longWindow ? "#workspace" : "#terrain-observations");
+  }
   return <section aria-labelledby="catalog-question">
     <h2 id="catalog-question">{t("Which site fits my dates?")}</h2>
     <form className="request-fields print:hidden" onChange={clear} onSubmit={async e => {
@@ -102,18 +113,11 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
       <p className="data-notice">{!best.length ? t("No site has enough coverage for a recommendation.") : best.some(r => (r.hours?.[column] ?? 0) > 0)
         ? t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
         : t("No evaluated site meets this visibility priority for any hour in this window.")}</p>
-      <SiteMap sites={result.rows} leaders={result.leaders} column={column} criterion={t(criteria[metric])} initialSite={initialSite} />
+      <SiteMap sites={result.rows} leaders={result.leaders} column={column} criterion={t(criteria[metric])} initialSite={initialSite} detailHref={detailHref} />
       <div className="table-scroll"><table><caption>{t("Visibility hours in the selected window")}</caption>
         <thead><tr><th scope="col">{t("Site")}</th>{["Sun visible","Earth visible","Both visible",...(result.scope === "live" ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
         <tbody>{result.rows.map(row => {
-          let href: string | undefined;
-          if (source !== "live") {
-            href = "/plan/site?" + new URLSearchParams({ source, site: row.id, from: result.from.slice(0, 10), to: result.to.slice(0, 10), priority: metric });
-          } else if (run.stepSeconds === 3600) {
-            const longWindow = Date.parse(result.to) - Date.parse(result.from) > 366 * DAY;
-            const params = new URLSearchParams({ run_id: run.runId, site_id: row.id, view_site: row.id, from: result.from, to: result.to, resolutionSeconds: String(run.stepSeconds) });
-            href = "/compare?" + params + (longWindow ? "#workspace" : "#terrain-observations");
-          }
+          const href = detailHref(row.id);
           return <tr key={row.id}><th scope="row">{href ? <a href={href}>{row.name}</a> : row.name}</th>
             {row.hours ? <>{row.hours.map((h,i) => <td key={i}>{h}</td>)}{result.scope === "live" && <td>{row.longest}</td>}</> : <td colSpan={4}>{t("Coverage")} · {t(row.coverage ?? "Incomplete coverage")}</td>}</tr>;
         })}</tbody></table></div>
