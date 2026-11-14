@@ -13,9 +13,20 @@ try {
   await page.goto(new URL("/compare", origin).href);
   const launcher = page.getByRole("button", { name: "Astronaut guide", exact: true });
   const panel = page.locator("aside[popover]");
+  const animations = () => launcher.evaluate(el => el.getAnimations({ subtree: true })
+    .filter(animation => animation instanceof CSSAnimation)
+    .map(animation => animation.effect.getTiming().duration).sort((a, b) => a - b));
+  await page.emulateMedia({ reducedMotion: "no-preference", forcedColors: "none" });
+  assert.deepEqual(await animations(), [7000, 12000]);
+  const motionPause = page.getByRole("checkbox", { name: "Pause sky and astronaut motion" });
+  await motionPause.check();
+  assert.deepEqual(await animations(), []);
+  await motionPause.uncheck();
+  assert.deepEqual(await animations(), [7000, 12000]);
   await launcher.focus();
   await page.keyboard.press("Enter");
   await panel.waitFor({ state: "visible" });
+  assert.deepEqual(await animations(), []);
   await panel.getByText("2026-11-15 05:00:00 UTC").waitFor();
   await panel.getByText("Athena · IM-2 · Sun and Earth visible").waitFor();
   await panel.getByText("Odysseus · IM-1 · Outside the joint visibility window").waitFor();
@@ -70,7 +81,9 @@ try {
   await questions.first().click();
   const box = await panel.boundingBox();
   assert.ok(box && box.x >= 0 && box.x + box.width <= 320 && box.y >= 0 && box.y + box.height <= 568);
-  assert.equal(await viLauncher.locator("span").evaluate(el => getComputedStyle(el).animationName), "none");
+  await page.keyboard.press("Escape");
+  assert.deepEqual(await viLauncher.evaluate(el => el.getAnimations({ subtree: true }).filter(animation => animation instanceof CSSAnimation).length), 0);
+  await viLauncher.click();
   await panel.getByRole("link", { name: "Đến phần so sánh kết quả đã lưu" }).click();
   await panel.waitFor({ state: "hidden" });
   assert.equal(new URL(page.url()).hash, "#observed-week");
