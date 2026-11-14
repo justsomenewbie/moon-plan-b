@@ -1,0 +1,17 @@
+.chat { overflow-wrap: anywhere; }
+.body { padding-bottom: .7rem; }
+.label, .body form label { display: block; margin-bottom: .4rem; font-weight: 600; }
+.label select, .body textarea { display: block; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: .35rem; padding: .45rem; margin-block: .3rem .55rem; width: 100%; }
+.body textarea { resize: vertical; }
+.body .scope { border: 0; }
+.scope summary, .notice, .turn, .body [role=status] { font-size: .88rem; }
+.scope ul { list-style: none; padding: 0; margin: 0 0 .65rem; }
+.scope li + li { margin-top: .4rem; }
+.turn { padding: .4rem 0; border-bottom: 1px solid var(--line); }
+.body .turn p { margin: .25rem 0; white-space: pre-line; }
+.turn a, .turn button { color: var(--earth); text-decoration: underline; }
+.body form { margin-top: .6rem; }
+.body .notice { color: var(--muted); margin: .35rem 0; }
+.buttons { display: flex; gap: .4rem; flex-wrap: wrap; }
+.buttons button { border: 1px solid var(--line); padding: .35rem .6rem; border-radius: .4rem; min-height: 2.75rem; }
+.buttons button:disabled { opacity: .5; }
