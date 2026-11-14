@@ -1,7 +1,4 @@
 import assert from "node:assert/strict";
-import { execFile as execFileCallback } from "node:child_process";
-import { promisify } from "node:util";
-const execFile = promisify(execFileCallback);
 
 const [origin] = process.argv.slice(2);
 if (!origin) throw Error("Pass the URL of a frontend using the live planner API.");
@@ -17,9 +14,8 @@ try {
       await page.route("**/api/v1/**", async route => {
         const target = new URL(route.request().url());
         target.protocol = "https:"; target.host = "moon-plan-b.vercel.app"; target.port = "";
-        const { stdout } = await execFile("curl", ["--fail", "--silent", "--show-error", "--max-time", "45", target.href],
-          { maxBuffer: 12_000_000 });
-        await route.fulfill({ contentType: "application/json", body: stdout });
+        const response = await route.fetch({ url: target.href, timeout: 45000 });
+        await route.fulfill({ response });
       });
     }
     const modelRequests = [];
