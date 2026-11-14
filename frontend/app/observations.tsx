@@ -48,7 +48,7 @@ const SampleMarkers = memo(function SampleMarkers({ a, b }: { a: Scenario; b?: S
   })) : null)}</svg>;
 });
 
-export function Timeline({ a, b, mode, offset }: { a: Scenario; b?: Scenario; mode: Mode; offset: number }) {
+export function Timeline({ a, b, mode, offset, clearanceDeg = 0 }: { a: Scenario; b?: Scenario; mode: Mode; offset: number; clearanceDeg?: number }) {
   const { t, locale } = useLanguage();
   const width = 800, height = 240;
   const cursor = offset / (durationHours(a) * 3600000) * width;
@@ -62,6 +62,7 @@ export function Timeline({ a, b, mode, offset }: { a: Scenario; b?: Scenario; mo
       {[-90, -45, 0, 45, 90].map((v) => <g key={v}>
         <line x1="0" x2={width} y1={(90 - v) / 180 * height} y2={(90 - v) / 180 * height} className={v === 0 ? "horizon-line" : "grid-line"} />
       </g>)}
+      {clearanceDeg > 0 ? <line x1="0" x2={width} y1={(90 - clearanceDeg) / 180 * height} y2={(90 - clearanceDeg) / 180 * height} className="clearance-line" /> : null}
       {[a, b].map((s, i) => s ? ["sun", "earth"].map((body) => <path key={`${s.id}-${body}`} d={chartPath(s, body as "sun" | "earth", width, height)} fill="none" className={`plot-line ${body}`} strokeDasharray={i ? "7 6" : undefined} opacity={i ? 0.65 : 1} />) : null)}
       {a.samples.length > 0 ? <line x1={cursor} x2={cursor} y1="0" y2={height} className="cursor-line" /> : null}
     </svg>
@@ -70,13 +71,13 @@ export function Timeline({ a, b, mode, offset }: { a: Scenario; b?: Scenario; mo
       const time = new Date(Date.parse(a.startUtc) + durationHours(a) * v * 3600000);
       return <span key={v}>{mode === "dates" ? `${Number((durationHours(a) * v).toFixed(2))} h` : <><span>{new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "short", timeZone: "UTC" }).format(time)}</span><span>{time.toISOString().slice(11, 16)}</span></>}</span>;
     })}</div></div>
-    <p className="axis-caption">{mode === "dates" ? t("Elapsed time from each window’s start · hours") : t("Time · UTC")} <span>{t("0° = ideal horizon")}</span></p>
+    <p className="axis-caption">{mode === "dates" ? t("Elapsed time from each window’s start · hours") : t("Time · UTC")} <span>{t("0° = ideal horizon")}{clearanceDeg > 0 ? ` · θ_mask = ${clearanceDeg.toFixed(1)}°` : ""}</span></p>
     <div className="visibility-bands">{[a, b].map((s, i) => s ? (["sun", "earth", "simultaneous"] as const).map((body) => <div className={`visibility-row ${body}`} key={`${s.id}-${body}`}><span>{i ? t("Alternative") : t("Primary")} · {body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window")}</span>{s.intervals === null ? <span className="muted">{t("Intervals unavailable")}</span> : <svg viewBox="0 0 800 16" preserveAspectRatio="none" role="img" aria-label={t("{role} {body} supplied visibility intervals: {count}", { role: i ? t("Alternative") : t("Primary"), body: body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window"), count: s.intervals[body].length })}><rect width="800" height="16" fill="none" stroke="var(--line)" />{s.intervals[body].map((v) => <rect key={v.startUtc} x={(Date.parse(v.startUtc) - Date.parse(s.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} y="2" width={(Date.parse(v.endUtc) - Date.parse(v.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} height="12" fill={i ? "none" : "currentColor"} stroke="currentColor" />)}</svg>}</div>) : null)}</div>
     <p className="muted text-xs golden-note">{t("Golden windows are producer-supplied Sun-and-Earth overlap intervals. The frontend does not calculate new scientific boundaries.")}</p>
   </div>;
 }
 
-export function SkyPosition({ scenario, offset }: { scenario: Scenario; offset: number }) {
+export function SkyPosition({ scenario, offset, clearanceDeg = 0 }: { scenario: Scenario; offset: number; clearanceDeg?: number }) {
   const { t } = useLanguage();
   const sample = sampleAt(scenario, offset);
   const point = (azimuthDeg: number, elevationDeg: number) => {
@@ -104,6 +105,7 @@ export function SkyPosition({ scenario, offset }: { scenario: Scenario; offset: 
     <svg className="skyplot" viewBox="0 0 200 200" role="img" aria-labelledby="sky-description">
       <title id="sky-description">{t("Polar skyplot of Sun and Earth azimuth and elevation at the selected primary sample")}</title>
       {[82, 55, 27].map((r, i) => <circle key={r} cx="100" cy="100" r={r} className={i === 0 ? "horizon-ring" : "grid-ring"} />)}
+      {clearanceDeg > 0 ? <circle cx="100" cy="100" r={82 * (90 - clearanceDeg) / 90} className="clearance-ring" strokeDasharray="4 3" /> : null}
       {[0, 90, 180, 270].map((azimuth, i) => { const edge = point(azimuth, 0); const label = point(azimuth, -10); return <g key={azimuth}><line x1="100" y1="100" x2={edge.x} y2={edge.y} className="grid-line" /><text x={label.x} y={label.y} textAnchor="middle" dominantBaseline="middle" className="axis-label">{["N", "E", "S", "W"][i]}</text></g>; })}
       <text x="104" y="104" className="elevation-label">90°</text><text x="104" y="47" className="elevation-label">30°</text>
       {(["sun", "earth"] as const).flatMap(body => trails(body).map((d, i) => <path key={`${body}-${i}`} d={d} fill="none" className={`plot-line ${body}`} opacity=".45" />))}

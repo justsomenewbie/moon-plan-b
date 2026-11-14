@@ -40,6 +40,7 @@ export default function Navigator() {
   const [shareUrl, setShareUrl] = useState("");
   const [savedResult, setSavedResult] = useState(() => savedResultFromUrl(new URLSearchParams()));
   const [tick, setTick] = useState(0);
+  const [clearanceDeg, setClearanceDeg] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [qaEnabled, setQaEnabled] = useState(false);
@@ -367,14 +368,14 @@ export default function Navigator() {
         {selection.mode === "sites" && siteWindow && <SiteAssessments data={data} scenarios={siteWindow} h={selection.h} />}
         <div className="window-labels"><p><strong>{t("Primary")}</strong> {data.sites.find((s) => s.id === a.siteId)?.name}<span>{formatUtc(a.startUtc, locale)} → {formatUtc(a.endUtc, locale)}</span></p>{b ? <p><strong>{t("Alternative")}</strong> {data.sites.find((s) => s.id === b.siteId)?.name}<span>{formatUtc(b.startUtc, locale)} → {formatUtc(b.endUtc, locale)}</span></p> : <p>{t("No compatible alternative in this release. The primary remains visible.")}</p>}</div>
         {a.coverage !== "complete" || b && b.coverage !== "complete" ? <p className="coverage-notice">{t("Incomplete coverage: unavailable totals are not zero. Gaps are not bridged, and no definite threshold result is inferred.")}</p> : null}
-        <Timeline a={a} b={b} mode={selection.mode} offset={offset} />
+        <Timeline a={a} b={b} mode={selection.mode} offset={offset} clearanceDeg={clearanceDeg} />
         <div className="playback"><button className="button play-button" aria-label={playing ? t("Pause timeline") : t("Play timeline")} disabled={offsets.length < 2 || reducedMotion} onClick={() => { if (tick === offsets.length - 1) setTick(0); setPlaying((v) => !v); }}><svg viewBox="0 0 20 20" aria-hidden="true">{playing ? <path d="M5 3h3v14H5zm7 0h3v14h-3z" /> : <path d="m6 3 11 7-11 7z" />}</svg></button>
           <label className="slider-label"><span className="sr-only">{t("Timeline sample")}</span><input aria-label={t("Timeline sample")} aria-valuetext={offsets.length ? t("{hours} hours elapsed. Primary {primary}{alternative}", { hours: offset / 3600000, primary: formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale), alternative: b ? t(". Alternative {time}", { time: formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale) }) : "" }) : t("No shared samples")} type="range" min="0" max={Math.max(0, offsets.length - 1)} step="1" value={Math.min(tick, Math.max(0, offsets.length - 1))} disabled={offsets.length === 0} onChange={(e) => { setTick(Number(e.target.value)); setPlaying(false); }} /></label><output className="mono">{offsets.length ? `+${(offset / 3600000).toFixed(1)} h` : t("No shared samples")}</output>
         </div>
         <p className="sample-time">{offsets.length ? <>{t("Primary:")}{" "}{formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale)}{b ? <> · {t("Alternative:")}{" "}{formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale)}</> : null}</> : t("The pair has no shared sample times. Exact observations are available in the sample table where present.")}</p>
         {reducedMotion ? <p className="muted text-sm">{t("Reduced motion is on. Use the slider to select samples without playback.")}</p> : null}
-        <LocalSky data={data} a={a} b={b} alternative={skyAlternative} setAlternative={setSkyAlternative} offset={offsets.length ? offset : undefined} />
-        <div className="detail-row"><SkyPosition scenario={a} offset={offsets.length ? offset : -1} /><Comparison a={a} b={b} h={selection.h} /></div>
+        <LocalSky data={data} a={a} b={b} alternative={skyAlternative} setAlternative={setSkyAlternative} offset={offsets.length ? offset : undefined} clearanceDeg={clearanceDeg} setClearanceDeg={setClearanceDeg} />
+        <div className="detail-row"><SkyPosition scenario={a} offset={offsets.length ? offset : -1} clearanceDeg={clearanceDeg} /><Comparison a={a} b={b} h={selection.h} /></div>
         <SampleTable a={a} b={b} /><Windows a={a} b={b} />
       </div>
     </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>{t("No observation windows in this dataset")}</h2><p>{isMock ? t("Import a release containing scenarios, or explore the clearly labeled demonstration.") : t("Request another UTC range above, or import a release containing scenarios.")}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? t("Explore demonstration") : t("Load default date range")}</button></main> : null}

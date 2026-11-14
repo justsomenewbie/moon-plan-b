@@ -50,3 +50,222 @@
 .sky-ray line { pointer-events: none; }
 .sky-ray [role="button"] { cursor: pointer; }
 .sky-ray text { fill: currentColor; font: bold 9px monospace; paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
+.sky-clearance-ring, .clearance-ring { fill: none; stroke: var(--sun); stroke-width: 1.25; opacity: .85; }
+.clearance-line { stroke: var(--sun); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: .85; }
+
+.mission-studio {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.mission-studio-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.mission-studio-header .eyebrow { margin-bottom: 2px; }
+.clearance-badge {
+  padding: 4px 8px;
+  border: 1px solid var(--sun);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--sun);
+  font-size: .82rem;
+}
+.clearance-controls {
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+}
+.preset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.preset-pill {
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: .78rem;
+}
+.preset-pill[aria-pressed="true"] {
+  border-color: var(--sun);
+  background: var(--sun);
+  color: var(--button-text);
+  font-weight: 600;
+}
+.studio-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+.mission-ribbon-card, .lander-hud-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  min-width: 0;
+}
+.mission-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.mission-card-head h4, .lander-hud-card h4 {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 600;
+}
+.battery-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .78rem;
+  color: var(--muted);
+}
+.battery-picker select {
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: .78rem;
+}
+.state-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: .72rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.state-dot::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.state-dot.golden::before, .ribbon-seg.golden { background: var(--positive); }
+.state-dot.solar-only::before, .ribbon-seg.solar-only { background: var(--sun); }
+.state-dot.comms-only::before, .ribbon-seg.comms-only { background: var(--earth); }
+.state-dot.blackout::before, .ribbon-seg.blackout { background: var(--grid); }
+.mission-scenarios {
+  display: grid;
+  gap: 12px;
+}
+.mission-scenario-row {
+  display: grid;
+  gap: 6px;
+}
+.mission-scenario-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+}
+.battery-badge {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: .72rem;
+  font-weight: 600;
+  border: 1px solid var(--line);
+}
+.battery-badge.safe { color: var(--positive); border-color: var(--positive); }
+.battery-badge.risk { color: var(--error-line); border-color: var(--error-line); background: var(--error-bg); }
+.battery-badge.unknown { color: var(--muted); }
+.mission-ribbon {
+  position: relative;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--below-horizon);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.ribbon-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.ribbon-empty {
+  display: block;
+  font-size: .68rem;
+  line-height: 10px;
+  text-align: center;
+  color: var(--muted);
+}
+.mission-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 2px 0 0;
+  font-size: .72rem;
+}
+.mission-metrics-row div {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  min-width: 0;
+}
+.mission-metrics-row dt { color: var(--muted); overflow-wrap: anywhere; }
+.mission-metrics-row dd { margin: 2px 0 0; font: 600 .78rem monospace; }
+
+.lander-hud-body {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+.lander-hud-svg {
+  width: 100%;
+  max-width: 150px;
+  margin: 0 auto;
+  display: block;
+}
+.hud-compass-ring { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.hud-inner-ring { fill: none; stroke: var(--grid); stroke-width: .9; }
+.hud-shadow-ray { stroke: var(--grid); opacity: .65; }
+.hud-sun-ray { stroke: var(--sun); stroke-width: 1.5; }
+.hud-sun-node { fill: var(--sun); stroke: var(--bg); stroke-width: 1.2; }
+.hud-earth-ray { stroke: var(--earth); stroke-width: 1.5; }
+.hud-earth-node { fill: var(--earth); stroke: var(--bg); stroke-width: 1.2; }
+.hud-solar-wing { fill: var(--sun); stroke: var(--bg); stroke-width: 1; }
+.hud-dish-arc, .hud-dish-boom { stroke: var(--earth); }
+.hud-lander-deck { fill: var(--text); stroke: var(--bg); stroke-width: 1.2; }
+.hud-readouts {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  font-size: .75rem;
+}
+.hud-readouts div {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
+.hud-readouts dt { color: var(--muted); font-size: .7rem; }
+.hud-readouts dd { margin: 1px 0 0; overflow-wrap: anywhere; }
+
+@media (max-width: 960px) {
+  .studio-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .mission-metrics-row { grid-template-columns: 1fr 1fr; }
+  .lander-hud-body { grid-template-columns: 1fr; }
+}

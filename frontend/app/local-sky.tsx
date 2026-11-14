@@ -5,6 +5,8 @@ import type { PointerEvent } from "react";
 import { sampleAt } from "../lib/dataset";
 import type { Dataset, Scenario } from "../lib/dataset";
 import { skyPoint } from "../lib/local-sky";
+import { analyzeScenarioClearance, clampClearanceDeg, computeLanderHud } from "../lib/mission-studio";
+import type { MissionOpState } from "../lib/mission-studio";
 import { useLanguage } from "./language";
 import "./globe-comparison.css";
 
@@ -12,6 +14,26 @@ const radius = 104;
 const meridians = [0, 30, 60, 90, 120, 150];
 const compass = ["N", "E", "S", "W"] as const;
 const bodies = [["sun", "Sun"], ["earth", "Earth"]] as const;
+const clearancePresets = [
+  { deg: 0, label: "0° Ideal horizon" },
+  { deg: 2, label: "2° Low crater rim" },
+  { deg: 3, label: "3° Antenna minimum" },
+  { deg: 5, label: "5° Polar ridge" },
+] as const;
+const batteryPresets = [
+  { hours: 6, label: "6 h micro-rover" },
+  { hours: 12, label: "12 h standard" },
+  { hours: 24, label: "24 h CubeRover" },
+  { hours: 100, label: "100 h VIPER class" },
+] as const;
+
+const opStateLabels: Record<MissionOpState, string> = {
+  "golden": "Golden window (Sun + Earth)",
+  "solar-only": "Solar charging only",
+  "comms-only": "Earth link on battery",
+  "blackout": "Total blackout",
+  "unavailable": "Unavailable",
+};
 
 function point(az: number, el: number, orbit: number) {
   const { x, y } = skyPoint(az, el, orbit);
@@ -28,19 +50,50 @@ function arc(orbit: number, at: (angle: number) => [number, number], end: number
   return points.join(" ");
 }
 
-export default function LocalSky({ data, a, b, offset, alternative, setAlternative }: {
-  data: Dataset; a: Scenario; b?: Scenario; offset?: number;
-  alternative: boolean; setAlternative: (useAlternative: boolean) => void;
+function polarXY(cx: number, cy: number, r: number, azDeg: number) {
+  const rad = (azDeg - 90) * (Math.PI / 180);
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+export default function LocalSky({
+  data,
+  a,
+  b,
+  offset,
+  alternative,
+  setAlternative,
+  clearanceDeg: externalClearance,
+  setClearanceDeg: setExternalClearance,
+}: {
+  data: Dataset;
+  a: Scenario;
+  b?: Scenario;
+  offset?: number;
+  alternative: boolean;
+  setAlternative: (useAlternative: boolean) => void;
+  clearanceDeg?: number;
+  setClearanceDeg?: (deg: number) => void;
 }) {
   const { t } = useLanguage();
   const [orbit, setOrbit] = useState(0);
+  const [internalClearance, setInternalClearance] = useState(0);
+  const [batteryHours, setBatteryHours] = useState(12);
+  const clearanceDeg = clampClearanceDeg(externalClearance ?? internalClearance);
+  const updateClearance = (next: number) => {
+    const clamped = clampClearanceDeg(next);
+    setInternalClearance(clamped);
+    setExternalClearance?.(clamped);
+  };
+
   const grid = useMemo(() => ({
     meridians: meridians.map(az => ({
       az, upper: arc(orbit, el => [az, el], 180), lower: arc(orbit, el => [az, -el], 180),
     })),
     parallel: arc(orbit, az => [az, 45], 360),
     horizon: arc(orbit, az => [az, 0], 360),
-  }), [orbit]);
+    clearance: clearanceDeg > 0 ? arc(orbit, az => [az, clearanceDeg], 360) : "",
+  }), [orbit, clearanceDeg]);
+
   const drag = useRef<{ id: number; x: number; orbit: number; width: number } | null>(null);
   function startOrbit(event: PointerEvent<SVGSVGElement>) {
     if (!event.isPrimary || event.button !== 0 || (event.target as Element).closest("[data-sky-body]")) return;
@@ -56,13 +109,22 @@ export default function LocalSky({ data, a, b, offset, alternative, setAlternati
   function endOrbit(event: PointerEvent<SVGSVGElement>) {
     if (drag.current?.id === event.pointerId) drag.current = null;
   }
+
   const observations = (b ? [a, b] : [a]).map((scenario, index) => ({
-    scenario, site: data.sites.find(site => site.id === scenario.siteId)!,
+    scenario,
+    site: data.sites.find(site => site.id === scenario.siteId)!,
     sample: offset === undefined ? undefined : sampleAt(scenario, offset),
     label: index === 0 ? "A" : "B",
+    summary: analyzeScenarioClearance(scenario, clearanceDeg, batteryHours),
   }));
   const selected = alternative && b ? 1 : 0;
   const { scenario, site, sample } = observations[selected];
+  const hud = computeLanderHud(sample, clearanceDeg);
+
+  const sunTarget = hud.sunAzimuthDeg !== null ? polarXY(90, 90, 62, hud.sunAzimuthDeg) : null;
+  const earthTarget = hud.earthAzimuthDeg !== null ? polarXY(90, 90, 62, hud.earthAzimuthDeg) : null;
+  const shadowTarget = hud.shadowAzimuthDeg !== null ? polarXY(90, 90, 56, hud.shadowAzimuthDeg) : null;
+
   return <section className="local-sky" id="local-sky" aria-labelledby="local-sky-title" tabIndex={-1}>
     <div className="local-sky-heading"><h2 id="local-sky-title">{t("Local sky in 3D")}</h2>
       {b && <div role="group" className="sky-scenario-key" aria-label={t("Inspect observation")}>
@@ -81,6 +143,7 @@ export default function LocalSky({ data, a, b, offset, alternative, setAlternati
         </g>)}
         <polyline className="sky-mesh" points={grid.parallel} />
         <polyline className="sky-ring" points={grid.horizon} />
+        {grid.clearance && <polyline className="sky-clearance-ring" points={grid.clearance} strokeDasharray="4 3" />}
         {compass.map((dir, i) => {
           const p = point(i * 90, 0, orbit);
           return <text key={dir} x={p.x * 1.13} y={p.y * 1.2} dy=".35em" textAnchor="middle" className="sky-bearing">{t(dir)}</text>;
@@ -92,8 +155,9 @@ export default function LocalSky({ data, a, b, offset, alternative, setAlternati
           const { x, y } = point(angles.azimuthDeg, angles.elevationDeg, orbit);
           const description = `${label} · ${site.name} · ${t(name)} · ${reading!.utc}`;
           const inspect = () => setAlternative(index === 1);
+          const belowMask = angles.elevationDeg <= clearanceDeg;
           return <g key={scenario.id + key} data-site={label} className="sky-ray">
-            <line x1="0" y1="0" x2={x} y2={y} stroke="currentColor" strokeWidth="1.5" strokeDasharray={angles.elevationDeg < 0 ? "3 3" : undefined} />
+            <line x1="0" y1="0" x2={x} y2={y} stroke="currentColor" strokeWidth="1.5" strokeDasharray={angles.elevationDeg < 0 || (clearanceDeg > 0 && belowMask) ? "3 3" : undefined} />
             <g transform={`translate(${x} ${y})`} data-sky-body={key} role="button" tabIndex={0}
               aria-label={description} aria-pressed={selected === index} onClick={inspect} onKeyDown={event => {
                 if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspect(); }
@@ -114,7 +178,8 @@ export default function LocalSky({ data, a, b, offset, alternative, setAlternati
         <dl>{bodies.map(([key, name]) => {
           const v = sample?.[key];
           return <div key={key}><dt className={key}>{t(name)}</dt>
-            <dd>{v ? <>{t(v.elevationDeg < 0 ? "Below horizon" : v.elevationDeg > 0 ? "Above horizon" : "On horizon")}<br/>
+            <dd>{v ? <>{t(v.elevationDeg < 0 ? "Below horizon" : v.elevationDeg > 0 ? "Above horizon" : "On horizon")}
+              {clearanceDeg > 0 && <> · <span>{t(v.elevationDeg > clearanceDeg ? "Clears mask" : "Blocked by mask")}</span></>}<br/>
               <span>{t("Az")} {v.azimuthDeg}° · {t("El")} {v.elevationDeg}°</span></> : t("Unavailable")}</dd></div>;
         })}</dl>
       </div>
@@ -123,5 +188,187 @@ export default function LocalSky({ data, a, b, offset, alternative, setAlternati
       aria-valuetext={`${orbit}°`} onChange={e => setOrbit(Number(e.target.value))} /><span className="mono" aria-hidden="true">{orbit}°</span></div>
     {b && <p className="muted text-xs">{t("A and B use their own local north and horizon at the same elapsed time. Circle: Sun. Square: Earth. Select a marker or a name for its readings.")}</p>}
     <p className="muted text-xs">{t("The ring marks the ideal horizon. Dashed rays point below it. The timeline selects the observation. Local terrain is omitted.")}</p>
+
+    <div className="mission-studio" aria-labelledby="mission-studio-title">
+      <div className="mission-studio-header">
+        <div>
+          <p className="eyebrow">{t("Educational horizon & survival simulator")}</p>
+          <h3 id="mission-studio-title">{t("Horizon Clearance & Mission Survival Studio")}</h3>
+        </div>
+        <span className="mono clearance-badge">θ_mask = {clearanceDeg.toFixed(1)}°</span>
+      </div>
+      <p className="muted text-xs">
+        {t("Test how low-angle terrain ridges or antenna clearance margins affect supplied samples. Producer 0° intervals remain unchanged.")}
+      </p>
+
+      <div className="clearance-controls">
+        <div className="sky-orbit">
+          <label htmlFor="horizon-clearance-input">{t("Horizon clearance mask (θ_mask)")}</label>
+          <input
+            id="horizon-clearance-input"
+            type="range"
+            min="0"
+            max="10"
+            step="0.5"
+            value={clearanceDeg}
+            aria-valuetext={`${clearanceDeg.toFixed(1)}°`}
+            onChange={e => updateClearance(Number(e.target.value))}
+          />
+          <span className="mono" aria-hidden="true">{clearanceDeg.toFixed(1)}°</span>
+        </div>
+        <div className="preset-pills" role="group" aria-label={t("Clearance presets")}>
+          {clearancePresets.map(preset => (
+            <button
+              type="button"
+              key={preset.deg}
+              className="preset-pill"
+              aria-pressed={clearanceDeg === preset.deg}
+              onClick={() => updateClearance(preset.deg)}
+            >
+              {t(preset.label)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="studio-grid">
+        <div className="mission-ribbon-card">
+          <div className="mission-card-head">
+            <h4>{t("4-State Mission Operations & Battery Survival")}</h4>
+            <label className="battery-picker">
+              <span>{t("Battery limit")}</span>
+              <select value={batteryHours} onChange={e => setBatteryHours(Number(e.target.value))}>
+                {batteryPresets.map(p => <option key={p.hours} value={p.hours}>{t(p.label)}</option>)}
+              </select>
+            </label>
+          </div>
+          <div className="state-legend" aria-hidden="true">
+            <span className="state-dot golden">{t("Golden window (Sun + Earth)")}</span>
+            <span className="state-dot solar-only">{t("Solar charging only")}</span>
+            <span className="state-dot comms-only">{t("Earth link on battery")}</span>
+            <span className="state-dot blackout">{t("Total blackout")}</span>
+          </div>
+          <div className="mission-scenarios">
+            {observations.map(({ label, site: sSite, scenario: sc, summary }) => (
+              <div key={sc.id} className="mission-scenario-row">
+                <div className="mission-scenario-meta">
+                  <strong>{label} · {sSite.name}</strong>
+                  <span className={`battery-badge ${summary.batteryStatus}`}>
+                    {summary.batteryStatus === "safe"
+                      ? t("Within battery limit")
+                      : summary.batteryStatus === "risk"
+                        ? t("Battery exhaustion risk")
+                        : t("Incomplete coverage")}
+                  </span>
+                </div>
+                <div className="mission-ribbon" role="img" aria-label={`${label} ${sSite.name} mission states at ${clearanceDeg}° clearance`}>
+                  {summary.segments.length === 0 ? (
+                    <span className="ribbon-empty">{t("Unavailable")}</span>
+                  ) : (
+                    summary.segments.map((seg, idx) => (
+                      <span
+                        key={`${seg.startUtc}-${idx}`}
+                        className={`ribbon-seg ${seg.state}`}
+                        style={{ left: `${seg.startPct}%`, width: `${seg.widthPct}%` }}
+                        title={`${t(opStateLabels[seg.state])}: ${seg.startUtc} → ${seg.endUtc} (${seg.durationHours} h)`}
+                      />
+                    ))
+                  )}
+                </div>
+                {summary.coverage === "complete" ? (
+                  <dl className="mission-metrics-row">
+                    <div><dt>{t("Golden")}</dt><dd>{summary.goldenHours} h</dd></div>
+                    <div><dt>{t("Solar only")}</dt><dd>{summary.solarOnlyHours} h</dd></div>
+                    <div><dt>{t("Comms on battery")}</dt><dd>{summary.commsOnlyHours} h</dd></div>
+                    <div><dt>{t("Max solar darkness")}</dt><dd>{summary.longestSolarDarknessHours} h / {batteryHours} h</dd></div>
+                  </dl>
+                ) : (
+                  <p className="muted text-xs">{t("Sample-step totals require complete scenario coverage.")}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="lander-hud-card" aria-label={t("Lander hardware orientation HUD")}>
+          <h4>{t("Lander Hardware Orientation HUD")} · {observations[selected].label}</h4>
+          <div className="lander-hud-body">
+            <svg viewBox="0 0 180 180" className="lander-hud-svg" role="img" aria-label={t("Top-down lunar lander solar array, Earth dish antenna and surface shadow schematic")}>
+              <circle cx="90" cy="90" r="72" className="hud-compass-ring" />
+              <circle cx="90" cy="90" r="46" className="hud-inner-ring" strokeDasharray="2 3" />
+              <text x="90" y="12" textAnchor="middle" className="sky-bearing">{t("N")}</text>
+              <text x="168" y="93" textAnchor="middle" className="sky-bearing">{t("E")}</text>
+              <text x="90" y="174" textAnchor="middle" className="sky-bearing">{t("S")}</text>
+              <text x="12" y="93" textAnchor="middle" className="sky-bearing">{t("W")}</text>
+
+              {shadowTarget && (
+                <line
+                  x1="90"
+                  y1="90"
+                  x2={shadowTarget.x}
+                  y2={shadowTarget.y}
+                  className="hud-shadow-ray"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                />
+              )}
+
+              {sunTarget && (
+                <g className="hud-sun-group">
+                  <line x1="90" y1="90" x2={sunTarget.x} y2={sunTarget.y} className="hud-sun-ray" strokeDasharray={hud.sunClearsMask ? undefined : "3 3"} />
+                  <circle cx={sunTarget.x} cy={sunTarget.y} r="6" className="hud-sun-node" />
+                </g>
+              )}
+
+              {earthTarget && (
+                <g className="hud-earth-group">
+                  <line x1="90" y1="90" x2={earthTarget.x} y2={earthTarget.y} className="hud-earth-ray" strokeDasharray={hud.earthClearsMask ? undefined : "3 3"} />
+                  <rect x={earthTarget.x - 5} y={earthTarget.y - 5} width="10" height="10" className="hud-earth-node" />
+                </g>
+              )}
+
+              <g transform={`translate(90 90) rotate(${hud.sunAzimuthDeg ?? 0})`}>
+                <rect x="-24" y="-3" width="14" height="6" rx="1" className="hud-solar-wing" />
+                <rect x="10" y="-3" width="14" height="6" rx="1" className="hud-solar-wing" />
+              </g>
+
+              <g transform={`translate(90 90) rotate(${hud.earthAzimuthDeg ?? 0})`}>
+                <path d="M -5 -10 Q 0 -15 5 -10" fill="none" className="hud-dish-arc" strokeWidth="2" />
+                <line x1="0" y1="0" x2="0" y2="-12" className="hud-dish-boom" strokeWidth="1.5" />
+              </g>
+
+              <polygon points="90,82 97,87 95,96 85,96 83,87" className="hud-lander-deck" />
+            </svg>
+
+            <dl className="hud-readouts">
+              <div>
+                <dt>{t("Operational state")}</dt>
+                <dd><strong>{t(opStateLabels[hud.opState])}</strong></dd>
+              </div>
+              <div>
+                <dt>{t("Solar array tracking (Sun)")}</dt>
+                <dd className="mono">{hud.sunAzimuthDeg !== null ? `${t("Az")} ${hud.sunAzimuthDeg}° · ${t("El")} ${hud.sunElevationDeg}°` : t("Unavailable")}</dd>
+              </div>
+              <div>
+                <dt>{t("High-gain dish (Earth)")}</dt>
+                <dd className="mono">{hud.earthAzimuthDeg !== null ? `${t("Az")} ${hud.earthAzimuthDeg}° · ${t("El")} ${hud.earthElevationDeg}°` : t("Unavailable")}</dd>
+              </div>
+              <div>
+                <dt>{t("Array–dish separation (ΔAz)")}</dt>
+                <dd className="mono">{hud.azimuthSeparationDeg !== null ? `${hud.azimuthSeparationDeg}°` : t("Unavailable")}</dd>
+              </div>
+              <div>
+                <dt>{t("Surface shadow vector")}</dt>
+                <dd className="mono">
+                  {hud.shadowAzimuthDeg !== null && hud.shadowLengthFactor !== null
+                    ? `${t("Az")} ${hud.shadowAzimuthDeg}° · ${hud.shadowLengthFactor}× ${t("height")}`
+                    : t("Sun at or below 0° (no direct shadow)")}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>;
 }
