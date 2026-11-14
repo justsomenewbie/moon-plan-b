@@ -33,9 +33,37 @@ class ProducerOpenAPITest(unittest.TestCase):
             self.check()
 
     def test_inherited_security_change_is_detected(self):
-        self.full["security"] = [{"apiKey": []}]
+        self.full["security"] = []
         with self.assertRaisesRegex(ValueError, "/security"):
             self.check()
+
+    def test_scheme_declarations_follow_effective_security(self):
+        local = {"type": "http", "scheme": "bearer"}
+        self.full["components"]["securitySchemes"].update(Local=local, Unused=local)
+        path = "/api/v1/jobs"
+        operation = self.full["paths"][path]["post"]
+        operation["security"] = [{"Local": []}, {}]
+        subset = scoped_contract(self.full, {"paths": {path: {"post": {}}}})
+        self.assertNotIn("security", subset)
+        self.assertEqual(subset["components"]["securitySchemes"], {"Local": local})
+        operation["security"] = []
+        public = scoped_contract(self.full, {"paths": {path: {"post": {}}}})
+        self.assertNotIn("securitySchemes", public["components"])
+        del operation["security"]
+        inherited = scoped_contract(self.full, {"paths": {path: {"post": {}}}})
+        self.assertEqual(inherited["security"], [{"ApiKeyAuth": []}])
+        self.assertEqual(inherited["components"]["securitySchemes"], {
+            "ApiKeyAuth": self.full["components"]["securitySchemes"]["ApiKeyAuth"]
+        })
+
+    def test_undefined_inherited_scheme_is_rejected(self):
+        del self.full["components"]["securitySchemes"]["ApiKeyAuth"]
+        with self.assertRaisesRegex(ValueError, "unresolved producer component: securitySchemes/ApiKeyAuth"):
+            self.check()
+
+    def test_tracked_extract_matches_the_producer_in_this_checkout(self):
+        owner = EXTRACT.parent.parent / "lunar-navigator/backend/contract/openapi.json"
+        compare(self.tracked, scoped_contract(json.loads(owner.read_bytes()), self.tracked))
 
     def test_skipping_a_scoped_method_is_detected(self):
         del self.full["paths"]["/api/v1/jobs"]["post"]

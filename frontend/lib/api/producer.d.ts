@@ -154,7 +154,7 @@ export interface paths {
         };
         /**
          * Download the series of a site as CSV (streamed, every sample of the range)
-         * @description No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series.
+         * @description No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series. File name (Content-Disposition): <site>_<run>_series_<start>_<end>.csv with the snapped UTC range, e.g. ..._series_20261119T140000Z_20261119T160000Z.csv (end exclusive).
          */
         get: operations["exportSiteSeriesCsv"];
         put?: never;
@@ -174,7 +174,7 @@ export interface paths {
         };
         /**
          * Download the visibility windows of a site as CSV
-         * @description Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows.
+         * @description Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows. File name (Content-Disposition): <site>_<run>_windows_<start>_<end>.csv with the snapped UTC range (end exclusive).
          */
         get: operations["exportSiteWindowsCsv"];
         put?: never;
@@ -1602,7 +1602,7 @@ export interface components {
              * @description Stable machine-readable error code - switch on this in the FE
              * @enum {string}
              */
-            code: "VALIDATION_ERROR" | "TOO_MANY_POINTS" | "NOT_FOUND" | "SITE_NOT_FOUND" | "RUN_NOT_FOUND" | "JOB_NOT_FOUND" | "JOB_NOT_YOURS" | "FILE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "RUN_NOT_READY" | "JOB_NOT_CANCELLABLE" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "OUT_OF_RANGE" | "BAD_MISSION_LENGTH" | "CAPABILITY_UNAVAILABLE" | "JOB_TOO_LARGE" | "RATE_LIMITED" | "QUEUE_FULL" | "TOO_MANY_JOBS" | "TOO_MANY_STREAMS" | "QUOTA_EXCEEDED" | "INTERNAL" | "JOB_TYPE_UNAVAILABLE" | "PYTHON_FAILED" | "SERVICE_UNAVAILABLE" | "STORAGE_FULL" | "PYTHON_TIMEOUT";
+            code: "VALIDATION_ERROR" | "TOO_MANY_POINTS" | "UNAUTHORIZED" | "NOT_FOUND" | "SITE_NOT_FOUND" | "RUN_NOT_FOUND" | "JOB_NOT_FOUND" | "JOB_NOT_YOURS" | "FILE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "RUN_NOT_READY" | "JOB_NOT_CANCELLABLE" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "OUT_OF_RANGE" | "BAD_MISSION_LENGTH" | "CAPABILITY_UNAVAILABLE" | "JOB_TOO_LARGE" | "RATE_LIMITED" | "QUEUE_FULL" | "TOO_MANY_JOBS" | "TOO_MANY_STREAMS" | "QUOTA_EXCEEDED" | "INTERNAL" | "JOB_TYPE_UNAVAILABLE" | "PYTHON_FAILED" | "SERVICE_UNAVAILABLE" | "STORAGE_FULL" | "PYTHON_TIMEOUT";
             /** @description Human-readable explanation of this occurrence */
             detail?: string;
             /** @description Request path that produced the problem */
@@ -3488,6 +3488,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
             404: {
                 headers: {
@@ -3574,6 +3585,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
@@ -3638,6 +3660,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3760,6 +3793,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
             404: {
                 headers: {
@@ -3825,6 +3869,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -3912,6 +3967,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4055,6 +4121,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
             404: {
                 headers: {
@@ -4118,6 +4195,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4234,6 +4322,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
             404: {
                 headers: {
@@ -4329,6 +4428,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4439,6 +4549,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
             404: {
                 headers: {
@@ -4526,6 +4647,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
             404: {
                 headers: {
@@ -4594,6 +4726,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4693,6 +4836,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
             404: {
                 headers: {
@@ -4766,6 +4920,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -4871,6 +5036,17 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
@@ -4918,6 +5094,17 @@ export interface operations {
             /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
             400: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>) */
+            401: {
+                headers: {
+                    /** @description ApiKey header="X-API-Key" */
+                    "WWW-Authenticate"?: string;
                     [name: string]: unknown;
                 };
                 content: {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { proxyLunarnav } from "../lib/lunarnav-proxy.ts";
+import { publicContract } from "../scripts/public-contract.mjs";
 
 const frontend = "https://moon.example";
 const freshKey = () => randomUUID();
@@ -92,6 +93,14 @@ test("public Swagger operations match the relay and retain producer parameter de
   const readJson = async (path: string) => JSON.parse(await readFile(new URL(path, import.meta.url), "utf8"));
   const producer = await readJson("../../contracts/openapi.dataset.json");
   const published = await readJson("../public/api-contract/lunarnav.json");
+  assert.deepEqual(producer.security, [{ ApiKeyAuth: [] }]);
+  assert.equal(producer.components.securitySchemes.ApiKeyAuth.name, "X-API-Key");
+  assert.deepEqual(published.security, []);
+  const explicitlySecured = structuredClone(producer);
+  explicitlySecured.paths["/api/v1/runs"].get.security = [{ ApiKeyAuth: [] }];
+  assert.deepEqual(publicContract(explicitlySecured), published);
+  assert.equal(published.components.securitySchemes, undefined);
+  assert.doesNotMatch(JSON.stringify(published), /x-api-key|www-authenticate|authorization: bearer/i);
   // An accepted route stops at the missing-key check before forwarding anything.
   const forward = async (req: Request) => (await proxyLunarnav(req, undefined)).status === 503;
   for (const [path, methods] of Object.entries(producer.paths)) {
@@ -105,6 +114,10 @@ test("public Swagger operations match the relay and retain producer parameter de
       const exposed = published.paths[path]?.[method];
       assert.equal(Boolean(exposed), await forward(req()), methodName + " " + path);
       if (!exposed) continue;
+      assert.ok(producer.paths[path][method].responses["401"]);
+      assert.equal(exposed.security, undefined);
+      assert.equal(exposed.responses["401"], undefined);
+      assert.ok(exposed.responses["502"].content["application/json"]);
       const allowed = [];
       for (const param of operation.parameters ?? []) {
         if (param.in === "path" || await forward(req("?" + param.name + "=example"))) allowed.push(param);

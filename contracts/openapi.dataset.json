@@ -148,6 +148,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
             "content": {
@@ -255,6 +273,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED)",
             "content": {
@@ -327,6 +363,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -469,6 +523,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
             "content": {
@@ -544,6 +616,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -646,6 +736,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -831,6 +939,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
             "content": {
@@ -905,6 +1031,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -993,7 +1137,7 @@
         "tags": [
           "export"
         ],
-        "description": "No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series.",
+        "description": "No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series. File name (Content-Disposition): <site>_<run>_series_<start>_<end>.csv with the snapped UTC range, e.g. ..._series_20261119T140000Z_20261119T160000Z.csv (end exclusive).",
         "parameters": [
           {
             "schema": {
@@ -1073,6 +1217,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
             "content": {
@@ -1143,7 +1305,7 @@
         "tags": [
           "export"
         ],
-        "description": "Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows.",
+        "description": "Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows. File name (Content-Disposition): <site>_<run>_windows_<start>_<end>.csv with the snapped UTC range (end exclusive).",
         "parameters": [
           {
             "schema": {
@@ -1215,6 +1377,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1371,6 +1551,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
             "content": {
@@ -1461,6 +1659,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1578,6 +1794,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
             "content": {
@@ -1687,6 +1921,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
             "content": {
@@ -1785,6 +2037,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1941,6 +2211,24 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED)",
             "content": {
@@ -2001,6 +2289,24 @@
           },
           "400": {
             "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (UNAUTHORIZED: missing or invalid API key; send X-API-Key: <key> or Authorization: Bearer <key>)",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "ApiKey header=\"X-API-Key\"",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5571,6 +5877,7 @@
             "enum": [
               "VALIDATION_ERROR",
               "TOO_MANY_POINTS",
+              "UNAUTHORIZED",
               "NOT_FOUND",
               "SITE_NOT_FOUND",
               "RUN_NOT_FOUND",
@@ -8942,6 +9249,19 @@
           }
         ]
       }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key issued by the backend operator (`Authorization: Bearer <key>` is accepted too). Keep it server side."
+      }
     }
-  }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ]
 }
