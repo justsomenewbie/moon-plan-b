@@ -73,7 +73,11 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
           <div><dt>{t("Elevation angle")}</dt><dd>{value[body].el_deg}°</dd></div>
           <div><dt>{t("Horizon elevation at this azimuth")}</dt><dd>{value[body].horizon_el_deg}°</dd></div>
           <div><dt>{t("Body centre above horizon")}</dt><dd>{value[body].clearance_deg}°</dd></div>
-          <div><dt>{t("Visibility")}</dt><dd>{t(value[body].visible ? "Visible" : "Hidden")}</dd></div>
+          {body === "earth" ? <>
+            <div><dt>{t("Earth’s centre exceeds the run’s clearance threshold")}</dt><dd>{t(value.earth.visible ? "Yes" : "No")}</dd></div>
+            {value.earth.fraction !== undefined && <div><dt>{t("Share of Earth’s disc above the local horizon")}</dt>
+              <dd>{value.earth.fraction.toLocaleString(locale, { style: "percent", maximumFractionDigits: 4 })}</dd></div>}
+          </> : <div><dt>{t("Visibility")}</dt><dd>{t(value.sun.visible ? "Visible" : "Hidden")}</dd></div>}
           {(body === "sun" ? ["sunset", "sunrise"] as const : ["earthset", "earthrise"] as const).map(key => {
             const { label, text, at } = instantEventText(locale, key, value);
             return <div key={key}><dt>{label}</dt><dd>{text}{at && <> · <time dateTime={at}>{at}</time></>}</dd></div>;
@@ -97,7 +101,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
               </label>;
             })}
           </fieldset>}
-        {body === "earth" && <p className="muted text-sm">{t("Earth visibility describes a line of sight. Radio signal strength is unavailable.")}</p>}
+        {body === "earth" && <p className="muted text-sm">{t("Earthrise and Earthset track the centre crossing the clearance threshold. Radio signal strength is unavailable.")}</p>}
       </div>)}</div>
       {value.sun.visible && value.sun.clearance_deg < 0 && <p>{t("Part of the Sun is visible while its centre is below the local horizon.")}</p>}
       <p>{t("Both visible")} · {t(value.both_visible ? "Yes" : "No")}</p>

@@ -19,7 +19,7 @@ try {
     calls.push(Object.fromEntries(url.searchParams));
     const body = { az_deg: 0, el_deg: -1, horizon_el_deg: 0, clearance_deg: -1, visible: false };
     return route.fulfill({ json: { run_id: run, site_id: site, precision_h: 1, step_s: 3600, t: requested,
-      sample_utc: sample, sun: body, earth: body, both_visible: false } });
+      sample_utc: sample, sun: body, earth: { ...body, el_deg: -0.030582, clearance_deg: -0.030582, fraction: 0.479104 }, both_visible: false } });
   });
   await page.goto(origin + "/compare?" + new URLSearchParams({ run_id: run, from: start, to: end, resolutionSeconds: "7200" }));
   const input = page.locator('#terrain-observations input[name="instantUtc"]');
@@ -47,5 +47,13 @@ try {
   await result.waitFor();
   assert.deepEqual(calls, [{ run_id: run, t: requested }]);
   assert.deepEqual(await result.locator("time").evaluateAll(nodes => nodes.map(el => el.dateTime)), [requested, sample]);
+  const earthGroup = result.locator(".week-sites > div").filter({has: page.getByRole("heading", {name:"Earth", exact:true})});
+  const field = (section, title) => section.getByText(title, { exact: true }).locator("..").locator("dd");
+  assert.equal(await field(earthGroup, "Earth’s centre exceeds the run’s clearance threshold").innerText(), "No");
+  assert.equal(await field(earthGroup, "Share of Earth’s disc above the local horizon").innerText(), "47.9104%");
+  await page.locator(".language-switch select").first().selectOption("vi");
+  const viEarth = page.locator("#instant-heading").locator("..").locator(".week-sites > div").filter({has: page.getByRole("heading", {name:"Trái Đất", exact:true})});
+  assert.equal(await field(viEarth, "Tâm Trái Đất vượt ngưỡng góc cao so với đường chân trời của lần chạy").innerText(), "Không");
+  assert.equal(await field(viEarth, "Tỷ lệ diện tích đĩa Trái Đất nằm trên đường chân trời địa phương").innerText(), "47,9104%");
   console.log("Immediate UTC edit survived disclosure opening; exclusive end rejected and off-grid query retained.");
 } finally { await browser.close(); }
