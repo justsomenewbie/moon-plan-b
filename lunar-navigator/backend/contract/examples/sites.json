@@ -1,0 +1,131 @@
+{
+  "run_id": "pf_21c3f3f6dc56b1e1",
+  "step_s": 3600,
+  "precision_h": 1,
+  "sites": [
+    {
+      "id": "ref_connecting_ridge_c1",
+      "name": "Shackleton-de Gerlache connecting ridge, point C1",
+      "group": "reference",
+      "origin": "catalog",
+      "lat_deg": -89.4505,
+      "lon_deg": 222.84,
+      "map": {
+        "projection": "south_polar_stereographic_R1737.4km",
+        "x_km": -11.33,
+        "y_km": -12.218
+      },
+      "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+      "horizon_method": "raymarch",
+      "rank": 1,
+      "score": 71.162037,
+      "pct_sun": 98.564815,
+      "pct_earth": 53.611111,
+      "pct_both": 52.175926,
+      "longest_dark_h": 26,
+      "longest_comms_gap_h": 326
+    },
+    {
+      "id": "ref_shackleton_rim",
+      "name": "Shackleton crater rim, point S",
+      "group": "reference",
+      "origin": "catalog",
+      "lat_deg": -89.7849,
+      "lon_deg": 203.97,
+      "map": {
+        "projection": "south_polar_stereographic_R1737.4km",
+        "x_km": -2.65,
+        "y_km": -5.96
+      },
+      "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+      "horizon_method": "raymarch",
+      "rank": 2,
+      "score": 70.185186,
+      "pct_sun": 97.268519,
+      "pct_earth": 52.268519,
+      "pct_both": 51.990741,
+      "longest_dark_h": 29,
+      "longest_comms_gap_h": 334
+    },
+    {
+      "id": "apollo11",
+      "name": "Apollo 11 LM Eagle (Tranquility Base)",
+      "group": "apollo",
+      "origin": "catalog",
+      "lat_deg": 0.67416,
+      "lon_deg": 23.47314,
+      "map": null,
+      "dem_source": "none:outside-pgda-coverage",
+      "horizon_method": "flat",
+      "rank": 3,
+      "score": 65.680555,
+      "pct_sun": 50.972222,
+      "pct_earth": 100,
+      "pct_both": 50.972222,
+      "longest_dark_h": 354,
+      "longest_comms_gap_h": 0
+    },
+    {
+      "id": "a3_de_gerlache_rim_2",
+      "name": "Artemis III region: de Gerlache Rim 2",
+      "group": "south_pole",
+      "origin": "catalog",
+      "lat_deg": -88.222637,
+      "lon_deg": 296.565051,
+      "map": {
+        "projection": "south_polar_stereographic_R1737.4km",
+        "x_km": -48.21,
+        "y_km": 24.105
+      },
+      "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+      "horizon_method": "raymarch",
+      "rank": 4,
+      "score": 35.12963,
+      "pct_sun": 41.851852,
+      "pct_earth": 49.027778,
+      "pct_both": 12.268519,
+      "longest_dark_h": 430,
+      "longest_comms_gap_h": 352
+    },
+    {
+      "id": "a3_haworth",
+      "name": "Artemis III region: Haworth",
+      "group": "south_pole",
+      "origin": "catalog",
+      "lat_deg": -86.752966,
+      "lon_deg": 336.328186,
+      "map": {
+        "projection": "south_polar_stereographic_R1737.4km",
+        "x_km": -39.542,
+        "y_km": 90.201
+      },
+      "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+      "horizon_method": "raymarch",
+      "rank": 5,
+      "score": 23.662037,
+      "pct_sun": 32.87037,
+      "pct_earth": 35.046296,
+      "pct_both": 0,
+      "longest_dark_h": 479,
+      "longest_comms_gap_h": 445
+    },
+    {
+      "id": "change6",
+      "name": "Chang'e-6 lander (Statio Tianjiang, Apollo basin)",
+      "group": "far_side",
+      "origin": "catalog",
+      "lat_deg": -41.6385,
+      "lon_deg": 206.0148,
+      "map": null,
+      "dem_source": "none:outside-pgda-coverage",
+      "horizon_method": "flat",
+      "rank": 6,
+      "score": 19.888889,
+      "pct_sun": 49.722222,
+      "pct_earth": 0,
+      "pct_both": 0,
+      "longest_dark_h": 353,
+      "longest_comms_gap_h": 2160
+    }
+  ]
+}

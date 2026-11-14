@@ -1,0 +1,9 @@
+{
+  "type": "https://lunarnav.example/errors/not-found",
+  "title": "Route not found",
+  "status": 404,
+  "code": "NOT_FOUND",
+  "instance": "/api/v1/site",
+  "detail": "no route GET /api/v1/site",
+  "hint": "API routes start with /api/v1; documentation at /docs"
+}

@@ -1,0 +1,74 @@
+{
+ "code_version": "0.1.0",
+ "conventions": {
+  "azimuth": "degrees [0,360) clockwise from local north (N=0, E=90), as JPL Horizons",
+  "bodies": "Sun and Earth positions are for the body CENTER",
+  "coordinates": "planetocentric latitude, EAST longitude [0,360), MOON_ME (Mean-Earth/Polar-Axis) frame",
+  "earth_visible": "Earth center elevation - terrain horizon elevation > min_earth_clearance_deg",
+  "elevation": "degrees above the plane perpendicular to the local sphere radial, airless, apparent",
+  "heights": "metres above the 1737.4 km reference sphere",
+  "sun_visible": "upper limb above the terrain horizon (visible disc fraction > 0)",
+  "time": "UTC, ISO 8601 'YYYY-MM-DDTHH:MM:SSZ'; sample i represents [t_i, t_i + step)",
+  "windows": "maximal runs of equal state tiling [start, end); boundaries +- one step"
+ },
+ "data_sources": [
+  {
+   "name": "Synthetic toy geometry (tests only, NOT physical-grade)",
+   "sha256": null,
+   "url": null
+  }
+ ],
+ "files": {
+  "sites.json": "7bcada28f017d5ca5ec3fdd72e1ac8a910b034047c4f759e17a3d86c1a3a52aa",
+  "sites/apollo11/ephemeris_synthetic.csv.gz": "656cfdacb62ab6c4fa459e4ff16234033b2c0ad93240ba1325493d926955b1d5",
+  "sites/apollo11/horizon_flat.csv": "f9b46731d3b2d1cee105fa454bab90efd4094172b3816531a1bd2065962daf40",
+  "sites/apollo11/visibility.csv.gz": "2b90770c0e249ea07da1b8b0716eee0e4d2d3fea7f3d44484025e78301325730",
+  "sites/apollo11/windows.json": "de7d1634a093bb22cfcbbd0255b23d1a3957cd846de389cf47451476fea16111",
+  "sites/custom_-89.4500_222.6900/ephemeris_synthetic.csv.gz": "f5532d827d94adaa70e003026e1b1493d14511f10d483274fd3c44a2b8856c16",
+  "sites/custom_-89.4500_222.6900/horizon_flat.csv": "f9b46731d3b2d1cee105fa454bab90efd4094172b3816531a1bd2065962daf40",
+  "sites/custom_-89.4500_222.6900/visibility.csv.gz": "2138759cfdf9178d71e293e88c48b3df6f44d9895928c39baad711f4ae968b70",
+  "sites/custom_-89.4500_222.6900/windows.json": "4f81fe83621a07e6a749f900edff16463efd34ee1a177dd9938fc04d474f94e4",
+  "sites/ref_shackleton_rim/ephemeris_synthetic.csv.gz": "7f9267dfcd1c947f8b45e655b35c7f87ad02b697026d65ddc13a130c0791fa17",
+  "sites/ref_shackleton_rim/horizon_flat.csv": "f9b46731d3b2d1cee105fa454bab90efd4094172b3816531a1bd2065962daf40",
+  "sites/ref_shackleton_rim/visibility.csv.gz": "b595158ed8630b9e42974d5fbdb627c373ab84ca541d3c63b0fb7f03e642c26e",
+  "sites/ref_shackleton_rim/windows.json": "818166244485d48a18d18736fab600cdb9fccc244eb74990d66593d8ab0eb29c",
+  "summary.csv": "fae17c69fd3bddb3010bd006c37692df543af87570ab677f0ac3c7422c30cf38"
+ },
+ "format": "lunarnav-precompute",
+ "format_version": 1,
+ "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+ "parameters": {
+  "az_step_deg": 0.5,
+  "dem": "none",
+  "dem_fallback": "flat",
+  "dem_label": null,
+  "dem_path": null,
+  "dem_res_m": null,
+  "end_utc": "2027-01-15T00:00:00Z",
+  "horizon_method": "flat",
+  "horizon_radius_km": 150.0,
+  "min_earth_clearance_deg": 0.0,
+  "n_samples": 336,
+  "observer_height_m": 2.0,
+  "provider": "synthetic",
+  "provider_config": {
+   "epoch": "2026-01-01T00:00:00",
+   "sun_lon0_deg": 0.0
+  },
+  "rank_weights": {
+   "pct_both": 0.3,
+   "pct_earth": 0.3,
+   "pct_sun": 0.4
+  },
+  "site_ids": [
+   "apollo11",
+   "ref_shackleton_rim",
+   "custom:-89.4500:222.6900"
+  ],
+  "start_utc": "2027-01-01T00:00:00Z",
+  "step_minutes": 60.0,
+  "step_s": 3600
+ },
+ "params_fingerprint": "4f3cc38f60e01d0e",
+ "run_timestamp_utc": "2026-11-14T00:00:00Z"
+}

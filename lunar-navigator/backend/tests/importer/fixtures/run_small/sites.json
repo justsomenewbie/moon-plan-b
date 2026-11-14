@@ -1,0 +1,80 @@
+{
+ "format_version": 1,
+ "sites": [
+  {
+   "dem_source": "none",
+   "files": {
+    "ephemeris": "sites/apollo11/ephemeris_synthetic.csv.gz",
+    "horizon": "sites/apollo11/horizon_flat.csv",
+    "visibility": "sites/apollo11/visibility.csv.gz",
+    "windows": "sites/apollo11/windows.json"
+   },
+   "group": "apollo",
+   "height_m_input": null,
+   "horizon_max_el_deg": -0.086937,
+   "horizon_method": "flat",
+   "horizon_min_el_deg": -0.086937,
+   "horizon_radius_km": 2.636,
+   "id": "apollo11",
+   "lat_deg": 0.67416,
+   "lon_deg": 23.47314,
+   "name": "Apollo 11 LM Eagle (Tranquility Base)",
+   "note": "Landed point; landing time 1969-07-20T20:17:40 UTC (NSSDCA).",
+   "observer_height_above_sphere_m": 2.0,
+   "observer_height_m": 2.0,
+   "origin": "catalog",
+   "source": "NASA NSSDCA Master Catalog 1969-059C (LM landing site from LRO images, DE421 mean Earth/polar axis frame)",
+   "surface_height_m": 0.0
+  },
+  {
+   "dem_source": "none",
+   "files": {
+    "ephemeris": "sites/ref_shackleton_rim/ephemeris_synthetic.csv.gz",
+    "horizon": "sites/ref_shackleton_rim/horizon_flat.csv",
+    "visibility": "sites/ref_shackleton_rim/visibility.csv.gz",
+    "windows": "sites/ref_shackleton_rim/windows.json"
+   },
+   "group": "reference",
+   "height_m_input": null,
+   "horizon_max_el_deg": -0.086937,
+   "horizon_method": "flat",
+   "horizon_min_el_deg": -0.086937,
+   "horizon_radius_km": 2.636,
+   "id": "ref_shackleton_rim",
+   "lat_deg": -89.7849,
+   "lon_deg": 203.97,
+   "name": "Shackleton crater rim, point S",
+   "note": "Mazarico et al. (2011): 86.7% at 89.78 S, 204.27 E (240 m DEM). Published illumination depends strongly on DEM resolution, period and observer height (same point: 76% at 20 m/px vs 89% at 240 m/px); compare with tolerance ~10 percentage points.",
+   "observer_height_above_sphere_m": 2.0,
+   "observer_height_m": 2.0,
+   "origin": "catalog",
+   "source": "Glaser et al. (2018) PSS 162, Table 1 (Shackleton S, surface level, 2017-2037): 81.0%",
+   "surface_height_m": 0.0
+  },
+  {
+   "dem_source": "none",
+   "files": {
+    "ephemeris": "sites/custom_-89.4500_222.6900/ephemeris_synthetic.csv.gz",
+    "horizon": "sites/custom_-89.4500_222.6900/horizon_flat.csv",
+    "visibility": "sites/custom_-89.4500_222.6900/visibility.csv.gz",
+    "windows": "sites/custom_-89.4500_222.6900/windows.json"
+   },
+   "group": "",
+   "height_m_input": null,
+   "horizon_max_el_deg": -0.086937,
+   "horizon_method": "flat",
+   "horizon_min_el_deg": -0.086937,
+   "horizon_radius_km": 2.636,
+   "id": "custom:-89.4500:222.6900",
+   "lat_deg": -89.45,
+   "lon_deg": 222.69,
+   "name": "Custom site 89.4500S 222.6900E",
+   "note": "custom site; coordinates as entered (planetocentric, MOON_ME), rounded to 1e-4 deg",
+   "observer_height_above_sphere_m": 2.0,
+   "observer_height_m": 2.0,
+   "origin": "custom",
+   "source": "user-defined",
+   "surface_height_m": 0.0
+  }
+ ]
+}

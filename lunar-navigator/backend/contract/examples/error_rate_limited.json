@@ -1,0 +1,9 @@
+{
+  "type": "https://lunarnav.example/errors/rate-limited",
+  "title": "Too many requests",
+  "status": 429,
+  "code": "RATE_LIMITED",
+  "detail": "rate limit of 5 requests per 1 minute exceeded",
+  "instance": "/api/v1/alt-dates",
+  "retry_after_s": 60
+}

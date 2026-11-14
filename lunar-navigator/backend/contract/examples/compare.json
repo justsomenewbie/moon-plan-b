@@ -1,0 +1,475 @@
+{
+  "run_id": "pf_21c3f3f6dc56b1e1",
+  "step_s": 3600,
+  "precision_h": 1,
+  "range": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-04-01T00:00:00Z",
+    "step_s": 3600,
+    "n_samples": 2160
+  },
+  "weights": {
+    "pct_sun": 0.4,
+    "pct_earth": 0.3,
+    "pct_both": 0.3
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "site_id": "ref_connecting_ridge_c1",
+      "name": "Shackleton-de Gerlache connecting ridge, point C1",
+      "group": "reference",
+      "score": 71.162037,
+      "pct_sun": 98.564815,
+      "pct_earth": 53.611111,
+      "pct_both": 52.175926,
+      "pct_sun_no_earth": 46.388889,
+      "longest_dark_h": 26,
+      "longest_dark_truncated": false,
+      "longest_comms_gap_h": 326,
+      "longest_comms_gap_truncated": false,
+      "mean_power_tracking": 0.971631,
+      "reasons": [
+        "Sun visible 98.6% of the time",
+        "Earth in view 53.6%",
+        "Sun and Earth together 52.2%",
+        "longest night only 26 h",
+        "longest comms gap 326 h"
+      ]
+    },
+    {
+      "rank": 2,
+      "site_id": "apollo11",
+      "name": "Apollo 11 LM Eagle (Tranquility Base)",
+      "group": "apollo",
+      "score": 65.680555,
+      "pct_sun": 50.972222,
+      "pct_earth": 100,
+      "pct_both": 50.972222,
+      "pct_sun_no_earth": 0,
+      "longest_dark_h": 354,
+      "longest_dark_truncated": false,
+      "longest_comms_gap_h": 0,
+      "longest_comms_gap_truncated": false,
+      "mean_power_tracking": 0.508127,
+      "reasons": [
+        "Sun visible 51.0% of the time",
+        "Earth in view 100.0%",
+        "Sun and Earth together 51.0%",
+        "longest night 354 h"
+      ]
+    },
+    {
+      "rank": 3,
+      "site_id": "a3_haworth",
+      "name": "Artemis III region: Haworth",
+      "group": "south_pole",
+      "score": 23.662037,
+      "pct_sun": 32.87037,
+      "pct_earth": 35.046296,
+      "pct_both": 0,
+      "pct_sun_no_earth": 32.87037,
+      "longest_dark_h": 479,
+      "longest_dark_truncated": false,
+      "longest_comms_gap_h": 445,
+      "longest_comms_gap_truncated": false,
+      "mean_power_tracking": 0.322023,
+      "reasons": [
+        "Sun visible 32.9% of the time",
+        "Earth in view 35.0%",
+        "longest night 479 h",
+        "longest comms gap 445 h"
+      ]
+    }
+  ],
+  "sites": {
+    "ref_connecting_ridge_c1": {
+      "metrics": {
+        "duration_h": 2160,
+        "pct_sun": 98.564815,
+        "pct_earth": 53.611111,
+        "pct_both": 52.175926,
+        "pct_sun_no_earth": 46.388889,
+        "longest_dark_h": 26,
+        "longest_dark_truncated": false,
+        "longest_comms_gap_h": 326,
+        "longest_comms_gap_truncated": false,
+        "longest_sun_h": 2088,
+        "longest_sun_truncated": true,
+        "longest_earth_h": 334,
+        "longest_earth_truncated": false,
+        "n_sun_windows": 3,
+        "n_dark_windows": 2,
+        "n_earth_windows": 4,
+        "n_comms_gaps": 4,
+        "mean_sun_el_lit_deg": 0.340818,
+        "mean_power_horizontal": 0.009032,
+        "mean_power_tracking": 0.971631
+      },
+      "windows": {
+        "sun": [
+          {
+            "start": "2026-01-01T00:00:00Z",
+            "end": "2026-03-29T00:00:00Z",
+            "duration_h": 2088,
+            "state": true,
+            "truncated_start": true,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-29T00:00:00Z",
+            "end": "2026-03-30T02:00:00Z",
+            "duration_h": 26,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-30T02:00:00Z",
+            "end": "2026-03-30T05:00:00Z",
+            "duration_h": 3,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-30T05:00:00Z",
+            "end": "2026-03-30T10:00:00Z",
+            "duration_h": 5,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-30T10:00:00Z",
+            "end": "2026-04-01T00:00:00Z",
+            "duration_h": 38,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": true,
+            "clipped_start": false,
+            "clipped_end": false
+          }
+        ]
+      },
+      "series": {
+        "start": "2026-01-01T00:00:00Z",
+        "end": "2026-04-01T00:00:00Z",
+        "step_s": 3600,
+        "bin_s": 324000,
+        "n": 24,
+        "agg": "sample",
+        "fields": {
+          "sun_el_deg": [
+            0.805135,
+            0.972327,
+            1.327268,
+            1.63081,
+            1.657076,
+            1.340379,
+            0.828137,
+            0.384546,
+            0.216054,
+            0.362286,
+            0.688107,
+            0.943615,
+            0.907937,
+            0.537219,
+            -0.001691,
+            -0.44654,
+            -0.60277,
+            -0.439092,
+            -0.108255,
+            0.1268,
+            0.055295,
+            -0.34037,
+            -0.874712,
+            -1.287139
+          ]
+        }
+      },
+      "warnings": []
+    },
+    "a3_haworth": {
+      "metrics": {
+        "duration_h": 2160,
+        "pct_sun": 32.87037,
+        "pct_earth": 35.046296,
+        "pct_both": 0,
+        "pct_sun_no_earth": 32.87037,
+        "longest_dark_h": 479,
+        "longest_dark_truncated": false,
+        "longest_comms_gap_h": 445,
+        "longest_comms_gap_truncated": false,
+        "longest_sun_h": 252,
+        "longest_sun_truncated": false,
+        "longest_earth_h": 220,
+        "longest_earth_truncated": false,
+        "n_sun_windows": 3,
+        "n_dark_windows": 4,
+        "n_earth_windows": 4,
+        "n_comms_gaps": 4,
+        "mean_sun_el_lit_deg": 1.479417,
+        "mean_power_horizontal": 0.009677,
+        "mean_power_tracking": 0.322023
+      },
+      "windows": {
+        "sun": [
+          {
+            "start": "2026-01-01T00:00:00Z",
+            "end": "2026-01-06T03:00:00Z",
+            "duration_h": 123,
+            "state": false,
+            "truncated_start": true,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-01-06T03:00:00Z",
+            "end": "2026-01-16T15:00:00Z",
+            "duration_h": 252,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-01-16T15:00:00Z",
+            "end": "2026-02-04T22:00:00Z",
+            "duration_h": 463,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-02-04T22:00:00Z",
+            "end": "2026-02-14T18:00:00Z",
+            "duration_h": 236,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-02-14T18:00:00Z",
+            "end": "2026-03-06T17:00:00Z",
+            "duration_h": 479,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-06T17:00:00Z",
+            "end": "2026-03-15T23:00:00Z",
+            "duration_h": 222,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-15T23:00:00Z",
+            "end": "2026-04-01T00:00:00Z",
+            "duration_h": 385,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": true,
+            "clipped_start": false,
+            "clipped_end": false
+          }
+        ]
+      },
+      "series": {
+        "start": "2026-01-01T00:00:00Z",
+        "end": "2026-04-01T00:00:00Z",
+        "step_s": 3600,
+        "bin_s": 324000,
+        "n": 24,
+        "agg": "sample",
+        "fields": {
+          "sun_el_deg": [
+            3.150306,
+            4.471516,
+            3.885934,
+            1.712731,
+            -0.789123,
+            -2.162072,
+            -1.618626,
+            0.463005,
+            2.768972,
+            3.86191,
+            3.037925,
+            0.73145,
+            -1.741344,
+            -2.952464,
+            -2.223507,
+            -0.064703,
+            2.149896,
+            3.03452,
+            2.001681,
+            -0.397593,
+            -2.790764,
+            -3.787804,
+            -2.835078,
+            -0.580172
+          ]
+        }
+      },
+      "warnings": []
+    },
+    "apollo11": {
+      "metrics": {
+        "duration_h": 2160,
+        "pct_sun": 50.972222,
+        "pct_earth": 100,
+        "pct_both": 50.972222,
+        "pct_sun_no_earth": 0,
+        "longest_dark_h": 354,
+        "longest_dark_truncated": false,
+        "longest_comms_gap_h": 0,
+        "longest_comms_gap_truncated": false,
+        "longest_sun_h": 357,
+        "longest_sun_truncated": false,
+        "longest_earth_h": 2160,
+        "longest_earth_truncated": true,
+        "n_sun_windows": 4,
+        "n_dark_windows": 3,
+        "n_earth_windows": 1,
+        "n_comms_gaps": 0,
+        "mean_sun_el_lit_deg": 45.906382,
+        "mean_power_horizontal": 0.328234,
+        "mean_power_tracking": 0.508127
+      },
+      "windows": {
+        "sun": [
+          {
+            "start": "2026-01-01T00:00:00Z",
+            "end": "2026-01-09T05:00:00Z",
+            "duration_h": 197,
+            "state": true,
+            "truncated_start": true,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-01-09T05:00:00Z",
+            "end": "2026-01-23T23:00:00Z",
+            "duration_h": 354,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-01-23T23:00:00Z",
+            "end": "2026-02-07T20:00:00Z",
+            "duration_h": 357,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-02-07T20:00:00Z",
+            "end": "2026-02-22T13:00:00Z",
+            "duration_h": 353,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-02-22T13:00:00Z",
+            "end": "2026-03-09T10:00:00Z",
+            "duration_h": 357,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-09T10:00:00Z",
+            "end": "2026-03-24T02:00:00Z",
+            "duration_h": 352,
+            "state": false,
+            "truncated_start": false,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          },
+          {
+            "start": "2026-03-24T02:00:00Z",
+            "end": "2026-04-01T00:00:00Z",
+            "duration_h": 190,
+            "state": true,
+            "truncated_start": false,
+            "truncated_end": true,
+            "clipped_start": false,
+            "clipped_end": false
+          }
+        ]
+      },
+      "series": {
+        "start": "2026-01-01T00:00:00Z",
+        "end": "2026-04-01T00:00:00Z",
+        "step_s": 3600,
+        "bin_s": 324000,
+        "n": 24,
+        "agg": "sample",
+        "fields": {
+          "sun_el_deg": [
+            80.731263,
+            53.530462,
+            8.06615,
+            -37.503209,
+            -83.146917,
+            -51.13495,
+            -5.451461,
+            40.151772,
+            85.469729,
+            48.793527,
+            3.276301,
+            -42.333079,
+            -88.006225,
+            -46.230962,
+            -0.512467,
+            45.125761,
+            89.09154,
+            43.765463,
+            -1.818479,
+            -47.481092,
+            -86.563001,
+            -40.940628,
+            4.819513,
+            50.500916
+          ]
+        }
+      },
+      "warnings": [
+        "smooth-sphere horizon (dem_source none:outside-pgda-coverage)",
+        "flat horizon: terrain shadowing not modelled"
+      ]
+    }
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "api_version": "1.0.0",
+  "field_case": "snake_case",
+  "time_format": "ISO 8601 UTC YYYY-MM-DDTHH:MM:SSZ; ranges are [start, end) with exclusive end",
+  "site_groups": [
+    "south_pole",
+    "reference",
+    "apollo",
+    "far_side"
+  ],
+  "window_kinds": [
+    "sun",
+    "earth",
+    "both"
+  ],
+  "series_fields": [
+    {
+      "name": "sun_az_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Sun azimuth [0,360), clockwise from local north"
+    },
+    {
+      "name": "sun_el_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Sun center elevation (airless, apparent)"
+    },
+    {
+      "name": "sun_dist_km",
+      "unit": "km",
+      "type": "number",
+      "nullable": false,
+      "description": "Observer -> Sun center distance"
+    },
+    {
+      "name": "sun_semidiam_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Solar angular semi-diameter"
+    },
+    {
+      "name": "horizon_el_sun_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Terrain horizon elevation at the Sun azimuth"
+    },
+    {
+      "name": "sun_clearance_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "sun_el - horizon_el_sun (Sun center)"
+    },
+    {
+      "name": "sun_fraction",
+      "unit": "1",
+      "type": "number",
+      "nullable": false,
+      "description": "Visible fraction of the solar disc (0..1)"
+    },
+    {
+      "name": "sun_visible",
+      "unit": "bool",
+      "type": "boolean",
+      "nullable": false,
+      "description": "Upper limb above the terrain horizon"
+    },
+    {
+      "name": "power_horizontal",
+      "unit": "1",
+      "type": "number",
+      "nullable": false,
+      "description": "Relative power of a flat-lying panel (0..1)"
+    },
+    {
+      "name": "power_tracking",
+      "unit": "1",
+      "type": "number",
+      "nullable": false,
+      "description": "Relative power of a Sun-tracking panel (0..1)"
+    },
+    {
+      "name": "irradiance_tracking_wm2",
+      "unit": "W/m2",
+      "type": "number",
+      "nullable": false,
+      "description": "Irradiance on a Sun-tracking panel"
+    },
+    {
+      "name": "earth_az_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Earth azimuth [0,360)"
+    },
+    {
+      "name": "earth_el_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Earth center elevation"
+    },
+    {
+      "name": "earth_dist_km",
+      "unit": "km",
+      "type": "number",
+      "nullable": false,
+      "description": "Observer -> Earth center distance"
+    },
+    {
+      "name": "earth_semidiam_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Earth angular semi-diameter"
+    },
+    {
+      "name": "horizon_el_earth_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "Terrain horizon elevation at the Earth azimuth"
+    },
+    {
+      "name": "earth_clearance_deg",
+      "unit": "deg",
+      "type": "number",
+      "nullable": false,
+      "description": "earth_el - horizon_el_earth"
+    },
+    {
+      "name": "earth_fraction",
+      "unit": "1",
+      "type": "number",
+      "nullable": false,
+      "description": "Visible fraction of the Earth disc (informative)"
+    },
+    {
+      "name": "earth_visible",
+      "unit": "bool",
+      "type": "boolean",
+      "nullable": false,
+      "description": "earth_clearance > min_earth_clearance_deg (DTE link possible)"
+    },
+    {
+      "name": "both_visible",
+      "unit": "bool",
+      "type": "boolean",
+      "nullable": false,
+      "description": "sun_visible AND earth_visible"
+    },
+    {
+      "name": "hours_until_sunset",
+      "unit": "h",
+      "type": "number",
+      "nullable": true,
+      "description": "0 if dark; else hours to the next dark window; null = none before run end"
+    },
+    {
+      "name": "hours_until_sunrise",
+      "unit": "h",
+      "type": "number",
+      "nullable": true,
+      "description": "0 if lit; else hours to the next sunrise; null = none before run end"
+    },
+    {
+      "name": "hours_until_earthset",
+      "unit": "h",
+      "type": "number",
+      "nullable": true,
+      "description": "0 if Earth not visible; else hours to the next comms gap"
+    },
+    {
+      "name": "hours_until_earthrise",
+      "unit": "h",
+      "type": "number",
+      "nullable": true,
+      "description": "0 if Earth visible; else hours to the next Earth rise"
+    }
+  ],
+  "rank_metrics": [
+    "pct_sun",
+    "pct_earth",
+    "pct_both",
+    "pct_sun_no_earth"
+  ],
+  "default_rank_weights": {
+    "pct_sun": 0.4,
+    "pct_earth": 0.3,
+    "pct_both": 0.3
+  },
+  "alt_date_objectives": [
+    "balanced",
+    "sun",
+    "earth",
+    "both",
+    "energy",
+    "earliest"
+  ],
+  "limits": {
+    "series_max_fields": 8,
+    "series_max_points_default": 2000,
+    "series_max_points_max": 5000,
+    "compare_min_sites": 2,
+    "compare_max_sites": 4,
+    "alt_dates_max_results": 50,
+    "job_max_range_days": 366,
+    "job_step_min_allowed": [
+      60
+    ],
+    "job_queue_max": 20,
+    "rate_limit_per_min": 300,
+    "rate_limit_post_per_min": 5
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "type": "https://lunarnav.example/errors/job-not-found",
+  "title": "Job not found",
+  "status": 404,
+  "code": "JOB_NOT_FOUND",
+  "detail": "job \"j_doesnotexist0\" does not exist (or expired)",
+  "instance": "/api/v1/jobs/j_doesnotexist0"
+}
