@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { comparisonLocation, diskPosition, missionSites, pairLocation, pairCenter } from "../lib/globe-sites.ts";
 import type { GlobeSite } from "../lib/globe-sites.ts";
-import { drawGlobe, globeCenter } from "../lib/moon-globe.ts";
+import { drawGlobe, globeCenter, globePointAt, globeCenterForAnchor } from "../lib/moon-globe.ts";
 
 // Red encodes longitude columns, green latitude rows. Angles are independent of fixture observations.
 const texture = { width: 4, height: 2, data: new Uint8ClampedArray(
@@ -71,6 +71,52 @@ test("magnification keeps a site centered and clips zoomed points outside the ci
   assert.equal(full.data[3], 0);
   assert.equal(close.data[3], 255);
   assert.deepEqual(close.data.slice(96, 100), full.data.slice(96, 100));
+});
+
+test("pointer zoom keeps the same lunar surface at an off-center pixel, including near the seam", () => {
+  const pointer = { x: 0.43, y: -0.28 };
+  for (const center of [{ longitude: 174, latitude: 18 }, { longitude: -35, latitude: -75 }]) {
+    const anchor = globePointAt(center, 1, pointer)!;
+    const projected = diskPosition(anchor, center)!;
+    assert.ok(Math.hypot(projected.x - pointer.x, projected.y - pointer.y) < 1e-12);
+    const closer = globeCenterForAnchor(anchor, pointer, 3, center);
+    const after = diskPosition(anchor, closer, 3)!;
+    assert.ok(Math.hypot(after.x - pointer.x, after.y - pointer.y) < 1e-12);
+    const restored = globeCenterForAnchor(anchor, pointer, 1, closer);
+    const back = diskPosition(anchor, restored)!;
+    assert.ok(Math.hypot(back.x - pointer.x, back.y - pointer.y) < 1e-12);
+    assert.ok(Math.abs(globeCenter(restored.longitude - center.longitude, 0).longitude) < 1e-10);
+    assert.ok(Math.abs(restored.latitude - center.latitude) < 1e-10);
+  }
+});
+
+test("a moving pinch midpoint carries a south-polar landmark and preserves its original projection branch", () => {
+  const center = { longitude: 24, latitude: -84 };
+  const landmark = { longitude: 176, latitude: -88 };
+  const originalPixel = diskPosition(landmark, center)!;
+  const anchor = globePointAt(center, 1, originalPixel)!;
+  const same = globeCenterForAnchor(anchor, originalPixel, 1, center);
+  assert.ok(Math.hypot(same.longitude - center.longitude, same.latitude - center.latitude) < 1e-10);
+  const midpoint = { x: -0.036, y: -0.09 };
+  const zoomed = globeCenterForAnchor(anchor, midpoint, 3, center);
+  const after = diskPosition(landmark, zoomed, 3)!;
+  assert.ok(Math.hypot(midpoint.x - after.x, midpoint.y - after.y) < 1e-12);
+});
+
+test("unreachable polar, off-disk and invalid anchors preserve the current view", () => {
+  const center = { longitude: 135, latitude: -81 };
+  const pole = { longitude: -144, latitude: -90 };
+  assert.equal(globeCenterForAnchor(pole, { x: 0.2, y: 0 }, 1, center), center);
+  const centered = globeCenterForAnchor(pole, { x: 0, y: 0 }, 3, center);
+  assert.equal(centered.longitude, center.longitude);
+  assert.equal(centered.latitude, -90);
+  for (const point of [{ x: 0.9, y: 0.9 }, { x: NaN, y: 0 }]) {
+    assert.equal(globePointAt(center, 3, point), null);
+    assert.equal(globeCenterForAnchor(pole, point, 3, center), center);
+  }
+  assert.equal(globePointAt(center, 0, { x: 0, y: 0 }), null);
+  const limb = globePointAt({ longitude: 0, latitude: 0 }, 1, { x: 1, y: 0 })!;
+  assert.deepEqual(limb, { longitude: 90, latitude: 0 });
 });
 
 test("dated sunlight maps the projected surface normal into the east-positive lunar frame", () => {
