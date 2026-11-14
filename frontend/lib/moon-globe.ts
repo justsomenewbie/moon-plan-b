@@ -6,6 +6,55 @@ export function globeCenter(longitude: number, latitude: number) {
   return { longitude: ((longitude + 180) % 360 + 360) % 360 - 180, latitude: Math.max(-90, Math.min(90, latitude)) };
 }
 
+type DiskPoint = { x: number; y: number };
+const radians = Math.PI / 180;
+const tolerance = 1e-12;
+
+// Screen coordinates run right and down in viewport radii, independent of magnification.
+function surfaceNormal(position: DiskPoint, zoom: number) {
+  if (!Number.isFinite(zoom) || zoom <= 0 || !(Math.hypot(position.x, position.y) <= 1 + tolerance)) return null;
+  const east = position.x / zoom, north = -position.y / zoom;
+  const depthSquared = 1 - east * east - north * north;
+  if (depthSquared < -tolerance) return null;
+  return { east, north, depth: Math.sqrt(Math.max(0, depthSquared)) };
+}
+
+export function globePointAt(center: MapPoint, zoom: number, position: DiskPoint): MapPoint | null {
+  const normal = surfaceNormal(position, zoom);
+  if (!normal || !Number.isFinite(center.longitude) || !(Math.abs(center.latitude) <= 90)) return null;
+  const { east, north, depth } = normal;
+  const latitude = center.latitude * radians;
+  const cos = Math.cos(latitude), sin = Math.sin(latitude);
+  const polar = north * cos + depth * sin;
+  const parallel = depth * cos - north * sin;
+  return globeCenter(center.longitude + Math.atan2(east, parallel) / radians,
+    Math.atan2(polar, Math.hypot(east, parallel)) / radians);
+}
+
+export function globeCenterForAnchor(anchor: MapPoint, position: DiskPoint, zoom: number, previousCenter: MapPoint): MapPoint {
+  const normal = surfaceNormal(position, zoom);
+  if (!normal || !Number.isFinite(anchor.longitude) || !(Math.abs(anchor.latitude) <= 90)) return previousCenter;
+  const { east, north, depth } = normal;
+  const latitude = anchor.latitude * radians;
+  const polar = Math.sin(latitude), radius = Math.cos(latitude);
+  // A near-polar landmark cannot reach every horizontal pixel in a north-up projection.
+  if (Math.abs(east) > radius + tolerance) return previousCenter;
+  const meridianLength = Math.sqrt(Math.max(0, (radius - east) * (radius + east)));
+  let nearest = previousCenter, leastTurn = Infinity;
+  // Both sides of the central meridian can solve the same north-up projection near a pole.
+  for (const parallel of [meridianLength, -meridianLength]) {
+    const tilt = Math.hypot(north, depth) < tolerance ? previousCenter.latitude :
+      Math.atan2(depth * polar - north * parallel, depth * parallel + north * polar) / radians;
+    if (Math.abs(tilt) > 90 + tolerance) continue;
+    const longitude = radius < tolerance ? previousCenter.longitude : anchor.longitude - Math.atan2(east, parallel) / radians;
+    const candidate = globeCenter(longitude, tilt);
+    const turn = Math.hypot(globeCenter(candidate.longitude - previousCenter.longitude, 0).longitude,
+      candidate.latitude - previousCenter.latitude);
+    if (turn < leastTurn) { nearest = candidate; leastTurn = turn; }
+  }
+  return nearest;
+}
+
 // Inverse orthographic projection of a north-up, zero-meridian-centered color map.
 export function drawGlobe(texture: Raster, frame: Raster, longitude: number, latitude: number, zoom = 1, subsolar?: MapPoint) {
   const lon = longitude * Math.PI / 180, lat = latitude * Math.PI / 180;

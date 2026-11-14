@@ -28,6 +28,25 @@ try {
     await surface.hover();
     await page.mouse.wheel(0, -100); await zoom(page, "partial");
     await page.mouse.wheel(0, 400); await zoom(page, 1);
+    if (route === "/compare") {
+      await globe.locator("#globe-site").selectOption("Athena · IM-2");
+      await surface.focus(); await surface.press("+"); await zoom(page, 2);
+      const expand = globe.getByRole("button", { name: "Expand globe" });
+      await expand.click();
+      const dialog = page.locator("dialog:modal");
+      await dialog.waitFor(); await zoom(page, 1);
+      await surface.focus(); await surface.press("ArrowUp");
+      const marker = dialog.locator('.site-pin[data-pin="1"]');
+      const point = await marker.boundingBox();
+      await page.mouse.move(point.x + point.width / 2, point.y + point.height / 2);
+      await page.mouse.wheel(0, -120); await zoom(page, "partial");
+      const after = await marker.boundingBox();
+      assert(Math.hypot(after.x - point.x, after.y - point.y) < 2);
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+      assert(await expand.evaluate(button => button === document.activeElement));
+      assert.equal(await globe.locator("#globe-site").inputValue(), "Athena · IM-2");
+    }
     assert(await globe.locator('a[href="https://svs.gsfc.nasa.gov/4720/"]').isVisible());
     await globe.getByRole("button", { name: "Return to photograph" }).click();
     assert.equal(await globe.locator("canvas").count(), 0);

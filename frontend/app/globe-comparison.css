@@ -334,3 +334,62 @@
   border: 1px solid #f3ce79; border-radius: 50%; color: #ffe19a;
   background: #252016; font-size: 1rem; line-height: 1;
 }
+
+.globe-view-slot { min-width: 0; }
+.globe-view {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+}
+.globe-view .lunar-frame, .globe-view canvas { touch-action: none; }
+.globe-full-bar, .globe-full-footer { display: none; }
+.globe-expand { display: flex; margin: 1.5rem auto 0; min-height: 44px; }
+.globe-view:modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  height: 100dvh;
+  max-height: none;
+  box-sizing: border-box;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: #0a0e14;
+  color: #f2f5fa;
+  overscroll-behavior: contain;
+  overflow: auto;
+}
+.globe-view::backdrop { background: #0a0e14; }
+body:has(.globe-view:modal) { overflow: hidden; }
+.globe-view:modal .globe-viewport {
+  container-type: size;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+}
+.globe-view:modal .lunar-frame {
+  width: 100cqmin;
+  max-width: none;
+  box-shadow: 0 0 0 1px #38424e;
+}
+.globe-view:modal .globe-full-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.globe-full-bar strong { font-size: 1rem; min-width: 0; overflow-wrap: anywhere; }
+.globe-view:modal .globe-full-footer { display: grid; justify-items: center; gap: .3rem; text-align: center; }
+.globe-full-footer p { font-size: .85rem; color: #cbd4df; }
+.globe-full-footer output { align-self: center; min-width: 4ch; font-variant-numeric: tabular-nums; }
+.globe-view:modal button { border-color: #758394; }
+.globe-view:modal .globe-close { min-height: 44px; background: #192331; color: #f2f5fa; white-space: nowrap; }
