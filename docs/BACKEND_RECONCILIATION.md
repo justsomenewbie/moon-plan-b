@@ -9,7 +9,7 @@ Chung owns the production OpenAPI. The FE requests one aggregate per UTC range a
 At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The frontend requests the following bounded comparison through its same-origin proxy. Changing the requested spacing affects the displayed series. Full visibility intervals still come from the source grid.
 
 ```text
-GET /api/v1/dataset?site_ids=im1_odysseus,im2_athena&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&step_s=3600&horizon_step_deg=0.5&max_points=10000&include=horizon,series,windows,metrics
+GET /api/v1/dataset?site_ids=im1_odysseus,im2_athena&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&step_s=3600&horizon_step_deg=0.5&max_points=10000&include=horizon,series,windows,metrics,criteria&criteria_hours=24,72,168
 ```
 
 At 14:46 Hanoi the bare link again returned HTTP 422. Its detail reported 230,000 requested series points for 23 sites against a 50,000-point limit and suggested at most 2,173 per site. The error title was `Range outside run`, although the reported cause was the point limit. The bounded example above returned 200, with 168 UTC samples and 721 horizon points per site.
@@ -20,7 +20,11 @@ At 15:15–15:16 Hanoi a fresh request to the same instance returned the identic
 
 ### Two dates at one site
 
-The live frontend uses two bounded aggregate GETs, each with one site, the same run and `include=windows,metrics`. On run `B_spice_pgda_bruteforce_2026_2030`, Athena returned 0 hours of sunlight, 72 hours of Earth visibility and 0 hours of overlap from December 1 at 00:00 UTC to December 4 at 00:00 UTC. From December 18 at 00:00 UTC to December 21 at 00:00 UTC, all three totals were 72 hours. Both windows had complete hourly coverage and exclusive ends. The single joint interval in the second window reached both query boundaries. All 144 sets of hourly visibility flags matched the separate site windows. The point-limit diagnostic above does not affect these bounded reads.
+The live frontend uses two bounded aggregate GETs, each with one site, the same run and `include=windows,metrics,criteria`. On run `B_spice_pgda_bruteforce_2026_2030`, Athena returned 0 hours of sunlight, 72 hours of Earth visibility and 0 hours of overlap from December 1 at 00:00 UTC to December 4 at 00:00 UTC. From December 18 at 00:00 UTC to December 21 at 00:00 UTC, all three totals were 72 hours. Both windows had complete hourly coverage and exclusive ends. The single joint interval in the second window reached both query boundaries. All 144 sets of hourly visibility flags matched the separate site windows. The point-limit diagnostic above does not affect these bounded reads.
+
+### Continuous overlap requirements
+
+The producer evaluates each minimum duration against the longest simultaneous Sun/Earth interval in the evaluated range, taking account of the sampling step and interval boundaries. For Odysseus from November 30 at 20:00 UTC to December 2 at 00:00 UTC, the producer reported a 24-hour interval and `borderline` at the 24-hour threshold. Its reason gives a possible in-range duration greater than 23 hours and at most 24 hours. In the complete December 18–21 Athena example both edges of the 72-hour interval were clipped at the query boundaries. The producer returned `meets` at 72 hours and `below` at 168. The interval may extend beyond the range.
 
 ## Per-site checks before the aggregate was available
 

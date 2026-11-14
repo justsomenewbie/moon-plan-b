@@ -4,7 +4,9 @@ The [producer OpenAPI extract](../contracts/openapi.dataset.json) defines the li
 
 Live observation links use `view_site` for the inspected site and `at` for its returned UTC. Only `site_id` changes the requested catalog for a custom result. The browser restores the selected observation after the pinned run loads. A site or timestamp absent from that response raises a selection error. Older links default to the first available observation. Local producer imports remain local.
 
-The standalone date comparison at `/compare-dates` requires `run_id`, `site_id`, `from`, `to`, `from2` and `to2`. Each query field occurs once. Each window has the same positive duration, up to 31 days. Opening the link loads one summary per UTC range, each pinned to the same run and single site, with `include=windows,metrics`. The client checks site, run, manifest identity, sampling step and returned UTC bounds before displaying the pair. The two-date workflow uses the existing aggregate contract.
+The standalone date comparison at `/compare-dates` requires `run_id`, `site_id`, `from`, `to`, `from2` and `to2`. Each query field occurs once. Each window has the same positive duration, up to 31 days. Opening the link loads one summary per UTC range, each pinned to the same run and single site, with `include=windows,metrics,criteria` and `criteria_hours=24,72,168`. The client checks site, run, manifest identity, sampling step and returned UTC bounds before displaying the pair. The two-date workflow uses the existing aggregate contract.
+
+For each live site, the aggregate supplies `minimum_hours`, `longest_both_h` as the metric, `value_h`, `value_clipped`, `result` and `reason`. Live requests check all requested thresholds. The importer accepts other threshold lists supplied by the producer and older exports without a criteria section. The display retains the reason in its original language.
 
 ## Synthetic API and legacy ideal-horizon imports
 
