@@ -34,10 +34,13 @@ function bounds(request: Request) {
   return Object.hasOwn(selected, request.priority) && start >= 0 && end > start && end <= archive.sampleCount ? { start, end } : null;
 }
 function observed(edges: number[], start: number, end: number) {
-  let hours = 0;
-  for (let i = 0; i < edges.length && edges[i] < end; i += 2)
-    hours += Math.max(0, Math.min(end, edges[i + 1]) - Math.max(start, edges[i]));
-  return hours;
+  let hours = 0, longest = 0;
+  for (let i = 0; i < edges.length && edges[i] < end; i += 2) {
+    const overlap = Math.max(0, Math.min(end, edges[i + 1]) - Math.max(start, edges[i]));
+    hours += overlap;
+    longest = Math.max(longest, overlap);
+  }
+  return { hours, longest };
 }
 
 // Counts and ties are hourly model samples. Each window is [start,end) in UTC.
@@ -48,8 +51,9 @@ export function rankArchiveB2(request: Request) {
   const pct = (n: number) => Number((100 * n / duration).toFixed(6));
   const rows = archiveB2Run.sites.map(({ id, name }) => {
     const mask = masks[id];
-    const sunHours = observed(mask.sun, start, end), earthHours = observed(mask.earth, start, end), bothHours = observed(mask.both, start, end);
-    return { id, name, sunHours, earthHours, bothHours, pctSun: pct(sunHours), pctEarth: pct(earthHours), pctBoth: pct(bothHours) };
+    const sunHours = observed(mask.sun, start, end).hours, earthHours = observed(mask.earth, start, end).hours;
+    const { hours: bothHours, longest: longestBothHours } = observed(mask.both, start, end);
+    return { id, name, sunHours, earthHours, bothHours, longestBothHours, pctSun: pct(sunHours), pctEarth: pct(earthHours), pctBoth: pct(bothHours) };
   });
   const field = selected[request.priority];
   rows.sort((a, b) => b[field] - a[field] || a.name.localeCompare(b.name, "en") || a.id.localeCompare(b.id, "en"));

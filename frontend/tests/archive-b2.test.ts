@@ -22,6 +22,19 @@ test("matches production B2 site rankings and hourly totals, including an arbitr
   assert.equal(rankArchiveB2({ ...week, from: "2026-01-01", to: "2031-01-01" })?.rows.length, 23);
 });
 
+test("clips separate joint windows at both UTC bounds and keeps a confirmed zero", () => {
+  // The B2 Athena intervals end November 1 at 11:00 and resume November 15 at 05:00.
+  const range = { ...week, from: "2026-11-01T04:00:00Z", to: "2026-11-15T13:00:00Z" };
+  const ranking = rankArchiveB2(range)!;
+  const athena = ranking.rows.find(site => site.id === "im2_athena")!;
+  assert.equal(athena.bothHours, 7 + 8);
+  assert.equal(athena.longestBothHours, 8);
+  assert.equal(ranking.rows.find(site => site.id === "psr_shackleton_floor")?.longestBothHours, 0);
+
+  const gap = rankArchiveB2({ ...range, from: "2026-11-01T11:00:00Z", to: "2026-11-15T05:00:00Z" })!;
+  assert.equal(gap.rows.find(site => site.id === "im2_athena")?.longestBothHours, 0);
+});
+
 test("scores only eligible UTC starts, counts every tie and caps the displayed candidates", () => {
   const input = { from: "2026-11-15", to: "2026-11-16", priority: "joint" as const, siteId: "im2_athena", missionHours: 3 };
   const x = searchArchiveB2({ ...input, earliest: "2026-11-15T03:00", latest: "2026-11-15T06:00:00Z" })!;

@@ -62,7 +62,9 @@ function storedResult(from: string, to: string, priority: PlannerPriority, sourc
     const site = run.sites.find(s => s.id === row.id);
     const location = site ? { point: { latitude: site.lat_deg, longitude: site.lon_deg } }
       : { reason: "This release supplies no coordinates for this site." };
-    return { id: row.id, name: row.name, location, smoothSphere: usesSmoothSphere(site), hours: [row.sunHours, row.earthHours, row.bothHours] };
+    const longest = "longestBothHours" in row && typeof row.longestBothHours === "number" ? row.longestBothHours : undefined;
+    return { id: row.id, name: row.name, location, smoothSphere: usesSmoothSphere(site),
+      hours: [row.sunHours, row.earthHours, row.bothHours], longest };
   }) };
 }
 
@@ -99,7 +101,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
   const flatLeaders = best.filter(row => row.smoothSphere && (row.hours?.[column] ?? 0) > 0);
   const pairRange = savedPlannerWindows.pair;
   const presets = savedPlannerWindows.catalog.filter(range => !duration || Date.parse(range.to) - Date.parse(range.from) === Number(duration) * 3600000);
-  const showLongest = result?.scope === "live" && result.missionHours === undefined;
+  const showLongest = source !== "saved" && result?.missionHours === undefined;
   function detailHref(siteId: string) {
     if (!result) return undefined;
     const mission = result.rows.find(row => row.id === siteId)?.missionWindow;
