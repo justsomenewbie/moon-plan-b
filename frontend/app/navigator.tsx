@@ -12,7 +12,7 @@ import type { DisplayedPair } from "./terrain-pair";
 import TerrainResult from "./terrain-result";
 import type { TerrainTarget, WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
-import { LunarResources, SiteFooter, SiteHeader, SkyBackground } from "./site-chrome";
+import { SiteFooter, SiteHeader, SkyBackground } from "./site-chrome";
 import AstronautGuide from "./astronaut-guide";
 import { workspaceGuideContext } from "../lib/api/guide-chat";
 import MoonGlobe from "./moon-globe";
@@ -456,7 +456,6 @@ export default function Navigator() {
       workspace={guideContext} workspaceActions={{ workspace: comparisonHref, saved: "#observed-week",
         sources: !loading && (data || terrain) ? "#sources" : undefined,
         compareSites: guideMode("sites"), compareDates: guideMode("dates") }} />
-    <LunarResources />
     <SiteFooter />
   </div>;
 }
