@@ -17,7 +17,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
   const clippedRange = range.start !== range.requested_start || range.end !== range.requested_end;
   return <main id="workspace" className="terrain-result" aria-labelledby="terrain-title" tabIndex={-1}>
     <div className="section-heading">
-      <h2 id="terrain-title">{t("Sun and Earth visibility above the terrain horizon")}</h2>
+      <h2 id="terrain-title">{t("Sun and Earth visibility above the site horizon")}</h2>
       <div className="terrain-print flex flex-wrap items-center gap-3">
         {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t("Open comparison in a new tab")}</a>}
         <button type="button" className="button outline terrain-print" onClick={onPrint}>{t("Print report")}</button>

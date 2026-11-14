@@ -39,17 +39,18 @@ function SkyTracks({ site, sample, sourceStep }: { site: Site; sample: number; s
   }, [horizon, series, site.coverage_in_range, sourceStep]);
   if (!horizon && !series?.t.length) return null;
 
+  const horizonLabel = horizon?.method === "flat" ? "Smooth-sphere horizon" : "Site horizon";
   return <figure className={styles.sky}>
-    <figcaption><h4>{t("Terrain horizon and apparent body positions")}</h4>
+    <figcaption><h4>{t("Site horizon and apparent body positions")}</h4>
       <p className="muted text-sm">{t("Body tracks show centre elevation. Visibility uses the flags returned by the model.")}</p></figcaption>
     <div className={styles.legend}>
-      {horizon && <span>━ {t("Terrain horizon")}</span>}
+      {horizon && <span>━ {t(horizonLabel)}</span>}
       {series?.t.length ? <><span className="sun">● {t("Sun")}</span><span className="earth">■ {t("Earth")}</span></> : null}
     </div>
     <p className="muted text-xs">{t("Elevation · degrees")}</p>
     <div className={`plot-frame ${styles.frame}`}>
       <div className="y-ticks" aria-hidden="true"><span>{chart.high}°</span><span>{(chart.high + chart.low) / 2}°</span><span>{chart.low}°</span></div>
-      <div className="plot-area"><svg className="timeline-svg" viewBox="0 0 360 100" preserveAspectRatio="none" role="img" aria-label={t("Terrain horizon and apparent body positions")}>
+      <div className="plot-area"><svg className="timeline-svg" viewBox="0 0 360 100" preserveAspectRatio="none" role="img" aria-label={t("Site horizon and apparent body positions")}>
         {[0, 50, 100].map(y => <line key={y} x1="0" x2="360" y1={y} y2={y} className="grid-line" />)}
         {[0, 90, 180, 270, 360].map(x => <line key={x} x1={x} x2={x} y1="0" y2="100" className="grid-line" />)}
         {chart.mask && <path data-horizon="" d={chart.mask} className={styles.mask} />}

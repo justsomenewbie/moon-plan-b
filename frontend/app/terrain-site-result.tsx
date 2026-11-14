@@ -30,6 +30,14 @@ export function SiteCsvLinks({ siteId, runId, range }: { siteId: string; runId: 
   </div>;
 }
 
+export function SiteHorizonSource({ method, source }: { method: string; source: string }) {
+  const { t } = useLanguage();
+  return <p className="muted text-sm break-words">{t("Site horizon method")} · {method}<br />
+    {t("Terrain elevation model")} · {source}
+    {source.startsWith("none:outside-") && <><br />{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</>}
+  </p>;
+}
+
 export function SiteResult({ site, liveResult }: {
   site: TerrainSummary["sites"][number];
   liveResult?: Pick<TerrainSummary, "run" | "range">;
@@ -43,6 +51,7 @@ export function SiteResult({ site, liveResult }: {
     <h3>{site.name}</h3>
     <p className="muted text-sm">{t("Requested coverage")} · {t(site.coverage)}<br />
       {t("Evaluated coverage")} · {t(site.coverage_in_range)}</p>
+    {site.horizon && <SiteHorizonSource method={site.horizon.method} source={site.horizon.dem_source} />}
     {metrics ? <dl className="metadata mt-4">
       <div><dt>{t("Total time with both visible")}</dt><dd><strong>{metrics.both_hours} h</strong> / {metrics.duration_h} h</dd></div>
       <div><dt>{t("Longest joint window")}</dt><dd>{metrics.longest_both_h} h</dd></div>

@@ -6,7 +6,7 @@ import { getTerrainDateSites, getTerrainDates, type TerrainDateRequest } from ".
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { terrainDatesHref } from "../lib/terrain-date-link";
 import { useLanguage } from "./language";
-import { SiteResult, TimeRange } from "./terrain-site-result";
+import { SiteHorizonSource, SiteResult, TimeRange } from "./terrain-site-result";
 
 type Bounds = TerrainDateRequest["first"];
 type Props = ({ result: TerrainSummary; baseWindow?: Bounds; initialRequest?: never }
@@ -116,10 +116,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
           {t("Run ID")} · <code className="break-all">{completed.first.run.run_id}</code></p>
         <p className="muted text-sm">{completed.first.attribution}</p>
         {comparedSite
-          ? <p className="muted text-sm break-words">{t("Site horizon method")} · {comparedSite.horizonMethod}<br />
-              {t("Terrain elevation model")} · {comparedSite.demSource}
-              {comparedSite.demSource.startsWith("none:outside-") && <><br />{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</>}
-            </p>
+          ? <SiteHorizonSource method={comparedSite.horizonMethod} source={comparedSite.demSource} />
           : <p className="muted text-sm">{t("Site horizon details are unavailable.")}</p>}
         <div className="week-sites">{(["first", "second"] as const).map(key => {
           const response = completed[key], request = completed.request[key];
