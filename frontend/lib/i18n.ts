@@ -6,6 +6,10 @@ export const savedLocale = (value: string | null): Locale => value === "vi" ? "v
 
 // Translate interface text only; producer evidence is rendered verbatim.
 export const vietnamese: Record<string, string> = {
+  "Saved run B2": "Lần chạy B2 đã lưu",
+  "Open saved run B2": "Mở lần chạy B2 đã lưu",
+  "Open the earlier run B archive": "Mở kho dữ liệu của lần chạy B trước đó",
+  "Saved hourly visibility for all 23 sites": "Tầm nhìn theo giờ đã lưu cho cả 23 địa điểm",
   "Creating, tracking and cancelling custom-site jobs are unavailable on this public frontend.": "Giao diện công khai chưa hỗ trợ tạo, theo dõi và hủy tác vụ tính địa điểm tùy chọn.",
   "The frontend documents the routes it uses. Custom-site jobs require team access.": "Tài liệu này mô tả các route giao diện sử dụng. Tính địa điểm tùy chọn cần quyền truy cập của nhóm.",
   "Choose a terrain export for the shared model run.": "Chọn tệp xuất dữ liệu địa hình của lần chạy mô hình trong liên kết.",

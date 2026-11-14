@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isMock } from "../../lib/api/client";
 import { getPlannerRanking, getPlannerRun, type PlannerRun, type PlannerPriority } from "../../lib/api/planner";
+import { archiveB2Run, rankArchiveB2 } from "../../lib/archive-b2";
 import { getSavedPlannerRanking, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
 import { useLanguage, LanguageControl } from "../language";
 import MissionDateSearch from "../mission-date-search";
@@ -20,20 +21,21 @@ const DAY = 86400000;
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const midnight = (date: string) => date + "T00:00:00Z";
 const planLink = (params: Record<string, string>) => "/plan?" + new URLSearchParams(params);
+type PlannerSource = "live" | "saved" | "saved-b2";
 type SearchResult = {
   from: string; to: string; scope: "live" | "catalog" | "pair";
   rows: { id: string; name: string; hours: number[] | null; longest?: number; coverage?: string }[];
   leaders: string[];
 };
 
-function storedResult(from: string, to: string, priority: PlannerPriority): SearchResult | null {
-  const saved = getSavedPlannerRanking({ from, to, priority });
+function storedResult(from: string, to: string, priority: PlannerPriority, source: PlannerSource): SearchResult | null {
+  const saved = source === "saved-b2" ? rankArchiveB2({ from, to, priority }) : getSavedPlannerRanking({ from, to, priority });
   return saved && { ...saved, rows: saved.rows.map(s => ({ id: s.id, name: s.name, hours: [s.sunHours, s.earthHours, s.bothHours] })) };
 }
 
-function CatalogSearch({ run, first, last, priority, saved }: { run: PlannerRun; first: string; last: string; priority: PlannerPriority; saved: boolean }) {
+function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource }) {
   const { t } = useLanguage();
-  const [result, setResult] = useState<SearchResult | null>(() => saved ? storedResult(first, last, priority) : null);
+  const [result, setResult] = useState<SearchResult | null>(() => source === "live" ? null : storedResult(first, last, priority, source));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [metric, setMetric] = useState(priority);
@@ -50,8 +52,8 @@ function CatalogSearch({ run, first, last, priority, saved }: { run: PlannerRun;
       const from = midnight(String(form.get("from"))), to = midnight(String(form.get("to")));
       clear();
       if (from < run.start || to > run.end || from >= to) { setError("Choose an increasing UTC window inside the model run."); return; }
-      if (saved) {
-        const next = storedResult(from, to, metric);
+      if (source !== "live") {
+        const next = storedResult(from, to, metric, source);
         setResult(next);
         if (!next) setError("No saved observations cover this request. Choose a saved range below or connect to the team API.");
         return;
@@ -78,7 +80,7 @@ function CatalogSearch({ run, first, last, priority, saved }: { run: PlannerRun;
     </form>
     {pending && <p role="status">{t("Checking visibility for the catalog…")}</p>}
     {error && <p role="alert">{t(error)}</p>}
-    {saved && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{savedPlannerWindows.catalog.map(w => <a key={w.from} href={planLink({mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric})}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
+    {source === "saved" && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{savedPlannerWindows.catalog.map(w => <a key={w.from} href={planLink({mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric})}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
     {result && <section aria-label={t("Site search results")} className="plan-results">
       <h3>{t("Site search results")}</h3>
       <p><TimeRange start={result.from} end={result.to} /> · {t(criteria[metric])}</p>
@@ -101,35 +103,45 @@ function CatalogSearch({ run, first, last, priority, saved }: { run: PlannerRun;
 function Planner({ seed }: { seed: URLSearchParams }) {
   const { t } = useLanguage();
   const [mode, setMode] = useState(seed.get("mode") === "dates" ? "dates" : "sites");
-  const forced = seed.get("source") === "saved";
+  const requestedSource = seed.get("source");
+  const forced = requestedSource === "saved" || requestedSource === "saved-b2";
   const catalog = useQuery({ queryKey: ["mission-planner-run"], queryFn: ({signal}) => getPlannerRun(signal), enabled: !isMock && !forced, retry:false });
-  const saved = isMock || forced || !catalog.data;
-  const run = saved ? savedPlannerRun : catalog.data!;
+  const source: PlannerSource = requestedSource === "saved" ? "saved" : forced || isMock || !catalog.data ? "saved-b2" : "live";
+  const run = source === "saved-b2" ? archiveB2Run : source === "saved" ? savedPlannerRun : catalog.data!;
   const today = day(Date.now());
   const seedDay = (key: string, fallback: string) => {
     const v = seed.get(key);
     return v && /^\d{4}-\d\d-\d\d$/.test(v) && Number.isFinite(Date.parse(midnight(v))) && day(Date.parse(midnight(v))) === v ? v : fallback;
   };
   const localStart = savedPlannerWindows.pair.from.slice(0,10);
-  const first = seedDay("from", saved ? localStart : today >= run.start.slice(0,10) && today < run.end.slice(0,10) ? today : run.start.slice(0,10));
-  const last = seedDay("to", day(Math.min(Date.parse(midnight(first)) + (saved && mode === "sites" ? 1 : 7)*DAY, Date.parse(run.end))));
+  const first = seedDay("from", source === "saved" ? localStart : today >= run.start.slice(0,10) && today < run.end.slice(0,10) ? today : run.start.slice(0,10));
+  const last = seedDay("to", day(Math.min(Date.parse(midnight(first)) + (source === "saved" && mode === "sites" ? 1 : 7)*DAY, Date.parse(run.end))));
   const sort = seed.get("priority");
   const priority = sort === "sun" || sort === "earth" ? sort : "joint";
   const hours = Number(seed.get("missionHours"));
   const mission = Number.isSafeInteger(hours) && hours > 0 && hours <= (Date.parse(run.end)-Date.parse(run.start))/3600000 ? hours : undefined;
-  const savedParams = new URLSearchParams(seed); savedParams.set("source","saved"); savedParams.set("mode",mode);
-  if (!isMock && !forced && catalog.isPending) return <p role="status">{t("Connecting to the team API…")} <a href={"/plan?"+savedParams}>{t("Use saved data now")}</a></p>;
+  function sourceLink(next: PlannerSource) {
+    const params = new URLSearchParams(seed);
+    if (next === "live") params.delete("source"); else params.set("source", next);
+    params.set("mode", mode);
+    return "/plan?" + params;
+  }
+  if (!isMock && !forced && catalog.isPending) return <p role="status">{t("Connecting to the team API…")} <a href={sourceLink("saved-b2")}>{t("Use saved data now")}</a></p>;
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
-    <p className="plan-source">{saved ? t("Saved run B") : t("Live team API")} · <a href="/data">{t("Browse data and all original files")}</a></p>
+    <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · <a href={source === "saved" ? "/data#bundled-data" : source === "saved-b2" ? "/data#run-b2" : "/data"}>{t("Browse data and all original files")}</a></p>
     {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></p>}
-    {(!saved || forced && !isMock) && <a className="print:hidden" href={forced ? "/plan?" + new URLSearchParams([...savedParams].filter(([k]) => k !== "source")) : "/plan?"+savedParams}>{t(forced ? "Check live data" : "Use saved data now")}</a>}
+    <div className="flex flex-wrap gap-4 print:hidden">
+      {source !== "saved-b2" && <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>}
+      {source !== "saved" && <a href={sourceLink("saved")}>{t("Open the earlier run B archive")}</a>}
+      {forced && !isMock && <a href={sourceLink("live")}>{t("Check live data")}</a>}
+    </div>
     <div className="mode-switch print:hidden" role="group" aria-label={t("Choose how to search")}>
       <button type="button" aria-pressed={mode === "sites"} onClick={() => setMode("sites")}>{t("I have dates")}</button>
       <button type="button" aria-pressed={mode === "dates"} onClick={() => setMode("dates")}>{t("I have a site")}</button>
     </div>
-    {mode === "sites" ? <CatalogSearch key={String(saved)} run={run} first={first} last={last} priority={priority} saved={saved} /> :
-      saved ? <SavedLanding siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} /> :
+    {mode === "sites" ? <CatalogSearch key={source} run={run} first={first} last={last} priority={priority} source={source} /> :
+      source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialObjective={priority === "joint" ? "both" : priority} />}
   </>;

@@ -4,6 +4,8 @@ import { useState } from "react";
 import manifest from "../../public/data/run-b/manifest.json";
 import catalog from "../../public/data/run-b/catalog.json";
 import weeks from "../../lib/odysseus-athena-weeks.json";
+import { archiveB2Run } from "../../lib/archive-b2";
+import { TimeRange } from "../terrain-site-result";
 import { isMock } from "../../lib/api/client";
 import { LanguageControl, useLanguage } from "../language";
 import ThemeControl from "../theme-control";
@@ -47,12 +49,28 @@ export default function DataPage() {
     <main className="terrain-result mx-auto max-w-4xl space-y-8">
       <div>
         <h1 id="data-title" tabIndex={-1}>{text("Lunar data catalog", "Danh mục dữ liệu Mặt Trăng")}</h1>
-        <p className="lead">{text("Run B covers 23 catalog sites from 1 January 2026 through 31 December 2030, sampled every hour in UTC.",
+      </div>
+      <section id="run-b2" className="space-y-3" aria-labelledby="b2-title">
+        <h2 id="b2-title">{text("Run B2 · hourly visibility for all 23 sites", "Lần chạy B2 · tầm nhìn theo giờ cho cả 23 địa điểm")}</h2>
+        <p className="lead">{text("Compare sites or search landing times throughout five model years. The saved archive includes hourly Sun, Earth and joint visibility.", "So sánh địa điểm hoặc tìm giờ hạ cánh trong suốt 5 năm mô hình. Kho lưu trữ có trạng thái nhìn thấy Mặt Trời, Trái Đất và cả hai theo giờ.")}</p>
+        <p><TimeRange start={archiveB2Run.start} end={archiveB2Run.end} /> · {text("end exclusive", "không gồm mốc cuối")}</p>
+        <p><code>{archiveB2Run.runId}</code><br/><code className="hash">SHA-256 {archiveB2Run.manifestSha256}</code></p>
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/plan?source=saved-b2&mode=sites">{text("Compare sites with run B2", "So sánh địa điểm với lần chạy B2")}</a>
+          <a href="/plan?source=saved-b2&mode=dates">{text("Find landing hours with run B2", "Tìm giờ hạ cánh với lần chạy B2")}</a>
+        </div>
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/data/run-b2/visibility.json" download="run-b2-visibility.json">{text("Hourly visibility archive (JSON)", "Kho tầm nhìn theo giờ (JSON)")}</a>
+          <a href="/data/run-b2/catalog.json" download="run-b2-catalog.json">{text("B2 site catalog (JSON)", "Danh mục địa điểm B2 (JSON)")}</a>
+          <a href="/data/run-b2/manifest.json" download="run-b2-manifest.json">{text("B2 source manifest (JSON)", "Manifest nguồn B2 (JSON)")}</a>
+        </div>
+      </section>
+      <section className="space-y-3" aria-labelledby="bundled-data">
+        <h2 id="bundled-data">{text("Earlier run B · bundled sources", "Lần chạy B trước đó · nguồn có sẵn")}</h2>
+        <p>{text("Run B covers 23 catalog sites from 1 January 2026 through 31 December 2030, sampled every hour in UTC.",
           "Lần chạy B gồm 23 địa điểm, lấy mẫu mỗi giờ theo UTC từ ngày 1/1/2026 đến hết ngày 31/12/2030.")}</p>
         <code>{runId}</code>
-      </div>
-      <section className="space-y-3" aria-labelledby="bundled-data">
-        <h2 id="bundled-data">{text("Included with the app", "Dữ liệu có sẵn trong ứng dụng")}</h2>
+
         <p>{text("The manifest lists the original files and their SHA-256 checksums. The saved site catalog includes names, coordinates, terrain methods and full-run summary values.",
           "Manifest liệt kê các tệp gốc và mã SHA-256 của từng tệp. Danh mục địa điểm lưu sẵn có tên, tọa độ, phương pháp mô hình địa hình và số liệu tổng hợp của cả lần chạy.")}</p>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
@@ -78,7 +96,7 @@ export default function DataPage() {
           {text("Find landing times within the saved intervals", "Tìm giờ hạ cánh trong các khoảng đã lưu")}</a>
       </section>
       <section className="space-y-3" aria-labelledby="source-files">
-        <h2 id="source-files">{text("Original files on the team API", "Tệp gốc trên API của nhóm")}</h2>
+        <h2 id="source-files">{text("Original run B files on the team API", "Tệp gốc của lần chạy B trên API của nhóm")}</h2>
         <p>{text("The manifest indexes 94 files. Full hourly ephemerides and visibility tables, local horizons and full-run intervals are served by the backend.",
           "Manifest liệt kê 94 tệp. Backend cung cấp bảng thiên văn và trạng thái tầm nhìn mỗi giờ, đường chân trời địa phương và các khoảng tầm nhìn của cả lần chạy.")}</p>
         {isMock && <p className="data-notice">{text("This build has no team API configured. Use the routes below with the team API host.",

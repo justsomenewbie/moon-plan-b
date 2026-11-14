@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { archiveB2Run, searchArchiveB2 } from "../../lib/archive-b2";
 import { getSavedPlannerDates, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
 import { useLanguage } from "../language";
 import { TimeRange } from "../terrain-site-result";
@@ -11,8 +12,7 @@ type Fields = Required<Props> & { earliest: string; latest: string };
 const example: Fields = {
   siteId: "im2_athena", from: "2026-11-14", to: "2026-11-21", missionHours: 24, priority: "joint", earliest: "", latest: "",
 };
-const coverage = savedPlannerWindows.pair;
-const sites = savedPlannerRun.sites.filter(site => coverage.siteIds.includes(site.id));
+const legacySites = savedPlannerRun.sites.filter(site => savedPlannerWindows.pair.siteIds.includes(site.id));
 const metric = { joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const;
 const hour = 3600000;
 
@@ -35,12 +35,15 @@ function rank(fields: Fields) {
   });
   const best = rows[0][metric[fields.priority]];
   const stamp = (ms: number) => new Date(ms).toISOString().replace(".000Z", "Z");
-  return { saved, rows, best, first: stamp(first), last: stamp(last), ties: rows.filter(row => row[metric[fields.priority]] === best).length };
+  return { ...saved, rows: rows.slice(0, 5), nEvaluated: rows.length, best, first: stamp(first), last: stamp(last), ties: rows.filter(row => row[metric[fields.priority]] === best).length };
 }
 
-export default function SavedLanding({ siteId, from, to, missionHours, priority }: Props) {
+export default function SavedLanding({ siteId, from, to, missionHours, priority, source }: Props & { source: "saved" | "saved-b2" }) {
   const { locale, t } = useLanguage();
   const vi = locale === "vi";
+  const b2 = source === "saved-b2";
+  const sites = b2 ? archiveB2Run.sites : legacySites;
+  const coverage = b2 ? { from: archiveB2Run.start, to: archiveB2Run.end } : savedPlannerWindows.pair;
   const initial: Fields = { ...example, siteId: siteId ?? example.siteId, from: from ?? example.from, to: to ?? example.to,
     missionHours: missionHours ?? example.missionHours, priority: priority ?? example.priority };
   const [fields, setFields] = useState(initial);
@@ -49,17 +52,18 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority 
     setFields(previous => ({ ...previous, [key]: value }));
     setSubmitted(null);
   };
-  const result = submitted && rank(submitted);
+  const result = useMemo(() => submitted && (b2 ? searchArchiveB2({ ...submitted,
+    earliest: submitted.earliest || undefined, latest: submitted.latest || undefined }) : rank(submitted)), [b2, submitted]);
   const validSite = sites.some(site => site.id === fields.siteId);
   const labels = { joint: t("Both visible"), sun: t("Sun visible"), earth: t("Earth visible") };
   const title = vi ? "Giờ hạ cánh nào phù hợp ở đây?" : "When should I land at this site?";
 
   return <section aria-labelledby="saved-landing-title">
     <h2 id="saved-landing-title">{title}</h2>
-    <p>{vi ? "Dữ liệu đã lưu theo giờ cho Odysseus và Athena" : "Saved hourly observations for Odysseus and Athena"} · <TimeRange start={coverage.from} end={coverage.to} /> ({vi ? "không gồm mốc cuối" : "end exclusive"})</p>
+    <p>{b2 ? t("Saved hourly visibility for all 23 sites") : vi ? "Dữ liệu đã lưu theo giờ cho Odysseus và Athena" : "Saved hourly observations for Odysseus and Athena"} · <TimeRange start={coverage.from} end={coverage.to} /> ({vi ? "không gồm mốc cuối" : "end exclusive"})</p>
     <form className="request-fields print:hidden" onSubmit={event => { event.preventDefault(); setSubmitted(fields); }}>
       <label className="field">{t("Site")}<select name="savedLandingSite" value={fields.siteId} onChange={event => change("siteId", event.target.value)}>
-        {!validSite && <option value={fields.siteId}>{savedPlannerRun.sites.find(s => s.id === fields.siteId)?.name ?? fields.siteId}</option>}
+        {!validSite && <option value={fields.siteId}>{(b2 ? archiveB2Run : savedPlannerRun).sites.find(s => s.id === fields.siteId)?.name ?? fields.siteId}</option>}
         {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
       </select></label>
       <label className="field">{vi ? "Bắt đầu chuyến đi (UTC)" : "Travel window start (UTC)"}<input required type="date" name="savedFrom" value={fields.from} onChange={e => change("from", e.target.value)} /></label>
@@ -78,26 +82,26 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority 
       <button className="button primary" type="submit">{t("Search landing dates")}</button>
     </form>
     {submitted && !result && <div className="data-notice" role="status">
-      <p>{vi ? "Không có kết quả cho lựa chọn này. Cần chọn một trong hai địa điểm có dữ liệu, toàn bộ chuyến đi nằm trong khoảng đã lưu và các mốc hạ cánh hợp lệ." : "No result for this selection. Choose a saved site, fit the whole mission inside the saved period, and keep the landing-hour limits within that window."}</p>
+      <p>{vi ? "Không có kết quả cho lựa chọn này. Cần chọn địa điểm có dữ liệu, toàn bộ chuyến đi nằm trong khoảng đã lưu và các mốc hạ cánh hợp lệ." : "No result for this selection. Choose a saved site, fit the whole mission inside the saved period, and keep the landing-hour limits within that window."}</p>
       <button className="button outline print:hidden" onClick={() => { setFields(example); setSubmitted(example); }}>
         {vi ? "Xem ví dụ Athena, 14–21/11" : "Show Athena example, Nov 14–21"}</button>
     </div>}
     {submitted && result && <section aria-label={t("Landing search results")} className="plan-results">
-      <h3>{result.saved.name}</h3>
-      <p><TimeRange start={result.saved.from} end={result.saved.to} /> · {submitted.missionHours} h · {labels[submitted.priority]}</p>
+      <h3>{result.name}</h3>
+      <p><TimeRange start={result.from} end={result.to} /> · {submitted.missionHours} h · {labels[submitted.priority]}</p>
       {(submitted.earliest || submitted.latest) && <p>{vi ? "Giờ hạ cánh được xét (UTC, gồm cả hai mốc)" : "Landing hours evaluated (UTC, inclusive)"} · <TimeRange start={result.first} end={result.last} /></p>}
       {result.best > 0 ? <>
         <p role="status">{vi
-          ? `${result.ties}/${result.rows.length} giờ hạ cánh đạt mức cao nhất: ${result.best} trong ${submitted.missionHours} giờ. Hiển thị ${Math.min(5, result.rows.length)} kết quả đầu, ưu tiên giờ sớm hơn khi bằng điểm.`
-          : `Best visibility: ${result.best} of ${submitted.missionHours} hours. ${result.ties} of ${result.rows.length} evaluated starts reach that total. Showing the first ${Math.min(5, result.rows.length)}, earliest first within each tie.`}</p>
+          ? `${result.ties}/${result.nEvaluated} giờ hạ cánh đạt mức cao nhất: ${result.best} trong ${submitted.missionHours} giờ. Hiển thị ${Math.min(5, result.rows.length)} kết quả đầu, ưu tiên giờ sớm hơn khi bằng điểm.`
+          : `Best visibility: ${result.best} of ${submitted.missionHours} hours. ${result.ties} of ${result.nEvaluated} evaluated starts reach that total. Showing the first ${Math.min(5, result.rows.length)}, earliest first within each tie.`}</p>
         <div className="table-scroll"><table><thead><tr><th scope="col">{vi ? "Chuyến đi (UTC)" : "Mission window (UTC)"}</th>
           <th scope="col">{labels.sun}</th><th scope="col">{labels.earth}</th><th scope="col">{labels.joint}</th></tr></thead>
           <tbody>{result.rows.slice(0, 5).map(row => <tr key={row.start}><th scope="row"><TimeRange start={row.start} end={row.end} /></th>
             <td>{row.sunHours} h</td><td>{row.earthHours} h</td><td>{row.bothHours} h</td></tr>)}</tbody></table></div>
       </> : <p role="status">{vi
-        ? `Cả ${result.rows.length} giờ hạ cánh đều cho 0 giờ theo ưu tiên này. Chưa có giờ hạ cánh phù hợp.`
-        : `All ${result.rows.length} landing times have 0 hours of the selected visibility. No landing time is recommended.`}</p>}
-      <p className="muted text-sm">{t("Run ID")} · <a href="/data/run-b/manifest.json">{result.saved.runId}</a> · {vi ? "Bước thời gian mô hình" : "Model step"} 1 h</p>
+        ? `Cả ${result.nEvaluated} giờ hạ cánh đều cho 0 giờ theo ưu tiên này. Chưa có giờ hạ cánh phù hợp.`
+        : `All ${result.nEvaluated} landing times have 0 hours of the selected visibility. No landing time is recommended.`}</p>}
+      <p className="muted text-sm">{t("Run ID")} · <a href={b2 ? "/data/run-b2/manifest.json" : "/data/run-b/manifest.json"}>{result.runId}</a> · {vi ? "Bước thời gian mô hình" : "Model step"} 1 h</p>
     </section>}
   </section>;
 }
