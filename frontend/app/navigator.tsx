@@ -15,6 +15,7 @@ import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindow
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
 import { Comparison, formatUtc, SampleTable, SiteAssessments, SkyPosition, Sources, Timeline, Windows } from "./observations";
 import QaInspector from "./qa-inspector";
+import ObservedWeek from "./observed-week";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -227,6 +228,7 @@ export default function Navigator() {
           <li>{t("Compare dates at one site, or compare sites over the same UTC window.")}</li>
           <li>{t("Move the timeline slider to see where the Sun and Earth are at each sample.")}</li>
         </ol>
+        <a href="#observed-week">{t("See the Odysseus and Athena results")}</a>
       </details>
       <div className="hero-actions">
         <a className="button primary" href={comparisonHref}>{t("Open comparison tool")} <span aria-hidden="true">↗</span></a>
@@ -238,6 +240,7 @@ export default function Navigator() {
       </div><MoonGlobe primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
         alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
     </section>
+    <ObservedWeek />
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}

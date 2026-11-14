@@ -1,6 +1,6 @@
 # Moon Plan B
 
-Shared repository for the team's NASA Space Apps 2026 project. The Next.js + Tailwind frontend supports site/date comparison, Sun/Earth tracks and visibility bands, dataset import, bounded API requests, job progress, source inspection, shareable selections and printing. **The included mock API and demonstration are synthetic, not lunar data. The backend owns the production OpenAPI for the agreed aggregate route `GET /api/v1/dataset`. The bundled schema and response are drafts.** The live team API provides site and terrain-aware visibility data. The frontend comparison awaits the aggregate endpoint. See [backend status](docs/BACKEND_RECONCILIATION.md).
+Shared repository for the team's NASA Space Apps 2026 project. The Next.js + Tailwind frontend supports site/date comparison, Sun/Earth tracks and visibility bands, dataset import, bounded API requests, job progress, source inspection, shareable selections and printing. **The included mock API and demonstration are synthetic, not lunar data. The backend owns the production OpenAPI for the agreed aggregate route `GET /api/v1/dataset`. The bundled schema and response are drafts.** The home page also displays a saved seven-day terrain-model comparison of Odysseus and Athena, with UTC intervals and reproducible source queries. The live team API provides site and terrain-aware visibility data. The frontend comparison awaits the aggregate endpoint. See [backend status](docs/BACKEND_RECONCILIATION.md).
 
 ## Run the frontend
 

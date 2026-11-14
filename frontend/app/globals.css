@@ -61,6 +61,12 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .theme-control { display: grid; gap: 3px; font-size: .68rem; color: var(--muted); }
 .theme-control select { border: 1px solid var(--line); border-radius: 4px; min-height: 44px; max-width: 100%; background: var(--surface); color: var(--text); padding: 7px 10px; font-size: .82rem; }
 .reference-resources { padding: 28px 0; border-top: 1px solid var(--line); }
+.observed-week { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.week-sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px; margin: 16px 0; }
+.week-hours { font-size: 1.55rem; font-variant-numeric: tabular-nums; }
+.week-track { position: relative; height: 7px; margin: 6px 0; background: var(--grid); }
+.week-track span { position: absolute; height: 100%; background: var(--positive); }
+.observed-week details p + p { margin-top: 6px; }
 .reference-resources h2 { margin-bottom: 8px; }
 .resource-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 20px; }
 .resource-links a { padding: 20px; border: 1px solid var(--line); text-decoration: none; background: var(--surface); }
@@ -206,8 +212,8 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 .loading-state, .empty-state { min-height: 360px; padding: 64px 0; }
 .loading-state p, .empty-state p { margin: 10px 0 22px; }
 .loading-line { width: 56px; height: 3px; background: var(--earth); margin-bottom: 24px; }
-.skip-link { position: fixed; top: -100px; left: 12px; background: var(--sun); color: var(--button-text); padding: 12px; z-index: 50; }
-.skip-link:focus { top: 12px; }
+.skip-link { position: fixed; top: 12px; left: 12px; background: var(--sun); color: var(--button-text); padding: 12px; z-index: 50; }
+.skip-link:not(:focus) { clip-path: inset(50%); pointer-events: none; }
 .request-panel { border-bottom: 1px solid var(--line); padding: 14px 0; }
 .request-panel > p { margin: 10px 0 16px; font-size: .85rem; }
 .request-fields { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
@@ -254,7 +260,7 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media print {
-  .qa-inspector { display: none; }
+  .qa-inspector, .observed-week { display: none; }
   .request-panel, .lunar-figure, .home-guide, .hero-actions, .reference-resources, .eyebrow { display: none; }
   .intro { display: block; }
   .intro h1 { font-size: 26pt; max-width: none; }
