@@ -92,25 +92,44 @@ function bestStart(intervals: Interval[], duration: number, lastStart: number) {
   return { first, ties };
 }
 
+type VisibleSpan = { start: string; end: string };
+export type RetainedSiteWindows = {
+  id: string; name: string; complete: boolean;
+  windows: Record<"sun" | "earth" | "both", readonly VisibleSpan[]>;
+};
+
 export function rankLiveMissionWindows(evidence: TerrainSummary, request: MissionWindowRequest): MissionWindowRanking | null {
   const range = grid(request, evidence.range.step_s);
   if (!range || evidence.range.n_samples !== range.count) return null;
   const from = format(range.start), to = format(range.end);
   if (from !== evidence.range.start || to !== evidence.range.end ||
       from !== evidence.range.requested_start || to !== evidence.range.requested_end) return null;
+  return rankRetainedMissionWindows(evidence.run.run_id, evidence.range, evidence.sites.map(site => ({
+    ...site, complete: site.coverage === "complete" && site.coverage_in_range === "complete",
+  })), request);
+}
+
+// Score a requested subrange using only the visible intervals retained for this run.
+export function rankRetainedMissionWindows(runId: string, retained: { start: string; end: string; step_s: number },
+  sites: readonly RetainedSiteWindows[], request: MissionWindowRequest): MissionWindowRanking | null {
+  const range = grid(request, retained.step_s);
+  const origin = Date.parse(retained.start), limit = Date.parse(retained.end);
+  if (!range || range.start < origin || range.end > limit || (range.start - origin) % range.step !== 0) return null;
   const rows: MissionWindowRow[] = [], excludedIds: string[] = [];
-  for (const site of evidence.sites) {
-    if (site.coverage !== "complete" || site.coverage_in_range !== "complete") {
+  for (const site of sites) {
+    if (!site.complete) {
       excludedIds.push(site.id);
       continue;
     }
     const windows: Record<"sun" | "earth" | "both", Interval[]> = { sun: [], earth: [], both: [] };
     for (const key of ["sun", "earth", "both"] as const) {
-      let previousEnd = 0;
+      let previousEnd = origin;
       for (const window of site.windows[key]) {
-        const start = (Date.parse(window.start) - range.start) / range.step, end = (Date.parse(window.end) - range.start) / range.step;
-        if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < previousEnd || end <= start || end > range.count) return null;
-        windows[key].push({ start, end });
+        const start = Date.parse(window.start), end = Date.parse(window.end);
+        if (!Number.isSafeInteger((start - origin) / range.step) || !Number.isSafeInteger((end - origin) / range.step) ||
+            start < previousEnd || end <= start || end > limit) return null;
+        const clippedStart = Math.max(range.start, start), clippedEnd = Math.min(range.end, end);
+        if (clippedStart < clippedEnd) windows[key].push({ start: (clippedStart - range.start) / range.step, end: (clippedEnd - range.start) / range.step });
         previousEnd = end;
       }
     }
@@ -120,6 +139,6 @@ export function rankLiveMissionWindows(evidence: TerrainSummary, request: Missio
     rows.push({ id: site.id, name: site.name, start: format(range.start + first * range.step), end: format(range.start + last * range.step),
       sunHours: hours("sun"), earthHours: hours("earth"), bothHours: hours("both"), ties });
   }
-  return ranked(request, { runId: evidence.run.run_id, from, to, missionHours: request.missionHours,
-    stepSeconds: evidence.range.step_s, nEvaluated: range.nEvaluated, scope: "catalog", rows, excludedIds });
+  return ranked(request, { runId, from: format(range.start), to: format(range.end), missionHours: request.missionHours,
+    stepSeconds: retained.step_s, nEvaluated: range.nEvaluated, scope: "catalog", rows, excludedIds });
 }
