@@ -88,27 +88,19 @@
   .night-stars i { animation: starlight 7s ease-in-out -2s infinite alternate; }
   .night-stars i:nth-child(even) { animation-duration: 11s; animation-delay: -9s; }
   .night-stars i:nth-child(3) { animation-delay: -6s; }
-  .night-stars::before, .night-stars::after {
-    content: "";
+  .night-stars span {
     position: absolute;
-    left: 82%;
-    top: 13%;
-    width: clamp(28px, 3.5vw, 46px);
-    height: 1.5px;
+    left: 82%; top: 13%;
+    width: clamp(50px, 5vw, 76px);
+    height: 2px;
     border-radius: 50%;
-    background: linear-gradient(to right, #f1f5ff, rgb(210 227 255 / 55%) 20%, transparent);
+    background: linear-gradient(to right, #f7faff, rgb(210 227 255 / 75%) 18%, transparent);
     opacity: 0;
-    animation: meteor-pass 48s linear 5s infinite;
+    animation: meteor-pass 36s linear 3s infinite;
   }
-  .night-stars::before {
-    left: 48%;
-    top: 20%;
-    width: clamp(24px, 3vw, 40px);
-    animation-delay: 28s;
-  }
-  body:has(#pause-sky-drift:checked) :is(.sky-clouds span, .night-stars i),
-  body:has(#pause-sky-drift:checked) .night-stars::before,
-  body:has(#pause-sky-drift:checked) .night-stars::after { animation-play-state: paused; }
+  .night-stars span:nth-of-type(2) { left: 46%; top: 23%; width: clamp(46px, 4.7vw, 68px); animation-delay: 14s; }
+  .night-stars span:nth-of-type(3) { left: 68%; top: 46%; width: clamp(44px, 4.4vw, 64px); animation-delay: 27s; }
+  body:has(#pause-sky-drift:checked) :is(.sky-clouds span, .night-stars i, .night-stars span) { animation-play-state: paused; }
   .sky-appearance label { display: inline-flex; align-items: center; min-height: 44px; gap: .4rem; margin-inline-start: .75rem; }
 }
 @keyframes sky-drift {
@@ -118,6 +110,6 @@
 @keyframes starlight { from { opacity: .43; } to { opacity: .88; } }
 @keyframes meteor-pass {
   0% { opacity: 0; transform: translate(0, 0) rotate(-28deg); }
-  0.45% { opacity: .85; }
-  2.6%, 100% { opacity: 0; transform: translate(-106px, 56px) rotate(-28deg); }
+  0.7% { opacity: .94; }
+  3.3%, 100% { opacity: 0; transform: translate(-136px, 72px) rotate(-28deg); }
 }
