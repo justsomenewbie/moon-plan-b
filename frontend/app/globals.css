@@ -65,18 +65,24 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 @media (min-width: 760px) {
   .home-about { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
 }
-.home-guide { margin-bottom: 32px; max-width: 48ch; padding-inline-start: 24px; border-inline-start: 1px solid var(--line); font-size: .95rem; }
+.home-guide { margin-bottom: 32px; padding-inline-start: clamp(12px, 2vw, 24px); border-inline-start: 1px solid var(--line); font-size: .95rem; }
 .home-team { margin: 28px 0; padding-top: 24px; border-top: 1px solid var(--line); }
 .home-team h2 { font-size: 1.2rem; }
 .home-team ul { max-width: 48rem; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem 1.2rem; margin-top: .75rem; }
 .home-team li { border-top: 1px solid var(--line); padding-top: .5rem; overflow-wrap: anywhere; }
 .home-guide h2 { font-size: 1.2rem; }
+.home-guide > p { max-width: 60ch; }
 .home-guide a { display: inline-block; margin-top: 12px; }
 .home-guide-links { display: flex; flex-wrap: wrap; gap: 0 20px; }
 .home-guide ol { list-style: decimal; padding-inline-start: 1.5em; margin-top: 6px; color: var(--muted); }
 .home-walkthrough { margin-top: 1rem; }
 .home-walkthrough summary { font-weight: 600; padding-block: .6rem; }
-.home-walkthrough li + li { margin-top: 1.25rem; }
+@media (min-width: 900px) {
+  .home-walkthrough ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 2.75rem; margin-top: 1rem; }
+}
+@media (max-width: 899px) {
+  .home-walkthrough li + li { margin-top: 1.25rem; }
+}
 .home-walkthrough li strong { color: var(--text); }
 .home-walkthrough img { display: block; width: 100%; max-width: 24rem; height: auto; margin-top: .5rem; border-radius: 4px; }
 .week-reading { margin-block: .75rem; font-weight: 600; }

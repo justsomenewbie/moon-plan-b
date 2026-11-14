@@ -74,8 +74,8 @@ export default function Home() {
         <h2 id="home-guide-title">{t("Quick guide")}</h2>
         <p>{t("Start with Athena and Odysseus. Which site can see both the Sun and Earth for longer in the same week?")}</p>
         <a href={exampleHref}>{t("Try the saved example")}</a>
-        <details className="home-walkthrough">
-          <summary>{t("How do I find a site for my own dates? See the steps with pictures.")}</summary>
+        <details className="home-walkthrough" open>
+          <summary>{t("How do I find a site for my dates?")}</summary>
           <p>{t("Try the week of November 14–20, 2026 (UTC). You can then change the dates.")}</p>
           <a href="/plan?mode=sites&source=saved-b2&from=2026-11-14&to=2026-11-21&priority=joint">{t("Open this planner example")}</a>
           <ol>

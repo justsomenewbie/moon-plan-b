@@ -291,7 +291,7 @@ export const vietnamese: Record<string, string> = {
   "Read the map and table": "Đọc bản đồ và bảng kết quả",
   "A gold diamond marks each site with the most hours. Choose a name under “Inspect a site” to see its coordinates. In this example, Vikram leads with 162 h. The table shows the hours for all 23 sites.": "Hình thoi vàng đánh dấu các địa điểm có số giờ cao nhất. Chọn tên trong mục “Xem địa điểm” để đọc tọa độ. Trong ví dụ này, Vikram đứng đầu với 162 h. Bảng bên dưới cho biết số giờ tại cả 23 địa điểm.",
   "Start with Athena and Odysseus. Which site can see both the Sun and Earth for longer in the same week?": "Hãy bắt đầu với hai điểm đáp Athena và Odysseus. Trong cùng một tuần, từ điểm nào có thể thấy cả Mặt Trời và Trái Đất lâu hơn?",
-  "How do I find a site for my own dates? See the steps with pictures.": "Tôi đã chọn ngày. Làm sao tìm điểm đáp? Xem hướng dẫn có hình.",
+  "How do I find a site for my dates?": "Làm sao tìm địa điểm phù hợp với ngày tôi chọn?",
   "Try the week of November 14–20, 2026 (UTC). You can then change the dates.": "Thử với tuần từ ngày 14 đến hết ngày 20/11/2026 (UTC). Sau đó bạn có thể đổi sang khoảng ngày của mình.",
   "Select “I have dates”. Start on November 14 and end on November 21. The last day counted is November 20.": "Chọn “Tôi đã chọn ngày”. Nhập ngày bắt đầu 14/11 và ngày kết thúc 21/11. Ngày cuối cùng được tính là 20/11.",
   "Select “Sun and Earth together” and press “Find sites” to rank sites by the hours when both are visible.": "Chọn “Mặt Trời và Trái Đất đồng thời”, rồi bấm “Tìm địa điểm”. Nơi thấy cả hai lâu nhất sẽ đứng đầu.",

@@ -31,8 +31,12 @@ try {
     await guideLink.press("Enter");
     await page.waitForFunction(() => document.activeElement.id === "home-guide");
     const steps = page.locator("#home-guide details");
-    assert.equal(await steps.getAttribute("open"), null);
+    const firstStep = steps.locator("li").first();
+    assert.equal(await firstStep.isVisible(), true);
     await steps.locator("summary").press("Enter");
+    assert.equal(await firstStep.isVisible(), false);
+    await steps.locator("summary").press("Enter");
+    assert.equal(await firstStep.isVisible(), true);
     assert.deepEqual(await steps.locator("img").evaluateAll(async imgs => {
       await Promise.all(imgs.map(img => img.decode()));
       return imgs.map(img => [img.naturalWidth, img.src.split("/").pop()]);
@@ -84,6 +88,12 @@ try {
     assert.match(await compare.innerText(), /Mở công cụ so sánh/);
     assert.equal(await plan.innerText(), "Lập kế hoạch cho chuyến đi tới Mặt Trăng");
     assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
+    assert.match(await steps.locator("summary").innerText(), /ngày tôi chọn/);
+    assert.equal(await firstStep.isVisible(), true);
+    const pictures = steps.locator("li img");
+    assert.deepEqual(await pictures.evaluateAll(imgs => imgs.map(img => img.src.split("/").pop())),
+      [1, 2, 3].map(i => `plan-step-${i}-vi.webp`));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(await nav.getByRole("link").allTextContents(),
       ["Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);
     for (const id of ["team", "about", "resources"]) {
