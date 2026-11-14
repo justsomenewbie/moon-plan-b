@@ -126,6 +126,19 @@ try {
   await panel.waitFor({ state: "hidden" });
   await page.emulateMedia({ media: "print" });
   assert.equal(await viLauncher.isVisible(), false);
+  const fallback = await browser.newPage({ reducedMotion: "no-preference" });
+  await fallback.addInitScript(() => localStorage.setItem("moon-plan-b-language", "vi"));
+  await fallback.route("**/images/guide-copper-wave.webp", route => route.fulfill({ status: 404 }));
+  await fallback.goto(origin);
+  const help = fallback.getByRole("button", { name: "Hướng dẫn của phi hành gia", exact: true });
+  await fallback.waitForFunction(() => Array.from(document.images).some(img =>
+    img.currentSrc.endsWith("guide-copper-rest.webp") && img.naturalWidth === 120));
+  await fallback.route("**/images/guide-copper-rest.webp", route => route.fulfill({ status: 404 }));
+  await fallback.reload();
+  await help.getByText("Trợ giúp", { exact: true }).waitFor();
+  await help.press("Enter");
+  await fallback.locator("aside:popover-open").waitFor();
+  await fallback.close();
   console.log("Passed EN/VI question and answer flows, keyboard dismissal, saved-result link, 320px layout, reduced motion and print.");
 } finally {
   await browser.close();
