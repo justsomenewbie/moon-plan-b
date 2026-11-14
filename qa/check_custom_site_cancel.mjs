@@ -19,7 +19,13 @@ async function exercise(mode) {
     if (vi) await context.addInitScript(() => localStorage.setItem("moon-plan-b-language", "vi"));
     let posts = 0, status = mode === "shared" ? "running" : "queued";
     const deletes = [], reads = [], unexpected = [];
+    const createInputs = [];
+    let capabilityReads = 0;
     let jobId, siteId, params;
+    function backoff(route, status = 429) {
+      return route.fulfill({ status, headers: { "retry-after": "2", "content-type": "application/problem+json" },
+        json: { type: "about:blank", title: "Wait before retrying", status, code: status === 429 ? "RATE_LIMITED" : "SERVICE_UNAVAILABLE", detail: "Fixture delay." } });
+    }
     function job(clients = 1) {
       return { job_id: jobId, type: "custom_site", site_id: siteId, status, params, clients,
         progress: { stage: status === "running" ? "python" : status === "queued" ? "queued" : "done", pct: null, lines: [] },
@@ -30,11 +36,17 @@ async function exercise(mode) {
     await context.route("**/api/**", route => {
       const req = route.request(), path = new URL(req.url()).pathname;
       if (req.method() === "GET" && path === "/api/v1/dataset") return route.fulfill({ json: terrain });
-      if (req.method() === "GET" && path === "/api/v1/capabilities") return route.fulfill({ json: capabilities });
+      if (req.method() === "GET" && path === "/api/v1/capabilities") {
+        capabilityReads++;
+        if (mode === "cooldown" && capabilityReads === 1) return backoff(route);
+        return route.fulfill({ json: capabilities });
+      }
       if (req.method() === "POST" && path === "/api/v1/jobs") {
         params = req.postDataJSON();
         assert.equal(params.type, "custom_site");
         assert.deepEqual([params.start, params.end], [start, end]);
+        createInputs.push(params);
+        if (mode === "cooldown" && createInputs.length <= 2) return backoff(route, createInputs.length === 1 ? 429 : 503);
         jobId = "j_cancel0" + ++posts;
         siteId = "custom:" + params.lat_deg.toFixed(4) + ":" + params.lon_deg.toFixed(4);
         if (posts > 1) status = "queued";
@@ -44,10 +56,12 @@ async function exercise(mode) {
       if (jobId && path === "/api/v1/jobs/" + jobId) {
         if (req.method() === "GET") {
           reads.push(jobId);
+          if (mode === "cooldown" && reads.length === 1) return backoff(route);
           return route.fulfill({ json: job() });
         }
         if (req.method() === "DELETE") {
           deletes.push(jobId);
+          if (mode === "cooldown" && deletes.length === 1) return backoff(route);
           if (mode === "offline") return route.abort("internetdisconnected");
           if (mode === "uncertain") return route.abort("connectionreset");
           if (mode === "not-owner" || mode === "unconfirmed-owner") {
@@ -77,6 +91,45 @@ async function exercise(mode) {
     assert.equal(await cancel.count(), 0);
     await form.locator('input[name="latitude"]').fill("-89.45");
     await form.locator('input[name="longitude"]').fill("222.69");
+    if (mode === "cooldown") {
+      const countdown = form.getByRole("button", { name: /Try again in \d+ s/ });
+      async function afterWait(retryButton) {
+        await countdown.first().waitFor();
+        for (const button of await countdown.all()) assert(await button.isDisabled());
+        await retryButton.waitFor();
+        assert(await retryButton.isEnabled());
+      }
+      const availability = form.getByRole("button", { name: "Check availability again" });
+      await afterWait(availability);
+      assert.equal(capabilityReads, 1);
+      await availability.click();
+      await submit.click();
+      await afterWait(submit);
+      assert.equal(createInputs.length, 1);
+      await submit.click();
+      const retrySame = form.getByRole("button", { name: "Retry the same request" });
+      await form.locator('input[name="latitude"]').fill("-88");
+      await afterWait(retrySame);
+      assert.equal(createInputs.length, 2);
+      await retrySame.click();
+      const retryStatus = form.getByRole("button", { name: "Retry job status" });
+      await afterWait(retryStatus);
+      assert.deepEqual(createInputs, [createInputs[0], createInputs[0], createInputs[0]]);
+      assert.deepEqual(reads, [jobId]);
+      await retryStatus.click();
+      await form.getByText("Queued — waiting for a worker", { exact: true }).waitFor();
+      await cancel.click();
+      const readsBeforeWait = reads.length;
+      await afterWait(cancel);
+      assert.equal(reads.length, readsBeforeWait);
+      assert.deepEqual(deletes, [jobId]);
+      await cancel.click();
+      await form.getByText("Your request was cancelled.", { exact: true }).waitFor();
+      assert.deepEqual(deletes, [jobId, jobId]);
+      assert.equal(createInputs.length, 3);
+      assert.deepEqual(unexpected, []);
+      return;
+    }
     await submit.click();
     await cancel.waitFor();
     await form.getByText(vi ? "Đang chạy — tính dữ liệu quan trắc" : "Queued — waiting for a worker", { exact: true }).waitFor();
@@ -140,6 +193,6 @@ async function exercise(mode) {
 }
 
 try {
-  for (const mode of ["exclusive", "shared", "race", "not-owner", "unconfirmed-owner", "uncertain", "offline"]) await exercise(mode);
-  console.log("Custom-site cancellation, shared detach, definitive and uncertain refusals, completion race, offline cancellation and replacement request passed.");
+  for (const mode of ["cooldown", "exclusive", "shared", "race", "not-owner", "unconfirmed-owner", "uncertain", "offline"]) await exercise(mode);
+  console.log("Custom-site cooldowns, same-input retry, cancellation, shared detach, definitive and uncertain refusals, completion race, offline cancellation and replacement request passed.");
 } finally { await browser.close(); }

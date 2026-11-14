@@ -1,4 +1,4 @@
-import { ApiProblemText } from "./api-problem-text";
+import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
 import { useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError, jobPollMs, jobReceiptUncertain } from "../lib/api/client";
@@ -22,7 +22,9 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const [formError, setFormError] = useState<Message>("");
   const submitting = useRef(false);
   const capability = useQuery({ queryKey: ["custom-site-capability"], queryFn: ({ signal }) => getCustomSiteCapability(signal), enabled: opened });
+  const capabilityWait = useRetryCountdown(capability.error ?? "");
   const create = useMutation({ mutationFn: createCustomSite, retry: false });
+  const createWait = useRetryCountdown(create.error ?? "");
   const accepted = create.data;
   const [stoppedFollowing, setStoppedFollowing] = useState(false);
   const cancelling = useRef(false);
@@ -32,15 +34,17 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
     retry: false,
   });
   const released = cancel.isSuccess || stoppedFollowing;
+  const cancelWait = useRetryCountdown(cancel.error ?? "");
   const status = useQuery({
-    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: !!accepted && !released && !cancel.isPending,
+    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: !!accepted && !released,
     queryFn: ({ signal }) => getCustomSiteJob(accepted!.job_id, accepted!.site_id, signal, create.variables),
     refetchInterval: query => {
       const state = query.state.data?.status;
-      return query.state.error || (state !== "queued" && state !== "running") ? false : jobPollMs;
+      return cancel.isPending || cancelWait > 0 || query.state.error || (state !== "queued" && state !== "running") ? false : jobPollMs;
     },
     staleTime: 0,
   });
+  const statusWait = useRetryCountdown(status.error ?? "");
   const job = status.data;
   const missing = status.error instanceof ApiError && status.error.status === 404;
   const active = job ? job.status === "queued" || job.status === "running" : accepted?.status === "queued" || accepted?.status === "running";
@@ -50,12 +54,15 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   );
   const canCancel = !!accepted && active && !released && !missing && !cancelRefused;
   const busy = create.isPending || cancel.isPending || !!accepted && !released && !missing && (!job || active);
-  const canSubmit = !!capability.data?.available && !capability.isError && !busy;
+  const canSubmit = !!capability.data?.available && !capability.isError && !busy && !createWait;
+  const retryLabel = (label: string, wait: number) => wait ? t("Try again in {seconds} s", { seconds: wait }) : t(label);
   function cancelRequest() {
-    if (!canCancel || !create.variables || cancelling.current) return;
+    if (!canCancel || cancelWait || !create.variables || cancelling.current) return;
     cancelling.current = true;
     cancel.mutate(undefined, {
-      onError: () => { void status.refetch(); },
+      onError: error => {
+        if (!statusWait && !(error instanceof ApiError && error.retryAt)) void status.refetch();
+      },
       onSettled: () => { cancelling.current = false; },
     });
   }
@@ -72,8 +79,8 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
     <summary onClick={() => setOpened(true)}>{t("Request a custom lunar location")}</summary>
     <p className="muted">{t("Use the UTC range above. The backend calculates hourly positions with SPICE and a PGDA terrain horizon using ray marching.")}</p>
     {capability.isPending && <p role="status">{t("Checking calculation availability…")}</p>}
-    {capability.error && <div role="alert"><p><ApiProblemText error={capability.error} /></p><button type="button" className="button outline" onClick={() => void capability.refetch()}>{t("Check availability again")}</button></div>}
-    {capability.data && !capability.data.available && <div role="status"><p>{t("Custom-site calculations are unavailable.")} {capability.data.reason}</p><button type="button" className="button outline" onClick={() => void capability.refetch()}>{t("Check availability again")}</button></div>}
+    {capability.error && <div role="alert"><p><ApiProblemText error={capability.error} /></p><button type="button" className="button outline" disabled={!!capabilityWait || capability.isFetching} onClick={() => void capability.refetch()}>{retryLabel("Check availability again", capabilityWait)}</button></div>}
+    {capability.data && !capability.isError && !capability.data.available && <div role="status"><p>{t("Custom-site calculations are unavailable.")} {capability.data.reason}</p><button type="button" className="button outline" disabled={capability.isFetching} onClick={() => void capability.refetch()}>{t("Check availability again")}</button></div>}
     <form className="request-fields" onSubmit={event => {
       event.preventDefault();
       if (!canSubmit || submitting.current || !capability.data) return;
@@ -90,13 +97,13 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
       <label className="field">{t("Planetocentric latitude · degrees")}<input name="latitude" type="number" step="any" min="-90" max="90" required /></label>
       <label className="field">{t("East longitude · degrees")}<input name="longitude" type="number" step="any" min="-360" max="360" required /></label>
       <label className="field">{t("Observer height above surface · m")}<input name="height" type="number" step="any" min="0" max={capability.data?.maxObserverHeightM ?? 100} defaultValue="2" required /></label>
-      <button className="button outline" disabled={!canSubmit}>{t("Request calculation")}</button>
+      <button className="button outline" disabled={!canSubmit}>{retryLabel("Request calculation", createWait)}</button>
     </form>
     {formError && <p role="alert">{t(formError)}</p>}
     {create.isPending && <p role="status">{t("Submitting request…")}</p>}
     {create.error && <div role="alert"><p><ApiProblemText error={create.error} /></p>
       {jobReceiptUncertain(create.error) && create.variables && <><p>{t("The server may already have accepted this request.")}</p>
-        <button type="button" className="button outline" disabled={!canSubmit} onClick={() => create.variables && submit(create.variables)}>{t("Retry the same request")}</button></>}
+        <button type="button" className="button outline" disabled={!canSubmit} onClick={() => create.variables && submit(create.variables)}>{retryLabel("Retry the same request", createWait)}</button></>}
     </div>}
     {accepted && create.variables && <div className="job-status">
       <p><code>{accepted.job_id}</code> · {create.variables.start} → {create.variables.end}</p>
@@ -106,11 +113,11 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
         {accepted.cached && job && !status.error && <p>{t("The backend reused a matching job.")}</p>}
         {!status.error && <p role="status">{t(job ? labels[job.status] : "Checking job status…")}</p>}
         {job?.status === "running" && <p><progress aria-label={t("Job progress")} max={100} value={job.progress.pct ?? undefined} /> {job.progress.pct === null ? t("Progress percentage unavailable.") : `${job.progress.pct}%`}</p>}
-        {status.error && <div role="alert"><p><ApiProblemText error={status.error} /></p><button type="button" className="button outline" disabled={status.isFetching} onClick={() => void status.refetch()}>{t("Retry job status")}</button></div>}
+        {status.error && <div role="alert"><p><ApiProblemText error={status.error} /></p><button type="button" className="button outline" disabled={status.isFetching || !!statusWait} onClick={() => void status.refetch()}>{retryLabel("Retry job status", statusWait)}</button></div>}
         {job?.status === "failed" && job.error && <p role="alert">{job.error.code} · {job.error.message}</p>}
         {job?.status === "succeeded" && job.result && !status.error && <button type="button" className="button primary" onClick={() => onResult({ from: create.variables!.start, to: create.variables!.end, resolutionSeconds: 3600 }, job.result!)}>{t("Open job results")}</button>}
-        {canCancel && <button type="button" className="button outline" disabled={cancel.isPending || (!!cancel.error && status.isFetching)}
-          onClick={cancelRequest}>{t("Cancel my request")}</button>}
+        {canCancel && <button type="button" className="button outline" disabled={cancel.isPending || !!cancelWait || (!!cancel.error && status.isFetching)}
+          onClick={cancelRequest}>{retryLabel("Cancel my request", cancelWait)}</button>}
         {cancel.isPending && <p role="status">{t("Cancelling your request…")}</p>}
         {cancel.error && <div role="alert"><p><ApiProblemText error={cancel.error} /></p>
           {active && !missing && <div className="flex flex-wrap gap-2">
