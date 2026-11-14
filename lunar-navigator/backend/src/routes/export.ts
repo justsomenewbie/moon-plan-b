@@ -48,6 +48,14 @@ const CONTENT_TYPES: Record<string, string> = {
 
 export const WINDOWS_CSV_COLUMNS = ['kind', 'start', 'end', 'duration_h', 'state', 'truncated_start', 'truncated_end', 'clipped_start', 'clipped_end'] as const;
 
+/** Compact UTC stamp for file names: 2026-11-19T14:00:00Z -> 20261119T140000Z. */
+const fileStamp = (ms: number): string => toIsoUtc(ms).replace(/[-:]/g, '');
+/**
+ * Download name of a site export: <site>_<run>_<kind>_<start>_<end>.csv with the SNAPPED UTC range actually in the file
+ * (end exclusive), so two different ranges never get the same name (FE report 14/11).
+ */
+const rangeFileName = (siteId: string, runId: string, kind: 'series' | 'windows', startMs: number, endMs: number): string =>
+  `${siteId}_${runId}_${kind}_${fileStamp(startMs)}_${fileStamp(endMs)}.csv`;
 const attachment = (name: string) => `attachment; filename="${name.replace(/[^A-Za-z0-9_.-]/g, '_')}"`;
 
 type CsvCell = string | number | boolean | null | undefined;
@@ -78,7 +86,9 @@ export const exportRoutes: FastifyPluginAsyncZod = async (app) => {
         tags: ['export'],
         operationId: 'exportSiteSeriesCsv',
         summary: 'Download the series of a site as CSV (streamed, every sample of the range)',
-        description: 'No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series.',
+        description:
+          'No downsampling: one row per sample of the snapped range (a full 5-year hourly run is ~44k rows). Range rules as /series. ' +
+          'File name (Content-Disposition): <site>_<run>_series_<start>_<end>.csv with the snapped UTC range, e.g. ..._series_20261119T140000Z_20261119T160000Z.csv (end exclusive).',
         params: SiteParams,
         querystring: SeriesCsvQuery,
         response: { 200: seriesCsvResponse, ...problemResponses(400, 404, 409, 422, 503) },
@@ -99,7 +109,7 @@ export const exportRoutes: FastifyPluginAsyncZod = async (app) => {
         }
       }
       setCacheHeaders(reply, q.run_id);
-      return sendCsv(reply, req.log, `${siteId}_${run._id}_series.csv`, ['time_utc', ...fields], rows());
+      return sendCsv(reply, req.log, rangeFileName(siteId, run._id, 'series', r.startMs, r.endMs), ['time_utc', ...fields], rows());
     },
   );
 
@@ -110,7 +120,9 @@ export const exportRoutes: FastifyPluginAsyncZod = async (app) => {
         tags: ['export'],
         operationId: 'exportSiteWindowsCsv',
         summary: 'Download the visibility windows of a site as CSV',
-        description: 'Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows.',
+        description:
+          'Rows grouped by kind (in the order of `kinds`), sorted by start; windows clipped to the query range as in /windows. ' +
+          'File name (Content-Disposition): <site>_<run>_windows_<start>_<end>.csv with the snapped UTC range (end exclusive).',
         params: SiteParams,
         querystring: WindowsCsvQuery,
         response: { 200: windowsCsvResponse, ...problemResponses(400, 404, 409, 422, 503) },
@@ -130,7 +142,7 @@ export const exportRoutes: FastifyPluginAsyncZod = async (app) => {
         }
       }
       setCacheHeaders(reply, q.run_id);
-      return sendCsv(reply, req.log, `${siteId}_${run._id}_windows.csv`, WINDOWS_CSV_COLUMNS, rows);
+      return sendCsv(reply, req.log, rangeFileName(siteId, run._id, 'windows', r.startMs, r.endMs), WINDOWS_CSV_COLUMNS, rows);
     },
   );
 
