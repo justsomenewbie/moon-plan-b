@@ -25,7 +25,7 @@ The editable UTC range and desired step feed both **Load windows** and the job f
 
 Browser Back/Forward restores the comparison encoded in a shared URL, including its date range. A bare URL opens the default request and comparison. An imported release can be reused while it remains loaded; a link alone cannot recover a missing local file.
 
-**Language** defaults to English; choose **Tiếng Việt** for the Vietnamese interface. The choice is saved locally when browser storage is available. Switching keeps the comparison, timeline sample, edited request and running job intact. Exact UTC values, units and supplied scientific/source text are preserved. Original OpenAPI documentation remains English. **Appearance** offers automatic local-time light/dark mode and saved manual overrides.
+**Language** defaults to English; choose **VI** for the Vietnamese interface. The choice is saved locally when browser storage is available. Switching keeps the comparison, timeline sample, edited request and running job intact. Exact UTC values, units and supplied scientific/source text are preserved. Original OpenAPI documentation remains English. Use the sun/moon button to switch appearance; **Auto** follows local time.
 
 The opening photograph gives way to the rotatable lunar globe as soon as the surface map loads. **Return to photograph** switches back. Drag to turn the globe or use the four direction buttons and **Reset view**. Its center coordinates describe the view. The surface uses a fixed light and NASA’s photographic color map. [NASA CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/)
 

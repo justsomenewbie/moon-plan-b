@@ -1,6 +1,6 @@
 # Frontend verification — 14 November 2026
 
-Scope: local frontend and a **proposed** API contract. No agreed backend schema, real Colab export, scientific validation, deployment or submission is established. Tests used synthetic data. English UI, provenance disclosures and AI attribution are present.
+The comparison UI exercises a draft aggregate contract with synthetic fixtures. Live transport and per-site response checks are recorded separately below. No aggregate release, independent scientific validation, deployment or submission is established.
 
 ## Verified behavior
 
@@ -214,3 +214,11 @@ A separate browser run held the aggregate GET for a 7,200-second step. An edit b
 On the production frontend the two mission references displayed their reported coordinates and source links. Camera rotation carried the marker out of view and centering restored it. A forced map failure preserved the photograph. Selecting a different mission while Retry loaded centered the latest selection on recovery. Opening the alternative from the locator focused the 3D sky and retained the selected UTC sample and comparison.
 
 The default demo, a synthetic file with coordinates, an unsupported frame and a compatible zero coordinate were exercised independently. Replacing the release with one reusing the same site IDs cleared the old marker and showed the new coordinates and name. A rejected import preserved the accepted site. Keyboard activation, reduced motion and Vietnamese at 320 CSS pixels passed. All imported payloads in these checks were local QA inputs. The screenshot is `globe-locator-athena.png` in the existing task evidence directory.
+
+## Combined check after Minh’s QA changes
+
+On Node 24.22.3 the integrated tree passed all 38 frontend tests, strict TypeScript and production builds in both mock and live modes. Minh’s eight-command offline gate passed, including deliberate rejection of a synthetic release. The QA package, polar skyplot, inspector component and original observation tests matched main `8b53003`.
+
+On the mock production build Chromium opened the guide and `?qa=true` inspector together, followed the keyboard link into the workspace, rendered two supplied Golden-window rows and the polar skyplot, and selected a missing scenario. The share link retained QA mode. Manual and automatic theme, EN/VI, reduced motion and 320px document width passed; the guide and inspector stayed out of print. A missing reference texture and Retry were also exercised on the combined build.
+
+In live mode Chromium received the producer’s 404 for the aggregate GET, focused the recovery panel via the home action, displayed the reason in EN and VI, retried the GET and recovered by importing the labeled local fixture. The same-origin OpenAPI request returned the team spec. The flow made no POST and raised no page exception. This is recovery evidence, not successful live dataset integration. See [the separate bounded comparison](BACKEND_RECONCILIATION.md).
