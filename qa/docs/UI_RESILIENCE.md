@@ -13,7 +13,15 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | UI-07 | Block globe texture, simulate image decode failure and unavailable Canvas 2D context separately | Fallback/retry or explicit error; numeric tables and SVG charts still usable, selection retained | [PASS in Chromium](#ui-07-browser-retest) |
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
 | UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
-| UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | NOT RUN |
+| UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | [PASS in Chromium](#ui-10-invalid-workspace-links) |
+
+## UI-10 invalid workspace links
+
+On 14 November 2026 at 08:54 UTC, Playwright ran Chromium 158.0.8127.18 at 1280 × 720 UTC on the live-mode [integrated build](https://github.com/justsomenewbie/moon-plan-b/commit/8e5ddee7473682cde08c9649dc6dbe1c8133de8f), route `/compare`. The test intercepted the same-origin dataset GET with a [synthetic terrain response](../browser-terrain-fixture.mjs). Local imports used the [paired Horizons copy](../evidence/odysseus-athena-hour-gap/gap.json), SHA-256 `7acb4779b02e8c743f9f04d5c69da5b51e33a31eb2f6b525d2d1a87851a0579b`, and the [demo](../../frontend/public/data/demo.json), SHA-256 `650bff2d8016a846fe1b330a93f1368e51def508864cec8878f0cc2979016722`.
+
+Before the fix, an incomplete selection could display Odysseus at the default time, and Retry on an invalid observation link could silently load a different range. The [browser regression](../check_invalid_links.mjs) now verifies that missing versions, duplicate parameters, mixed live/imported fields, empty job IDs and unpinned live observations display an error with no dataset request. Stale release links keep their URL when supplied another dataset, including a terrain export. Missing scenarios, wrong duration, mismatched UTC windows and the absent Athena 02:00 sample display no comparison.
+
+For a pinned live site absent from the response, Retry issued the same GET and kept the original URL. Explicitly choosing the loaded release’s defaults cleared an invalid selection. Supplying the requested archive on a valid link restored Athena and Odysseus at exactly 03:00 UTC. The homepage’s saved-report selector has its own documented default-week behavior. Replay with `node qa/check_invalid_links.mjs <live-mode-frontend-origin>`. OpenAI Codex assisted the corrections and test.
 
 ## UI-06 sharing a sample
 

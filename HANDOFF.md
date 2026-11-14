@@ -2,7 +2,7 @@
 
 ## Combined frontend and QA
 
-Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified history during slow loads. [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) verified nine rejections and 5 MiB recovery. [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) recovered pinned selections after five API faults, including offline import rejection.
+Wi-Fi mock jobs work. Chromium verified [slow loads](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows), [nine import rejections and 5 MiB recovery](qa/docs/UI_RESILIENCE.md#ui-02-import-retest), [five API faults](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) and [invalid workspace links](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links).
 
 Minh added offline QA, overlap bands, polar plots, scenario inspection and clearance controls. [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) passed missing data, 0° and north crossings. The [clearance replay](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram) verifies threshold crossings, gaps and flat-ground shadows. QA monitors Minh’s submissions.
 
