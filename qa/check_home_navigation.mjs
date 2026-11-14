@@ -69,9 +69,10 @@ try {
       document.activeElement.closest("details")?.open);
     assert.equal(await page.locator("#resources .resource-links a").count(), 3);
     assert.equal(new URL(page.url()).pathname, "/compare");
-    assert.equal(await page.locator(".site-pin-key button").count(), 2);
-    await page.locator("#globe-site").selectOption({ index: 1 });
-    assert.ok(await page.locator(".globe-place").isVisible());
+    const referenceGlobe = page.locator("#lunar-reference");
+    assert.equal(await referenceGlobe.locator(".site-pin-key button").count(), 2);
+    await referenceGlobe.locator("#globe-site").selectOption({ index: 1 });
+    assert.ok(await referenceGlobe.locator(".globe-place").isVisible());
     await page.close();
   }
   console.log("Homepage example, saved hours, keyboard navigation and sources passed at 320, 375 and 1280 px.");
