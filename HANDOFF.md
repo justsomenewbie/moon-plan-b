@@ -14,7 +14,7 @@ The [synthetic regression](frontend/tests/observations.test.ts) preserves 0° ma
 
 ## Backend integration
 
-Checked at 15:16 Hanoi. The bare aggregate still reports a point limit as a date-range error. Both November weeks matched per-site endpoints across 672 site-hours (33/139 then 168/168 overlap hours). Shared live chart links restore the site and UTC. Two equal date windows at one site now open from one pinned link. At Athena, 1–4 and 18–21 December returned 0 and 72 joint hours. Custom jobs verify the submitted or hourly-rounded UTC range, preserve unknown progress and reopen a pinned run. One real job returned 202 with three matching samples. Summary-only imports and offline comparisons work. Science owns physical validation and the data team owns Colab. [Reproduction](docs/BACKEND_RECONCILIATION.md#aggregate-update-on-14-november).
+Checked at 15:16 Hanoi. The bare aggregate still reports a point limit as a date-range error. Both November weeks matched per-site endpoints across 672 site-hours (33/139 then 168/168 overlap hours). Shared live chart links restore the site and UTC. A pinned link opens two equal-duration requests at one site. The comparison rejects requests that evaluate to the same model window. At Athena, 1–4 and 18–21 December returned 0 and 72 joint hours. Custom jobs verify the submitted or hourly-rounded UTC range, preserve unknown progress and reopen a pinned run. One real job returned 202 with three matching samples. Summary-only imports and offline comparisons work. Science owns physical validation and the data team owns Colab. [Reproduction](docs/BACKEND_RECONCILIATION.md#aggregate-update-on-14-november).
 
 ## Open items and ownership
 
