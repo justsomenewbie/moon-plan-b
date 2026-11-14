@@ -314,6 +314,29 @@ test("original run downloads retain the manifest bytes, ETag and path while qual
   assert.notEqual(longName, await name("B2", longPath.replace("/p/", "/q/")));
 });
 
+test("forward producer rate-limit counts and cache outcomes only on accepted upstream replies", async () => {
+  const quota = { "x-ratelimit-limit": "300", "x-ratelimit-remaining": "0", "x-ratelimit-reset": "57" };
+  for (const [status, outcome] of [[200, "hit"], [304, "miss"], [429, "shared"]] as const) {
+    const req = status === 200 ? request("alt-dates", post({ site_id: "im2_athena" }))
+      : request("sites", { headers: { "if-none-match": '"sites"' } });
+    const headers = { ...quota, "x-lunarnav-cache": outcome, "x-rl-internal": "private", etag: '"sites"',
+      "content-type": "application/json", ...(status === 429 ? { "retry-after": "57" } : {}) };
+    const res = await proxyLunarnav(req, freshKey(), async () => new Response(status === 304 ? null : "{}", { status, headers }));
+    assert.equal(res.status, status);
+    for (const [name, value] of Object.entries(quota)) assert.equal(res.headers.get(name), value);
+    assert.equal(res.headers.get("x-lunarnav-cache"), outcome);
+    assert.equal(res.headers.get("x-rl-internal"), null);
+    assert.equal(res.headers.get("retry-after"), status === 429 ? "57" : null);
+  }
+  const invalid = { "x-ratelimit-limit": "private", "x-ratelimit-remaining": "1, 2", "x-ratelimit-reset": "9007199254740992",
+    "x-lunarnav-cache": "hit, unrelated" };
+  for (const [status, headers] of [[200, invalid], [403, { ...quota, "x-lunarnav-cache": "hit" }]] as const) {
+    const res = await proxyLunarnav(request("sites"), freshKey(), async () => Response.json({}, { status, headers }));
+    assert.equal(res.status, status === 403 ? 502 : 200);
+    for (const name of Object.keys(invalid)) assert.equal(res.headers.get(name), null);
+  }
+});
+
 test("conditional reads forward bounded validators, accept a matching upstream 304 and preserve download metadata", async () => {
   const match = 'W/"other", "opaque@,value"';
   const tag = 'W/"opaque@,value"';
