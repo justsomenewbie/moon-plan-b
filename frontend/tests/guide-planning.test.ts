@@ -32,8 +32,8 @@ test("an explicit EN or VI travel window never uses last week's displayed rows",
     assert.match(generated.answer, /Apollo 11 · 123 h/); assert.match(generated.answer, /fixture-run/);
     assert.match(generated.href, /^\/plan\?mode=sites/);
     const offline = await answerPlanning(intent, locale, signal, { ...api, online: false });
-    assert.match(offline.answer, /Odysseus · IM-1 · 168 h/);
-    assert.match(offline.answer, /Athena · IM-2 · 168 h/);
+    assert.match(offline.answer, /Odysseus[^\n]+168 h/);
+    assert.match(offline.answer, /Athena[^\n]+168 h/);
     assert.doesNotMatch(offline.answer, /139 h|33 h/);
     assert.match(offline.answer, /Saved comparison only|Chỉ xét kết quả so sánh đã lưu/);
   }
@@ -65,11 +65,20 @@ test("catalog names resolve exactly, missing coverage or dates do not produce st
   assert.deepEqual(matchSites("Apollo 11", run.sites).map(s => s.id), ["apollo11"]);
   assert.deepEqual(matchSites("Apollo", run.sites).map(s => s.id), ["apollo11", "apollo15"]);
   assert.deepEqual(matchSites("Mons Mouton Plateau", [site("a3_mons_mouton", "Artemis III region: Mons Mouton"), site("a3_mons_mouton_plateau", "Artemis III region: Mons Mouton Plateau")]).map(s => s.id), ["a3_mons_mouton_plateau"]);
-  const q = planningIntent("How long is Earth visible at Apollo 11 on December 1, 2026?")!;
+  const q = planningIntent("How long is Earth visible at Apollo 11 on December 5, 2026?")!;
   const result = await answerPlanning(q, "en", signal, { ...api, online: false });
   assert.match(result.answer, /could not verify/); assert.doesNotMatch(result.answer, /\d+ h\b/);
   const ambiguous = await answerPlanning(planningIntent("When can I visit Apollo for 24 hours from 2026-11-21 to 2026-11-28?")!, "en", signal, api);
   assert.match(ambiguous.answer, /Which of these sites/);
   const cancel = new AbortController(); cancel.abort();
   await assert.rejects(answerPlanning(q, "en", cancel.signal, { ...api, run: unintended }), { name: "AbortError" });
+});
+
+test("the astronaut can answer a saved complete catalog ranking or site-first search during an outage", async () => {
+  const offline = { ...api, online: false };
+  const catalog = await answerPlanning(planningIntent("Where should I visit from December 1 to 4, 2026?")!, "en", signal, offline);
+  assert.match(catalog.answer, /Saved catalog · 23 sites/); assert.match(catalog.answer, /Odysseus[^\n]+20 h/);
+  const mission = await answerPlanning(planningIntent("Khi nào nên đi Odysseus 24 giờ từ 14 đến 21 tháng 11 năm 2026?")!, "vi", signal, offline);
+  assert.match(mission.answer, /2026-11-19T15:00:00Z → 2026-11-20T15:00:00Z/);
+  assert.match(mission.answer, /10 mốc đồng hạng trong 145 mốc/);
 });

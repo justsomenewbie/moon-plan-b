@@ -1,4 +1,4 @@
-import snapshot from "../odysseus-athena-weeks.json" with { type: "json" };
+import { getSavedPlannerDates, getSavedPlannerRanking, savedPlannerRun } from "../saved-planner.ts";
 import { findAltDates } from "./alt-dates.ts";
 import { getTerrainAggregate, isMock } from "./client.ts";
 import { getPlannerRanking, getPlannerRun } from "./planner.ts";
@@ -60,16 +60,34 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     "Bạn muốn nhiệm vụ kéo dài bao nhiêu giờ hoặc ngày trong khoảng " + period + "?"));
   const unavailable = tr("I could not verify team-model results for ", "Mình chưa xác minh được kết quả mô hình của nhóm cho ") + period + tr(". Reopen the planner to retry.", ". Bạn có thể mở công cụ lập kế hoạch để thử lại.");
   function offline() {
-    const week = snapshot.weeks.find(w => w.startUtc === from && w.endUtc === to);
-    if (!week || plan.mode === "dates") return reply(unavailable);
-    const matches = matchSites(plan.siteText, week.sites);
-    const rows = plan.mode === "sites" && !matches.length ? week.sites : matches;
-    if (!rows.length || (plan.mode === "observation" && rows.length !== 1)) return reply(unavailable);
-    const values = week.sites.filter(s => rows.some(row => row.id === s.id)).map(s => ({ name: s.name, hours: plan.priority === "joint" ? s.overlap.duration_h : plan.priority === "sun" ? s.sunHours : s.earthHours }));
-    const best = Math.max(...values.map(v => v.hours));
-    const body = values.filter(v => v.hours === best).map(v => v.name + " · " + v.hours + " h").join("\n");
-    return reply(tr("Live catalog unavailable. Saved comparison only", "Chưa truy cập được danh mục trực tuyến. Chỉ xét kết quả so sánh đã lưu")
-      + " (" + rows.map(s => s.name).join(" / ") + ").\n" + period + "\n" + metric + " · " + body + "\n" + tr("Source run", "Run nguồn") + " · " + snapshot.runId);
+    const savedSource = "\n" + tr("Saved run", "Run đã lưu") + " · " + savedPlannerRun.runId;
+    const matches = matchSites(plan.siteText, savedPlannerRun.sites);
+    const key = ({ joint: "bothHours", sun: "sunHours", earth: "earthHours" } as const)[plan.priority];
+    if (matches.length > 1) return reply(tr("Which catalog site do you mean? ", "Bạn muốn chọn địa điểm nào? ") + matches.map(s => s.name).join(" · "));
+    if (plan.mode === "dates") {
+      if (!matches.length) return reply(tr("Which catalog site should I check? Please give its name or ID.", "Bạn muốn tra địa điểm nào trong danh mục? Hãy ghi tên hoặc mã."));
+      const site = matches[0];
+      href = plannerHref(plan, site.id);
+      const search = getSavedPlannerDates({ ...plan, from, to, siteId: site.id, missionHours: plan.missionHours! });
+      if (!search) return reply(unavailable);
+      const first = search.rows[0], ties = search.rows.filter(r => r[key] === first[key]).length;
+      return reply(tr("Saved hourly observations", "Các mẫu giờ đã lưu") + " · " + site.name + "\n" + period
+        + "\n" + tr("Earliest highest-visibility mission window", "Khoảng nhiệm vụ sớm nhất đạt mức quan sát cao nhất") + " · " + first.start + " → " + first.end
+        + "\n" + metric + " · " + first[key] + " h · " + tr(ties + " tied starts out of " + search.nEvaluated, ties + " mốc đồng hạng trong " + search.nEvaluated + " mốc") + savedSource);
+    }
+    const ranking = getSavedPlannerRanking({ ...plan, from, to });
+    if (!ranking) return reply(unavailable);
+    const scope = ranking.scope === "catalog" ? tr("Saved catalog · 23 sites", "Danh mục đã lưu · 23 địa điểm")
+      : tr("Saved comparison only · Odysseus and Athena", "Chỉ xét kết quả so sánh đã lưu · Odysseus và Athena");
+    const site = matches[0];
+    if (site || plan.mode === "observation") {
+      const row = ranking.rows.find(r => r.id === site?.id);
+      if (!row) return reply(unavailable);
+      return reply(scope + "\n" + row.name + "\n" + period + "\n" + tr("Sun / Earth / both", "Mặt Trời / Trái Đất / cả hai") + " · "
+        + [row.sunHours, row.earthHours, row.bothHours].join(" / ") + " h" + savedSource);
+    }
+    return reply(scope + "\n" + period + "\n" + metric + " · " + ranking.rows.filter(r => ranking.leaders.includes(r.id))
+      .map(r => r.name + " · " + r[key] + " h").join("\n") + savedSource);
   }
   if (!api.online) return offline();
   try {
