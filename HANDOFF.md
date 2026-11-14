@@ -4,9 +4,7 @@
 
 The clearance control spans 0–10° in 0.1° steps with 0/2/5° educational presets. The ribbon keeps four known states plus explicit unavailable UTC intervals, shows hours and percentages, and never turns a null or cadence gap into blackout. Educational darkness endurance uses 24/100/150-hour assumptions; a boundary-clipped dark span stays unresolved unless its observed duration already exceeds the selected reference. Producer intervals remain unchanged and separately labeled.
 
-The HUD retains shortest-angle north wrapping, adds a side-elevation schematic, and labels its uniform mask as a sensitivity test rather than local terrain. Timeline and polar plots shade the selected clearance band. State patterns, always-mounted screen-reader interval text, 44px controls, forced-colors boundaries and printable results supplement color. English remains default with optional Vietnamese display translation; values, UTC and IDs are unchanged. Sun clearance is not a power model, and Earth visibility is not a radio-link budget.
-
-Minh’s clearance checkpoint passed 82 tests, route generation, TypeScript and build. The [QA replay](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram) covers the side-view fix, 320px, desktop, forced colors, PDF and both orders of the archived Horizons comparison. On `65b7375`, both clocks skipped Athena’s missing 02:00 UTC in both directions.
+The HUD and plots label the simulated clearance. Solar visibility is not power; Earth visibility is not a radio-link budget. [Clearance QA](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram).
 
 ## Current product, backend and QA state
 
@@ -23,6 +21,8 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
 The astronaut turns, blinks and waves; pause and reduced motion keep it still. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [Local Ollama](README.md#ask-the-astronaut).
+
+**Plan and data:** /plan ranks sites by date or searches landing hours at a selected site. /data distinguishes 94 original files from verified [saved observations](docs/SAVED_PLANNER.md). Five-year summaries cover 23 sites and 43,824 hours per site; offline event timing covers two sites for 14 days. The astronaut uses the requested dates. Printed reports preserve the selected pair and date details; validated comparisons can be downloaded and reimported. Globe wheel, pinch and keyboard zoom retain NASA attribution.
 
 ## Pending
 
