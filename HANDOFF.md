@@ -16,6 +16,8 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Vietnamese labels and instructions now distinguish sites, UTC samples and apparent sky positions across home, comparison, import and errors. JSON syntax errors give a Vietnamese recovery step. Chromium verified the updated Vietnamese site selectors, restored UTC samples and clearance slider label.
 
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
+
 ## Pending
 
 Backend fractional bounds, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.
