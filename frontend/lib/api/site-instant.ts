@@ -28,14 +28,14 @@ function readBody(body: Body): Body {
   return { az_deg, el_deg, horizon_el_deg, clearance_deg, visible };
 }
 
-export async function getSiteInstant(runId: string, siteId: string, at: string, stepSeconds: number, signal?: AbortSignal): Promise<SiteInstant> {
+export async function getSiteInstant(runId: string, siteId: string, at: string, stepSeconds: number, gridStart: string, signal?: AbortSignal): Promise<SiteInstant> {
   if (!/^[A-Za-z0-9_.-]{1,64}$/.test(runId) || !/^[A-Za-z0-9_.:-]{1,64}$/.test(siteId) ||
       !Number.isSafeInteger(stepSeconds) || stepSeconds <= 0)
     throw new ApiError("Invalid run, site or model step for the site instant.", 422);
   // A datetime-local control omits the time zone and may omit seconds.
   const input = /^(\d{4}-\d\d-\d\dT\d\d:\d\d)(:\d\d)?Z?$/.exec(at);
   const t = input ? input[1] + (input[2] ?? ":00") + "Z" : at;
-  const requested = wholeSecond(t, 422);
+  const requested = wholeSecond(t, 422), grid = wholeSecond(gridStart, 422);
   signal?.throwIfAborted();
   const { data, error, response } = await producer.GET("/api/v1/sites/{site_id}/instant", {
     params: { path: { site_id: siteId }, query: { run_id: runId, t } }, signal,
@@ -46,7 +46,7 @@ export async function getSiteInstant(runId: string, siteId: string, at: string, 
     data.precision_h === stepSeconds / 3600 && (data.sample_index === undefined ||
     (Number.isSafeInteger(data.sample_index) && data.sample_index >= 0)));
   const sample = wholeSecond(data.sample_utc, 502);
-  check(sample <= requested && (requested - sample) / 1000 < stepSeconds);
+  check(sample <= requested && (requested - sample) / 1000 < stepSeconds && ((sample - grid) / 1000) % stepSeconds === 0);
   const sun = readBody(data.sun), earth = readBody(data.earth);
   check(data.both_visible === (sun.visible && earth.visible));
   return { run_id: runId, site_id: siteId, t, sample_utc: data.sample_utc, sample_index: data.sample_index,

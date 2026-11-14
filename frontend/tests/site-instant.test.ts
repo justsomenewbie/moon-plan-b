@@ -16,12 +16,12 @@ test("reads the containing model sample with pinned IDs and preserves visibility
     calls.push(request);
     return Response.json({ ...sample, t: new URL(request.url).searchParams.get("t") });
   });
-  const last = await getSiteInstant(run, site, inside, 3600);
+  const last = await getSiteInstant(run, site, inside, 3600, time);
   assert.equal(last.t, inside);
   assert.equal(last.sample_utc, time);
   assert.deepEqual(last.sun, sun); assert.deepEqual(last.earth, earth); assert.equal(last.both_visible, true);
   for (const at of ["2026-11-19T15:00", "2026-11-19T15:00:00", time]) {
-    assert.equal((await getSiteInstant(run, site, at, 3600)).t, time);
+    assert.equal((await getSiteInstant(run, site, at, 3600, time)).t, time);
   }
   assert.equal(calls.length, 4);
   for (const request of calls) {
@@ -30,7 +30,7 @@ test("reads the containing model sample with pinned IDs and preserves visibility
     assert.equal(url.searchParams.get("run_id"), run);
   }
   handler.mock.mockImplementation(async () => Response.json({ ...sample, sample_index: undefined }));
-  assert.equal((await getSiteInstant(run, site, inside, 3600)).sample_index, undefined);
+  assert.equal((await getSiteInstant(run, site, inside, 3600, time)).sample_index, undefined);
 });
 
 test("rejects invalid identity, UTC sample boundaries, cadence and body data", async t => {
@@ -45,8 +45,21 @@ test("rejects invalid identity, UTC sample boundaries, cadence and body data", a
     { sun: { ...sun, clearance_deg: 0.2 } }, { sun: { ...sun, visible: 1 } }, { both_visible: false },
   ]) {
     reply = { ...sample, ...diff };
-    await assert.rejects(getSiteInstant(run, site, inside, 3600), (e: unknown) => e instanceof ApiError && e.status === 502);
+    await assert.rejects(getSiteInstant(run, site, inside, 3600, time), (e: unknown) => e instanceof ApiError && e.status === 502);
   }
+});
+
+test("requires the sample to be on the supplied grid even when its interval contains the request", async t => {
+  let sampleUtc = "2026-11-19T15:30:00Z", calls = 0;
+  t.mock.method(globalThis, "fetch", async () => { calls++; return Response.json({ ...sample, sample_utc: sampleUtc }); });
+  await assert.rejects(getSiteInstant(run, site, inside, 3600, "2026-11-19T14:00"),
+    (e: unknown) => e instanceof ApiError && e.status === 422);
+  assert.equal(calls, 0);
+  const laterGridPoint = "2026-11-19T16:00:00Z";
+  await assert.rejects(getSiteInstant(run, site, inside, 3600, laterGridPoint),
+    (e: unknown) => e instanceof ApiError && e.status === 502);
+  sampleUtc = time;
+  assert.equal((await getSiteInstant(run, site, inside, 3600, laterGridPoint)).sample_utc, time);
 });
 
 test("invalid inputs and abort avoid the request; producer rejections retain their status, code and detail", async t => {
@@ -59,10 +72,10 @@ test("invalid inputs and abort avoid the request; producer rejections retain the
     ["bad/run", site, time, 3600], [run, "bad/site", time, 3600], [run, site, time, 0],
     [run, site, "2026-02-30T00:00:00Z", 3600], [run, site, "2026-11-19T15:00:00.500Z", 3600],
     [run, site, "2026-11-19T15:00:00+07:00", 3600],
-  ] as const) await assert.rejects(getSiteInstant(runId, siteId, at, step), (e: unknown) => e instanceof ApiError && e.status === 422);
-  await assert.rejects(getSiteInstant(run, site, time, 3600, AbortSignal.abort()), { name: "AbortError" });
+  ] as const) await assert.rejects(getSiteInstant(runId, siteId, at, step, time), (e: unknown) => e instanceof ApiError && e.status === 422);
+  await assert.rejects(getSiteInstant(run, site, time, 3600, time, AbortSignal.abort()), { name: "AbortError" });
   assert.equal(calls, 0);
-  await assert.rejects(getSiteInstant(run, site, time, 3600), (e: unknown) =>
+  await assert.rejects(getSiteInstant(run, site, time, 3600, time), (e: unknown) =>
     e instanceof ApiError && e.status === 422 && e.code === "OUT_OF_RANGE" && e.message === "Pick a time in this run");
   assert.equal(calls, 1);
 });
