@@ -37,6 +37,13 @@ test("typed client, mock contract and problem responses work end to end", async 
   assert.equal(emptyJob.status === "done" && emptyJob.result.scenarios.length, 0);
   server.use(http.get("*/api/v1/dataset", () => HttpResponse.json({ type: "about:blank", title: "Unavailable", status: 503, detail: "Please retry", instance: "/request/1", extra: "allowed" }, { status: 503, headers: { "Content-Type": "application/problem+json" } })));
   await assert.rejects(getDataset(defaultWindow), (e: unknown) => e instanceof ApiError && e.status === 503 && e.message === "Please retry");
+  for (const [title, detail, expected] of [
+    ["Route not found", "no route GET /api/v1/dataset", /Import a compatible JSON release/],
+    ["Release not found", "Requested run is no longer available", /Requested run is no longer available/],
+  ] as const) {
+    server.use(http.get("*/api/v1/dataset", () => HttpResponse.json({ title, detail, status: 404, instance: "/api/v1/dataset" }, { status: 404 })));
+    await assert.rejects(getDataset(defaultWindow), (e: unknown) => e instanceof ApiError && e.status === 404 && expected.test(e.message));
+  }
   server.use(http.get("*/api/v1/dataset", () => new HttpResponse("x".repeat(5 * 1024 * 1024 + 1))));
   await assert.rejects(getDataset(defaultWindow), (e: unknown) => e instanceof ApiError && e.status === 413);
 });

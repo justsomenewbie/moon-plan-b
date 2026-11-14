@@ -1,6 +1,6 @@
 # Frontend API contract — draft 2
 
-**The team selected the backend OpenAPI and one aggregate GET. The response schema in this document remains a frontend draft.** Sơn explicitly authorized a marked draft after supplying Chung's mandatory coordination rules. No agreed OpenAPI or real Colab export has been supplied. This is not an agreed backend API. The frontend accepts local JSON or calls a fixed same-origin API; it never calls Horizons.
+**The team selected the backend OpenAPI and one aggregate GET. The response schema in this document remains a frontend draft.** Sơn explicitly authorized a marked draft after supplying Chung's mandatory coordination rules. Chung’s live OpenAPI 1.0.0 documents the science endpoints. Its aggregate GET and payload are still pending. The frontend accepts local JSON or calls a fixed same-origin API; it never calls Horizons.
 
 Chung's subsequently supplied backend plan is an evolving proposal with richer terrain/series/run APIs. Its naming, model and jobs differ from this draft; see [the reconciliation and AI-assistant proposal](BACKEND_RECONCILIATION.md). The current fixture is a working baseline, not a ceiling on future features. No endpoint or scientific model has been silently switched.
 

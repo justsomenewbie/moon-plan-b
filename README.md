@@ -1,6 +1,6 @@
 # Moon Plan B
 
-Shared repository for the team's NASA Space Apps 2026 project. The Next.js + Tailwind frontend supports site/date comparison, Sun/Earth tracks and visibility bands, dataset import, bounded API requests, job progress, source inspection, shareable selections and printing. **The included mock API and demonstration are synthetic, not lunar data. The backend owns the production OpenAPI for the agreed aggregate route `GET /api/v1/dataset`. The bundled schema and response are drafts.** No real backend integration, validated scientific dataset, deployment or submitted entry is established.
+Shared repository for the team's NASA Space Apps 2026 project. The Next.js + Tailwind frontend supports site/date comparison, Sun/Earth tracks and visibility bands, dataset import, bounded API requests, job progress, source inspection, shareable selections and printing. **The included mock API and demonstration are synthetic, not lunar data. The backend owns the production OpenAPI for the agreed aggregate route `GET /api/v1/dataset`. The bundled schema and response are drafts.** The live team API provides site and terrain-aware visibility data. The frontend comparison awaits the aggregate endpoint. See [backend status](docs/BACKEND_RECONCILIATION.md).
 
 ## Run the frontend
 
@@ -43,7 +43,7 @@ Start with [AGENTS.md](AGENTS.md) and [HANDOFF.md](HANDOFF.md). English remains 
 
 ## Collaboration
 
-One repository holds the frontend, backend/data scripts, tests and product documentation. Frontend direction: Next.js + Tailwind CSS, reported by Sơn from Chung. Chung's separate backend/server work is user-reported; its source, API contract, deployment and access have not been verified. Do not guess an endpoint or copy private credentials into this repository.
+One repository holds the frontend, backend/data scripts, tests and product documentation. Frontend direction: Next.js + Tailwind CSS, reported by Sơn from Chung. The team service exposed its version 1.0.0 API on the local network. Read-only site and visibility responses were verified. The aggregate comparison route and public hosting are pending. Do not guess an endpoint or copy private credentials into this repository.
 
 This repository is public. Anyone may fork it and propose changes through a pull request. Named collaborators need to accept their invitations before direct push access works. Use one editor per checkout; independent reviewers read without writing. Frontend files live under `frontend/`, the proposed shared contract under `contracts/`; backend/data implementation remains with its assigned owner. Edit and agree the OpenAPI before real integration, regenerate types and run the checks. The draft's arbitrary endpoints and limits must not be presented as Chung's existing API.
 

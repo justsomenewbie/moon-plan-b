@@ -126,6 +126,7 @@ export default function Navigator() {
 
   const a = data?.scenarios.find((s) => s.id === selection?.a);
   const b = data?.scenarios.find((s) => s.id === selection?.b);
+  const comparisonHref = loading || a || data?.scenarios.length === 0 ? "#workspace" : "#data-error";
   const windows = useMemo(() => data ? publishedWindows(data.scenarios) : [], [data]);
   const siteWindow = useMemo(() => windows.find(group => group.some(s => s.id === a?.id)), [windows, a]);
   const compatible = data && a && selection ? alternatives(data, a, selection.mode) : [];
@@ -207,12 +208,31 @@ export default function Navigator() {
   }
 
   return <div className="app-shell">
-    <a className="skip-link" href="#workspace">{t("Skip to comparison")}</a>
-    <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label={t("Main")}><a href="#workspace" className="active-link">{t("Compare")}</a><a href="#sources">{t("Sources & method")}</a><ThemeControl /><LanguageControl /><button className="button outline" onClick={() => fileInput.current?.click()} disabled={loading}>{t("Import data")}</button></nav>
+    <a className="skip-link" href={comparisonHref}>{t("Skip to comparison")}</a>
+    <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
+      <nav aria-label={t("Main")}>
+        <a href={comparisonHref} className="active-link">{t("Compare")}</a>
+        <a href="#resources">{t("Lunar resources")}</a>
+        {data && !loading && <a href="#sources">{t("Sources & method")}</a>}
+        <LanguageControl />
+        <button className="button outline" onClick={() => fileInput.current?.click()} disabled={loading}>{t("Import data")}</button>
+        <ThemeControl />
+      </nav>
       <input ref={fileInput} aria-label={t("Import JSON dataset")} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
     </header>
-    <section className="intro"><div className="hero-copy"><p className="eyebrow">{t("Lunar observation explorer")}</p><h1>{t("Find a clearer window.")}</h1><p className="lead">{t("Compare the Sun and Earth above the lunar horizon.")}</p>
-      <div className="hero-actions"><a className="button primary" href="#workspace">{t("Explore the comparison")}{" "}<span aria-hidden="true">&nbsp;↗</span></a>{data && a && !loading ? <a className="button outline" href="#local-sky">{t("Explore the 3D sky")}</a> : <a className="button outline" href="#resources">{t("Explore lunar resources")}</a>}</div>
+    <section className="intro"><div className="hero-copy"><p className="eyebrow">{t("Lunar observation explorer")}</p><h1>{t("Find a clearer window")}</h1><p className="lead">{t("Compare the Sun and Earth above the lunar horizon.")}</p>
+      <details className="home-guide" open>
+        <summary>{t("Quick guide")}</summary>
+        <ol>
+          <li>{t("Compare dates at one site, or compare sites over the same UTC window.")}</li>
+          <li>{t("Move the timeline slider to see where the Sun and Earth are at each sample.")}</li>
+        </ol>
+      </details>
+      <div className="hero-actions">
+        <a className="button primary" href={comparisonHref}>{t("Open comparison tool")} <span aria-hidden="true">↗</span></a>
+        {a && !loading ? <a className="button outline" href="#local-sky">{t("Explore the 3D sky")}</a> :
+          <a className="button outline" href="#lunar-reference">{t("Explore the lunar globe")}</a>}
+      </div>
       <p className="muted text-sm hero-meta">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Backend API · draft compatibility requires producer review")} · <a href="/api-docs">{t("API explorer")}</a></p>
       <p className="data-notice">{!data ? isMock ? t("No scientific dataset connected. Use the demonstration or import a release.") : t("Waiting for a valid API dataset. You can also import a release.") : data.evidence === "synthetic-fixture" ? t("Demonstration data — fictional sites and values. Not for mission planning.") : t("Supplied data — scientific validity has not been independently verified. Not for mission planning.")}</p>
       </div><MoonGlobe primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}

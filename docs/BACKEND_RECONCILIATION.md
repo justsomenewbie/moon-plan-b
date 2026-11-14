@@ -4,6 +4,14 @@ Status on 14 November 2026: the team has selected the backend contract and a sin
 
 Chung owns the production OpenAPI and will add **GET `/api/v1/dataset`** after the current backend workflow. The frontend already calls this route once per requested window through its typed API client. Once Chung supplies the versioned schema and a bounded example, regenerate the client types and adapt the API layer. Preserve the current UI where the meanings match. Where the backend supplies a different horizon model, review the affected labels and validation before displaying it. A separate team member owns Colab execution and testing.
 
+## Live producer API checked on 14 November
+
+The team service returned HTTP 200 for Swagger and its JSON spec. `/docs/json` and `/api/v1/openapi.json` returned the same OpenAPI 3.1.0 document (`Lunar Landing Site Navigator API` version `1.0.0`, SHA-256 `f457e46fab414266f9647444350ead9cbd8e46d675217e889b903c18e914010d`). It documents 21 paths, including runs, sites, sky tracks, series, visibility windows and ranking. The selected aggregate route was absent and a bounded GET returned the producer’s 404 `NOT_FOUND`. Keep the configured origin local to each environment.
+
+For a bounded read-only check, the default run reported SPICE, PGDA terrain, brute-force horizons, a 2 m observer and hourly samples. For the Odysseus and Athena candidate sites we retrieved site details, hourly Sun/Earth/joint flags and all three interval lists over the same seven-day UTC window. Each list covered the requested half-open range. At all 168 samples per site the joint flag equalled the conjunction of the two body flags. Re-expanding every returned interval reproduced the corresponding hourly flags. Both positive intervals ended at the query boundary with `clipped_end=true`. The local evidence retains the raw responses, run ID, coordinate sources and SHA-256 for each response. This verifies the meaning and consistency of the responses consumed by FE. Independent ephemeris and terrain validation belongs to the science team.
+
+Unlike the draft, the service uses snake_case, east longitude in [0, 360), terrain-aware upper-limb sunlight and Earth clearance. Preserve the producer’s `precision_h`, UTC bounds and clipped versus run-truncated flags in the eventual aggregate. The existing ideal-horizon importer cannot represent these semantics. The next integration input is the versioned aggregate response and its example.
+
 ## Colab precompute and the first science comparison
 
 The team supplied a precompute notebook on 14 November. Its full-run settings select 23 catalog sites, hourly UTC samples from 2026-01-01 inclusive to 2031-01-01 exclusive, and an observer 2 m above ground. A uses JPL Horizons, a Moon Trek elevation model and ray marching. B uses NAIF SPICE, a PGDA elevation model and a brute-force horizon calculation. These are configured methods and dates. The shared copy saved the settings and a failed Google Drive mount. Its precompute, validation and archive cells contain no saved results.
@@ -24,7 +32,7 @@ The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The
 
 Frontend answers already available: Next.js 16.4.6, TypeScript 5.9.3, TanStack Query 5.107.1, openapi-fetch 0.17.0, generated OpenAPI types and MSW. Same-origin `/api/*` proxy is prepared. Hosting is still undecided.
 
-Minimum next input: exported `openapi.json` at a known commit, the referenced OUTPUT_SPEC/model definitions, and a small sourced two-site/two-window fixture with complete/gap/empty and job terminal examples. A tested origin or reproducible mock unlocks integration. No need to finish every optional endpoint first.
+Remaining input: an OpenAPI revision including the aggregate GET, the referenced OUTPUT_SPEC/model definitions, and a small sourced two-site/two-window fixture with complete/gap/empty and job terminal examples. A tested origin or reproducible mock unlocks integration. No need to finish every optional endpoint first.
 
 ## AI planning assistant — proposed addition
 
@@ -42,4 +50,4 @@ This is a proposal, not a new endpoint promise or a simulated chatbot presented 
 
 Time-based appearance and credited lunar imagery can ship independently now. Terrain views, 3D, alternate-date search, richer criteria and AI explanations remain candidates as backend resources arrive. Add them in useful, reviewable slices without removing the working comparison or confusing reference imagery with scientific results.
 
-Next action: share the exported OpenAPI and one small example when available; reconcile only the fields needed for the first real comparison.
+Next action: review the aggregate response definition and one small aggregate example when available; reconcile only the fields needed for the first real comparison.

@@ -65,6 +65,9 @@ function withinRequestedWindow(dataset: Dataset, request: WindowRequest) {
 export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   validateWindow(request);
   const { data, error, response } = await api.GET("/api/v1/dataset", { params: { query: request }, signal });
+  if (response.status === 404 && error?.instance === "/api/v1/dataset" && error.title === "Route not found") {
+    throw new ApiError("This backend does not yet serve the comparison dataset. Import a compatible JSON release or retry after the backend adds the route.", 404);
+  }
   if (!response.ok) throw apiError(error, response.status);
   return withinRequestedWindow(validateDataset(data), request);
 }
