@@ -27,7 +27,7 @@ try {
   });
   const alert = page.locator("#data-error[role=alert]");
   const retry = alert.getByRole("button", { name: "Retry API request", exact: true });
-  const field = page.getByLabel("Import JSON dataset");
+  const field = page.getByLabel("Choose JSON file");
   const workspace = page.locator("#workspace.terrain-result, #workspace.workspace, .sample-time");
   async function visit(params) {
     const url = new URL("/compare", origin);

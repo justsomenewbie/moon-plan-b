@@ -93,7 +93,7 @@ async function checkFault({ fault, attempts, message }) {
   const retry = alert.getByRole("button", { name: "Retry API request", exact: true });
   async function rejectFile() {
     await page.getByRole("button", { name: "Import data", exact: true }).click();
-    await page.getByRole("dialog").getByLabel("Import JSON dataset").setInputFiles({
+    await page.getByRole("dialog").getByLabel("Choose JSON file").setInputFiles({
       name: "invalid.json", mimeType: "application/json", buffer: Buffer.from("{"),
     });
     await alert.getByText(/previous dataset has not changed/i).waitFor();
@@ -124,7 +124,7 @@ async function checkFault({ fault, attempts, message }) {
       await countdown.waitFor();
       assert.equal(await countdown.isDisabled(), true);
       await page.getByText("Request observation windows", { exact: true }).click();
-      const form = page.locator("form.request-fields");
+      const form = page.locator("form.request-fields").filter({ has: page.getByRole("button", { name: /Try again in/ }) });
       assert.equal(await form.getByRole("button", { name: /Try again in/ }).isDisabled(), true);
       await form.evaluate(element => element.requestSubmit());
       await rejectFile();

@@ -28,8 +28,8 @@ export default function ImportDialog({ ref, guide, onImport }: { ref: Ref<HTMLDi
     {guide && "invalid" in guide && <p>{t("This comparison link has missing or conflicting settings. Ask the sender for a new link.")}</p>}
     {!guide &&
       <ol>
-        <li>{t("Have a Moon Plan B export? Select “Choose JSON file” and open it from your device.")}</li>
-        <li>{t("The comparison opens when the file is ready. To practise first, download the example below and choose that file.")}</li>
+        <li>{t("Download the example below, or use “Download this comparison (JSON)” in your terrain results.")}</li>
+        <li>{t("Select “Choose JSON file” and open the saved file.")}</li>
       </ol>
     }
     {(!guide || ("version" in guide && guide.exampleMatches)) &&
@@ -45,7 +45,7 @@ export default function ImportDialog({ ref, guide, onImport }: { ref: Ref<HTMLDi
     <div className="import-actions">
       <form method="dialog"><button className="button outline">{t("Cancel")}</button></form>
       <label className="button primary import-picker">{t("Choose JSON file")}
-        <input type="file" accept=".json,application/json" aria-label={t("Import JSON dataset")} onChange={event => {
+        <input type="file" accept=".json,application/json" onChange={event => {
           const file = event.currentTarget.files?.[0];
           if (!file) return;
           event.currentTarget.value = "";

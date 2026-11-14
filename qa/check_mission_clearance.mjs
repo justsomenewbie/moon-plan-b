@@ -17,7 +17,7 @@ try {
     const file = fileURLToPath(new URL("./fixtures/" + name + ".json", import.meta.url));
     await page.getByRole("button", { name: "Import data", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Import a comparison dataset" });
-    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), dialog.getByLabel("Import JSON dataset").click()]);
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), dialog.getByLabel("Choose JSON file").click()]);
     await chooser.setFiles(file);
     await page.locator("#sources").getByText("qa-" + name + "-v1", { exact: true }).waitFor({ state: "attached" });
   }

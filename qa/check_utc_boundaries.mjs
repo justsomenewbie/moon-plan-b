@@ -32,7 +32,7 @@ try {
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(new URL("/compare", origin).href);
     await page.getByRole("button", { name: "Import data", disabled: false }).waitFor();
-    const file = page.getByLabel("Import JSON dataset");
+    const file = page.getByLabel("Choose JSON file");
     const upload = value => file.setInputFiles({ name: "boundary.json", mimeType: "application/json",
       buffer: Buffer.from(JSON.stringify(value)) });
     await upload(data);

@@ -102,7 +102,7 @@ try {
       }
       site.series.n_transitions = 1;
       site.criteria.forEach(criterion => Object.assign(criterion, { value_h: 3, value_clipped: true }));
-      await page.getByLabel("Import JSON dataset").setInputFiles({
+      await page.getByLabel("Choose JSON file").setInputFiles({
         name: "precision.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(fixture)),
       });
       const card = page.getByRole("article").filter({ has: page.getByRole("heading", { name: site.name, exact: true }) });

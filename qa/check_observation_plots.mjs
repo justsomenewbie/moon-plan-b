@@ -20,7 +20,7 @@ try {
   const primary = page.getByLabel(/^Primary site/);
   const details = page.locator("details").filter({ has: page.getByText("Inspect exact samples", { exact: true }) });
   async function compare(data) {
-    await page.getByLabel("Import JSON dataset").setInputFiles({ name: data.datasetId + ".json", mimeType: "application/json",
+    await page.getByLabel("Choose JSON file").setInputFiles({ name: data.datasetId + ".json", mimeType: "application/json",
       buffer: Buffer.from(JSON.stringify(data)) });
     await page.locator("#sources").getByText(data.datasetId, { exact: true }).waitFor({ state: "attached" });
     await page.getByRole("button", { name: "Compare sites", exact: true }).click();

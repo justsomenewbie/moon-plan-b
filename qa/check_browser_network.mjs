@@ -64,7 +64,7 @@ try {
   for (const entry of imports) {
     const file = fileURLToPath(new URL(entry, import.meta.url));
     const data = JSON.parse(await readFile(file, "utf8"));
-    await page.getByLabel("Import JSON dataset").setInputFiles(file);
+    await page.getByLabel("Choose JSON file").setInputFiles(file);
     await page.locator("#sources").getByText(data.datasetId, { exact: true }).waitFor({ state: "attached" });
     await page.getByRole("button", { name: "Compare sites", exact: true }).click();
     const primary = page.getByLabel(/^Primary site/);

@@ -27,7 +27,7 @@ try {
   async function importFile(button, value) {
     await button.click();
     const dialog = page.locator("#import-dialog");
-    await dialog.getByLabel("Import JSON dataset").setInputFiles({
+    await dialog.getByLabel("Choose JSON file").setInputFiles({
       name: "fixture.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(value)),
     });
   }

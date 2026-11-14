@@ -38,7 +38,7 @@ try {
   const page = await browser.newPage();
   await page.goto(new URL("/compare", origin).href);
   await page.getByRole("button", { name: "Import data", disabled: false }).waitFor();
-  await page.getByLabel("Import JSON dataset").setInputFiles({
+  await page.getByLabel("Choose JSON file").setInputFiles({
     name: "coverage.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(dataset)),
   });
   for (const entry of dataset.sites) {

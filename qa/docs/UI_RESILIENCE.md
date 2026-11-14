@@ -95,6 +95,8 @@ At 08:22 UTC, Chromium reran both scripts and the [paired Horizons replay](../ev
 
 ## UI-02 import retest
 
+On November 15, Chrome’s accessibility tree exposed the file picker as **Chọn tệp JSON** at 320 CSS pixels in Vietnamese and **Choose JSON file** at 1280 in English. Both names matched the visible button. Following the dialog’s instructions, the browser downloaded a 54,368-byte comparison from the B2 producer for Odysseus and Athena for November 14–21 UTC (end exclusive). Reimporting it preserved the dates and joint totals of 47 and 139 hours out of 168. No request carried file contents during import. The [rejection test](../check_import_rejections.mjs) also checks that choosing the site's B2 catalog JSON explains which file is accepted and preserves the loaded comparison.
+
 At 08:02 UTC on 14 November 2026, Chromium 158.0.8127.18 exercised the [corrected importer](https://github.com/justsomenewbie/moon-plan-b/commit/8ddc9bb1421b70629ec71817a1029d0f539ffeff) at `/` on a local production build with the mock startup API. The browser used its default 1280 × 720 viewport. It started with the [paired Horizons gap copy](../evidence/odysseus-athena-hour-gap/gap.json), SHA-256 `7acb4779b02e8c743f9f04d5c69da5b51e33a31eb2f6b525d2d1a87851a0579b`, with Athena primary and Odysseus alternative at 03:00 UTC.
 
 All five invalid fixture files, a separate unsupported schema version, malformed JSON, an empty file and a valid JSON document padded to 5 MiB + 1 byte produced focused error alerts. Each rejection preserved the dataset ID, both site selections, both exact-sample tables and the visible and accessible time labels. The next valid file, padded to exactly 5 MiB, replaced the dataset and cleared the alert. No uncaught page errors occurred.

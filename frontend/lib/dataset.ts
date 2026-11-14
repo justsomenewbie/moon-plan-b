@@ -48,7 +48,7 @@ function ids(items: unknown[], path: string): Set<string> {
 
 export function validateDataset(input: unknown): Dataset {
   const d = record(input, "Dataset");
-  requireValue(d.schemaVersion === "frontend-draft-2", "Unsupported schema. Expected frontend-draft-2 (pending producer review).");
+  requireValue(d.schemaVersion === "frontend-draft-2", "Unsupported schema. Use a comparison export or a scenario JSON file with schemaVersion set to frontend-draft-2.");
   text(d.attribution, "Data attribution");
   text(d.datasetId, "datasetId");
   requireValue(d.evidence === "synthetic-fixture" || d.evidence === "computed-ephemeris", "evidence must identify synthetic-fixture or computed-ephemeris.");

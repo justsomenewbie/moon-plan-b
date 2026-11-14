@@ -64,7 +64,7 @@ try {
   const dialog = page.getByRole("dialog", { name: "Import a comparison dataset" });
   await dialog.waitFor();
   assert.ok(await dialog.getByRole("heading").evaluate(el => el === document.activeElement));
-  const input = dialog.getByLabel("Import JSON dataset");
+  const input = dialog.getByLabel("Choose JSON file");
   await tabTo(input, dialog.locator("label.import-picker"));
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), press("Enter")]);
   await chooser.setFiles(gap);

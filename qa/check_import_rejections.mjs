@@ -47,6 +47,7 @@ try {
   await instructions.getByRole("heading", { name: "Import a comparison dataset" }).waitFor();
   assert.ok(await instructions.getByRole("heading").evaluate(el => document.activeElement === el));
   assert.match(await instructions.innerText(), /5 MiB/);
+  assert.match(await instructions.locator("ol").innerText(), /Download this comparison \(JSON\)/);
   assert.equal(await instructions.locator("details").getAttribute("open"), null);
   await instructions.locator("details summary").press("Enter");
   assert.match(await instructions.innerText(), /frontend-draft-2/);
@@ -59,7 +60,7 @@ try {
   async function choose(file) {
     await button.click();
     const dialog = page.getByRole("dialog", { name: "Import a comparison dataset" });
-    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), dialog.getByLabel("Import JSON dataset").click()]);
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), dialog.getByLabel("Choose JSON file").click()]);
     await chooser.setFiles(file);
   }
   await choose(fileURLToPath(gap));
@@ -101,6 +102,15 @@ try {
   assert.equal(await alert.count(), 0);
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
   assert.equal(await primary.inputValue(), "ridge-1");
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.locator(".language-switch select").first().selectOption("vi");
+  await page.getByRole("button", { name: "Nhập dữ liệu", exact: true }).click();
+  const picker = instructions.getByRole("button", { name: "Chọn tệp JSON", exact: true });
+  assert.match(await instructions.locator("ol").innerText(), /Tải kết quả so sánh này \(JSON\)/);
+  assert.equal(await picker.evaluate(el => el.labels[0].textContent.trim()), "Chọn tệp JSON");
+  await picker.setInputFiles(fileURLToPath(new URL("../frontend/public/data/run-b2/catalog.json", import.meta.url)));
+  await page.getByRole("alert").filter({ hasText: "Hãy dùng tệp kết quả so sánh hoặc tệp kịch bản JSON" }).waitFor();
+  await sources.getByText(JSON.parse(normal).datasetId, { exact: true }).waitFor({ state: "attached" });
   assert.deepEqual(errors, []);
   console.log("Exact 5 MiB accepted.", "Chromium", browser.version(), new Date().toISOString());
 } finally { await browser.close(); }

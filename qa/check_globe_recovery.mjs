@@ -18,7 +18,7 @@ try {
   await map.waitFor();
   await page.getByRole("button", { name: "Import data", disabled: false }).waitFor();
   const fixture = new URL("./evidence/odysseus-athena-hour-gap/gap.json", import.meta.url);
-  await page.getByLabel("Import JSON dataset").setInputFiles(fileURLToPath(fixture));
+  await page.getByLabel("Choose JSON file").setInputFiles(fileURLToPath(fixture));
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
   const primary = page.getByLabel(/^Primary site/);
   const alternative = page.getByLabel(/^Alternative site/);

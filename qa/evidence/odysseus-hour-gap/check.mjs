@@ -60,7 +60,7 @@ try {
     if (!switchSite) {
       await importButton.click();
       await page.getByRole("dialog", { name: "Import a comparison dataset" })
-        .getByLabel("Import JSON dataset").setInputFiles(file(name));
+        .getByLabel("Choose JSON file").setInputFiles(file(name));
     }
     await page.locator("#sources").getByText(data.datasetId, { exact: true }).waitFor({ state: "attached" });
     const compare = page.getByRole("button", { name: "Compare sites", exact: true });
