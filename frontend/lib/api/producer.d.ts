@@ -121,6 +121,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Compare 2-4 sites over a date range
+         * @description Full run -> metrics verbatim from the precompute (same numbers as Python); sub-range -> recomputed exactly like lunarnav.windows.compute_metrics. ranking ranks only the compared sites (rank 1..N among them).
+         */
+        post: operations["compareSites"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1712,6 +1732,572 @@ export interface components {
                 dem_source: string;
             };
         };
+        /**
+         * @description A window intersected with the query range [start, end)
+         * @example {
+         *       "start": "2026-01-01T00:00:00Z",
+         *       "end": "2026-03-29T00:00:00Z",
+         *       "duration_h": 2088,
+         *       "state": true,
+         *       "truncated_start": true,
+         *       "truncated_end": false,
+         *       "clipped_start": false,
+         *       "clipped_end": false
+         *     }
+         */
+        ClippedWindow: {
+            /**
+             * @description First sample of the window
+             * @example 2026-01-01T00:00:00Z
+             */
+            start: string;
+            /**
+             * @description EXCLUSIVE end (first sample of the next window, or range end)
+             * @example 2026-01-01T00:00:00Z
+             */
+            end: string;
+            duration_h: number;
+            /** @description true = visible (Sun lit / Earth in view / both); false = dark / comms gap */
+            state: boolean;
+            /** @description Window starts at the RUN start - its true start is earlier or unknown */
+            truncated_start: boolean;
+            /** @description Window runs to the RUN end */
+            truncated_end: boolean;
+            /** @description start was clipped to the QUERY start (differs from truncated_* = run boundary) */
+            clipped_start: boolean;
+            /** @description end was clipped to the QUERY end */
+            clipped_end: boolean;
+        };
+        /**
+         * @example {
+         *       "site_ids": [
+         *         "ref_connecting_ridge_c1",
+         *         "a3_haworth",
+         *         "apollo11"
+         *       ],
+         *       "start": "2026-01-01T00:00:00Z",
+         *       "end": "2026-04-01T00:00:00Z",
+         *       "weights": {
+         *         "pct_sun": 0.4,
+         *         "pct_earth": 0.3,
+         *         "pct_both": 0.3
+         *       },
+         *       "include": {
+         *         "windows": [
+         *           "sun"
+         *         ]
+         *       }
+         *     }
+         */
+        CompareRequest: {
+            /**
+             * @description Default: the default run
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id?: string;
+            /** @description 2-4 distinct site ids */
+            site_ids: string[];
+            /** @description Default: run start */
+            start?: string;
+            /** @description EXCLUSIVE end; default: run end */
+            end?: string;
+            /** @description Default 0.4 pct_sun + 0.3 pct_earth + 0.3 pct_both */
+            weights?: components["schemas"]["RankWeightsInput"];
+            include?: {
+                /** @description Window kinds to embed per site */
+                windows?: components["schemas"]["WindowKindInput"][];
+                /** @description Embed a downsampled series per site */
+                series?: {
+                    fields: components["schemas"]["SeriesField"][];
+                    /** @default 1500 */
+                    max_points: number;
+                    /**
+                     * @description Downsampling when the range has more samples than max_points (bins of bin_s = ceil(n / max_points) * step_s, aligned on start; the last bin may be partial). sample: value of the first sample of each bin. minmax: {min,max} per bin for numbers (elevation extremes are preserved, e.g. draw a band between min and max); booleans -> fraction of true samples in the bin (0..1, same value in min and max; 0 < value < 1 <=> the bin contains a transition). In both modes the exact transitions are listed in `events`. With bin_s = step_s, agg=sample returns the stored values unchanged.
+                     * @default sample
+                     * @enum {string}
+                     */
+                    agg: "sample" | "minmax";
+                };
+            };
+        };
+        /**
+         * @example {
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "step_s": 3600,
+         *       "precision_h": 1,
+         *       "range": {
+         *         "start": "2026-01-01T00:00:00Z",
+         *         "end": "2026-04-01T00:00:00Z",
+         *         "step_s": 3600,
+         *         "n_samples": 2160
+         *       },
+         *       "weights": {
+         *         "pct_sun": 0.4,
+         *         "pct_earth": 0.3,
+         *         "pct_both": 0.3
+         *       },
+         *       "ranking": [
+         *         {
+         *           "rank": 1,
+         *           "site_id": "ref_connecting_ridge_c1",
+         *           "name": "Shackleton-de Gerlache connecting ridge, point C1",
+         *           "group": "reference",
+         *           "score": 71.162037,
+         *           "pct_sun": 98.564815,
+         *           "pct_earth": 53.611111,
+         *           "pct_both": 52.175926,
+         *           "pct_sun_no_earth": 46.388889,
+         *           "longest_dark_h": 26,
+         *           "longest_dark_truncated": false,
+         *           "longest_comms_gap_h": 326,
+         *           "longest_comms_gap_truncated": false,
+         *           "mean_power_tracking": 0.971631,
+         *           "reasons": [
+         *             "Sun visible 98.6% of the time",
+         *             "Earth in view 53.6%",
+         *             "Sun and Earth together 52.2%",
+         *             "longest night only 26 h",
+         *             "longest comms gap 326 h"
+         *           ]
+         *         },
+         *         {
+         *           "rank": 2,
+         *           "site_id": "apollo11",
+         *           "name": "Apollo 11 LM Eagle (Tranquility Base)",
+         *           "group": "apollo",
+         *           "score": 65.680555,
+         *           "pct_sun": 50.972222,
+         *           "pct_earth": 100,
+         *           "pct_both": 50.972222,
+         *           "pct_sun_no_earth": 0,
+         *           "longest_dark_h": 354,
+         *           "longest_dark_truncated": false,
+         *           "longest_comms_gap_h": 0,
+         *           "longest_comms_gap_truncated": false,
+         *           "mean_power_tracking": 0.508127,
+         *           "reasons": [
+         *             "Sun visible 51.0% of the time",
+         *             "Earth in view 100.0%",
+         *             "Sun and Earth together 51.0%",
+         *             "longest night 354 h"
+         *           ]
+         *         }
+         *       ],
+         *       "sites": {
+         *         "ref_connecting_ridge_c1": {
+         *           "metrics": {
+         *             "duration_h": 2160,
+         *             "longest_comms_gap_h": 326,
+         *             "longest_comms_gap_truncated": false,
+         *             "longest_dark_h": 26,
+         *             "longest_dark_truncated": false,
+         *             "longest_earth_h": 334,
+         *             "longest_earth_truncated": false,
+         *             "longest_sun_h": 2088,
+         *             "longest_sun_truncated": true,
+         *             "mean_power_horizontal": 0.009032,
+         *             "mean_power_tracking": 0.971631,
+         *             "mean_sun_el_lit_deg": 0.340818,
+         *             "n_comms_gaps": 4,
+         *             "n_dark_windows": 2,
+         *             "n_earth_windows": 4,
+         *             "n_sun_windows": 3,
+         *             "pct_both": 52.175926,
+         *             "pct_earth": 53.611111,
+         *             "pct_sun": 98.564815,
+         *             "pct_sun_no_earth": 46.388889
+         *           },
+         *           "warnings": [],
+         *           "windows": {
+         *             "sun": [
+         *               {
+         *                 "start": "2026-01-01T00:00:00Z",
+         *                 "end": "2026-03-29T00:00:00Z",
+         *                 "duration_h": 2088,
+         *                 "state": true,
+         *                 "truncated_start": true,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-03-29T00:00:00Z",
+         *                 "end": "2026-03-30T02:00:00Z",
+         *                 "duration_h": 26,
+         *                 "state": false,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-03-30T02:00:00Z",
+         *                 "end": "2026-03-30T05:00:00Z",
+         *                 "duration_h": 3,
+         *                 "state": true,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-03-30T05:00:00Z",
+         *                 "end": "2026-03-30T10:00:00Z",
+         *                 "duration_h": 5,
+         *                 "state": false,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-03-30T10:00:00Z",
+         *                 "end": "2026-04-01T00:00:00Z",
+         *                 "duration_h": 38,
+         *                 "state": true,
+         *                 "truncated_start": false,
+         *                 "truncated_end": true,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               }
+         *             ]
+         *           }
+         *         },
+         *         "apollo11": {
+         *           "metrics": {
+         *             "duration_h": 2160,
+         *             "longest_comms_gap_h": 0,
+         *             "longest_comms_gap_truncated": false,
+         *             "longest_dark_h": 354,
+         *             "longest_dark_truncated": false,
+         *             "longest_earth_h": 2160,
+         *             "longest_earth_truncated": true,
+         *             "longest_sun_h": 357,
+         *             "longest_sun_truncated": false,
+         *             "mean_power_horizontal": 0.328234,
+         *             "mean_power_tracking": 0.508127,
+         *             "mean_sun_el_lit_deg": 45.906382,
+         *             "n_comms_gaps": 0,
+         *             "n_dark_windows": 3,
+         *             "n_earth_windows": 1,
+         *             "n_sun_windows": 4,
+         *             "pct_both": 50.972222,
+         *             "pct_earth": 100,
+         *             "pct_sun": 50.972222,
+         *             "pct_sun_no_earth": 0
+         *           },
+         *           "warnings": [
+         *             "smooth-sphere horizon (dem_source none:outside-pgda-coverage)",
+         *             "flat horizon: terrain shadowing not modelled"
+         *           ],
+         *           "windows": {
+         *             "sun": [
+         *               {
+         *                 "start": "2026-01-01T00:00:00Z",
+         *                 "end": "2026-01-09T05:00:00Z",
+         *                 "duration_h": 197,
+         *                 "state": true,
+         *                 "truncated_start": true,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-01-09T05:00:00Z",
+         *                 "end": "2026-01-23T23:00:00Z",
+         *                 "duration_h": 354,
+         *                 "state": false,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-01-23T23:00:00Z",
+         *                 "end": "2026-02-07T20:00:00Z",
+         *                 "duration_h": 357,
+         *                 "state": true,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-02-07T20:00:00Z",
+         *                 "end": "2026-02-22T13:00:00Z",
+         *                 "duration_h": 353,
+         *                 "state": false,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-02-22T13:00:00Z",
+         *                 "end": "2026-03-09T10:00:00Z",
+         *                 "duration_h": 357,
+         *                 "state": true,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-03-09T10:00:00Z",
+         *                 "end": "2026-03-24T02:00:00Z",
+         *                 "duration_h": 352,
+         *                 "state": false,
+         *                 "truncated_start": false,
+         *                 "truncated_end": false,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               },
+         *               {
+         *                 "start": "2026-03-24T02:00:00Z",
+         *                 "end": "2026-04-01T00:00:00Z",
+         *                 "duration_h": 190,
+         *                 "state": true,
+         *                 "truncated_start": false,
+         *                 "truncated_end": true,
+         *                 "clipped_start": false,
+         *                 "clipped_end": false
+         *               }
+         *             ]
+         *           }
+         *         }
+         *       }
+         *     }
+         */
+        CompareResponse: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            /**
+             * @description = step_s / 3600. Every boundary and "hours until" value is accurate to +- this many hours.
+             * @example 1
+             */
+            precision_h: number;
+            range: components["schemas"]["TimeRange"];
+            weights: components["schemas"]["RankWeights"];
+            ranking: components["schemas"]["RankingRow"][];
+            /** @description site id -> details (same ids as site_ids) */
+            sites: {
+                [key: string]: components["schemas"]["CompareSite"];
+            };
+        };
+        CompareSite: {
+            metrics: components["schemas"]["Metrics"];
+            windows?: components["schemas"]["WindowsByKind"];
+            series?: components["schemas"]["SeriesBlock"];
+            warnings: string[];
+        };
+        /**
+         * @description Time-weighted metrics over a range (docs/OUTPUT_SPEC.md section 3.6)
+         * @example {
+         *       "duration_h": 2160,
+         *       "pct_sun": 98.564815,
+         *       "pct_earth": 53.611111,
+         *       "pct_both": 52.175926,
+         *       "pct_sun_no_earth": 46.388889,
+         *       "longest_dark_h": 26,
+         *       "longest_dark_truncated": false,
+         *       "longest_comms_gap_h": 326,
+         *       "longest_comms_gap_truncated": false,
+         *       "longest_sun_h": 2088,
+         *       "longest_sun_truncated": true,
+         *       "longest_earth_h": 334,
+         *       "longest_earth_truncated": false,
+         *       "n_sun_windows": 3,
+         *       "n_dark_windows": 2,
+         *       "n_earth_windows": 4,
+         *       "n_comms_gaps": 4,
+         *       "mean_sun_el_lit_deg": 0.340818,
+         *       "mean_power_horizontal": 0.009032,
+         *       "mean_power_tracking": 0.971631
+         *     }
+         */
+        Metrics: {
+            /** @description Length of the evaluated range, h */
+            duration_h: number;
+            /** @description % of time the Sun is visible (upper limb above terrain) */
+            pct_sun: number;
+            /** @description % of time the Earth is visible (direct-to-Earth comms) */
+            pct_earth: number;
+            /** @description % of time with Sun AND Earth */
+            pct_both: number;
+            /** @description % of time with Sun but no Earth */
+            pct_sun_no_earth: number;
+            /** @description Longest continuous dark period, h */
+            longest_dark_h: number;
+            /** @description true -> touches the range boundary: value is a lower bound */
+            longest_dark_truncated: boolean;
+            /** @description Longest continuous period without Earth, h */
+            longest_comms_gap_h: number;
+            longest_comms_gap_truncated: boolean;
+            longest_sun_h: number;
+            longest_sun_truncated: boolean;
+            longest_earth_h: number;
+            longest_earth_truncated: boolean;
+            n_sun_windows: number;
+            n_dark_windows: number;
+            n_earth_windows: number;
+            n_comms_gaps: number;
+            /** @description Mean Sun elevation over lit samples; null if never lit */
+            mean_sun_el_lit_deg: number | null;
+            /** @description Mean relative power of a flat-lying panel (0..1) */
+            mean_power_horizontal: number;
+            /** @description Mean relative power of a Sun-tracking panel (0..1) */
+            mean_power_tracking: number;
+        };
+        /**
+         * @description score = sum(weight[k] * metric[k]) (0..100 when weights sum to 1). Missing keys = 0; at least one weight must be > 0. Default 0.4 pct_sun + 0.3 pct_earth + 0.3 pct_both.
+         * @example {
+         *       "pct_sun": 0.4,
+         *       "pct_earth": 0.3,
+         *       "pct_both": 0.3
+         *     }
+         */
+        RankWeights: {
+            pct_sun?: number;
+            pct_earth?: number;
+            pct_both?: number;
+            pct_sun_no_earth?: number;
+        };
+        /**
+         * @description score = sum(weight[k] * metric[k]) (0..100 when weights sum to 1). Missing keys = 0; at least one weight must be > 0. Default 0.4 pct_sun + 0.3 pct_earth + 0.3 pct_both.
+         * @example {
+         *       "pct_sun": 0.4,
+         *       "pct_earth": 0.3,
+         *       "pct_both": 0.3
+         *     }
+         */
+        RankWeightsInput: {
+            pct_sun?: number;
+            pct_earth?: number;
+            pct_both?: number;
+            pct_sun_no_earth?: number;
+        };
+        /**
+         * @example {
+         *       "rank": 1,
+         *       "site_id": "ref_connecting_ridge_c1",
+         *       "name": "Shackleton-de Gerlache connecting ridge, point C1",
+         *       "group": "reference",
+         *       "score": 71.162037,
+         *       "pct_sun": 98.564815,
+         *       "pct_earth": 53.611111,
+         *       "pct_both": 52.175926,
+         *       "pct_sun_no_earth": 46.388889,
+         *       "longest_dark_h": 26,
+         *       "longest_dark_truncated": false,
+         *       "longest_comms_gap_h": 326,
+         *       "longest_comms_gap_truncated": false,
+         *       "mean_power_tracking": 0.971631,
+         *       "reasons": [
+         *         "Sun visible 98.6% of the time",
+         *         "longest night only 26 h",
+         *         "Earth in view 53.6%"
+         *       ]
+         *     }
+         */
+        RankingRow: {
+            /** @description 1 = best. Ties -> shorter longest_dark_h, then site_id */
+            rank: number;
+            /**
+             * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+             * @example ref_connecting_ridge_c1
+             */
+            site_id: string;
+            name: string;
+            group: string;
+            score: number;
+            pct_sun: number;
+            pct_earth: number;
+            pct_both: number;
+            pct_sun_no_earth: number;
+            longest_dark_h: number;
+            longest_dark_truncated: boolean;
+            longest_comms_gap_h: number;
+            longest_comms_gap_truncated: boolean;
+            mean_power_tracking: number;
+            /** @description Short human-readable reasons for this rank (for UI tooltips) */
+            reasons: string[];
+        };
+        SeriesBlock: {
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            start: string;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            end: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            /** @description Spacing of returned points, s (multiple of step_s) */
+            bin_s: number;
+            /** @description Points per field */
+            n: number;
+            /**
+             * @description Downsampling when the range has more samples than max_points (bins of bin_s = ceil(n / max_points) * step_s, aligned on start; the last bin may be partial). sample: value of the first sample of each bin. minmax: {min,max} per bin for numbers (elevation extremes are preserved, e.g. draw a band between min and max); booleans -> fraction of true samples in the bin (0..1, same value in min and max; 0 < value < 1 <=> the bin contains a transition). In both modes the exact transitions are listed in `events`. With bin_s = step_s, agg=sample returns the stored values unchanged.
+             * @enum {string}
+             */
+            agg: "sample" | "minmax";
+            /** @description field name -> values (same length n) */
+            fields: {
+                [key: string]: (number | null)[] | (boolean | null)[] | components["schemas"]["SeriesMinMax"];
+            };
+        };
+        /**
+         * @description A visibility.csv column name
+         * @enum {string}
+         */
+        SeriesField: "sun_az_deg" | "sun_el_deg" | "sun_dist_km" | "sun_semidiam_deg" | "horizon_el_sun_deg" | "sun_clearance_deg" | "sun_fraction" | "sun_visible" | "power_horizontal" | "power_tracking" | "irradiance_tracking_wm2" | "earth_az_deg" | "earth_el_deg" | "earth_dist_km" | "earth_semidiam_deg" | "horizon_el_earth_deg" | "earth_clearance_deg" | "earth_fraction" | "earth_visible" | "both_visible" | "hours_until_sunset" | "hours_until_sunrise" | "hours_until_earthset" | "hours_until_earthrise";
+        SeriesMinMax: {
+            min: (number | null)[];
+            max: (number | null)[];
+        };
+        TimeRange: {
+            /**
+             * @description Snapped start actually used
+             * @example 2026-01-01T00:00:00Z
+             */
+            start: string;
+            /**
+             * @description Snapped EXCLUSIVE end actually used
+             * @example 2026-01-01T00:00:00Z
+             */
+            end: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            n_samples: number;
+        };
+        /**
+         * @description sun: Sun visible (true) / dark (false); earth: Earth visible = DTE link (true) / comms gap (false); both: sun AND earth
+         * @enum {string}
+         */
+        WindowKindInput: "sun" | "earth" | "both";
+        /** @description Only the requested kinds are present */
+        WindowsByKind: {
+            sun?: components["schemas"]["ClippedWindow"][];
+            earth?: components["schemas"]["ClippedWindow"][];
+            both?: components["schemas"]["ClippedWindow"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -2259,6 +2845,102 @@ export interface operations {
             };
             /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    compareSites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareRequest"];
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareResponse"];
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Request body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unsupported media type (UNSUPPORTED_MEDIA_TYPE): send Content-Type: application/json */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
