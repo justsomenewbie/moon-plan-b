@@ -20,7 +20,7 @@ const weightLabels = [
   ["pct_both", "Both visible"], ["pct_sun_no_earth", "Sun without Earth visibility"],
 ] as const;
 
-export type DisplayedPair = { terrain: TerrainSummary; context: GuideContext };
+export type DisplayedPair = { terrain: TerrainSummary; comparison: SiteComparison; context: GuideContext };
 
 export default function TerrainPair({ result, onDisplayedPair, replay, resolutionSeconds }: {
   result: TerrainSummary; replay: boolean; resolutionSeconds: number; onDisplayedPair: (pair: DisplayedPair | null) => void;
@@ -55,7 +55,7 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
   })), [rows, catalog.data, result]);
   useLayoutEffect(() => {
     if (!opened || !comparison || !rows) return;
-    onDisplayedPair({ terrain: result, context: pairGuideContext(comparison, rows) });
+    onDisplayedPair({ terrain: result, comparison, context: pairGuideContext(comparison, rows) });
     return () => onDisplayedPair(null);
   }, [opened, comparison, rows, result, onDisplayedPair]);
 

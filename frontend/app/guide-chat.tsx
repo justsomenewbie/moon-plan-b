@@ -3,6 +3,9 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { askGuide, GuideRequestError, type GuideErrorKey, type GuideAction, type GuideContext, type GuideReply } from "../lib/api/guide-chat";
 import { planningIntent, type PlanningIntent } from "../lib/guide-planning";
+import type { TerrainSummary } from "../lib/api/terrain-summary";
+import type { DisplayedPair } from "./terrain-pair";
+import { answerWorkspacePlanning } from "../lib/guide-workspace-planning";
 import { answerPlanning, type PlanningSource } from "../lib/api/guide-planning";
 import { useLanguage } from "./language";
 import { isSavedResultLink } from "./observed-week";
@@ -12,7 +15,7 @@ const copy = {
   en: {
     title: "Ask the astronaut", source: "Use data from", saved: "Saved comparison", workspace: "Current workspace", pair: "Displayed site pair",
     kinds: { saved: "Saved team model", terrain: "Terrain model", scenario: "Supplied scenario", synthetic: "Simulated example", unavailable: "No shareable observation summary" },
-    summary: "See UTC ranges and hours", sourceId: "Source", privacy: "Your device answers planning questions that use saved data. For live planning, it requests model data from the team API. For other questions, this site's server receives your question, the previous question if any, and the selected summary. When this server uses OpenAI, it sends your question, the previous question and the site names and dates to OpenAI. Your file stays on your device.",
+    summary: "See UTC ranges and hours", sourceId: "Source", privacy: "Planning questions about the current workspace, displayed pair and saved archives use data on your device. The live planner requests model data from the team API. For other questions, this site's server receives your question, the previous question if any, and the selected summary. When this server uses OpenAI, it sends your question, the previous question and the site names and dates to OpenAI. Your file stays on your device.",
     hours: "Hours visible · Sun / Earth / both", unknown: "unknown", invalid: "Edit the question and send it again.", prompt: "Your question", send: "Send", cancel: "Cancel", reset: "Clear chat", retry: "Try again",
     waiting: "The astronaut is thinking…", failed: "The guide couldn’t answer. You can try again or use the questions below.",
     offline: "The model is unavailable. You can still use the questions below.", slow: "The guide timed out. Try again.", limited: "The guide is busy. Please try again shortly.",
@@ -21,7 +24,7 @@ const copy = {
   vi: {
     title: "Hỏi phi hành gia", source: "Chọn dữ liệu để hỏi", saved: "Kết quả đã lưu", workspace: "Dữ liệu đang xem", pair: "Cặp địa điểm đang so sánh",
     kinds: { saved: "Kết quả mô hình đã lưu", terrain: "Mô hình địa hình", scenario: "Kịch bản đã tải", synthetic: "Dữ liệu mô phỏng", unavailable: "Chưa có dữ liệu quan sát phù hợp để gửi" },
-    summary: "Xem khoảng thời gian UTC và số giờ", sourceId: "Nguồn", privacy: "Thiết bị của bạn xử lý câu hỏi lập kế hoạch dùng dữ liệu đã lưu. Khi lập kế hoạch bằng dữ liệu trực tuyến, thiết bị truy vấn API của nhóm. Với các câu hỏi khác, máy chủ của trang nhận câu hỏi hiện tại, câu hỏi ngay trước đó (nếu có) và phần dữ liệu tóm tắt đã chọn. Khi dùng OpenAI, máy chủ gửi cho OpenAI câu hỏi hiện tại, câu hỏi trước đó, tên địa điểm và khoảng ngày. Tệp gốc vẫn nằm trên thiết bị của bạn.",
+    summary: "Xem khoảng thời gian UTC và số giờ", sourceId: "Nguồn", privacy: "Câu hỏi lập kế hoạch về dữ liệu đang xem, cặp địa điểm đang so sánh và các bản đã lưu dùng dữ liệu trên thiết bị của bạn. Công cụ lập kế hoạch trực tuyến truy vấn API của nhóm. Với các câu hỏi khác, máy chủ của trang nhận câu hỏi hiện tại, câu hỏi ngay trước đó (nếu có) và phần dữ liệu tóm tắt đã chọn. Khi dùng OpenAI, máy chủ gửi cho OpenAI câu hỏi hiện tại, câu hỏi trước đó, tên địa điểm và khoảng ngày. Tệp gốc vẫn nằm trên thiết bị của bạn.",
     hours: "Số giờ nhìn thấy · Mặt Trời / Trái Đất / cả hai", unknown: "chưa xác định", invalid: "Hãy sửa câu hỏi rồi gửi lại.", prompt: "Câu hỏi của bạn", send: "Gửi", cancel: "Hủy", reset: "Xóa cuộc trò chuyện", retry: "Thử lại",
     waiting: "Phi hành gia đang suy nghĩ…", failed: "Chưa có câu trả lời. Bạn có thể thử lại hoặc chọn một câu hỏi bên dưới.",
     offline: "Mô hình hiện chưa hoạt động. Bạn vẫn có thể chọn một câu hỏi bên dưới.", slow: "Đã hết thời gian chờ. Hãy thử lại.", limited: "Phi hành gia đang bận. Bạn vui lòng thử lại sau.",
@@ -32,7 +35,7 @@ const copy = {
 export type GuideDestination = string | (() => void);
 export type GuideActions = Partial<Record<GuideAction, GuideDestination>>;
 export type GuideScope = "saved" | "workspace" | "pair";
-type Props = { planningSource?: PlanningSource; choice: GuideScope | null; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; pair?: GuideContext; savedActions: GuideActions; workspaceActions?: GuideActions };
+type Props = { planningSource?: PlanningSource; choice: GuideScope | null; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; workspaceEvidence?: TerrainSummary | null; pair?: DisplayedPair; savedActions: GuideActions; workspaceActions?: GuideActions };
 type Turn = GuideReply & { question: string; plan?: PlanningIntent; href?: string };
 
 function subscribeToLocation(notify: () => void) {
@@ -46,15 +49,22 @@ function subscribeToLocation(notify: () => void) {
 
 const savedRoute = () => isSavedResultLink(window.location);
 
-export default function GuideChat({ planningSource, choice, onChoice, saved, workspace, pair, savedActions, workspaceActions }: Props) {
+export default function GuideChat({ planningSource, choice, onChoice, saved, workspace, workspaceEvidence, pair, savedActions, workspaceActions }: Props) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const onSavedRoute = useSyncExternalStore(subscribeToLocation, savedRoute, () => false);
   const defaultScope = onSavedRoute ? "saved" : pair ? "pair" : workspace ? "workspace" : "saved";
   const scope = choice === "saved" || (choice === "workspace" && workspace) || (choice === "pair" && pair)
     ? choice : defaultScope;
-  const context = (scope === "pair" ? pair : scope === "workspace" ? workspace : saved) ?? saved;
+  const context = (scope === "pair" ? pair?.context : scope === "workspace" ? workspace : saved) ?? saved;
+  const localScope = scope === "workspace" || scope === "pair";
+  const evidence = scope === "pair" ? pair?.comparison : workspaceEvidence;
+  const [lastEvidence, setLastEvidence] = useState({ evidence, revision: 0 });
+  // A replacement export can retain the same run, totals and site names with different windows.
+  if (lastEvidence.evidence !== evidence) setLastEvidence({ evidence, revision: lastEvidence.revision + 1 });
+  const conversationKey = [locale, scope, lastEvidence.revision, JSON.stringify(context), typeof planningSource === "object" ? planningSource.runId : planningSource].join("|");
   const source = planningSource ?? (scope === "saved" && (choice === "saved" || onSavedRoute) ? "saved" : undefined);
+  const actions = scope === "saved" ? savedActions : scope === "pair" ? { ...workspaceActions, workspace: "#terrain-pair" } : workspaceActions ?? {};
   return <section className={styles.chat} aria-label={labels.title}>
     <h3>{labels.title}</h3>
       {typeof source === "string" && <p className={styles.notice}>{locale === "en" ? "Travel planning uses saved run " : "Câu hỏi lập kế hoạch dùng lần chạy đã lưu "}{source === "saved" ? "B" : "B2"}.</p>}
@@ -65,11 +75,19 @@ export default function GuideChat({ planningSource, choice, onChoice, saved, wor
         {pair && <option value="pair">{labels.pair}</option>}
         <option value="workspace">{labels.workspace}</option><option value="saved">{labels.saved}</option>
       </select></label>}
-      <Conversation key={locale + JSON.stringify(context) + scope + (typeof source === "object" ? source.runId : source)} source={source} context={context} actions={scope === "saved" ? savedActions : workspaceActions ?? {}} />
+      {localScope && <p className={styles.notice}>
+        {scope === "pair" ? (locale === "en" ? "Planning uses this site pair and its UTC window." : "Câu hỏi lập kế hoạch dùng cặp địa điểm này và khoảng UTC đang xem.")
+          : (locale === "en" ? "Planning uses the sites and dates in this workspace." : "Câu hỏi lập kế hoạch dùng các địa điểm và khoảng ngày trong dữ liệu đang xem.")}
+        {" "}<a href="/plan">{locale === "en" ? "Plan with the full catalog" : "Lập kế hoạch với toàn bộ danh mục"}</a>
+      </p>}
+      <Conversation key={conversationKey} source={source} localScope={localScope} evidence={evidence} context={context} actions={actions} />
   </section>;
 }
 
-function Conversation({ context, actions, source }: { source?: PlanningSource; context: GuideContext; actions: GuideActions }) {
+function Conversation({ context, actions, source, localScope, evidence }: {
+  source?: PlanningSource; context: GuideContext; actions: GuideActions; localScope: boolean;
+  evidence?: TerrainSummary | DisplayedPair["comparison"] | null;
+}) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const input = useId();
@@ -95,8 +113,10 @@ function Conversation({ context, actions, source }: { source?: PlanningSource; c
     try {
       const previous = turns.at(-1);
       const plan = planningIntent(text, previous?.plan);
-      const reply = plan ? { ...await answerPlanning(plan, locale, controller.signal, undefined, source), plan, action: null }
-        : await askGuide({ locale, question: text, previousQuestion: previous?.question, context }, controller.signal);
+      let reply: GuideReply & { plan?: PlanningIntent; href?: string };
+      if (plan && localScope) reply = { ...answerWorkspacePlanning(plan, locale, context, evidence), plan };
+      else if (plan) reply = { ...await answerPlanning(plan, locale, controller.signal, undefined, source), plan, action: null };
+      else reply = await askGuide({ locale, question: text, previousQuestion: previous?.question, context }, controller.signal);
       if (request.current !== controller || controller.signal.aborted) return;
       setTurns(old => [...old.slice(-3), { question: text, ...reply }]);
       setQuestion("");
