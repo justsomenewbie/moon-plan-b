@@ -104,6 +104,9 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   if (!selected) return null;
   const details = detailHref(selected.id);
   const hours = value(selected);
+  const duration = hours === undefined ? t("Incomplete coverage") : column === 1
+    ? t("{hours} of {total} h", { hours, total: evaluatedHours }) : `${hours} h`;
+  const reading = `${criterion} · ${duration}`;
   const point = "point" in selected.location ? selected.location.point : null;
   const bearing = point && sun ? sunBearing(point, sun) : undefined;
   const flatSun = sun ? project(sun) : undefined;
@@ -155,7 +158,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
             lat: Number(customPoint.latitude.toFixed(3)), lon: Number(((customPoint.longitude + 360) % 360).toFixed(3)),
           }) : selected.name} /> :
           view === "globe" && mapped.length > 0 ? <MoonGlobe plannerSun={sun} pairSites={sites} terrainView={{
-          siteId: selected.id, onSelect: setSelectedId, onCloseUp: inspectPoint, markerColors, plannerLeaders: sites.filter(isLeader).map(site => site.id),
+          siteId: selected.id, reading, onSelect: setSelectedId, onCloseUp: inspectPoint, markerColors, plannerLeaders: sites.filter(isLeader).map(site => site.id),
         }} /> : imageFailed ? <p role="status">{t("The map image could not load. Select a site to see its coordinates.")}</p> :
           <svg className="plan-map-surface" viewBox={`${left} ${top} ${width} ${height}`} role="group" aria-labelledby="plan-site-map-title">
             <image width="720" height="360" href="/images/lroc-color-2k.jpg" onError={() => setImageFailed(true)}
@@ -215,8 +218,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           <strong>{selected.name}</strong>
           {markerColors && view !== "surface" && <p>{solar.key} · <strong>{selected.trackingPower === undefined ? solar.missing :
             new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(selected.trackingPower)}</strong></p>}
-          <p>{criterion} · {hours === undefined ? t("Incomplete coverage") : column === 1
-            ? t("{hours} of {total} h", { hours, total: evaluatedHours }) : `${hours} h`}</p>
+          <p>{reading}</p>
           {selected.smoothSphere && <p>{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
           {point ? <p>{point.latitude}° {t("latitude")} · {point.longitude}° {t("east longitude")}</p> :
             "reason" in selected.location && <p>{t(selected.location.reason)}</p>}

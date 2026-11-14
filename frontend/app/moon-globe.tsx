@@ -31,7 +31,7 @@ type GlobeProps = {
   savedResult?: string;
   pairSites?: readonly PairLocation[];
   plannerSun?: MapPoint & { utc: string };
-  terrainView?: { siteId: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[]; markerColors?: ReadonlyMap<string, string>; onCloseUp?: (point: MapPoint) => void };
+  terrainView?: { siteId: string; reading?: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[]; markerColors?: ReadonlyMap<string, string>; onCloseUp?: (point: MapPoint) => void };
   showSky?: (alternative: boolean) => void;
 };
 
@@ -365,6 +365,10 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
       })}
     </div>;
 
+  const pinPicker = overlap.length > 1 && <SitePinPicker sites={pins.filter(pin => overlap.includes(pin.key)).map(pin => ({
+    id: pin.key, name: pin.name, select: () => inspectPin(pin),
+  }))} onClose={() => setOverlap([])} />;
+
   const centerOnSun = ready && plannerSun && !sunMarker && <button type="button" className="text-button" onClick={() => {
     setZoom(1); selectCenter(plannerSun);
   }}>{t("Show subsolar point")}</button>;
@@ -396,11 +400,14 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
 
   return <figure className={terrainView && !plannerLeaders ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
     id={plannerLeaders ? "planner-lunar-globe" : terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
-    {home ? frame : <div className="globe-view-slot">
+    {home ? <>{frame}{pinPicker}</> : <div className="globe-view-slot">
       <dialog open ref={viewer} className="globe-view" role={expanded ? undefined : "group"} aria-label={t("Lunar surface globe")}
         onCancel={event => { event.preventDefault(); collapseGlobe(); }}>
         <div className="globe-full-bar">
-          <strong>{target?.name ?? t("Lunar surface globe")}</strong>
+          <div aria-live="polite"><strong>{target?.name ?? t("Lunar surface globe")}</strong>
+            {point && <small className="block">{terrainView && terrainView.siteId === target?.key && terrainView.reading
+              ? terrainView.reading : coordinates(point, false)}</small>}
+          </div>
           <button className="globe-close button outline" type="button" onClick={collapseGlobe}>{t(plannerLeaders ? "Back to planner" : "Close expanded view")}</button>
         </div>
         <div className="globe-viewport">{frame}</div>
@@ -415,10 +422,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
           {closeUpButton}
           <p id={zoomHelpId + "-expanded"}>{t("Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.")}</p>
         </div>
-        {overlap.length > 1 && <SitePinPicker sites={pins.filter(pin => overlap.includes(pin.key)).map(pin => ({
-          id: pin.key, name: pin.name, select: () => inspectPin(pin),
-        }))}
-          onClose={() => setOverlap([])} />}
+        {pinPicker}
       </dialog>
       {ready && <button ref={expandButton} type="button" className="button outline globe-expand" aria-haspopup="dialog" onClick={expandGlobe}>{t("Expand globe")}</button>}
     </div>}

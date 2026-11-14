@@ -56,6 +56,7 @@ try {
 
     await chooseAthena(pin(athena.id));
     assert.equal(await pin(athena.id).getAttribute("aria-pressed"), "true");
+    assert.match(await expanded.locator(".globe-full-bar").innerText(), /139 h/);
     await pin(plateau.id).focus();
     await page.keyboard.press("Enter");
     assert.equal(await inspect.inputValue(), plateau.id);

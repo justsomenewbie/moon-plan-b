@@ -53,7 +53,10 @@ export default function TerrainResult({ reducedMotion, result, view, onSelect, o
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>
     {hasGlobe && observationSite && <section className="my-6 print:hidden" aria-labelledby="terrain-globe-heading">
       <h3 id="terrain-globe-heading">{t("Sites on the Moon")}</h3>
-      <MoonGlobe pairSites={placements} terrainView={{ siteId: observationSite.id, onSelect: id => selectSite(result.sites.findIndex(site => site.id === id)) }} />
+      <MoonGlobe pairSites={placements} terrainView={{ siteId: observationSite.id,
+        reading: observationSite.metrics && observationSite.coverage_in_range === "complete"
+          ? `${t("Sun visible")} · ${observationSite.metrics.sun_hours} h · ${t("Earth visible")} · ${observationSite.metrics.earth_hours} h` : undefined,
+        onSelect: id => selectSite(result.sites.findIndex(site => site.id === id)) }} />
     </section>}
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} source={result} liveResult={liveWindow ? result : undefined} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
