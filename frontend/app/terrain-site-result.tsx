@@ -1,3 +1,4 @@
+import { usesSmoothSphere } from "../lib/site-horizon";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import type { operations } from "../lib/api/producer";
 import { useLanguage } from "./language";
@@ -49,7 +50,7 @@ export function SiteHorizonSource({ method, source }: { method: string; source: 
   const { t } = useLanguage();
   return <p className="muted text-sm break-words">{t("Site horizon method")} · {method}<br />
     {t("Terrain elevation model")} · {source}
-    {source.startsWith("none:outside-") && <><br />{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</>}
+    {usesSmoothSphere({ horizonMethod: method, demSource: source }) && <><br />{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</>}
   </p>;
 }
 

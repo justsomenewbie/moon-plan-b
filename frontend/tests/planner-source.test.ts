@@ -40,6 +40,20 @@ test("same-hour landing, duration, unsupported constraints and ranking survive s
   assert.deepEqual(liveExtras(changed), { maxEarthGap: "0", separationHours: "4" });
 });
 
+test("continuous visibility and signed Sun elevation survive a round trip through saved data", () => {
+  const controls = { minContinuousSun: "2.5", minContinuousEarth: "4", minSunElevation: "-0.25" };
+  const live = plannerFormState(new URLSearchParams(), "dates", "live", form(controls));
+  const back = plannerFormState(live, "dates", "saved-b2", form({ savedPriority: "joint" }));
+  assert.ok(hasLiveOptions(back));
+  assert.deepEqual(liveExtras(back), controls);
+  for (const value of ["-90", "0", "90", "-.5", "1e-2"]) {
+    assert.deepEqual(liveExtras(new URLSearchParams({ minSunElevation: value })), { minSunElevation: value });
+  }
+  for (const value of ["-91", "91", "Infinity", "1e999", "", "0x01"]) {
+    assert.deepEqual(liveExtras(new URLSearchParams({ minSunElevation: value, minContinuousEarth: "-2" })), {});
+  }
+});
+
 test("sub-hour bounds round inward solely for model evaluation, including when no grid hour fits", () => {
   const p = plannerFormState(new URLSearchParams(), "dates", "live", form({
     earliest: "2026-11-15T04:00:01", latest: "2026-11-15T05:59:59", missionHours: "24", landingSite: "im2_athena", objective: "earth",

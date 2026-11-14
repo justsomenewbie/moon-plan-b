@@ -20,6 +20,16 @@ Status on 14 November 2026: the team has selected the backend contract and a sin
 
 Chung owns the production OpenAPI. The FE requests one aggregate per UTC range and can import the producer JSON export. A separate team member owns Colab execution and testing.
 
+## Planner and dataset checks, November 15, 2026
+
+Run B2’s [site catalog](../frontend/public/data/run-b2/catalog.json) identifies five sites outside PGDA elevation coverage with a flat horizon: Apollo 11, 15 and 17, and Chang’e-4 and Chang’e-6. For 00:00 UTC November 15 through 00:00 November 16, Apollo 17 and Chandrayaan-3 Vikram each have 24 hours of simultaneous visibility. Apollo 17 omits local terrain shadows. Vikram uses a horizon computed from the PGDA elevation model. The date-first results and site-first searches display the caveat using each site's model metadata.
+
+For a five-hour visit to Apollo 11 starting February 12–18, 2029, the saved B2 hourly series and the public planner agree: each of the 164 possible starts for a mission ending by February 19 00:00 UTC has five hours of Earth visibility and zero hours of sunlight or joint visibility. With a zero minimum, these starts are feasible. The planner gives no landing recommendation when the visibility objective scores zero, and retains the producer's candidates for inspection.
+
+A production call to `POST /alt-dates` for a five-hour mission at Athena on November 15 tested three conditions together: at least three continuous hours of sunlight after landing, five of Earth visibility and a minimum solar elevation of −10°. With both bodies required at landing and no minimum spacing, the API returned both tested starts, 06:00 and 07:00 UTC. The B2 archive independently reproduced the uninterrupted sunlight/Earth durations, 379/459 hours and 378/458 hours respectively. These durations extend beyond the five-hour mission.
+
+**Open backend message issue.** On the public proxy, a one-day Haworth dataset returned HTTP 200 for `max_points=10000` and HTTP 400 for `10001`. The rejected response's `detail` and field error give the correct maximum of 10,000. Its `hint` gives the 5,000-point limit and the field-count guidance for the separate series route. The aggregate contract permits 10,000. Both requests used `site_ids=a3_haworth`, `include=series`, and November 15 00:00 through November 16 00:00 UTC. The closed export filename report above concerns a different endpoint.
+
 ## Aggregate update on 14 November
 
 At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The frontend requests the following bounded comparison through its same-origin proxy. Changing the requested spacing affects the displayed series. Full visibility intervals still come from the source grid.
@@ -161,7 +171,7 @@ The aggregate schema and two bounded responses have been checked. The production
 
 ## Live custom-coordinate jobs
 
-Opening the form fetches `GET /api/v1/capabilities` and checks the custom-site job type, SPICE, PGDA, ray marching and hourly sampling. The form uses the selected UTC range, planetocentric latitude, east-positive longitude and observer height above the surface in metres. `POST /api/v1/jobs` returns a job receipt. The client accepts 202 for queued or running work and 200 for an already completed matching job. It polls the same job ID every 1.5 seconds. A null percentage is shown as indeterminate. Failed and cancelled jobs have separate terminal states. A successful job identifies the resulting site and run. Opening the result performs a bounded aggregate GET for that one site, and its permalink retains the site ID, run ID and UTC range. Once the backend expires the run, the link may become unavailable.
+Opening the form fetches `GET /api/v1/capabilities` and checks the custom-site job type, SPICE, PGDA, ray marching and hourly sampling. The form uses the selected UTC range, planetocentric latitude, east-positive longitude and observer height above the surface in metres. `POST /api/v1/jobs` returns a job receipt. The client accepts 202 for queued or running work and 200 for an already completed matching job. The current client polls the same job ID every two seconds while active. A null percentage is shown as indeterminate. Failed and cancelled jobs have separate terminal states. A successful job identifies the resulting site and run. Opening the result performs a bounded aggregate GET for that one site, and its permalink retains the site ID, run ID and UTC range. Once the backend expires the run, the link may become unavailable.
 
 ## Astronaut assistant and producer API
 
