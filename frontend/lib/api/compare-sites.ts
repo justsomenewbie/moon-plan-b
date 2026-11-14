@@ -30,7 +30,7 @@ function sourceTime(value: string) {
 }
 
 // Each kind contains visible AND hidden spans. Only a contiguous partition covers the entire evaluated window.
-function checkSite(site: Schemas["CompareSite"], rank: Schemas["RankingRow"], start: number, end: number, step: number): Coverage {
+function checkSite(site: Schemas["CompareSite"], rank: Schemas["RankingRow"], start: number, end: number, step: number) {
   const metrics = site?.metrics, windows = site?.windows;
   const duration = (end - start) / HOUR;
   check(metrics && windows && strings(site.warnings) && close(metrics.duration_h, duration));
@@ -64,21 +64,36 @@ function checkSite(site: Schemas["CompareSite"], rank: Schemas["RankingRow"], st
     within(metrics.mean_power_tracking, 1) && within(metrics.mean_power_horizontal, 1));
   for (const field of ["longest_dark_h", "longest_comms_gap_h", "longest_dark_truncated", "longest_comms_gap_truncated", "mean_power_tracking"] as const)
     check(rank[field] === metrics[field]);
+  // Advance only to supplied edges. A gap contributes no known state.
+  const cursor = [0, 0, 0];
+  for (let time = start; time < end;) {
+    let next = end;
+    const [sun, earth, both] = spans.map((list, i) => {
+      const w = list[cursor[i]];
+      if (!w) return undefined;
+      next = Math.min(next, time < w.start ? w.start : w.end);
+      return time < w.start ? undefined : w.state;
+    });
+    if (both === true) check(sun !== false && earth !== false);
+    if (both === false) check(sun !== true || earth !== true);
+    time = next;
+    spans.forEach((list, i) => { if (list[cursor[i]]?.end === time) cursor[i]++; });
+  }
+  let weightedSamples = 0, longestDark = 0;
   if (coverage === "complete") {
     for (const [i, kind] of kinds.entries()) {
       const visible = spans[i].reduce((sum, w) => w.state ? sum + (w.end - w.start) : sum, 0);
       check(close(metrics[`pct_${kind}`], 100 * visible / (end - start)));
+      weightedSamples += (visible / step) * (10 * weights[`pct_${kind}`]);
     }
-    // Compare states segment by segment, including simultaneous transitions at the same boundary.
-    const cursor = [0, 0, 0];
-    for (let time = start; time < end;) {
-      const [sun, earth, both] = spans.map((list, i) => list[cursor[i]]);
-      check(both.state === (sun.state && earth.state));
-      time = Math.min(sun.end, earth.end, both.end);
-      spans.forEach((list, i) => { if (list[cursor[i]].end === time) cursor[i]++; });
+    let dark = 0;
+    for (const w of spans[0]) {
+      dark = w.state ? 0 : dark + (w.end - w.start);
+      longestDark = Math.max(longestDark, dark);
     }
+    check(close(metrics.longest_dark_h, longestDark / HOUR));
   }
-  return coverage;
+  return { coverage, weightedSamples, longestDark };
 }
 
 export async function compareSites(request: SiteComparisonRequest, signal?: AbortSignal): Promise<SiteComparison> {
@@ -106,12 +121,24 @@ export async function compareSites(request: SiteComparisonRequest, signal?: Abor
     data.sites && Object.keys(data.sites).length === 2 && siteIds.every(id => Object.hasOwn(data.sites, id)) &&
     Array.isArray(data.ranking) && data.ranking.length === 2);
   const coverageBySite: Record<string, Coverage> = Object.create(null);
+  let previous: ReturnType<typeof checkSite> | undefined;
   for (const [i, row] of data.ranking.entries()) {
     check(row && row.rank === i + 1 && siteIds.includes(row.site_id) && !Object.hasOwn(coverageBySite, row.site_id) &&
       typeof row.name === "string" && row.name.length && typeof row.group === "string" && strings(row.reasons));
-    coverageBySite[row.site_id] = checkSite(data.sites[row.site_id], row, start, end, step);
+    const observed = checkSite(data.sites[row.site_id], row, start, end, step);
+    coverageBySite[row.site_id] = observed.coverage;
     check(close(row.score, fields.reduce((sum, f) => sum + weights[f] * row[f], 0)));
-    if (i > 0) check(row.score <= data.ranking[i - 1].score + 0.000002);
+    if (previous) {
+      const prior = data.ranking[i - 1];
+      check(row.score <= prior.score + 0.000002);
+      // Rounded scores alone cannot establish a tie. Complete sample states give the exact weighted counts.
+      if (observed.coverage === "complete" && previous.coverage === "complete" &&
+          row.score === prior.score && observed.weightedSamples === previous.weightedSamples) {
+        check(previous.longestDark < observed.longestDark ||
+          (previous.longestDark === observed.longestDark && prior.site_id < row.site_id));
+      }
+    }
+    previous = observed;
   }
   return { ...data, coverageBySite };
 }
