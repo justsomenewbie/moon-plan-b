@@ -6,6 +6,7 @@ import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../li
 import type { WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
 import ThemeControl from "./theme-control";
+import AstronautGuide from "./astronaut-guide";
 import MoonGlobe from "./moon-globe";
 import LocalSky from "./local-sky";
 import { LanguageControl, useLanguage } from "./language";
@@ -265,27 +266,35 @@ export default function Navigator() {
       </nav>
       <input ref={fileInput} aria-label={t("Import JSON dataset")} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
     </header>
-    <section className="intro"><div className="hero-copy"><p className="eyebrow">{t("Lunar observation explorer")}</p><h1>{t("Find a clearer window")}</h1><p className="lead">{t("Compare the Sun and Earth above the lunar horizon.")}</p>
-      <details className="home-guide" open>
-        <summary>{t("Quick guide")}</summary>
-        <ol>
-          <li>{t("Compare dates at one site, or compare sites over the same UTC window.")}</li>
-          <li>{t("Move the timeline slider to see where the Sun and Earth are at each sample.")}</li>
-        </ol>
-        <a href="#observed-week">{t("See the Odysseus and Athena results")}</a>
-      </details>
-      <div className="hero-actions">
-        <a className="button primary" href={comparisonHref}>{t("Open comparison tool")} <span aria-hidden="true">↗</span></a>
-        {a && !loading ? <a className="button outline" href="#local-sky">{t("Explore the 3D sky")}</a> :
-          <a className="button outline" href="#lunar-reference">{t("Explore the lunar globe")}</a>}
+    <section className="intro" aria-labelledby="home-title">
+      <div className="hero-copy">
+        <p className="eyebrow">{t("Lunar observation explorer")}</p>
+        <h1 id="home-title">{t("Find a clearer window")}</h1>
+        <p className="lead">{t("See when a lunar landing site can see both the Sun and Earth.")}</p>
+        <div className="hero-actions">
+          <a className="button primary" href="#observed-week">{t("Open comparison tool")} <span aria-hidden="true">↗</span></a>
+          <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
+        </div>
       </div>
-      <p className="muted text-sm hero-meta">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Backend API · draft compatibility requires producer review")} · <a href="/api-docs">{t("API explorer")}</a></p>
-      <p className="data-notice">{!data ? isMock ? t("No scientific dataset connected. Use the demonstration or import a release.") : t("Waiting for a valid API dataset. You can also import a release.") : data.evidence === "synthetic-fixture" ? t("Demonstration data — fictional sites and values. Not for mission planning.") : t("Supplied data — scientific validity has not been independently verified. Not for mission planning.")}</p>
-      </div><MoonGlobe primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
-        alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
+      <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
+        <h2 id="home-guide-title">{t("Quick guide")}</h2>
+        <ol>
+          <li>{t("Open the saved results and choose two sites in one week, or two weeks at one site.")}</li>
+          <li>{t("Read the hours when both the Sun and Earth are visible. Select a site on the globe to inspect it.")}</li>
+          <li>{t("For individual observations, open the timeline and move the slider to a UTC sample.")}</li>
+        </ol>
+        <a href={comparisonHref}>{t("Open the observation workspace")}</a>
+      </section>
     </section>
-    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")} />
+    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")}>
+      <MoonGlobe savedResult={savedResult} primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
+        alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
+    </ObservedWeek>
 
+    <div className="workspace-notice">
+      <p className="muted text-sm">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Backend API · draft compatibility requires producer review")} · <a href="/api-docs">{t("API explorer")}</a></p>
+      <p className="data-notice">{!data ? isMock ? t("No scientific dataset connected. Use the demonstration or import a release.") : t("Waiting for a valid API dataset. You can also import a release.") : data.evidence === "synthetic-fixture" ? t("Demonstration data — fictional sites and values. Not for mission planning.") : t("Supplied data — scientific validity has not been independently verified. Not for mission planning.")}</p>
+    </div>
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
     {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId)}>{t("Retry API request")}</button> : null}{isMock || !retryLoad ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? t("Reset to demonstration") : t("Retry API request")}</button> : null}<button className="button outline" onClick={() => fileInput.current?.click()}>{t("Import the correct dataset")}</button></div></div> : null}
@@ -338,6 +347,7 @@ export default function Navigator() {
       <a href="https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table" target="_blank" rel="noreferrer"><strong>{t("Understand the observations ↗")}</strong><span>{t("Read the JPL Horizons observer-table documentation and coordinate conventions.")}</span></a>
       <a href="https://trek.nasa.gov/moon/" target="_blank" rel="noreferrer"><strong>{t("Explore lunar terrain ↗")}</strong><span>{t("Open NASA Moon Trek in a separate tab to explore its lunar map.")}</span></a>
     </div></section>
-    <footer className="app-footer"><p>{t("Ideal horizon only. Terrain, power and radio links are not modeled.")}</p><p>{t("Frontend draft · AI-assisted implementation ·")}{" "}<a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">{t("Project repository")}</a></p></footer>
+    <AstronautGuide />
+    <footer className="app-footer"><p>{t("Visibility alone does not measure solar power or radio signal strength.")}</p><p>{t("Frontend draft · AI-assisted implementation ·")}{" "}<a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">{t("Project repository")}</a> · <a href="https://github.com/justsomenewbie/moon-plan-b/issues" target="_blank" rel="noreferrer">{t("Project feedback")}</a></p></footer>
   </div>;
 }

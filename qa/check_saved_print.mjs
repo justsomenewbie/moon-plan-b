@@ -13,7 +13,7 @@ const browser = await chromium.launch({
 try {
   const page = await browser.newPage();
   const saved = page.locator("#observed-week");
-  const selector = saved.getByRole("combobox");
+  const selector = saved.getByRole("combobox", { name: "Compare saved results" });
   async function printText() {
     const pdf = await page.pdf({ format: "A4" });
     return execFileSync("pdftotext", ["-layout", "-", "-"], { input: pdf, encoding: "utf8" });
