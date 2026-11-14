@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
-import { drawGlobe, globeCenter } from "../lib/moon-globe";
+import { drawGlobe, globeCenter, globePointAt, globeCenterForAnchor } from "../lib/moon-globe";
 import { comparisonLocation, diskPosition, missionSites, pairCenter } from "../lib/globe-sites";
 import type { GlobeSite, MapPoint, PairLocation } from "../lib/globe-sites";
 import type { Dataset } from "../lib/dataset";
@@ -82,10 +82,15 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     sample.utc === selectedWeek?.startUtc || (savedSite && !selectedWeek));
   const sun = orbit ? sunlight.samples.find(sample => sample.utc === orbit.weekUtc) : solarChoices.find(sample => sample.utc === sunUtc);
   const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
+  const viewer = useRef<HTMLDialogElement>(null);
+  const expandButton = useRef<HTMLButtonElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [rasterSize, setRasterSize] = useState(384);
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<{ context: CanvasRenderingContext2D; texture: ImageData; frame: ImageData } | null>(null);
   const touches = useRef(new Map<number, { x: number; y: number }>());
-  const pinch = useRef<{ distance: number; zoom: number } | null>(null);
+  const pinGesture = useRef(false);
+  const pinch = useRef<{ distance: number; zoom: number; anchor: MapPoint | null; center: MapPoint } | null>(null);
   const drag = useRef<{ id: number; x: number; y: number; scale: number; center: typeof origin } | null>(null);
 
   useEffect(() => {
@@ -183,56 +188,95 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
   }, [enabled]);
 
   useEffect(() => {
+    const surface = canvas.current;
+    if (!expanded || !surface) { setRasterSize(384); return; }
+    function resize() {
+      const width = surface!.getBoundingClientRect().width;
+      setRasterSize(Math.max(384, Math.min(896, Math.round(width * window.devicePixelRatio))));
+    }
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(surface);
+    return () => observer.disconnect();
+  }, [expanded]);
+
+  useEffect(() => {
     const view = renderer.current;
     if (!view) return;
     const id = requestAnimationFrame(() => {
+      if (view.frame.width !== rasterSize) {
+        view.context.canvas.width = view.context.canvas.height = rasterSize;
+        view.frame = view.context.createImageData(rasterSize, rasterSize);
+      }
       drawGlobe(view.texture, view.frame, center.longitude, center.latitude, zoom, sun);
       view.context.putImageData(view.frame, 0, 0);
     });
     return () => cancelAnimationFrame(id);
-  }, [center, zoom, sun]);
+  }, [center, zoom, sun, rasterSize, ready]);
+
+  function diskCoordinates(clientX: number, clientY: number) {
+    const box = canvas.current!.getBoundingClientRect();
+    return { x: 2 * (clientX - box.left) / box.width - 1, y: 2 * (clientY - box.top) / box.height - 1 };
+  }
 
   const wheelZoom = useEffectEvent((event: WheelEvent) => {
     if (event.ctrlKey || event.metaKey || !event.deltaY) return;
     const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.current!.clientHeight : 1);
     const scale = clampZoom(zoom * Math.exp(-Math.max(-400, Math.min(400, pixels)) * 0.003));
     if (scale === zoom) return;
+    if (!home) {
+      const position = diskCoordinates(event.clientX, event.clientY);
+      const anchor = globePointAt(center, zoom, position);
+      if (!anchor) return;
+      setCenter(globeCenterForAnchor(anchor, position, scale, center));
+    }
     event.preventDefault();
     setRotating(false); setZoom(scale);
   });
   useEffect(() => {
-    const surface = canvas.current;
+    const surface = canvas.current?.parentElement;
     if (!surface || !ready) return;
     const wheel = (event: WheelEvent) => wheelZoom(event);
     surface.addEventListener("wheel", wheel, { passive: false });
     return () => surface.removeEventListener("wheel", wheel);
   }, [ready]);
 
-  function fingerDistance() {
+  function fingerSpan() {
     const [a, b] = touches.current.values();
-    return Math.hypot(a.x - b.x, a.y - b.y);
+    return { distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
+      position: diskCoordinates((a.x + b.x) / 2, (a.y + b.y) / 2) };
   }
-  function startDrag(event: PointerEvent<HTMLCanvasElement>) {
+  function startDrag(event: PointerEvent<HTMLDivElement>) {
     if (!ready || event.button !== 0 || (event.pointerType !== "touch" && !event.isPrimary)) return;
+    const element = event.target as HTMLElement;
+    if (!touches.current.size) pinGesture.current = false;
+    const onPin = !!element.closest(".site-pin");
+    if (onPin && event.pointerType !== "touch") return;
     if (event.pointerType === "touch") {
       if (touches.current.size >= 2) return;
       touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     }
     setRotating(false);
-    event.currentTarget.setPointerCapture(event.pointerId);
+    element.setPointerCapture(event.pointerId);
     setAnnounced(null);
     if (touches.current.size === 2) {
+      pinGesture.current = true;
       drag.current = null;
-      pinch.current = { distance: Math.max(1, fingerDistance()), zoom };
+      const { distance, position } = fingerSpan();
+      pinch.current = { distance, zoom, center, anchor: home ? null : globePointAt(center, zoom, position) };
       return;
     }
+    if (onPin) return;
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scale: 150 / (zoom * event.currentTarget.getBoundingClientRect().width), center };
   }
-  function moveDrag(event: PointerEvent<HTMLCanvasElement>) {
+  function moveDrag(event: PointerEvent<HTMLDivElement>) {
     if (touches.current.has(event.pointerId)) {
       touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
       if (pinch.current && touches.current.size === 2) {
-        setZoom(clampZoom(pinch.current.zoom * fingerDistance() / pinch.current.distance));
+        const { distance, position } = fingerSpan();
+        const next = clampZoom(pinch.current.zoom * distance / pinch.current.distance);
+        if (pinch.current.anchor) setCenter(globeCenterForAnchor(pinch.current.anchor, position, next, pinch.current.center));
+        setZoom(next);
         return;
       }
     }
@@ -241,9 +285,15 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     setCenter(globeCenter(start.center.longitude - (event.clientX - start.x) * start.scale,
       start.center.latitude + (event.clientY - start.y) * start.scale));
   }
-  function endDrag(event: PointerEvent<HTMLCanvasElement>) {
+  function endDrag(event: PointerEvent<HTMLDivElement>) {
     if (touches.current.delete(event.pointerId)) pinch.current = null;
-    if (drag.current?.id === event.pointerId) drag.current = null;
+    const start = drag.current;
+    if (start?.id !== event.pointerId) return;
+    drag.current = null;
+    if (!home && event.type === "pointerup" && Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 4) {
+      const location = globePointAt(start.center, zoom, diskCoordinates(event.clientX, event.clientY));
+      if (location) selectCenter(location);
+    }
   }
   function selectCenter(next: typeof origin) {
     setRotating(false);
@@ -273,15 +323,12 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     if (item && "point" in item.location) selectCenter(item.location.point);
   }
 
-  return <figure className={terrainView ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
-    id={terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
-    <div className={terrainView ? "lunar-frame w-full" : "lunar-frame"}>
+  const frame = <div className={terrainView ? "lunar-frame w-full" : "lunar-frame"}
+      onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag}>
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
         tabIndex={0} onKeyDown={turnWithKeyboard}
-        aria-describedby={orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : zoomHelpId}
-        onPointerDown={startDrag} onPointerMove={moveDrag}
-        onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} />}
+        aria-describedby={expanded ? zoomHelpId + "-expanded" : orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : zoomHelpId} />}
       {ready && !orbit && sunMarker && <span className="subsolar-marker" aria-hidden="true"
         style={{ left: `${(1 + sunMarker.x) * 50}%`, top: `${(1 + sunMarker.y) * 50}%` }}>☉</span>}
       {ready && (!home || orbit) && pins.map((item, index) => {
@@ -292,10 +339,56 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         return <span key={item.key} className="site-pin" data-pin={index} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined }}>
           <button type="button" title={item.name} aria-label={t("Inspect {site}", {site: item.name})}
             aria-pressed={orbit ? orbit.site.id === item.missionId : target?.key === item.key}
-            onClick={() => { if (orbit && item.missionId) orbit.onSite(item.missionId); locate(item); }}>{orbit ? item.name.split(" · ")[0] : index + 1}</button>
+            onClick={event => {
+              if (event.detail && pinGesture.current) return;
+              if (orbit && item.missionId) orbit.onSite(item.missionId);
+              locate(item);
+            }}>{orbit ? item.name.split(" · ")[0] : index + 1}</button>
         </span>;
       })}
-    </div>
+    </div>;
+
+  function expandGlobe() {
+    const dialog = viewer.current;
+    if (!dialog) return;
+    dialog.close();
+    dialog.showModal();
+    setZoom(1);
+    setRotating(false);
+    setExpanded(true);
+    dialog.querySelector<HTMLButtonElement>(".globe-close")?.focus();
+  }
+
+  function collapseGlobe() {
+    const dialog = viewer.current;
+    if (!dialog) return;
+    dialog.close();
+    dialog.show();
+    setExpanded(false);
+    expandButton.current?.focus({ preventScroll: true });
+  }
+
+  return <figure className={terrainView ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
+    id={terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
+    {home ? frame : <div className="globe-view-slot">
+      <dialog open ref={viewer} className="globe-view" role={expanded ? undefined : "group"} aria-label={t("Lunar surface globe")}
+        onCancel={event => { event.preventDefault(); collapseGlobe(); }}>
+        <div className="globe-full-bar">
+          <strong>{target?.name ?? t("Lunar surface globe")}</strong>
+          <button className="globe-close button outline" type="button" onClick={collapseGlobe}>{t("Close expanded view")}</button>
+        </div>
+        <div className="globe-viewport">{frame}</div>
+        <div className="globe-full-footer">
+          <div className="globe-controls">
+            <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => setZoom(value => clampZoom(value / 2))}>−</button>
+            <output>{zoom}×</output>
+            <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => setZoom(value => clampZoom(value * 2))}>+</button>
+          </div>
+          <p id={zoomHelpId + "-expanded"}>{t("Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.")}</p>
+        </div>
+      </dialog>
+      {ready && <button ref={expandButton} type="button" className="button outline globe-expand" aria-haspopup="dialog" onClick={expandGlobe}>{t("Expand globe")}</button>}
+    </div>}
     {orbit ? <figcaption id="orbit-help">
       {ready ? t("Drag or use the arrow keys to rotate. Use + or − to zoom.") : failed ?
         t("Map unavailable. The photograph and site readings are still available.") : t("Lunar reference photograph")}
@@ -331,7 +424,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
           <a href={sunlight.query} target="_blank" rel="noreferrer">JPL Horizons · {t("Sun direction")} ↗</a>
         </div>}
       </div>}
-      {ready && <p id={zoomHelpId}>{t("Scroll or pinch to zoom the reference map (1–4×). With the globe focused, use + or − to zoom.")}</p>}
+      {ready && <p id={zoomHelpId}>{t(home ? "Scroll or pinch to zoom the reference map (1–4×). With the globe focused, use + or − to zoom." : "Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.")}</p>}
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)} · {zoom}×</p>}
       <p role="status">{failed ? t("Globe unavailable. The photograph is shown. Try again to reload the map.") : enabled && !ready ? t("Loading lunar surface map…") :
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>

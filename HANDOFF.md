@@ -12,7 +12,7 @@ Imports, saved links, EN/VI, printing and sources work. View from switches or ov
 
 [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
-Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body readings.
+Comparison globes expand from 1×, support location-centered zoom and retain the selected site. Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md).
 
 Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup labels optional solar-disc fraction and Sun-facing irradiance. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
