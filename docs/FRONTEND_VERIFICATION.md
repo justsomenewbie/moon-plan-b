@@ -368,3 +368,7 @@ During the earlier orbit release, the production build and 172 frontend tests pa
 The saved and terrain comparison globes share one viewer. Opening it shows the whole visible hemisphere at 1×. A click or tap centers a surface point. Wheel and two-finger zoom follow the chosen point up to 4×, including over site pins. Near a pole, if a point cannot stay at the requested pixel with north up, the camera retains its center. Expanding changes the map's drawing resolution. Closing restores keyboard focus and the selected site.
 
 The [browser regression](../qa/check_globe_zoom.mjs) exercised keyboard entry, Escape, wheel zoom over an off-center Athena pin and the photograph fallback. Chrome at 1366 × 900 displayed a 746 px disk and kept the pin within 1 CSS px at 1.62×. At 375 × 812 the disk was 351 px across. A simulated two-finger pinch reached 1.79× with the pin stationary and page scale 1. Vietnamese tap-to-center, zoom, close and reopen passed at 375 × 812 and 812 × 375. This covered browser touch emulation.
+
+### Shared local sky on the public B2 planner
+
+On November 15, 2026, Chromium opened the public comparison for Odysseus and Athena from 04:00 through 07:00 UTC. At 04:00 and 05:00, all 16 displayed azimuth/elevation readings and eight visibility flags agreed with the run-pinned aggregate and the producer’s instant endpoint. After a switch to Vietnamese and a new-tab reopen, the shared link retained run B2, both sites, Athena as the observer and the 05:00 sample. The two hourly samples do not determine the instant of the visibility transition.

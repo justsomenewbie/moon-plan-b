@@ -50,11 +50,33 @@ test("discovers the producer's default, requires matching coverage bounds and a 
   assert.deepEqual(await getPlannerRun(), run);
   assert.deepEqual(paths, ["/api/v1/runs?limit=1", "/api/v1/sites?run_id=fixture&format=json"]);
   catalog = catalog.slice(1);
-  await assert.rejects(getPlannerRun(), /default model run/);
+  await assert.rejects(getPlannerRun(), /model run/);
   record.n_samples = 25;
-  await assert.rejects(getPlannerRun(), /default model run/);
+  await assert.rejects(getPlannerRun(), /model run/);
   record.n_samples = 24; record.is_default = false;
-  await assert.rejects(getPlannerRun(), /default model run/);
+  await assert.rejects(getPlannerRun(), /model run/);
+});
+
+test("reopens the exact live run when its default changes and rejects missing or mismatched pins", async t => {
+  const record = { run_id: run.runId, is_default: false, status: "ready", start_utc: start, end_utc: end,
+    n_samples: 24, step_s: 3600, n_sites: ids.length, site_ids: ids };
+  const catalog = ids.map(id => ({ id, name: id, dem_source: "fixture", horizon_method: "fixture" }));
+  const paths: string[] = [];
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    const url = new URL(req.url);
+    paths.push(url.pathname + url.search);
+    if (url.pathname === "/api/v1/runs/fixture") return Response.json(record);
+    if (url.pathname === "/api/v1/runs/expired") return Response.json({ detail: "Run expired" }, { status: 404 });
+    if (url.pathname === "/api/v1/sites") return Response.json({ run_id: run.runId, sites: catalog });
+    throw Error("Unexpected API call " + url.pathname);
+  });
+  assert.deepEqual(await getPlannerRun(undefined, run.runId), run);
+  assert.deepEqual(paths, ["/api/v1/runs/fixture", "/api/v1/sites?run_id=fixture&format=json"]);
+  record.run_id = "different";
+  await assert.rejects(getPlannerRun(undefined, run.runId), /model run/);
+  await assert.rejects(getPlannerRun(undefined, "expired"), /Run expired/);
+  for (const pin of ["", ".", "..", "bad/path"]) await assert.rejects(getPlannerRun(undefined, pin), /model run/);
+  assert.deepEqual(paths.slice(2), ["/api/v1/runs/fixture", "/api/v1/runs/expired"]);
 });
 
 test("matches the native interval evidence to all ranked IDs, preserves ties and excludes missing coverage", async t => {

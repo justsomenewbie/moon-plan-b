@@ -6,7 +6,7 @@ import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
-import type { PlanningArchive } from "../lib/api/guide-planning";
+import type { PlanningSource } from "../lib/api/guide-planning";
 import GuideChat, { type GuideActions, type GuideScope } from "./guide-chat";
 import { savedGuideContext, type GuideContext } from "../lib/api/guide-chat";
 
@@ -51,8 +51,8 @@ const messages = {
   },
 };
 
-export default function AstronautGuide({ planningArchive, savedResult, terrain, comparisonPath = "", workspace, pair, workspaceActions, onSaved }: {
-  planningArchive?: PlanningArchive; savedResult: string; terrain: TerrainSummary | null; comparisonPath?: string;
+export default function AstronautGuide({ planningSource, savedResult, terrain, comparisonPath = "", workspace, pair, workspaceActions, onSaved }: {
+  planningSource?: PlanningSource; savedResult: string; terrain: TerrainSummary | null; comparisonPath?: string;
   workspace?: GuideContext; pair?: GuideContext; workspaceActions?: GuideActions; onSaved?: (value: string) => void;
 }) {
   const { locale } = useLanguage();
@@ -117,7 +117,7 @@ export default function AstronautGuide({ planningArchive, savedResult, terrain, 
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
       <p className={styles.greeting}>{copy.greeting}<br />{copy.measurementNote}</p>
-      {open && <GuideChat planningArchive={planningArchive} choice={guideChoice} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
+      {open && <GuideChat planningSource={planningSource} choice={guideChoice} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
       {reading && <section className={styles.sample}>
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>

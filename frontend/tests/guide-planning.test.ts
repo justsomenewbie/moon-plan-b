@@ -51,6 +51,7 @@ test("missing bounds and mission duration can be supplied in later turns without
       ["im2_athena", first, "2026-11-27T00:00:00Z", 24, 3600, run.start]);
     return { candidates: [{ landing_utc: first, mission_end_utc: "2026-11-22T00:00:00Z", sun_pct: 50, earth_pct: 25, both_pct: 25 }] } as AltDatesResponse;
   } });
+  assert.equal(new URL(reply.href, "https://example.org").searchParams.get("run_id"), run.runId);
   assert.match(reply.answer, /50% \/ 25% \/ 25%/); assert.match(reply.href, /site=im2_athena/); assert.match(reply.href, /missionHours=24/);
   assert.equal(planningIntent("từ 21 đến 28 tháng 11, địa điểm nào oke nhất?")?.dateProblem, true);
   assert.equal(planningIntent("Where should I go from 2026-02-30 to 2026-03-02?")?.dateProblem, true);
@@ -132,4 +133,22 @@ test("B2 site search counts all starts and never recommends a zero-score interva
   assert.match(earth.answer, /164 tied starts out of 164/);
   assert.match(earth.href, /source=saved-b2/);
   assert.match(earth.href, /site=apollo11&missionHours=5/);
+});
+
+
+test("retains the planner's live model when answering a ranking question or offering retry", async () => {
+  const q = planningIntent("Which site is best from 2026-11-15 to 2026-11-16?")!;
+  const services = { ...api, run: unintended, ranking: async (model: PlannerRun) => {
+    assert.equal(model, run);
+    return { recommendedIds: [], evidence: { sites: [] } } as unknown as PlannerRanking;
+  } };
+  const answer = await answerPlanning(q, "en", signal, services, run);
+  assert.match(answer.answer, /No catalog site has complete coverage/);
+  const failed = await answerPlanning(q, "vi", signal, { ...services, ranking: unintended }, run);
+  assert.match(failed.answer, /chưa xác minh/);
+  for (const item of [answer, failed]) {
+    const url = new URL(item.href, "https://example.org");
+    assert.equal(url.searchParams.get("run_id"), run.runId);
+    assert.equal(url.searchParams.has("source"), false);
+  }
 });

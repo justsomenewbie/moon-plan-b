@@ -1,6 +1,7 @@
 import { ApiError, apiError, getTerrainAggregate, producer } from "./client.ts";
 import { readCatalogRanking, type CatalogRanking } from "./catalog-ranking.ts";
 import { terrainUtcNanos, type TerrainSummary } from "./terrain-summary.ts";
+import type { components } from "./producer";
 import { getTerrainDateSites } from "./terrain-dates.ts";
 
 export type PlannerRun = {
@@ -11,19 +12,29 @@ export type PlannerDateRequest = { from: string; to: string; priority: PlannerPr
 export type PlannerRanking = { ranking: CatalogRanking; evidence: TerrainSummary; recommendedIds: string[] };
 
 function requireRun(ok: unknown): asserts ok {
-  if (!ok) throw new ApiError("The default model run or its site catalog is unavailable.", 502);
+  if (!ok) throw new ApiError("The model run or its site catalog is unavailable.", 502);
 }
 function requireMatch(ok: unknown): asserts ok {
   if (!ok) throw new ApiError("The catalog ranking and its observation evidence do not match.", 502);
 }
 
-export async function getPlannerRun(signal?: AbortSignal): Promise<PlannerRun> {
+export async function getPlannerRun(signal?: AbortSignal, pinnedRunId?: string): Promise<PlannerRun> {
   signal?.throwIfAborted();
-  const { data, error, response } = await producer.GET("/api/v1/runs", { signal, params: { query: { limit: 1 } } });
+  let run: components["schemas"]["RunSummary"] | undefined;
+  if (pinnedRunId !== undefined) {
+    requireRun(/^[A-Za-z0-9_.-]{1,64}$/.test(pinnedRunId) && pinnedRunId !== "." && pinnedRunId !== "..");
+    const { data, error, response } = await producer.GET("/api/v1/runs/{run_id}", { signal, params: { path: { run_id: pinnedRunId } } });
+    if (!response.ok) throw apiError(error, response);
+    requireRun(data?.run_id === pinnedRunId);
+    run = data;
+  } else {
+    const { data, error, response } = await producer.GET("/api/v1/runs", { signal, params: { query: { limit: 1 } } });
+    if (!response.ok) throw apiError(error, response);
+    run = data?.runs?.[0];
+    requireRun(run && data?.default_run_id === run.run_id && run.is_default === true);
+  }
   signal?.throwIfAborted();
-  if (!response.ok) throw apiError(error, response);
-  const run = data?.runs?.[0];
-  requireRun(run && data?.default_run_id === run.run_id && run.is_default === true && run.status === "ready" &&
+  requireRun(run && run.status === "ready" &&
     typeof run.run_id === "string" && /^[A-Za-z0-9_.-]{1,64}$/.test(run.run_id) &&
     Number.isSafeInteger(run.step_s) && run.step_s > 0 && Number.isSafeInteger(run.n_samples) && run.n_samples > 0 &&
     typeof run.start_utc === "string" && run.start_utc.length === 20 && typeof run.end_utc === "string" && run.end_utc.length === 20 &&
