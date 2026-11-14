@@ -16,6 +16,8 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Vietnamese labels and instructions now distinguish sites, UTC samples and apparent sky positions across home, comparison, import and errors. JSON syntax errors give a Vietnamese recovery step. Chromium verified the updated Vietnamese site selectors, restored UTC samples and clearance slider label.
 
+The date selector loaded all 23 sites in run B. Chromium verified Apollo 11, a pinned link and recovery after a catalog failure. The FE now preserves the final sample when the exclusive end has fractional seconds. The [contract](docs/FRONTEND_CONTRACT.md#published-route-scope) records the backend owner’s route list, provisional tools and scoped schema check.
+
 ## Pending
 
 Backend fractional bounds, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.

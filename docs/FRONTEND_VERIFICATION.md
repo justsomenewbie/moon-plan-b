@@ -293,6 +293,8 @@ Chromium opened the pinned Athena comparison for December 1â€“4 and December 18â
 
 The catalog form accepted the same two windows and reopened the result link. Browser history returned to the catalog and restored the date report. An unequal-duration link and a duplicate site field produced errors before any API request. At 320 CSS pixels the Vietnamese page did not overflow, and the English and Vietnamese PDFs each fit one A4 page. A controlled replay verified partial coverage, cancellation during an edit and preservation of UTC seconds. Physical model validation and native Safari printing remain open.
 
+The live date selector listed the 23 sites returned for run B. At Apollo 11, two three-hour windows on November 15 and 16 starting at 00:00 UTC returned one and three hours of joint visibility. Chromium reopened the pinned dates, retained Apollo 11 after a simulated catalog failure, and restored the full catalog on retry. The Vietnamese report fit a 320 CSS pixel viewport.
+
 ## Alternative landing dates
 
 Chromium submitted the [November and December Athena searches](BACKEND_RECONCILIATION.md#alternative-landing-dates) to the team service. The form issued one POST per submission and none on opening or editing. Opening the first candidate returned its three-hour interval through a pinned GET. The December search displayed overlapping rejection counts and zero candidates. A separate intercepted replay exercised site-switch cancellation and the Vietnamese interface at 320 CSS pixels. Native Safari 26.6.2 confirmed the two November starts, retained the result after switching to Vietnamese, opened the first three-hour mission in a separate tab and closed the isolated test session.
