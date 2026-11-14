@@ -165,12 +165,15 @@ export function answerGuide(input: GuideRequest, plan: Plan): GuideReply {
   const copy = fixed[input.locale];
   let { topic } = plan;
   const { measure } = plan;
-  // The small model can reverse a superlative when Vietnamese words separate "ít" from "nhất".
+  // An explicit comparison can be clearer than the classifier’s choice of minimum or maximum.
   if (topic === "mostHours" || topic === "fewestHours") {
     const q = input.question.normalize("NFC").toLowerCase();
-    const minimum = /\b(fewest|least|shortest|minimum|fewer)\b|(?:ít|ngắn|thấp)(?:\s.{0,100})?\snhất/u.test(q);
-    const maximum = /\b(most|longest|maximum|more)\b|(?:nhiều|dài|cao)(?:\s.{0,100})?\snhất/u.test(q);
-    if (minimum && maximum) topic = "hours";
+    const minimum = /\b(fewest|least|shortest|minimum|fewer|less|lower|lowest|shorter)\b|(?:ít|ngắn|thấp)(?:\s[^?!.,;]{1,100})?\s(?:hơn|nhất)/u.test(q);
+    const maximum = /\b(most|longest|maximum|more|higher|highest|greater|greatest|longer)\b|(?:nhiều|dài|cao)(?:\s[^?!.,;]{1,100})?\s(?:hơn|nhất)/u.test(q);
+    // A negation, threshold, or second question cannot be answered by selecting a single extreme.
+    const qualified = /\b(not|never|without|except)\b|n['’]t\b|\b(no (more|less|fewer|greater)|at (least|most))\b|không|chẳng|ngoại trừ|(?:ít|nhiều|thấp|cao) (?:nhất|hơn)\s+\d|\b(?:less|more|fewer|greater|lower|higher) than\s+\d/u.test(q);
+    const compound = /[?;]\s*\S|\b(?:and|or)\s+(?:wh(?:at|ich|ere|en|y)|how|can|is|does|safer?|better)\b|(?:và|hay|hoặc)\s+(?:địa điểm|nơi|ở đâu|bao lâu|làm sao|có thể|an toàn)/u.test(q);
+    if (qualified || compound || (minimum && maximum)) topic = "hours";
     else if (minimum) topic = "fewestHours";
     else if (maximum) topic = "mostHours";
   }
