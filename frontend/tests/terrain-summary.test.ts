@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ApiError, getTerrainWindow } from "../lib/api/client.ts";
 import { guideObservation } from "../lib/guide-observation.ts";
 import { parseTerrainSummary } from "../lib/api/terrain-summary.ts";
 
@@ -39,6 +40,26 @@ test("reads summary-only aggregates and leaves unavailable plotting sections nul
   assert.deepEqual(parsed.model, d.model);
   assert.equal(parsed.sites[0].series, null);
   assert.equal(parsed.sites[0].horizon, null);
+});
+
+test("requires the requested sections on a live response and accepts a covered range with a missing site", async t => {
+  const d = example(), site = d.sites[0];
+  const sections = ["horizon", "series", "windows", "metrics"];
+  const missing = { ...site, coverage: "missing", coverage_in_range: "missing", windows: { sun: [], earth: [], both: [] }, metrics: null };
+  const response = { ...d, sites: [missing] };
+  t.mock.method(globalThis, "fetch", async () => Response.json(response));
+  const request = { from: d.range.start, to: d.range.end, resolutionSeconds: 3600 };
+  const target = { run_id: d.run.run_id, site_id: site.id };
+  for (const section of sections) {
+    response.include = sections.filter(s => s !== section);
+    await assert.rejects(getTerrainWindow(request, undefined, target), (err: unknown) =>
+      err instanceof ApiError && err.status === 502 && err.message.includes("requested dataset section"));
+  }
+  response.include = sections;
+  const result = await getTerrainWindow(request, undefined, target);
+  assert.equal(result.sites[0].coverage_in_range, "missing");
+  assert.equal(result.sites[0].horizon, null);
+  assert.equal(result.sites[0].series, null);
 });
 
 test("accepts snapped client input and run clamping, rejects wrong request, reversed range and sample count", () => {

@@ -20,6 +20,7 @@ export const vietnamese: Record<string, string> = {
   "The returned model run differs from the shared link.": "Lần chạy mô hình nhận được khác với lần chạy trong liên kết chia sẻ.",
   "Team API · terrain horizon model": "API của nhóm · mô hình chân trời địa hình",
   "The returned sites do not match the requested comparison.": "Các địa điểm nhận được khác với các địa điểm đã yêu cầu.",
+  "The server response is missing a requested dataset section.": "Phản hồi từ máy chủ thiếu một phần dữ liệu đã yêu cầu.",
   "Loaded terrain-model results from the team API.": "Đã tải kết quả theo mô hình địa hình từ API của nhóm.",
   "This view accepts saved observation windows. Custom job links require the backend jobs interface.": "Trang này nhận các khoảng quan sát đã tính sẵn. Liên kết tác vụ riêng cần giao diện tác vụ của backend.",
   "Terrain-model results use the supplied surface horizon. Visibility alone does not establish power or a radio link.": "Kết quả dùng đường chân trời theo địa hình. Việc nhìn thấy Mặt Trời hoặc Trái Đất chưa đủ để kết luận về nguồn điện hoặc liên lạc vô tuyến.",

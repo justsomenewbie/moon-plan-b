@@ -91,15 +91,18 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   return withinRequestedWindow(validateDataset(data), request);
 }
 export type TerrainTarget = { run_id: string; site_id?: string };
+const terrainSections = ["horizon", "series", "windows", "metrics"] as const;
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
   if (target?.site_id) validateCustomWindow(request);
   else validateTerrainWindow(request);
   const siteIds = target?.site_id ?? "im1_odysseus,im2_athena";
   const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
     run_id: target?.run_id, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
-    horizon_step_deg: 0.5, max_points: 10000, include: "horizon,series,windows,metrics",
+    horizon_step_deg: 0.5, max_points: 10000, include: terrainSections.join(","),
   } } });
   if (!response.ok) throw apiError(error, response.status);
+  if (!Array.isArray(data?.include) || !terrainSections.every(section => data.include.includes(section)))
+    throw new ApiError("The server response is missing a requested dataset section.", 502);
   const result = parseTerrainSummary(data, request);
   if (target && result.run.run_id !== target.run_id) throw new ApiError("The returned model run differs from the shared link.", 502);
   if (result.sites.map(site => site.id).join(",") !== siteIds)
