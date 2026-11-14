@@ -16,6 +16,7 @@ export function SiteHeader({ comparisonHref, showSources = false }: {
   const { t } = useLanguage();
   return <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
       <nav aria-label={t("Main")}>
+        {!comparisonHref && <a href="#about">{t("About the project")}</a>}
         <a href={comparisonHref ?? "/compare"} className={comparisonHref ? "active-link" : undefined} aria-current={comparisonHref ? "page" : undefined}>{t("Compare")}</a>
         <a href="#resources">{t("Lunar resources")}</a>
         {showSources && <a href="#sources">{t("Sources & method")}</a>}

@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useLanguage } from "./language";
 import { SiteFooter, SiteHeader, SkyBackground, LunarResources } from "./site-chrome";
 import { savedResultFromUrl } from "./observed-week";
-import { isMock } from "../lib/api/client";
 import AstronautGuide from "./astronaut-guide";
 import MoonGlobe from "./moon-globe";
 
@@ -42,18 +41,22 @@ export default function Home() {
         </div>
         <MoonGlobe home savedResult={savedResult} />
       </section>
-      <section className="home-about" aria-labelledby="home-about-title">
+      <section className="home-about" id="about" tabIndex={-1} aria-labelledby="home-about-title">
         <h2 id="home-about-title">{t("About Moon Plan B")}</h2>
-        <p>{t("Compare dates at one site, or compare sites over the same UTC window.")} {t("Visibility alone does not measure solar power or radio signal strength.")}</p>
+        <p>{t("At a lunar landing site, the Sun and Earth can rise above the local horizon at different times. Moon Plan B compares sites and dates to find when both are in view.")}</p>
       </section>
       <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
         <h2 id="home-guide-title">{t("Quick guide")}</h2>
         <ol>
-          <li>{t("Open the saved results and choose two sites in one week, or two weeks at one site.")}</li>
-          <li>{t("Read the hours when both the Sun and Earth are visible. Choose a site from the list below the globe to inspect it.")}</li>
-          <li>{!isMock ? t("Open the observation workspace to inspect the terrain model’s UTC intervals and coverage.") : t("For individual observations, open the timeline and move the slider to a UTC sample.")}</li>
+          <li>{t("Open the example below. It compares two landing sites over the same week.")}</li>
+          <li>{t("Compare the hours in bold. More hours means a longer time with both the Sun and Earth in view.")}</li>
+          <li>{t("To try a different comparison, choose another week or select a site to compare its two weeks.")}</li>
         </ol>
-        <a href="/compare#workspace">{t("Open the observation workspace")}</a>
+        <a href="/compare#observed-week">{t("Try the saved example")}</a>
+      </section>
+      <section id="team" className="home-team" aria-labelledby="team-title">
+        <h2 id="team-title">{t("Team members")}</h2>
+        <ul>{["Chung", "Trang", "Lam", "Minh", "Son", "Thao"].map(name => <li key={name}>{name}</li>)}</ul>
       </section>
       <LunarResources />
     </main>

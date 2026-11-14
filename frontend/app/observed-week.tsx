@@ -23,6 +23,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
     <div>
       <h2 id="observed-week-title">{t("Odysseus and Athena · Sun and Earth visibility")}</h2>
       <p className="muted">{t("Saved team model results")} · {t("Interval boundaries ±{hours} h", { hours: precisionHours })}</p>
+      <p>{t("Choose a week to compare two sites. Choose a site to compare two weeks there.")}</p>
       <label className="field week-selection">{t("Compare saved results")}
         <select value={selection} onChange={event => onSelect(event.target.value)}>
           <optgroup label={t("Two sites in one week")}>{weeks.map(week =>
@@ -46,7 +47,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
           return <article key={week.startUtc + site.id}>
             <h3>{selectedWeek ? site.name : weekLabel(week)}</h3>
             <p className="muted">{selectedWeek ? weekLabel(week) : site.name}</p>
-            <p><strong className="week-hours">{interval.duration_h} h</strong> {t("with both visible")}</p>
+            <p>{t("Time with both the Sun and Earth in view")}<br /><strong className="week-hours">{interval.duration_h} h</strong></p>
             <div className="week-track" aria-hidden="true"><span style={{ left: `${left}%`, width: `${width}%` }} /></div>
             <p><time dateTime={interval.start}>{formatUtc(interval.start, locale)}</time> → <time dateTime={interval.end}>{formatUtc(interval.end, locale)}</time></p>
             <p className="muted">{t("Sun visible")} · {site.sunHours} h · {t("Earth visible")} · {site.earthHours} h</p>

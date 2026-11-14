@@ -57,6 +57,10 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .home-about { max-width: 65ch; padding: 28px 0; }
 .home-about p { color: var(--muted); }
 .home-guide { margin-bottom: 32px; max-width: 48ch; padding-inline-start: 24px; border-inline-start: 1px solid var(--line); font-size: .95rem; }
+.home-team { max-width: 48rem; margin: 28px 0; }
+.home-team h2 { font-size: 1.2rem; }
+.home-team ul { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem 1.2rem; margin-top: .75rem; }
+.home-team li { border-top: 1px solid var(--line); padding-top: .5rem; overflow-wrap: anywhere; }
 .home-guide h2 { font-size: 1.2rem; }
 .home-guide a { display: inline-block; margin-top: 12px; }
 .home-guide ol { list-style: decimal; padding-inline-start: 1.5em; margin-top: 6px; color: var(--muted); }
