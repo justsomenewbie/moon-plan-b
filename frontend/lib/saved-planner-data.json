@@ -1,0 +1,546 @@
+{
+  "runId": "B_spice_pgda_bruteforce_2026_2030",
+  "manifestSha256": "35601268e464e2e610e3cf33cf7e7b8588e59e23877857708799f29a8ac615a4",
+  "stepSeconds": 3600,
+  "siteIds": [
+    "a3_de_gerlache_rim_2",
+    "a3_haworth",
+    "a3_malapert_massif",
+    "a3_mons_mouton",
+    "a3_mons_mouton_plateau",
+    "a3_nobile_rim_1",
+    "a3_nobile_rim_2",
+    "a3_peak_near_cabeus_b",
+    "a3_slater_plain",
+    "apollo11",
+    "apollo15",
+    "apollo17",
+    "chandrayaan3_vikram",
+    "change4",
+    "change6",
+    "im1_odysseus",
+    "im2_athena",
+    "psr_haworth_floor",
+    "psr_shackleton_floor",
+    "ref_connecting_ridge_c1",
+    "ref_connecting_ridge_c2",
+    "ref_de_gerlache_rim",
+    "ref_shackleton_rim"
+  ],
+  "catalogWindows": [
+    {
+      "from": "2026-01-01T00:00:00Z",
+      "to": "2031-01-01T00:00:00Z",
+      "samples": 43824,
+      "counts": [
+        [
+          16744,
+          22142,
+          9232
+        ],
+        [
+          14274,
+          15924,
+          4855
+        ],
+        [
+          17340,
+          32662,
+          12887
+        ],
+        [
+          11402,
+          17606,
+          4059
+        ],
+        [
+          12048,
+          25160,
+          7656
+        ],
+        [
+          12629,
+          10883,
+          3323
+        ],
+        [
+          15519,
+          27942,
+          10078
+        ],
+        [
+          23329,
+          19646,
+          11581
+        ],
+        [
+          2572,
+          16150,
+          1727
+        ],
+        [
+          21971,
+          43824,
+          21971
+        ],
+        [
+          21988,
+          43824,
+          21988
+        ],
+        [
+          21970,
+          43824,
+          21970
+        ],
+        [
+          21057,
+          43824,
+          21057
+        ],
+        [
+          22049,
+          0,
+          0
+        ],
+        [
+          22053,
+          0,
+          0
+        ],
+        [
+          16315,
+          43824,
+          16315
+        ],
+        [
+          20413,
+          35641,
+          16875
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          39551,
+          23677,
+          21386
+        ],
+        [
+          36001,
+          23922,
+          20255
+        ],
+        [
+          36936,
+          25029,
+          20919
+        ],
+        [
+          38406,
+          23044,
+          19788
+        ]
+      ]
+    },
+    {
+      "from": "2026-11-14T00:00:00Z",
+      "to": "2026-11-15T00:00:00Z",
+      "samples": 24,
+      "counts": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          24,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          24,
+          0,
+          0
+        ],
+        [
+          14,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          24,
+          0
+        ],
+        [
+          0,
+          24,
+          0
+        ],
+        [
+          12,
+          24,
+          12
+        ],
+        [
+          18,
+          24,
+          18
+        ],
+        [
+          24,
+          0,
+          0
+        ],
+        [
+          24,
+          0,
+          0
+        ],
+        [
+          0,
+          24,
+          0
+        ],
+        [
+          0,
+          24,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          24,
+          0,
+          0
+        ],
+        [
+          8,
+          0,
+          0
+        ],
+        [
+          24,
+          0,
+          0
+        ],
+        [
+          24,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "from": "2026-12-01T00:00:00Z",
+      "to": "2026-12-04T00:00:00Z",
+      "samples": 72,
+      "counts": [
+        [
+          72,
+          0,
+          0
+        ],
+        [
+          72,
+          0,
+          0
+        ],
+        [
+          2,
+          60,
+          2
+        ],
+        [
+          72,
+          0,
+          0
+        ],
+        [
+          0,
+          16,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          31,
+          0
+        ],
+        [
+          72,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          72,
+          0
+        ],
+        [
+          13,
+          72,
+          13
+        ],
+        [
+          0,
+          72,
+          0
+        ],
+        [
+          0,
+          72,
+          0
+        ],
+        [
+          51,
+          0,
+          0
+        ],
+        [
+          72,
+          0,
+          0
+        ],
+        [
+          20,
+          72,
+          20
+        ],
+        [
+          0,
+          72,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          72,
+          0,
+          0
+        ],
+        [
+          72,
+          0,
+          0
+        ],
+        [
+          72,
+          3,
+          3
+        ],
+        [
+          72,
+          0,
+          0
+        ]
+      ]
+    }
+  ],
+  "pairWindow": {
+    "from": "2026-11-14T00:00:00Z",
+    "to": "2026-11-28T00:00:00Z",
+    "intervals": {
+      "im1_odysseus": {
+        "sun": [
+          [
+            "2026-11-19T15:00:00Z",
+            "2026-11-28T00:00:00Z"
+          ]
+        ],
+        "earth": [
+          [
+            "2026-11-14T00:00:00Z",
+            "2026-11-28T00:00:00Z"
+          ]
+        ],
+        "both": [
+          [
+            "2026-11-19T15:00:00Z",
+            "2026-11-28T00:00:00Z"
+          ]
+        ]
+      },
+      "im2_athena": {
+        "sun": [
+          [
+            "2026-11-15T05:00:00Z",
+            "2026-11-28T00:00:00Z"
+          ]
+        ],
+        "earth": [
+          [
+            "2026-11-14T00:00:00Z",
+            "2026-11-28T00:00:00Z"
+          ]
+        ],
+        "both": [
+          [
+            "2026-11-15T05:00:00Z",
+            "2026-11-28T00:00:00Z"
+          ]
+        ]
+      }
+    }
+  },
+  "responses": [
+    {
+      "request": "GET /runs/B_spice_pgda_bruteforce_2026_2030/files/manifest.json",
+      "sha256": "35601268e464e2e610e3cf33cf7e7b8588e59e23877857708799f29a8ac615a4"
+    },
+    {
+      "request": "GET /runs/B_spice_pgda_bruteforce_2026_2030",
+      "sha256": "c64910c8a6aed96d0c2b6e27a846cc236781b937a39d79f610e451aaedffeaca"
+    },
+    {
+      "request": "GET /sites?run_id=B_spice_pgda_bruteforce_2026_2030&format=json",
+      "sha256": "da758fd0453cc2319b719c3101804959ff96fa099f9f770eca4ab95edba71ace"
+    },
+    {
+      "request": "GET /sites/a3_haworth?run_id=B_spice_pgda_bruteforce_2026_2030",
+      "sha256": "71187678d82927613f168e7ba66cb6062fde3176953ea49840938603789a3d4b"
+    },
+    {
+      "request": "GET /sites/apollo11?run_id=B_spice_pgda_bruteforce_2026_2030",
+      "sha256": "9c62043b0747f9db0351216c5adf0d322eb795c5c3545e01c0f65db0066b2ded"
+    },
+    {
+      "request": "GET /sites/im1_odysseus?run_id=B_spice_pgda_bruteforce_2026_2030",
+      "sha256": "073691186cb0b73e7f423dc4a05e3c2719ed4eda4d3e6d3ac3328d753240348d"
+    },
+    {
+      "request": "GET /sites/im2_athena?run_id=B_spice_pgda_bruteforce_2026_2030",
+      "sha256": "ce0908ad5f4828599151b89b047b00594c2d903b31769659ef54e2bfeb86a753"
+    },
+    {
+      "request": "GET /ranking?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-14T00:00:00Z&end=2026-11-15T00:00:00Z&weights=pct_sun:0.4,pct_earth:0.3,pct_both:0.3",
+      "sha256": "ebfbeb122b793c77f0734e68d170fdd3d57bbbccccebe19ba1d16ea704212d11"
+    },
+    {
+      "request": "POST /compare (same UTC range and weights, sites a3_haworth,apollo11)",
+      "sha256": "2f4344f02873179c63a85797fb187bd50629b676a645745f87b3c27fca0d5a8e"
+    },
+    {
+      "request": "GET /ranking?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-14T00:00:00Z&end=2026-11-15T00:00:00Z&weights=pct_sun:0,pct_earth:1,pct_both:0",
+      "sha256": "6689125bccd832d1ec2040567d5b24025d560d8b606de14c7e6173c5ebd5b4aa"
+    },
+    {
+      "request": "POST /compare (same UTC range and weights, sites a3_haworth,apollo11)",
+      "sha256": "22dfd4ac07e5f666f13b39e87bdc60aca69c2d837a58e4437b762fcfe2070dcc"
+    },
+    {
+      "request": "GET /ranking?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-12-01T00:00:00Z&end=2026-12-04T00:00:00Z&weights=pct_sun:0.4,pct_earth:0.3,pct_both:0.3",
+      "sha256": "b855a6b46ce1b087c35c33dd06d5fafffb9258d035c9ea99a278dbd6dc178845"
+    },
+    {
+      "request": "POST /compare (same UTC range and weights, sites im1_odysseus,im2_athena)",
+      "sha256": "a27c6e63706d131c302c62ffce53092d6a3972cb9ba99d331d84e963d85533c8"
+    },
+    {
+      "request": "GET /ranking?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-12-01T00:00:00Z&end=2026-12-04T00:00:00Z&weights=pct_sun:0,pct_earth:1,pct_both:0",
+      "sha256": "1f86c0c7c6330ec0200fa76ddacd1ec4f17dadbb8f016f58f2c9329ad834e62d"
+    },
+    {
+      "request": "POST /compare (same UTC range and weights, sites im1_odysseus,im2_athena)",
+      "sha256": "5ac4e4e9d4d571aaa7043801842244cd667f54fa0733e65d9642720a167b9d45"
+    },
+    {
+      "request": "GET /dataset?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&site_ids=im1_odysseus,im2_athena (hourly series, windows and metrics)",
+      "sha256": "9d0c272c78f24065157a551a6ce60305fbf5bbd2bc0d166e4e96f1a4fdae02a8"
+    },
+    {
+      "request": "GET /sites/im1_odysseus/series?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z (hourly visibility)",
+      "sha256": "3dd3b3867231c5905c5b64e51294f85e8ae01876c4b25e61042e39392e224812"
+    },
+    {
+      "request": "GET /sites/im1_odysseus/windows?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&kinds=sun,earth,both",
+      "sha256": "427cc1877efee079d5e07c18d4796002048d0a1679b24cfec3a8f90a834c9c29"
+    },
+    {
+      "request": "GET /sites/im2_athena/series?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z (hourly visibility)",
+      "sha256": "f89ba263e450ab05eb9b0d759a7b6fd7e0351b586130257fb5fdd620519e66ca"
+    },
+    {
+      "request": "GET /sites/im2_athena/windows?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&kinds=sun,earth,both",
+      "sha256": "9daa9553fa01ade944506bf67fd115f5799f62931d89095f9d535bd445367f28"
+    },
+    {
+      "request": "GET /dataset?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-21T00:00:00Z&end=2026-11-28T00:00:00Z&site_ids=im1_odysseus,im2_athena (hourly series, windows and metrics)",
+      "sha256": "7b01480d90c9a314b6287cf90274badfc77b5f0e24cb410016055918c9f3db53"
+    },
+    {
+      "request": "GET /sites/im1_odysseus/series?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-21T00:00:00Z&end=2026-11-28T00:00:00Z (hourly visibility)",
+      "sha256": "19e22d49a2fdbe5a17b475bffc7ccfa793ef9f1fc7521d427362b070a3b3dadd"
+    },
+    {
+      "request": "GET /sites/im1_odysseus/windows?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-21T00:00:00Z&end=2026-11-28T00:00:00Z&kinds=sun,earth,both",
+      "sha256": "7f1f105648fd56ca877302d35de2548b7a12c3d91346eb32ffc7f40c904a9181"
+    },
+    {
+      "request": "GET /sites/im2_athena/series?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-21T00:00:00Z&end=2026-11-28T00:00:00Z (hourly visibility)",
+      "sha256": "ac9028bad47dd57950791a8308abadb2c68950b78c1169d3150849939f0f3ca1"
+    },
+    {
+      "request": "GET /sites/im2_athena/windows?run_id=B_spice_pgda_bruteforce_2026_2030&start=2026-11-21T00:00:00Z&end=2026-11-28T00:00:00Z&kinds=sun,earth,both",
+      "sha256": "440adde809d30ba01e5e900470da79452bdf6b93dcd105bfb14d7d8cee44526c"
+    }
+  ]
+}
