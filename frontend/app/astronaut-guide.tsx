@@ -1,6 +1,8 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
+import { guideObservation } from "../lib/guide-observation";
+import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
@@ -10,6 +12,10 @@ const messages = {
     title: "Astronaut guide",
     close: "Close astronaut guide",
     greeting: "What would you like to explore?",
+    savedSample: "Saved model sample · interval boundaries ±1 h",
+    terrainSample: "Loaded terrain model sample",
+    states: { both: "Sun and Earth visible", sun: "Sun visible, Earth out of view", earth: "Earth visible, Sun out of view", neither: "Sun and Earth both out of view", outsideJoint: "Outside the joint visibility window" },
+    source: "Model and sources",
     questions: [
       ["How do I compare sites or dates?", "In the saved results, choose a week to compare Odysseus with Athena. Choose a site to compare its two weeks. Each bar shows when the model places both the Sun and Earth above that site’s horizon."],
       ["Can I see what’s happening now?", "Check the UTC window on the result. The saved weeks show modeled conditions for those dates. This guide has no live feed."],
@@ -23,6 +29,10 @@ const messages = {
     title: "Hướng dẫn của phi hành gia",
     close: "Đóng hướng dẫn của phi hành gia",
     greeting: "Bạn muốn tìm hiểu điều gì?",
+    savedSample: "Mốc mô hình đã lưu · sai số ranh giới ±1 giờ",
+    terrainSample: "Mốc mô hình địa hình đã tải",
+    states: { both: "Thấy cả Mặt Trời và Trái Đất", sun: "Thấy Mặt Trời, không thấy Trái Đất", earth: "Thấy Trái Đất, không thấy Mặt Trời", neither: "Không thấy Mặt Trời và Trái Đất", outsideJoint: "Ngoài khoảng nhìn thấy đồng thời" },
+    source: "Mô hình và nguồn dữ liệu",
     questions: [
       ["Làm sao so sánh địa điểm hoặc thời gian?", "Trong phần kết quả đã lưu, chọn một tuần để so sánh Odysseus với Athena. Chọn một địa điểm để so sánh hai tuần tại đó. Mỗi thanh biểu thị khoảng thời gian mà theo mô hình, cả Mặt Trời và Trái Đất đều ở phía trên đường chân trời tại địa điểm đó."],
       ["Tôi xem được tình hình hiện tại không?", "Hãy xem khoảng thời gian UTC ghi trên kết quả. Các tuần đã lưu cho biết điều kiện theo mô hình trong những ngày đó. Hướng dẫn này không có dữ liệu trực tiếp."],
@@ -34,10 +44,12 @@ const messages = {
   },
 };
 
-export default function AstronautGuide({ savedResult }: { savedResult: string }) {
+export default function AstronautGuide({ savedResult, terrain }: { savedResult: string; terrain: TerrainSummary | null }) {
   const { locale } = useLanguage();
   const copy = messages[locale];
   const id = useId();
+  const [openedAt, setOpenedAt] = useState<number | null>(null);
+  const reading = openedAt === null ? null : guideObservation(openedAt, savedResult, terrain);
   const rows = snapshot.weeks.flatMap(week => week.sites
     .filter(site => week.startUtc === savedResult || site.id === savedResult)
     .map(site => ({ week, site })));
@@ -45,12 +57,18 @@ export default function AstronautGuide({ savedResult }: { savedResult: string })
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
       <span aria-hidden="true">🧑‍🚀</span>
     </button>
-    <aside id={id} popover="auto" className={styles.panel} aria-labelledby={id + "-title"}>
+    <aside id={id} popover="auto" onToggle={event => setOpenedAt(event.newState === "open" ? Date.now() : null)} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
-      <p className={styles.greeting}>{copy.greeting}</p>
+      {reading ? <section className={styles.sample}>
+        <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
+        <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>
+        <ul>{reading.readings.map((row, index) => <li key={index}>{row.name} · {copy.states[row.visibility]}</li>)}</ul>
+        <a href={reading.saved ? "#saved-model-source" : "#sources"} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
+        <small>{reading.source}</small>
+      </section> : <p className={styles.greeting}>{copy.greeting}</p>}
       {copy.questions.map(([question, answer], index) =>
         <details key={index} name={id}>
           <summary>{question}</summary>

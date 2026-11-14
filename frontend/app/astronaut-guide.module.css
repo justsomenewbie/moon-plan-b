@@ -34,6 +34,10 @@
 .header h2 { font-size: 1.15rem; }
 .close { min-width: 2.75rem; min-height: 2.75rem; color: var(--muted); font-size: 1.55rem; }
 .greeting { margin-bottom: .65rem; color: var(--muted); }
+.sample { margin-bottom: .65rem; }
+.sample time, .sample small { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.sample ul { margin-block: .45rem; }
+.sample a { text-decoration: underline; }
 .panel details { border-top: 1px solid var(--line); }
 .panel summary, .jump { padding: .65rem 0; min-height: 2.75rem; }
 .panel summary { font-weight: 600; }

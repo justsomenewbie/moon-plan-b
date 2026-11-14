@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { guideObservation } from "../lib/guide-observation.ts";
 import { parseTerrainSummary } from "../lib/api/terrain-summary.ts";
 
 const stamp = (hour: number) => `2026-01-01T${String(hour).padStart(2, "0")}:00:00Z`;
@@ -102,4 +103,28 @@ test("rejects missing sections, unsafe links and duplicate site identifiers", ()
   for (const manifest_url of ["//example.org/path", "/\\example.org/path", "javascript:alert(1)"]) {
     assert.throws(() => parseTerrainSummary({ ...d, run: { ...d.run, manifest_url } }), /URL|manifest/);
   }
+});
+
+test("astronaut reports the last covered terrain sample and preserves incomplete coverage", () => {
+  const input = example();
+  const terrain = parseTerrainSummary(input);
+  const read = (hour: number, minutes = 0) => guideObservation(Date.parse(stamp(hour)) + minutes * 60000, "", terrain);
+  assert.equal(read(0)?.readings[0].visibility, "sun");
+  assert.equal(read(1, 59)?.time, Date.parse(stamp(1)));
+  assert.equal(read(1, 59)?.readings[0].visibility, "both");
+  assert.equal(read(2)?.readings[0].visibility, "earth");
+  assert.equal(read(8), null);
+  const incomplete = parseTerrainSummary({ ...input, sites: [{ ...input.sites[0], coverage: "partial", coverage_in_range: "partial", metrics: null }] });
+  assert.equal(guideObservation(Date.parse(stamp(1)), "", incomplete), null);
+});
+
+test("saved guide reports only joint visibility and honors exclusive saved range limits", () => {
+  const site = "im2_athena";
+  const read = (utc: string, choice = site) => guideObservation(Date.parse(utc), choice, null);
+  assert.equal(read("2026-11-15T04:59:59Z")?.readings[0].visibility, "outsideJoint");
+  assert.equal(read("2026-11-15T05:00:00Z")?.readings[0].visibility, "both");
+  assert.equal(read("2026-11-21T00:00:00Z")?.readings[0].visibility, "both");
+  assert.equal(read("2026-11-21T00:00:00Z", "2026-11-14T00:00:00Z"), null);
+  assert.equal(read("2026-11-28T00:00:00Z"), null);
+  assert.equal(read("2026-11-18T00:00:00Z", "unknown"), null);
 });
