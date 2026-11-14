@@ -9,6 +9,14 @@ export function savedResultFromUrl(params: URLSearchParams) {
   return duplicate === undefined && savedChoices.includes(value) ? value : weeks[0].startUtc;
 }
 
+export function isSavedResultLink({ hash, search }: Pick<Location, "hash" | "search">) {
+  if (hash === "#observed-week" || hash === "#saved-model-source") return true;
+  const params = new URLSearchParams(search);
+  const [value, duplicate] = params.getAll("saved");
+  const validSaved = duplicate === undefined && savedChoices.includes(value);
+  return validSaved && ((!hash && params.size === 1) || hash === "#lunar-reference");
+}
+
 function weekLabel(week: typeof weeks[number]) {
   // The exclusive midnight endpoint belongs to the following week.
   const lastDay = new Date(Date.parse(week.endUtc) - 1).toISOString().slice(0, 10);

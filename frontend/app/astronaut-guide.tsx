@@ -6,7 +6,7 @@ import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
-import GuideChat, { type GuideActions } from "./guide-chat";
+import GuideChat, { type GuideActions, type GuideScope } from "./guide-chat";
 import { savedGuideContext, type GuideContext } from "../lib/api/guide-chat";
 
 const messages = {
@@ -54,6 +54,7 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
   const copy = messages[locale];
   const id = useId();
   const [openedAt, setOpenedAt] = useState<number | null>(null);
+  const [guideChoice, setGuideChoice] = useState<GuideScope | null>(null);
   const reading = openedAt === null ? null : guideObservation(openedAt, savedResult, terrain);
   const rows = snapshot.weeks.flatMap(week => week.sites
     .filter(site => week.startUtc === savedResult || site.id === savedResult)
@@ -76,7 +77,7 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
-      {openedAt !== null && <GuideChat saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
+      {openedAt !== null && <GuideChat choice={guideChoice} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
       {reading ? <section className={styles.sample}>
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>

@@ -21,7 +21,7 @@ import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindow
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
 import { Comparison, formatUtc, SampleTable, SiteAssessments, SkyPosition, Sources, Timeline, Windows } from "./observations";
 import QaInspector from "./qa-inspector";
-import ObservedWeek, { savedResultFromUrl } from "./observed-week";
+import ObservedWeek, { isSavedResultLink, savedResultFromUrl } from "./observed-week";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const needsRelease = "This link needs a different dataset version. Import that exact release before reopening it.";
@@ -334,11 +334,7 @@ export default function Navigator() {
     const openedForPrint = new Set<HTMLDetailsElement>();
     const beforePrint = () => {
       if (!shell.dataset.printReport) {
-        const { hash, search } = window.location;
-        const params = new URLSearchParams(search);
-        const validSaved = params.getAll("saved").length === 1 && params.get("saved") === savedResultFromUrl(params);
-        const savedLink = validSaved && ((!hash && params.size === 1) || hash === "#lunar-reference");
-        shell.dataset.printReport = hash === "#observed-week" || hash === "#saved-model-source" || savedLink ? "saved" : "workspace";
+        shell.dataset.printReport = isSavedResultLink(window.location) ? "saved" : "workspace";
       }
       const selector = shell.dataset.printReport === "saved" ? "#observed-week details:not([open])" : "details:not([open])";
       for (const details of shell.querySelectorAll<HTMLDetailsElement>(selector)) {
