@@ -20,6 +20,8 @@ Minimum next input: exported `openapi.json` at a known commit, the referenced OU
 
 ## AI planning assistant — proposed addition
 
+The frontend now answers the structured version using **Compare sites**. A visitor selects a published UTC interval and threshold. The view lists producer-supplied results, reasons and available source references for that release. Free-text questions and model-generated explanations still depend on the backend contract below.
+
 Desired interaction: “For this UTC interval, which published sites fit my chosen criteria?” The backend plan has no LLM provider/model or assistant endpoint. Its `provider: spice` means ephemeris computation; an optional jobs API key is not an AI-provider integration.
 
 Propose a backend-owned assistant after the owner agrees its contract. The model should explain backend-produced comparisons, identify the release, actual UTC interval, chosen criteria and supporting scenario/source IDs, and preserve ties, missing coverage and uncertainty. “Best” needs a declared objective; no landing-safety conclusion follows from a visibility score. Dates beyond available data must return an explicit inability to answer. Natural-language local dates need an explicit timezone and confirmation of the interpreted UTC range.

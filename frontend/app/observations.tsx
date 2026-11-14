@@ -10,6 +10,35 @@ export const formatUtc = (utc: string, locale: Locale = "en") => new Intl.DateTi
 const angle = (n: number | undefined) => n === undefined ? "Unavailable" : `${n.toFixed(1)}°`;
 const exactAngle = (n: number | undefined) => n === undefined ? "Unavailable" : `${n}°`;
 const hours = (n: number | undefined) => n === undefined ? "Unavailable" : `${n.toFixed(1)} h`;
+const assessmentLabel = {
+  meets: "Meets the criterion", below: "Below the criterion",
+  borderline: "Near the threshold", unknown: "Not enough data",
+};
+
+export const SiteAssessments = memo(function SiteAssessments({ data, scenarios, h }: { data: Dataset; scenarios: Scenario[]; h: number }) {
+  const { t } = useLanguage();
+  const publishedSites = new Set(scenarios.map(s => s.siteId));
+  return <section className="site-assessments" aria-labelledby="site-assessments-title">
+    <h2 id="site-assessments-title">{t("Where are the Sun and Earth both above the horizon for at least {hours} h?", { hours: h })}</h2>
+    <p className="muted text-sm">{data.evidence === "synthetic-fixture" ? t("Synthetic release") : t("Dataset")} · {data.datasetId}</p>
+    <p className="text-sm"><time>{scenarios[0].startUtc}</time> → <time>{scenarios[0].endUtc}</time></p>
+    <ul>{scenarios.map(s => {
+      const assessment = s.criteria.find(c => c.minimumHours === h)!;
+      const name = data.sites.find(site => site.id === s.siteId)!.name;
+      return <li key={s.id}>
+        <div><strong>{name}</strong><p className="muted text-sm">{s.id} · {t(s.coverage)}</p></div>
+        <div><strong className={assessment.result}>{t(assessmentLabel[assessment.result])}</strong>
+          {s.metrics && <p className="text-sm">{t("Longest joint window")} · {s.metrics.simultaneousLongestHours} h</p>}
+          <p className="muted text-sm">{t("Original producer explanation")} · {assessment.reason}</p>
+          {s.sourceIds.length > 0 && <p className="muted text-sm">{t("Source IDs")}{[...new Set(s.sourceIds)].map(id =>
+            <span key={id}> · <a href={`#source-${id}`}>{id}</a></span>)}</p>}
+          {s.evidenceUrl && <a className="text-sm" href={s.evidenceUrl} target="_blank" rel="noreferrer">{t("processing evidence")}</a>}
+        </div>
+      </li>;
+    })}{data.sites.filter(site => !publishedSites.has(site.id)).map(site =>
+      <li key={`absent/${site.id}`}><strong>{site.name}</strong><span className="muted">{t("No published window")}</span></li>)}</ul>
+  </section>;
+});
 
 const SampleMarkers = memo(function SampleMarkers({ a, b }: { a: Scenario; b?: Scenario }) {
   return <svg className="plot-markers" aria-hidden="true">{[a, b].map((s, i) => s ? s.samples.flatMap((sample) => (["sun", "earth"] as const).map((body) => {
@@ -79,7 +108,7 @@ export function Comparison({ a, b, h }: { a: Scenario; b?: Scenario; h: number }
     </table></div>
     <div className="assessments">{[a, b].map((s, i) => {
       const assessment = s?.criteria.find((c) => c.minimumHours === h);
-      return <div key={i}><p className="text-sm muted">{i ? t("Alternative") : t("Primary")} · {h} {t("h joint-window criterion")}</p><p className={`assessment ${assessment?.result ?? "unknown"}`}>{assessment ? { meets: t("Meets the criterion"), below: t("Below the criterion"), borderline: t("Near the threshold"), unknown: t("Not enough data") }[assessment.result] : t("No alternative selected")}</p><p className="text-sm muted">{assessment ? <>{locale === "vi" ? <span>{t("Original producer explanation")}: </span> : null}{assessment.reason}</> : t("Choose an available comparison.")}</p></div>;
+      return <div key={i}><p className="text-sm muted">{i ? t("Alternative") : t("Primary")} · {h} {t("h joint-window criterion")}</p><p className={`assessment ${assessment?.result ?? "unknown"}`}>{assessment ? t(assessmentLabel[assessment.result]) : t("No alternative selected")}</p><p className="text-sm muted">{assessment ? <>{locale === "vi" ? <span>{t("Original producer explanation")}: </span> : null}{assessment.reason}</> : t("Choose an available comparison.")}</p></div>;
     })}</div>
     <p className="muted text-xs">{t("Durations shown to 0.1 h. Assessments are supplied by the dataset, not landing-safety recommendations.")}</p>
   </section>;
@@ -117,7 +146,7 @@ export function Sources({ data, a, b }: { data: Dataset; a?: Scenario; b?: Scena
       {data.sites.filter((site) => site.id === a?.siteId || site.id === b?.siteId).map((site) => <div key={site.id} className="site-provenance"><h3>{site.name}</h3>{site.location ? <dl className="metadata"><div><dt>{t("Latitude")}</dt><dd>{site.location.latitudeDeg}°</dd></div><div><dt>{t("East longitude")}</dt><dd>{site.location.longitudeEastDeg}°</dd></div><div><dt>{t("Elevation")}</dt><dd>{site.location.elevationKm} km</dd></div><div><dt>{t("Frame")}</dt><dd>{site.location.frame}</dd></div><div><dt>{t("Elevation datum")}</dt><dd>{site.location.elevationDatum}</dd></div><div><dt>{t("Source IDs")}</dt><dd>{site.sourceIds.join(", ")}</dd></div></dl> : <p>{t("Fictional site. No real coordinates, elevation or reference frame are supplied.")}</p>}</div>)}
     </div>
       <div><dl className="metadata"><div><dt>{t("Dataset")}</dt><dd>{data.datasetId}</dd></div><div><dt>{t("Schema")}</dt><dd>{data.schemaVersion} · {t("draft")}</dd></div><div><dt>{t("Model")}</dt><dd>{data.model.id}</dd></div></dl>
-        {data.sources.length === 0 ? <p className="muted">{t("The comparison sites and values were invented to test the interface. The separate lunar image and reference links are not sources for these values.")}</p> : <ul className="source-list">{data.sources.map((s) => <li key={s.id}><a href={s.url} target="_blank" rel="noreferrer">{s.title}</a><p className="muted text-sm">{s.version} · {t("retrieved")}{" "}{formatUtc(s.retrievedAtUtc, locale)}</p>{s.rawSha256 ? <code className="hash">SHA-256 {s.rawSha256}</code> : null}</li>)}</ul>}
+        {data.sources.length === 0 ? <p className="muted">{t("The comparison sites and values were invented to test the interface. The separate lunar image and reference links are not sources for these values.")}</p> : <ul className="source-list">{data.sources.map((s) => <li key={s.id} id={`source-${s.id}`}><a href={s.url} target="_blank" rel="noreferrer">{s.title}</a><p className="muted text-sm">{s.id} · {s.version} · {t("retrieved")}{" "}{formatUtc(s.retrievedAtUtc, locale)}</p>{s.rawSha256 ? <code className="hash">SHA-256 {s.rawSha256}</code> : null}</li>)}</ul>}
         {[a, b].map((s, i) => s?.evidenceUrl ? <p key={s.id}><a href={s.evidenceUrl} target="_blank" rel="noreferrer">{i ? t("Alternative") : t("Primary")} {t("processing evidence")}</a> · {t("sources")}{" "}{s.sourceIds.join(", ")}</p> : null)}
       </div></div>
     <p className="muted text-sm">{t("The frontend displays supplied angles, intervals and assessments. It does not query Horizons or calculate ephemerides. This draft format requires agreement with the data producer before integration.")}</p>

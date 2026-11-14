@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button as AnimatedButton } from "@animate-ui/react/primitives/buttons/button";
 import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../lib/api/client";
@@ -9,9 +9,9 @@ import { ApiControls } from "./requests";
 import ThemeControl from "./theme-control";
 import { LanguageControl, useLanguage } from "./language";
 import type { Message } from "../lib/i18n";
-import { alternatives, commonOffsets, durationHours, laterMatch, readSelection, selectionParams, validateDataset } from "../lib/dataset";
+import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindows, readSelection, selectionParams, validateDataset } from "../lib/dataset";
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
-import { Comparison, formatUtc, SampleTable, SkyPosition, Sources, Timeline, Windows } from "./observations";
+import { Comparison, formatUtc, SampleTable, SiteAssessments, SkyPosition, Sources, Timeline, Windows } from "./observations";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -117,6 +117,13 @@ export default function Navigator() {
 
   const a = data?.scenarios.find((s) => s.id === selection?.a);
   const b = data?.scenarios.find((s) => s.id === selection?.b);
+  const windows = useMemo(() => data ? publishedWindows(data.scenarios) : [], [data]);
+  const siteWindow = useMemo(() => windows.find(group => group.some(s => s.id === a?.id)), [windows, a]);
+  const compatible = data && a && selection ? alternatives(data, a, selection.mode) : [];
+  function siteOption(s: Scenario) {
+    const name = data!.sites.find(site => site.id === s.siteId)!.name;
+    return name + " · " + s.id;
+  }
   const offsets = a ? commonOffsets(a, b) : [];
   const offset = offsets[Math.min(tick, offsets.length - 1)] ?? 0;
   useEffect(() => {
@@ -208,9 +215,21 @@ export default function Navigator() {
     {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
       <aside className="controls" aria-label={t("Comparison controls")}>
         <div className="mode-switch" role="group" aria-label={t("Comparison mode")}>{(["dates", "sites"] as const).map((mode) => <button key={mode} aria-pressed={selection.mode === mode} onClick={() => choose(a, mode)}>{mode === "dates" ? t("Compare dates") : t("Compare sites")}</button>)}</div>
-        <label className="field">{selection.mode === "sites" ? t("Primary site") : t("Site")}<select value={a.siteId} onChange={(e) => { const next = data.scenarios.find((s) => s.siteId === e.target.value && Date.parse(s.startUtc) === Date.parse(a.startUtc)) ?? data.scenarios.find((s) => s.siteId === e.target.value); if (next) choose(next, selection.mode); }}>{data.sites.filter((s) => data.scenarios.some((v) => v.siteId === s.id)).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-        <label className="field">{t("Primary window")}<select value={a.id} onChange={(e) => choose(data.scenarios.find((s) => s.id === e.target.value)!, selection.mode)}>{data.scenarios.filter((s) => s.siteId === a.siteId).map((s) => <option key={s.id} value={s.id}>{formatUtc(s.startUtc, locale)} · {durationHours(s)} h{s.coverage !== "complete" ? ` · ${t(s.coverage)}` : ""}</option>)}</select></label>
-        <label className="field">{selection.mode === "dates" ? t("Compare with") : t("Alternative site")}<select value={selection.b} disabled={alternatives(data, a, selection.mode).length === 0} onChange={(e) => choose(a, selection.mode, e.target.value)}>{alternatives(data, a, selection.mode).length === 0 ? <option value="">{t("No compatible window")}</option> : alternatives(data, a, selection.mode).map((s) => <option key={s.id} value={s.id}>{selection.mode === "dates" ? formatUtc(s.startUtc, locale) : data.sites.find((site) => site.id === s.siteId)?.name}{s.coverage !== "complete" ? ` · ${t(s.coverage)}` : ""}</option>)}</select></label>
+        {selection.mode === "sites" && siteWindow ? <>
+          <label className="field">{t("Published UTC window")}<select value={siteWindow[0].id} onChange={e => {
+            const group = windows.find(group => group[0].id === e.target.value)!;
+            choose(group.find(s => s.siteId === a.siteId) ?? group[0], "sites", group.find(s => s.siteId === b?.siteId)?.id);
+          }}>{windows.map(([first]) => <option key={first.id} value={first.id}>{first.startUtc.replace(/T00:00:00(?:\.000)?Z$/, "")} · {durationHours(first)} h</option>)}</select></label>
+          <label className="field">{t("Primary site")}<select value={a.id} onChange={e => {
+            const next = siteWindow.find(s => s.id === e.target.value)!;
+            choose(next, "sites", next.siteId === b?.siteId ? a.id : b?.id);
+          }}>
+            {siteWindow.map(s => <option key={s.id} value={s.id}>{siteOption(s)}</option>)}</select></label>
+        </> : <>
+          <label className="field">{t("Site")}<select value={a.siteId} onChange={(e) => { const next = data.scenarios.find((s) => s.siteId === e.target.value && Date.parse(s.startUtc) === Date.parse(a.startUtc)) ?? data.scenarios.find((s) => s.siteId === e.target.value); if (next) choose(next, "dates"); }}>{data.sites.filter((s) => data.scenarios.some((v) => v.siteId === s.id)).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+          <label className="field">{t("Primary window")}<select value={a.id} onChange={(e) => choose(data.scenarios.find((s) => s.id === e.target.value)!, "dates")}>{data.scenarios.filter((s) => s.siteId === a.siteId).map((s) => <option key={s.id} value={s.id}>{formatUtc(s.startUtc, locale)} · {durationHours(s)} h{s.coverage !== "complete" ? ` · ${t(s.coverage)}` : ""}</option>)}</select></label>
+        </>}
+        <label className="field">{selection.mode === "dates" ? t("Compare with") : t("Alternative site")}<select value={selection.b} disabled={compatible.length === 0} onChange={(e) => choose(a, selection.mode, e.target.value)}>{compatible.length === 0 ? <option value="">{t("No compatible window")}</option> : compatible.map((s) => <option key={s.id} value={s.id}>{selection.mode === "dates" ? formatUtc(s.startUtc, locale) : siteOption(s)}{s.coverage !== "complete" ? ` · ${t(s.coverage)}` : ""}</option>)}</select></label>
         <div className="field">{t("Window")}<p className="fixed-value">{durationHours(a)} {t("hours")}{" "}<span className="muted text-sm">{t("from the dataset")}</span></p></div>
         <label className="field">{t("Joint-window criterion")}<select value={selection.h} onChange={(e) => { setSelection({ ...selection, h: Number(e.target.value) }); setShareUrl(""); replaceUrl(window.location.pathname); }}>{data.criteriaHours.map((h) => <option value={h} key={h}>{h} {t("hours")}</option>)}</select></label>
         {selection.mode === "dates" ? <button className="text-button find-match" onClick={findMatch}>{t("Find a later published match")}</button> : null}
@@ -220,6 +239,7 @@ export default function Navigator() {
         <button className="text-button mt-4" onClick={() => void loadDemo(true, requestWindow, sharedJobId)}>{t("Reload current window")}</button>
       </aside>
       <div className="results">
+        {selection.mode === "sites" && siteWindow && <SiteAssessments data={data} scenarios={siteWindow} h={selection.h} />}
         <div className="window-labels"><p><strong>{t("Primary")}</strong> {data.sites.find((s) => s.id === a.siteId)?.name}<span>{formatUtc(a.startUtc, locale)} → {formatUtc(a.endUtc, locale)}</span></p>{b ? <p><strong>{t("Alternative")}</strong> {data.sites.find((s) => s.id === b.siteId)?.name}<span>{formatUtc(b.startUtc, locale)} → {formatUtc(b.endUtc, locale)}</span></p> : <p>{t("No compatible alternative in this release. The primary remains visible.")}</p>}</div>
         {a.coverage !== "complete" || b && b.coverage !== "complete" ? <p className="coverage-notice">{t("Incomplete coverage: unavailable totals are not zero. Gaps are not bridged, and no definite threshold result is inferred.")}</p> : null}
         <Timeline a={a} b={b} mode={selection.mode} offset={offset} />

@@ -21,6 +21,34 @@ new Function("require", "exports", output)((id: string) => id === "../lib/datase
 const fixture = () => JSON.parse(readFileSync(new URL("../public/data/demo.json", import.meta.url), "utf8")) as Dataset;
 const windows = (a: Scenario, b?: Scenario) => renderToStaticMarkup(createElement(compiled.exports.Windows, { a, b }));
 
+test("site finder reports every supplied assessment separately from unavailable sites", () => {
+  const data = fixture();
+  const render = (scenarios: Scenario[], h: number) => renderToStaticMarkup(createElement(compiled.exports.SiteAssessments, { data, scenarios, h }));
+  const [ridge, , basin, , partial] = data.scenarios;
+  data.sources = [{ id: "test-source", title: "Fixture record", url: "https://example.invalid/test", version: "test", retrievedAtUtc: ridge.startUtc, rawSha256: null }];
+  ridge.sourceIds = ["test-source", "test-source"];
+  const repeat = { ...ridge, id: "second-ridge-run" };
+  const result = render([ridge, basin, repeat], 6);
+  assert.equal(result.match(/>Meets the criterion</g)?.length, 2);
+  assert.match(result, /Near the threshold/);
+  for (const s of [ridge, basin, repeat]) assert.ok(result.includes(s.id));
+  assert.ok(result.includes(data.datasetId) && result.includes(basin.criteria[0].reason));
+  assert.ok(result.includes(ridge.startUtc) && result.includes(ridge.endUtc));
+  assert.equal(result.match(/href="#source-test-source"/g)?.length, 2); // one link per ridge run
+  const sources = renderToStaticMarkup(createElement(compiled.exports.Sources, { data, a: ridge }));
+  assert.ok(sources.includes('id="source-test-source"') && sources.includes("Fixture record"));
+  assert.doesNotMatch(result, /No published window/);
+  assert.match(render([ridge, basin], 12), /Below the criterion/);
+  locale = "vi";
+  try {
+    const gap = render([partial], 6);
+    assert.match(gap, /Chưa đủ dữ liệu/);
+    assert.match(gap, /Chưa có dữ liệu cho khoảng thời gian này/);
+    assert.ok(gap.includes(partial.criteria[0].reason));
+    assert.doesNotMatch(gap, /0 h/);
+  } finally { locale = "en"; }
+});
+
 test("visibility text retains each supplied body, scenario and precise clipped boundary", () => {
   const [a, b] = fixture().scenarios;
   a.intervals!.sun[0].startUtc = "2026-11-14T06:00:15.125Z";

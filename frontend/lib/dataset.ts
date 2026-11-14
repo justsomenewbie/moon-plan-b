@@ -181,6 +181,17 @@ export function validateDataset(input: unknown): Dataset {
 export const durationHours = (s: Scenario) => (Date.parse(s.endUtc) - Date.parse(s.startUtc)) / 3600000;
 export type Mode = "dates" | "sites";
 export type Selection = { mode: Mode; a: string; b: string; h: number };
+export function publishedWindows(scenarios: Scenario[]): Scenario[][] {
+  const groups = new Map<string, Scenario[]>();
+  for (const scenario of scenarios) {
+    const key = Date.parse(scenario.startUtc) + "/" + Date.parse(scenario.endUtc);
+    const group = groups.get(key);
+    if (group) group.push(scenario);
+    else groups.set(key, [scenario]);
+  }
+  return [...groups.values()].sort(([a], [b]) =>
+    Date.parse(a.startUtc) - Date.parse(b.startUtc) || Date.parse(a.endUtc) - Date.parse(b.endUtc));
+}
 export function alternatives(d: Dataset, a: Scenario, mode: Mode): Scenario[] {
   return d.scenarios.filter((s) => s.id !== a.id && durationHours(s) === durationHours(a) && (mode === "dates"
     ? s.siteId === a.siteId && Date.parse(s.startUtc) !== Date.parse(a.startUtc)

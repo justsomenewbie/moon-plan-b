@@ -1,10 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { alternatives, chartPath, commonOffsets, initialSelection, laterMatch, readSelection, sampleAt, selectionParams, skyPath, utcMillis, validateDataset } from "../lib/dataset.ts";
+import { alternatives, chartPath, commonOffsets, initialSelection, laterMatch, publishedWindows, readSelection, sampleAt, selectionParams, skyPath, utcMillis, validateDataset } from "../lib/dataset.ts";
 import type { Dataset } from "../lib/dataset.ts";
 
 const fixture = () => JSON.parse(readFileSync(new URL("../public/data/demo.json", import.meta.url), "utf8")) as Dataset;
+
+test("published windows group both UTC instants, retain duplicate site runs and sort chronologically", () => {
+  const [ridge, later, basin] = fixture().scenarios;
+  const duplicate = { ...ridge, id: "repeat", startUtc: ridge.startUtc.replace("Z", ".000Z") };
+  const shorter = { ...basin, id: "short", endUtc: "2026-11-14T12:00:00Z" };
+  const groups = publishedWindows([later, basin, duplicate, shorter, ridge]);
+  assert.deepEqual(groups.map(group => group.map(s => s.id)), [["short"], ["basin-1", "repeat", "ridge-1"], ["ridge-2"]]);
+});
 
 test("fixture is explicitly synthetic and exercises complete, partial and missing coverage", () => {
   const d = validateDataset(fixture());
