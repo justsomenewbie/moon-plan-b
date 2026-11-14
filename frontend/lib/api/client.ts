@@ -2,7 +2,7 @@
 import createClient from "openapi-fetch";
 import type { components, paths } from "./schema";
 import type { paths as ProducerPaths } from "./producer";
-import { parseTerrainSummary } from "./terrain-summary.ts";
+import { parseTerrainSummary, terrainUtcNanos } from "./terrain-summary.ts";
 import { utcMillis, validateDataset } from "../dataset.ts";
 import { terrainSiteIds, type TerrainTarget } from "../terrain-target.ts";
 import type { Dataset } from "../dataset.ts";
@@ -69,10 +69,21 @@ export type Job = components["schemas"]["Job"];
 export const defaultWindow: WindowRequest = isMock
   ? { from: "2026-11-14T00:00:00Z", to: "2026-11-18T00:00:00Z", resolutionSeconds: 10800 }
   : { from: "2026-11-14T00:00:00Z", to: "2026-11-21T00:00:00Z", resolutionSeconds: 3600 };
-export function validateCustomWindow(request: WindowRequest) {
-  const span = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
-  if (span <= 0 || span > 366 * 86400000 || request.resolutionSeconds !== 3600) throw new ApiError("Choose an increasing UTC range of up to 366 days for an hourly custom-site job.", 422);
+function checkTerrainWindow(request: WindowRequest, span: bigint, hourly: boolean) {
+  const day = 86_400_000_000_000n;
+  if (hourly) {
+    if (span <= 0n || span > 366n * day || request.resolutionSeconds !== 3600)
+      throw new ApiError("Choose an increasing UTC range of up to 366 days for an hourly custom-site job.", 422);
+  } else {
+    if (span <= 0n || span > 31n * day) throw new ApiError("Choose an increasing UTC range of up to 31 days for the catalog comparison.", 422);
+    if (!Number.isInteger(request.resolutionSeconds) || request.resolutionSeconds < 3600 || request.resolutionSeconds > 2678400)
+      throw new ApiError("Choose a track sampling step between 3,600 and 2,678,400 seconds.", 422);
+  }
   return request;
+}
+export function validateCustomWindow(request: WindowRequest) {
+  const milliseconds = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
+  return checkTerrainWindow(request, BigInt(milliseconds) * 1_000_000n, true);
 }
 export function validateWindow(request: WindowRequest) {
   const span = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
@@ -81,11 +92,8 @@ export function validateWindow(request: WindowRequest) {
   return request;
 }
 export function validateTerrainWindow(request: WindowRequest) {
-  const span = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
-  if (span <= 0 || span > 31 * 86400000) throw new ApiError("Choose an increasing UTC range of up to 31 days for the catalog comparison.", 422);
-  if (!Number.isInteger(request.resolutionSeconds) || request.resolutionSeconds < 3600 || request.resolutionSeconds > 2678400)
-    throw new ApiError("Choose a track sampling step between 3,600 and 2,678,400 seconds.", 422);
-  return request;
+  const milliseconds = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
+  return checkTerrainWindow(request, BigInt(milliseconds) * 1_000_000n, false);
 }
 export function windowFromInputs(from: string, to: string, resolution: string, validate = validateWindow) {
   const utc = (value: string) => {
@@ -139,8 +147,9 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
 export function validateTerrainTargetWindow(request: WindowRequest, target?: TerrainTarget) {
   terrainSiteIds(target);
   // An explicit pair may come from a year-long hourly custom-site workspace.
-  return target?.site_id || (target?.site_ids && request.resolutionSeconds === 3600)
-    ? validateCustomWindow(request) : validateTerrainWindow(request);
+  const hourly = target?.site_id !== undefined || (target?.site_ids !== undefined && request.resolutionSeconds === 3600);
+  const span = terrainUtcNanos(request.to, "End UTC") - terrainUtcNanos(request.from, "Start UTC");
+  return checkTerrainWindow(request, span, hourly);
 }
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
   validateTerrainTargetWindow(request, target);

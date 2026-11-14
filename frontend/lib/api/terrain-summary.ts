@@ -56,11 +56,10 @@ function utc(value: unknown, field: string): string {
   return stamp;
 }
 
-// Relative arithmetic preserves sub-millisecond inputs supported by the producer at a grid boundary.
-function secondsFromBoundary(input: string, boundary: string): number {
-  const match = /^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d{1,9}))?Z$/.exec(input);
-  check(match, "Invalid requested UTC instant.");
-  return (utcMillis(match[1] + "Z") - Date.parse(boundary)) / 1000 + Number("0." + (match[2] ?? "0"));
+export function terrainUtcNanos(value: string, field = "Timestamp"): bigint {
+  const match = /^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d{1,9}))?Z$/.exec(value);
+  check(match, `${field} must be an ISO UTC timestamp ending in Z.`);
+  return BigInt(utcMillis(match[1] + "Z", field)) * 1_000_000n + BigInt((match[2] ?? "").padEnd(9, "0"));
 }
 function readRange(value: unknown, request?: { from: string; to: string }) {
   const r = row(value, "range");
@@ -75,10 +74,11 @@ function readRange(value: unknown, request?: { from: string; to: string }) {
     (startMs - Date.parse(requested_start)) % stepMs === 0 && (Date.parse(requested_end) - endMs) % stepMs === 0,
     "Evaluated UTC range falls outside the requested grid.");
   if (request) {
-    const fromOffset = secondsFromBoundary(request.from, requested_start);
-    const toOffset = secondsFromBoundary(request.to, requested_end);
-    check(secondsFromBoundary(request.to, requested_start) > fromOffset &&
-      fromOffset >= 0 && fromOffset < step_s && toOffset <= 0 && toOffset > -step_s, "The response describes a different requested UTC range.");
+    const from = terrainUtcNanos(request.from, "Start UTC"), to = terrainUtcNanos(request.to, "End UTC");
+    const fromOffset = from - terrainUtcNanos(requested_start), toOffset = to - terrainUtcNanos(requested_end);
+    const step = BigInt(step_s) * 1_000_000_000n;
+    check(to > from && fromOffset >= 0n && fromOffset < step && toOffset <= 0n && toOffset > -step,
+      "The response describes a different requested UTC range.");
   }
   return { start, end, requested_start, requested_end, step_s, n_samples };
 }

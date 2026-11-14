@@ -346,3 +346,24 @@ test("retains the producer verdict at sampled edges and validates thresholds and
   assert.equal(parseTerrainSummary({ ...input, sites: [dark] }).sites[0].criteria?.[0].value_h, 0);
   assert.throws(() => parseTerrainSummary({ ...input, sites: [{ ...dark, criteria: [{ ...dark.criteria[0], value_clipped: true }] }] }), /clipped/);
 });
+
+test("live terrain URL bounds use exact fractional seconds and cap ranges at the final nanosecond", () => {
+  const targets = [{ run_id: "run", site_id: "one" }, { run_id: "run", site_ids: "two,one" }, { run_id: "run" }, undefined];
+  for (const target of targets) {
+    const window = { from: "2026-11-19T14:00:00.000000001Z", to: "2026-11-19T14:00:00.000000002Z", resolutionSeconds: 3600 };
+    assert.equal(validateTerrainTargetWindow(window, target), window);
+    assert.throws(() => validateTerrainTargetWindow({ ...window, to: window.from }, target), /increasing/);
+    assert.throws(() => validateTerrainTargetWindow({ ...window, from: window.to, to: window.from }, target), /increasing/);
+    const end = target?.site_id || target?.site_ids ? "2027-01-02" : "2026-02-01";
+    const boundary = { ...window, from: "2026-01-01T00:00:00.000000002Z", to: end + "T00:00:00.000000002Z" };
+    assert.equal(validateTerrainTargetWindow(boundary, target), boundary);
+    assert.throws(() => validateTerrainTargetWindow({ ...boundary, to: end + "T00:00:00.000000003Z" }, target), /days/);
+    for (const fraction of ["1", "12", "123", "1234", "12345", "123456", "1234567", "12345678", "123456789"]) {
+      const request = { ...window, to: "2026-11-19T14:00:00." + fraction + "Z" };
+      assert.equal(validateTerrainTargetWindow(request, target), request);
+    }
+    for (const invalid of ["2026-11-19T14:00:00.1234567890Z", "2026-02-30T14:00:00.01Z", "2026-11-19T14:00:00.1+07:00"]) {
+      assert.throws(() => validateTerrainTargetWindow({ ...window, to: invalid }, target));
+    }
+  }
+});
