@@ -98,6 +98,7 @@ export default function DataPage() {
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           <a href="/plan?source=saved-b2&mode=sites">{text("Compare sites with run B2", "So sánh địa điểm với lần chạy B2")}</a>
           <a href="/plan?source=saved-b2&mode=dates">{text("Find landing hours with run B2", "Tìm giờ hạ cánh với lần chạy B2")}</a>
+          <a href="https://github.com/justsomenewbie/moon-plan-b/blob/7435102bf532b71a8ea05291dc1fa722d20c8bbf/qa/docs/JPL_CHECK.md#november-b2-overlap-using-jpl-directions">{text("JPL overlap check for Odysseus and Athena, November 14–21", "Đối chiếu thời gian cùng thấy Mặt Trời và Trái Đất bằng JPL, Odysseus và Athena, 14–21/11")}</a>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           <a href="/data/run-b2/visibility.json" download="run-b2-visibility.json">{text("Hourly visibility archive (JSON)", "Kho tầm nhìn theo giờ (JSON)")}</a>
