@@ -16,7 +16,7 @@ Root is the only editor in this checkout. Three read-only agent streams provided
 
 Finance Tracker is not activated: no purchase or budget change. Experiment Tracker is not activated: no experiment participants enrolled. Workflow Optimizer responsibilities are covered by the reproducible runner and explicit retest process. Performance timings describe these small fixtures on this host, not load or device certification.
 
-Gate 2 permits **QA tooling implementation with a clearly labeled proposed contract**. It does not permit production integration while the producer/scientific contract is unaccepted. Gate 4 passes only the executed QA scope; unmet release gates cannot be waived by agent consensus.
+Gate 2 covered the proposed offline QA sidecar. The [producer contract](../../docs/FRONTEND_CONTRACT.md) governs live frontend integration. Gate 4 covers the checks actually run. The team reviews release evidence against the checklist below.
 
 ## Minh schedule — Hanoi UTC+07:00
 
@@ -43,7 +43,8 @@ Record only consented, minimal observations; avoid names, recordings and persona
 
 ## Release freeze gate — open until evidence supplied
 
-- [ ] Chung and Son accept actual wire schema, static-file/API transport and stack; Trang accepts model/units and independent JPL sample checks. User's static-only/Vite brief versus current Next.js/API path is resolved explicitly.
+- [x] Frontend integration uses the selected Next.js stack and Chung’s same-origin aggregate API. [Contract and Chromium retest](../README.md#frontend-integration-retest).
+- [ ] At freeze, record Chung and Son’s acceptance of the release build and producer schema, and Trang’s sign-off on model assumptions, units and independent JPL sample checks.
 - [ ] Sourced production package validates with `--release`; true query receipts, raw exports, parser compatibility and source authenticity reviewed. Synthetic labels remain on mocks.
 - [ ] Supported-runtime install, full frontend test/typecheck/build and production-preview checks pass at the frozen commit; no unsupported Node waiver.
 - [ ] Manual resilience/network/accessibility evidence and three real-user sessions recorded; no unresolved P0/P1 or scientific correctness defect. Exceptions require named human acceptance.
