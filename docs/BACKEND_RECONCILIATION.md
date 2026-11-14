@@ -201,4 +201,4 @@ Question text and imported labels are untrusted. The model has no tools, externa
 
 ## Current integration scope
 
-The live aggregate, alternate-date search, time-based appearance, credited reference globe and source-scoped astronaut planning are available in the frontend. Site-specific terrain close-ups remain a proposal. Engineering estimates for batteries, panel output and antenna pointing are provisional. The data team owns Colab execution and the science team owns independent model validation.
+The live aggregate, alternate-date search, time-based appearance, credited reference globe and source-scoped astronaut planning are available in the frontend. The planner inspector opens LROC imagery and elevation relief at the selected coordinates. The comparison globe uses reference imagery. Visibility comes from the selected producer run. Engineering estimates for batteries, panel output and antenna pointing are provisional. The data team owns Colab execution and the science team owns independent model validation.

@@ -8,7 +8,7 @@ Compare how long the **Sun** and **Earth** are visible from a lunar landing site
 |---|---|
 | 🗺️ Planner (web app) | https://moon-plan-b.vercel.app/plan |
 | 📊 Data browser | https://moon-plan-b.vercel.app/data |
-| 🌐 Project page | https://lunavigator.com |
+| 🌐 Project landing page | https://lunavigator.com |
 | 🔌 Live API | https://api.lunavigator.com/api/v1/health (other routes need an API key) |
 
 ## What it does
@@ -37,11 +37,11 @@ flowchart LR
 
 | Source | Used for |
 |---|---|
-| [JPL Horizons](https://ssd.jpl.nasa.gov/horizons/) | Sun and Earth positions |
+| [JPL Horizons](https://ssd.jpl.nasa.gov/horizons/) | Sun and Earth positions for run A2 and independent checks of B2 |
 | [NASA Moon Trek](https://trek.nasa.gov/moon/) LOLA DEMs | Lunar terrain where covered |
 | [LROC QuickMap](https://quickmap.lroc.asu.edu/) | Cross-checking heights and illumination |
 | [NASA GSFC PGDA](https://pgda.gsfc.nasa.gov/products/90) LOLA DEMs and [illumination maps](https://pgda.gsfc.nasa.gov/products/69) | Terrain (default dataset) and validation |
-| [NAIF SPICE kernels](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/) | Independent check of Sun/Earth positions |
+| [NAIF SPICE kernels](https://naif.jpl.nasa.gov/pub/naif/generic_kernels/) | Sun and Earth positions for the default run B2 |
 | [NASA SVS Moon imagery](https://svs.gsfc.nasa.gov/4720/) | Globe in the planner |
 
 ## How it meets the judging criteria
