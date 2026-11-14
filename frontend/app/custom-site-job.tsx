@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ApiError } from "../lib/api/client";
+import { ApiError, jobReceiptUncertain } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import type { Message } from "../lib/i18n";
 import { createCustomSite, getCustomSiteCapability, getCustomSiteJob } from "../lib/api/custom-site";
@@ -36,7 +36,6 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const missing = status.error instanceof ApiError && status.error.status === 404;
   const busy = create.isPending || !!accepted && !missing && (!job || job.status === "queued" || job.status === "running");
   const canSubmit = !!capability.data?.available && !capability.isError && !busy;
-  const receiptUncertain = create.error instanceof ApiError && (create.error.status === 0 || create.error.status >= 500);
   function submit(input: Parameters<typeof createCustomSite>[0]) {
     if (!canSubmit || submitting.current) return;
     setFormError("");
@@ -71,7 +70,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
     {formError && <p role="alert">{t(formError)}</p>}
     {create.isPending && <p role="status">{t("Submitting request…")}</p>}
     {create.error && <div role="alert"><p>{t(create.error.message)}</p>
-      {receiptUncertain && create.variables && <><p>{t("The server may already have accepted this request.")}</p>
+      {jobReceiptUncertain(create.error) && create.variables && <><p>{t("The server may already have accepted this request.")}</p>
         <button type="button" className="button outline" disabled={!canSubmit} onClick={() => create.variables && submit(create.variables)}>{t("Retry the same request")}</button></>}
     </div>}
     {accepted && create.variables && <div className="job-status">

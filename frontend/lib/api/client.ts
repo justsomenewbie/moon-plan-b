@@ -14,13 +14,27 @@ export function ensureMock(): Promise<void> {
 }
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status = 0) { super(message); this.name = "ApiError"; this.status = status; }
+  code?: string;
+  constructor(message: string, status = 0, code?: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+  }
 }
 export function apiError(value: unknown, status = 0): ApiError {
   if (value instanceof ApiError) return value;
   const p = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const message = typeof p.detail === "string" ? p.detail : typeof p.title === "string" ? p.title : "The request could not be completed. Retry or check the connection.";
-  return new ApiError(message.slice(0, 2000), status);
+  const code = p.status === status && typeof p.type === "string" && p.type.length > 0 &&
+    typeof p.title === "string" && p.title.length > 0 && typeof p.code === "string" &&
+    /^[A-Z][A-Z0-9_]{0,63}$/.test(p.code) ? p.code : undefined;
+  return new ApiError(message.slice(0, 2000), status, code);
+}
+export function jobReceiptUncertain(error: unknown): boolean {
+  if (!(error instanceof ApiError) || (error.status !== 0 && error.status < 500)) return false;
+  return !(error.status === 503 && error.code === "STORAGE_FULL") &&
+    !(error.status === 501 && error.code === "JOB_TYPE_UNAVAILABLE");
 }
 export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && (error.status === 0 || error.status >= 500);
 const baseUrl = typeof window === "undefined" ? "http://localhost" : "";

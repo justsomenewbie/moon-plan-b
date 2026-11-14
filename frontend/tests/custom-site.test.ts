@@ -1,4 +1,4 @@
-import { validateCustomWindow, windowFromInputs } from "../lib/api/client.ts";
+import { apiError, jobReceiptUncertain, validateCustomWindow, windowFromInputs } from "../lib/api/client.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { setupServer } from "msw/node";
@@ -88,4 +88,24 @@ test("the custom coordinate form and permalink support up to 366 hourly days", (
   assert.equal(validateCustomWindow(request).to, "2027-01-02T00:00:00Z");
   assert.throws(() => validateCustomWindow({ ...request, to: "2027-01-03T00:00:00Z" }), /366 days/);
   assert.throws(() => validateCustomWindow({ ...request, resolutionSeconds: 60 }), /hourly/);
+});
+
+test("explicit producer rejections and unconfirmed custom job receipts remain distinct", () => {
+  const problem = (code: unknown, status: number) => ({ type: "about:blank", title: "Job request", detail: "Producer detail", code, status });
+  for (const [status, code, uncertain] of [
+    [503, "STORAGE_FULL", false], [501, "JOB_TYPE_UNAVAILABLE", false], [429, "QUOTA_EXCEEDED", false],
+    [503, "SERVICE_UNAVAILABLE", true], [500, "INTERNAL", true], [504, "STORAGE_FULL", true],
+  ] as const) {
+    const error = apiError(problem(code, status), status);
+    assert.equal(error.message, "Producer detail");
+    assert.equal(error.code, code);
+    assert.equal(jobReceiptUncertain(error), uncertain);
+  }
+  for (const body of [{ code: "STORAGE_FULL" }, problem("STORAGE_FULL", 501), problem(["STORAGE_FULL"], 503)]) {
+    const error = apiError(body, 503);
+    assert.equal(error.code, undefined);
+    assert.equal(jobReceiptUncertain(error), true);
+  }
+  assert.equal(jobReceiptUncertain(apiError(new TypeError("failed to fetch"))), true);
+  assert.equal(jobReceiptUncertain(apiError(undefined, 504)), true);
 });
