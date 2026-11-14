@@ -3,10 +3,9 @@
 import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
 
 import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useTerrainSiteCatalog } from "./terrain-query";
 import { compareSites, type SiteComparison } from "../lib/api/compare-sites";
 import { pairGuideContext, type GuideContext } from "../lib/api/guide-chat";
-import { getTerrainDateSites } from "../lib/api/terrain-dates";
 import { writeTerrainTarget } from "../lib/terrain-target";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
@@ -29,14 +28,12 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
   const runId = result.run.run_id;
   const { start, end } = result.range;
   const [opened, setOpened] = useState(replay);
-  const catalog = useQuery({
-    queryKey: ["terrain-date-sites", runId],
-    queryFn: ({ signal }) => getTerrainDateSites(runId, signal),
-    enabled: opened,
-  });
+  const catalog = useTerrainSiteCatalog(runId, opened);
+  const catalogWait = useRetryCountdown(catalog.error ?? "");
   const sites = catalog.data ?? result.sites;
   const [choice, setChoice] = useState<[string, string]>([result.sites[0]?.id ?? "", result.sites[1]?.id ?? ""]);
   const [comparison, setComparison] = useState<SiteComparison>();
+  const [rankingDeadline, setRankingDeadline] = useState<Error | null>(null);
   const [showGlobe, setShowGlobe] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | Error>("");
@@ -115,7 +112,8 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
     </form>
     {catalog.isFetching && <p role="status">{t("Loading sites for this run…")}</p>}
     {catalog.isError && <p role="status">{t("The full site list is unavailable. Only sites in the current dataset are available.")} <span className="block"><ApiProblemText error={catalog.error} /></span>
-      <button className="button outline" type="button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button>
+      <button className="button outline" type="button" disabled={catalogWait > 0} onClick={() => void catalog.refetch()}>
+        {catalogWait ? t("Try again in {seconds} s", { seconds: catalogWait }) : t("Retry site list")}</button>
     </p>}
     {!catalog.isFetching && sites.length < 2 && <p>{t("Two distinct sites from this run are needed for a pair comparison.")}</p>}
     {pending && <p role="status">{t("Comparing the selected sites…")}</p>}
@@ -164,7 +162,8 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
         {showGlobe && <MoonGlobe pairSites={placements} />}
       </div>}
       <a className="print:hidden" href={pairHref()} target="_blank" rel="noreferrer">{t("Open this ranked pair in a new tab")}</a>
-      {opened && completePair && <PairCatalogRanking comparison={comparison} catalogSites={catalog.data} />}
+      {opened && completePair && <PairCatalogRanking comparison={comparison} catalogSites={catalog.data}
+        catalogWait={catalog.data ? 0 : catalogWait} deadline={rankingDeadline} onDeadline={setRankingDeadline} />}
     </section>}
   </details>;
 }

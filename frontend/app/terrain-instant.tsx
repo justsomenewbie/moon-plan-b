@@ -1,4 +1,5 @@
-import { ApiProblemText } from "./api-problem-text";
+import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
+import { hasRetryDeadline } from "./terrain-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getSiteInstant, type SiteInstant } from "../lib/api/site-instant";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
@@ -18,15 +19,18 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
 }) {
   const { t, locale } = useLanguage();
   const [lookup, setLookup] = useState<Lookup>({ status: "idle" });
+  const error = lookup.status === "error" ? lookup.message : "";
+  const wait = useRetryCountdown(error);
   const active = useRef<AbortController | null>(null);
   const timeInput = useRef<HTMLInputElement>(null);
   useEffect(() => () => active.current?.abort(), []);
   function clear() {
     active.current?.abort();
-    setLookup({ status: "idle" });
+    if (!wait) setLookup({ status: "idle" });
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (wait || lookup.status === "pending") return;
     const input = String(new FormData(event.currentTarget).get("instantUtc") ?? "");
     const at = Date.parse(input + "Z");
     if (!Number.isFinite(at) || at < Date.parse(range.start) || at >= Date.parse(range.end)) {
@@ -51,15 +55,15 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
     <summary onClick={() => {
       if (!timeInput.current) return;
       if (timeInput.current.closest("details")?.open) clear();
-      else timeInput.current.value = initialUtc.slice(0, 19);
+      else if (!hasRetryDeadline(error)) timeInput.current.value = initialUtc.slice(0, 19);
     }}>{t("Look up a UTC instant")}</summary>
     <form className="request-fields my-4 print:hidden" onSubmit={submit}>
       <label className="field">{t("Requested time (UTC)")}
         <input ref={timeInput} name="instantUtc" type="datetime-local" step="1" required onChange={clear}
           defaultValue={initialUtc.slice(0, 19)} min={range.start.slice(0, 19)}
           max={new Date(Date.parse(range.end) - 1000).toISOString().slice(0, 19)} /></label>
-      <button className="button outline" type="submit" disabled={lookup.status === "pending"}>
-        {t(lookup.status === "error" ? "Retry observation lookup" : "Look up observation")}</button>
+      <button className="button outline" type="submit" disabled={wait > 0 || lookup.status === "pending"}>
+        {wait ? t("Try again in {seconds} s", { seconds: wait }) : t(lookup.status === "error" ? "Retry observation lookup" : "Look up observation")}</button>
     </form>
     {lookup.status === "pending" && <p role="status">{t("Loading observation…")}</p>}
     {lookup.status === "error" && <p role="alert"><ApiProblemText error={lookup.message} /></p>}

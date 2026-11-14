@@ -1,6 +1,7 @@
 "use client";
 
-import { ApiProblemText } from "./api-problem-text";
+import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
+import { hasRetryDeadline } from "./terrain-query";
 
 import { useEffect, useRef, useState } from "react";
 import { getCatalogRanking, type CatalogRanking } from "../lib/api/catalog-ranking";
@@ -16,20 +17,26 @@ const actions = {
   ready: "Hide catalog ranks",
 } as const;
 
-export default function PairCatalogRanking({ comparison, catalogSites }: {
-  comparison: SiteComparison; catalogSites?: readonly { id: string }[];
+export default function PairCatalogRanking({ comparison, catalogSites, catalogWait, deadline, onDeadline }: {
+  comparison: SiteComparison; catalogSites?: readonly { id: string }[]; catalogWait: number;
+  deadline: Error | null; onDeadline: (error: Error | null) => void;
 }) {
   const { t } = useLanguage();
-  const [lookup, setLookup] = useState<Lookup>({ status: "closed" });
+  const [state, setLookup] = useState<Lookup>({ status: "closed" });
+  const lookup: Lookup = deadline ? { status: "error", message: deadline } : state;
+  const wait = Math.max(useRetryCountdown(deadline ?? ""), catalogWait);
+  const blocked = wait > 0 && (lookup.status === "closed" || lookup.status === "error");
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
 
   async function toggle() {
+    if (blocked) return;
     active.current?.abort();
     if (lookup.status === "ready" || lookup.status === "pending") {
       setLookup({ status: "closed" });
       return;
     }
+    onDeadline(null);
     const controller = new AbortController();
     active.current = controller;
     setLookup({ status: "pending" });
@@ -37,13 +44,16 @@ export default function PairCatalogRanking({ comparison, catalogSites }: {
       const result = await getCatalogRanking(comparison, controller.signal, catalogSites);
       if (!controller.signal.aborted) setLookup({ status: "ready", result });
     } catch (error) {
-      if (!controller.signal.aborted) setLookup({ status: "error", message: error instanceof Error ? error : "The request could not be completed. Retry or check the connection." });
+      if (controller.signal.aborted) return;
+      if (hasRetryDeadline(error)) onDeadline(error);
+      setLookup({ status: "error", message: error instanceof Error ? error : "The request could not be completed. Retry or check the connection." });
     }
   }
 
   return <div id="catalog-ranking" className="mt-4">
     <button type="button" className="button outline print:hidden" aria-expanded={lookup.status !== "closed"}
-      aria-controls="catalog-ranking-result" onClick={toggle}>{t(actions[lookup.status])}</button>
+      aria-controls="catalog-ranking-result" disabled={blocked} onClick={toggle}>
+      {blocked ? t("Try again in {seconds} s", { seconds: wait }) : t(actions[lookup.status])}</button>
     <div id="catalog-ranking-result">
       {lookup.status === "pending" && <p role="status">{t("Loading catalog ranks…")}</p>}
       {lookup.status === "error" && <p role="alert"><ApiProblemText error={lookup.message} /></p>}

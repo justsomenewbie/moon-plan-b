@@ -1,4 +1,5 @@
-import { ApiProblemText } from "./api-problem-text";
+import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
+import { hasRetryDeadline } from "./terrain-query";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
@@ -24,8 +25,10 @@ export function RunDownloads({ run }: { run: TerrainSummary["run"] }) {
   const { t } = useLanguage();
   const [opened, setOpened] = useState(false);
   const [selected, setSelected] = useState("");
-  const files = useQuery({ queryKey: ["source-files", run.run_id, run.manifest_sha256], enabled: opened,
-    retry: false, queryFn: ({ signal }) => getRunFiles(run, signal) });
+  const files = useQuery({ queryKey: ["source-files", run.run_id, run.manifest_sha256],
+    queryFn: ({ signal }) => getRunFiles(run, signal), retry: false,
+    enabled: query => opened && !hasRetryDeadline(query.state.error) });
+  const wait = useRetryCountdown(files.error ?? "");
   const file = files.data?.find(f => f.path === selected) ?? files.data?.[0];
   const geoCatalog = new URLSearchParams({ run_id: run.run_id, format: "geojson" });
   return <div className="print:hidden mt-3 space-y-2">
@@ -36,7 +39,8 @@ export function RunDownloads({ run }: { run: TerrainSummary["run"] }) {
     <details onToggle={e => setOpened(e.currentTarget.open)}>
       <summary>{t("Original files from this run")}</summary>
       {files.isFetching ? <p role="status">{t("Loading source files…")}</p> :
-        files.isError ? <div role="alert"><p><ApiProblemText error={files.error} /></p><button className="button outline" type="button" onClick={() => void files.refetch()}>{t("Retry")}</button></div> :
+        files.isError ? <div role="alert"><p><ApiProblemText error={files.error} /></p><button className="button outline" type="button" disabled={wait > 0} onClick={() => void files.refetch()}>
+          {wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Retry")}</button></div> :
         file ? <div className="space-y-1 mt-2">
           <label className="block">{t("Choose a source file")} <select className="max-w-full" value={file.path} onChange={e => setSelected(e.target.value)}>
             {files.data?.map(f => <option key={f.path} value={f.path}>{f.path}</option>)}</select></label>

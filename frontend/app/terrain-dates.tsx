@@ -3,8 +3,8 @@
 import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getTerrainDateSites, getTerrainDates, type TerrainDateRequest } from "../lib/api/terrain-dates";
+import { useTerrainSiteCatalog } from "./terrain-query";
+import { getTerrainDates, type TerrainDateRequest } from "../lib/api/terrain-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { terrainDatesHref } from "../lib/terrain-date-link";
 import { useLanguage } from "./language";
@@ -33,11 +33,8 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
   const [completed, setCompleted] = useState<{ request: TerrainDateRequest; first: TerrainSummary; second: TerrainSummary }>();
   const runId = initialRequest?.runId ?? result?.run.run_id;
   const [opened, setOpened] = useState(Boolean(initialRequest));
-  const catalog = useQuery({
-    queryKey: ["terrain-date-sites", runId],
-    queryFn: ({ signal }) => getTerrainDateSites(runId!, signal),
-    enabled: opened && Boolean(runId),
-  });
+  const catalog = useTerrainSiteCatalog(runId, opened);
+  const catalogWait = useRetryCountdown(catalog.error ?? "");
   const available = catalog.data ?? result?.sites ?? [];
   const sites = available.some(site => site.id === inputs.site) ? available : [
     { id: inputs.site, name: completed?.first.sites.find(site => site.id === inputs.site)?.name ?? inputs.site }, ...available,
@@ -93,6 +90,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
       {useEvaluated && <p>{t("The date comparison starts from the evaluated model window. The original request includes sub-millisecond precision.")}</p>}
       <form className="request-fields my-4 print:hidden" onSubmit={event => {
         event.preventDefault();
+        if (pending || wait) return;
         if (!otherEnd) { setError("Choose valid UTC bounds for both windows."); return; }
         void compare({
           siteId: inputs.site, runId,
@@ -111,7 +109,8 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
       </form>
       {catalog.isFetching && <p role="status">{t("Loading sites for this run…")}</p>}
       {catalog.isError && <p role="status">{t("The full site list is unavailable. You can still compare the selected site.")} <span className="block"><ApiProblemText error={catalog.error} /></span>
-        <button type="button" className="button outline" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button>
+        <button type="button" className="button outline" disabled={catalogWait > 0} onClick={() => void catalog.refetch()}>
+          {catalogWait ? t("Try again in {seconds} s", { seconds: catalogWait }) : t("Retry site list")}</button>
       </p>}
       {Number.isFinite(span) && span > 0 && <p className="muted text-sm print:hidden">{t("Duration")} · {span / 3600000} h</p>}
       {pending && <p role="status">{t("Loading dataset…")}</p>}
