@@ -24,6 +24,8 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
         <button type="button" className="button outline terrain-print" onClick={onPrint}>{t("Print report")}</button>
       </div>
     </div>
+    {liveWindow && (liveWindow.from !== range.requested_start || liveWindow.to !== range.requested_end) &&
+      <p>{t("Requested UTC range")} · <TimeRange start={liveWindow.from} end={liveWindow.to} /></p>}
     <p>{t("Evaluated UTC range")} · <TimeRange start={range.start} end={range.end} /></p>
     {clippedRange && <p>{t("Requested UTC range on the model grid")} · <TimeRange start={range.requested_start} end={range.requested_end} /></p>}
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>

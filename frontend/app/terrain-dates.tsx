@@ -21,7 +21,8 @@ function shiftUtc(value: string, milliseconds: number) {
 
 export default function TerrainDates({ result, baseWindow, initialRequest, onCompared }: Props) {
   const { t } = useLanguage();
-  const base = initialRequest?.first ?? baseWindow ?? { from: result!.range.requested_start, to: result!.range.requested_end };
+  const useEvaluated = baseWindow && [baseWindow.from, baseWindow.to].some(utc => /\.\d{4,9}Z$/.test(utc));
+  const base = initialRequest?.first ?? (useEvaluated ? { from: result!.range.start, to: result!.range.end } : baseWindow) ?? { from: result!.range.requested_start, to: result!.range.requested_end };
   const [inputs, setInputs] = useState(() => ({
     site: initialRequest?.siteId ?? result!.sites[0].id,
     from: base.from.slice(0, -1), to: base.to.slice(0, -1),
@@ -85,6 +86,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
   return <section id="terrain-dates" aria-label={t("Compare dates")} tabIndex={-1}>
     <details className="details-section" open={initialRequest ? true : undefined} onToggle={event => setOpened(event.currentTarget.open)}>
       <summary>{t("Compare dates")}</summary>
+      {useEvaluated && <p>{t("The date comparison starts from the evaluated model window. The original request includes sub-millisecond precision.")}</p>}
       <form className="request-fields my-4 print:hidden" onSubmit={event => {
         event.preventDefault();
         if (!otherEnd) { setError("Choose valid UTC bounds for both windows."); return; }

@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiError, createJob, getJob, isMock, jobPollInterval, validateCustomWindow, validateTerrainWindow, windowFromInputs } from "../lib/api/client";
-import type { WindowRequest } from "../lib/api/client";
+import { apiError, createJob, getJob, isMock, jobPollInterval, validateCustomWindow, validateTerrainTargetWindow, windowFromInputs } from "../lib/api/client";
+import { terrainUtcNanos } from "../lib/api/terrain-summary";
+import type { TerrainTarget, WindowRequest } from "../lib/api/client";
 import type { Dataset } from "../lib/dataset";
 import CustomSiteJob from "./custom-site-job";
 import { useLanguage } from "./language";
@@ -10,7 +11,7 @@ import { useLanguage } from "./language";
 type ResultHandler = (data: Dataset, request: WindowRequest, jobId: string) => void;
 const windowInputs = (request: WindowRequest) => ({ from: request.from.slice(0, -1), to: request.to.slice(0, -1), resolution: String(request.resolutionSeconds) });
 
-export function ApiControls({ request, loading, onLoad, onResult, onTerrainResult }: { request: WindowRequest; loading: boolean; onLoad: (request: WindowRequest) => void; onResult: ResultHandler; onTerrainResult: (request: WindowRequest, result: { run_id: string; site_id: string }) => void }) {
+export function ApiControls({ request, target, loading, onLoad, onResult, onTerrainResult }: { request: WindowRequest; target?: TerrainTarget; loading: boolean; onLoad: (request: WindowRequest) => void; onResult: ResultHandler; onTerrainResult: (request: WindowRequest, result: { run_id: string; site_id: string }) => void }) {
   const { t } = useLanguage();
   const [error, setError] = useState("");
   const [inputs, setInputs] = useState(() => windowInputs(request));
@@ -25,25 +26,25 @@ export function ApiControls({ request, loading, onLoad, onResult, onTerrainResul
     if (previous === request || preserveDraft) return;
     setInputs((current) => {
       try {
-        const draft = windowFromInputs(current.from, current.to, current.resolution, isMock ? undefined : validateTerrainWindow);
-        if (Date.parse(draft.from) === Date.parse(previous.from) && Date.parse(draft.to) === Date.parse(previous.to) && draft.resolutionSeconds === previous.resolutionSeconds) return windowInputs(request);
+        const draft = windowFromInputs(current.from, current.to, current.resolution, isMock ? undefined : range => validateTerrainTargetWindow(range, target));
+        if (terrainUtcNanos(draft.from) === terrainUtcNanos(previous.from) && terrainUtcNanos(draft.to) === terrainUtcNanos(previous.to) && draft.resolutionSeconds === previous.resolutionSeconds) return windowInputs(request);
       } catch { /* An incomplete draft stays editable. */ }
       return current;
     });
-  }, [loading, request]);
+  }, [loading, request, target]);
   function changeInput(key: keyof typeof inputs, value: string) {
     // A deliberate edit back to the previous accepted value is still a new draft.
     if (loading) editedWhileLoading.current = true;
     setInputs(current => ({ ...current, [key]: value }));
   }
-  const readRequest = () => windowFromInputs(inputs.from, inputs.to, inputs.resolution, isMock ? undefined : validateTerrainWindow);
-  return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{isMock ? t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.") : t("Compare Odysseus and Athena over up to 31 days. The team API returns full-resolution visibility intervals for the selected UTC range.")}</p>
+  const readRequest = () => windowFromInputs(inputs.from, inputs.to, inputs.resolution, isMock ? undefined : range => validateTerrainTargetWindow(range, target));
+  return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{isMock ? t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.") : target?.site_ids ? t("Load observations for the two sites in this shared link using the UTC range below.") : t("Compare Odysseus and Athena over up to 31 days. The team API returns full-resolution visibility intervals for the selected UTC range.")}</p>
     <form className="request-fields" onSubmit={(event) => {
       event.preventDefault();
       try { const next = readRequest(); setError(""); onLoad(next); } catch (e) { setError(e instanceof Error ? e.message : "Invalid request."); }
     }}>
-      <label className="field">{t("From · UTC")}<input name="from" type="datetime-local" step="0.001" required value={inputs.from} onChange={(e) => changeInput("from", e.target.value)} /></label>
-      <label className="field">{t("To · UTC")}<input name="to" type="datetime-local" step="0.001" required value={inputs.to} onChange={(e) => changeInput("to", e.target.value)} /></label>
+      <label className="field">{t("From · UTC")}<input name="from" type={/\.\d{4,9}Z$/.test(request.from) ? "text" : "datetime-local"} step="0.001" required value={inputs.from} onChange={(e) => changeInput("from", e.target.value)} /></label>
+      <label className="field">{t("To · UTC")}<input name="to" type={/\.\d{4,9}Z$/.test(request.to) ? "text" : "datetime-local"} step="0.001" required value={inputs.to} onChange={(e) => changeInput("to", e.target.value)} /></label>
       <label className="field">{t(isMock ? "Desired step · seconds" : "Track sampling step · seconds")}<input name="resolution" type="number" min={isMock ? 60 : 3600} max={isMock ? 86400 : 2678400} step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>
       <button className="button outline" disabled={loading}>{t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}

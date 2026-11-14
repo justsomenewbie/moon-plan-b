@@ -551,6 +551,8 @@ export const vietnamese: Record<string, string> = {
 
   // Terrain-horizon aggregate results.
   "Open selected observation in a new tab": "Mở quan trắc đã chọn trong thẻ mới",
+  "Load observations for the two sites in this shared link using the UTC range below.": "Tải quan trắc của hai địa điểm trong đường dẫn này theo khoảng UTC bên dưới.",
+  "The date comparison starts from the evaluated model window. The original request includes sub-millisecond precision.": "So sánh ngày bắt đầu từ khoảng mô hình đã tính. Yêu cầu ban đầu có phần giây lẻ nhỏ hơn một mili giây.",
   "Open this ranked pair in a new tab": "Mở kết quả xếp hạng cặp này trong thẻ mới",
   "The shared pair needs both UTC bounds and a sampling step.": "Đường dẫn chia sẻ cặp địa điểm cần có mốc đầu, mốc cuối UTC và bước lấy mẫu.",
   "Requested coverage": "Mức độ đầy đủ trong khoảng yêu cầu",
