@@ -56,6 +56,14 @@ test("requests two bounded one-site summaries, pins both when given a run, prese
   }
 });
 
+test("reports invalid producer JSON on the second date without returning a partial comparison", async t => {
+  const replies = [Response.json(example(request.first, false)), new Response('{"range":')];
+  t.mock.method(globalThis, "fetch", async () => replies.shift());
+  await assert.rejects(getTerrainDates(request), (error: unknown) =>
+    error instanceof ApiError && error.status === 502 && /incomplete or invalid JSON/.test(error.message));
+  assert.equal(replies.length, 0);
+});
+
 test("rejects different date requests that resolve to the same model window", async t => {
   const utc = (clock: string) => `2026-11-14T${clock}:00Z`;
   const hour = { from: utc("00:00"), to: utc("01:00") };

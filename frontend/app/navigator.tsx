@@ -129,13 +129,14 @@ export default function Navigator() {
     loadFocus.current = document.activeElement?.closest("button, form") ? document.activeElement : null;
     setLoading(true); setError(""); setRetryLoad(null); setMessage(""); setPlaying(false);
     try {
+      // A paused offline request would also lock the local file import until reconnection.
       const next = await queryClient.fetchQuery({ queryKey: ["dataset", request, jobId, target], queryFn: async ({ signal }) => {
         if (!jobId) return isMock ? getDataset(request, signal) : getTerrainWindow(request, signal, target);
         if (!isMock) throw new Error("This view accepts saved observation windows. Custom job links require the backend jobs interface.");
         const job = await getJob(jobId, request, signal);
         if (job.status !== "done") throw new Error(job.status === "failed" ? job.problem.detail : "The shared job has not completed. Retry when its result is ready.");
         return job.result;
-      }, staleTime: reset ? 0 : 60000 });
+      }, networkMode: isMock ? "online" : "always", staleTime: reset ? 0 : 60000 });
       if (generation === loadGeneration.current) {
         setRequestWindow(request);
         if ("schema_version" in next) {

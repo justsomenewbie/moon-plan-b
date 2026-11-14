@@ -92,15 +92,25 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
 }
 export type TerrainTarget = { run_id: string; site_id?: string };
 const terrainSections = ["horizon", "series", "windows", "metrics"] as const;
+type ProducerDatasetQuery = NonNullable<ProducerPaths["/api/v1/dataset"]["get"]["parameters"]["query"]>;
+export async function getProducerDataset(query: ProducerDatasetQuery, signal?: AbortSignal) {
+  try {
+    const { data, error, response } = await producer.GET("/api/v1/dataset", { params: { query }, signal });
+    if (!response.ok) throw apiError(error, response.status);
+    return data;
+  } catch (error) {
+    if (error instanceof SyntaxError) throw new ApiError("The API returned incomplete or invalid JSON. Please retry.", 502);
+    throw error;
+  }
+}
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
   if (target?.site_id) validateCustomWindow(request);
   else validateTerrainWindow(request);
   const siteIds = target?.site_id ?? "im1_odysseus,im2_athena";
-  const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
+  const data = await getProducerDataset({
     run_id: target?.run_id, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
     horizon_step_deg: 0.5, max_points: 10000, include: terrainSections.join(","),
-  } } });
-  if (!response.ok) throw apiError(error, response.status);
+  }, signal);
   if (!Array.isArray(data?.include) || !terrainSections.every(section => data.include.includes(section)))
     throw new ApiError("The server response is missing a requested dataset section.", 502);
   const result = parseTerrainSummary(data, request);

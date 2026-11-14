@@ -1,4 +1,4 @@
-import { ApiError, apiError, producer, validateTerrainWindow } from "./client.ts";
+import { ApiError, getProducerDataset, validateTerrainWindow } from "./client.ts";
 import { parseTerrainSummary } from "./terrain-summary.ts";
 
 type DateRange = { from: string; to: string };
@@ -27,11 +27,10 @@ export async function getTerrainDates(request: TerrainDateRequest, signal?: Abor
   validateTerrainDates(request);
   async function load(range: DateRange, runId?: string) {
     signal?.throwIfAborted();
-    const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
+    const data = await getProducerDataset({
       run_id: runId, site_ids: request.siteId, start: range.from, end: range.to, step_s: 3600, include: "windows,metrics",
-    } } });
+    }, signal);
     signal?.throwIfAborted();
-    if (!response.ok) throw apiError(error, response.status);
     const result = parseTerrainSummary(data, range);
     if (runId !== undefined && result.run.run_id !== runId)
       throw new ApiError("The returned model run differs from the shared link.", 502);

@@ -57,6 +57,7 @@ export const vietnamese: Record<string, string> = {
   "Invalid request range above.": "Khoảng thời gian yêu cầu ở trên không hợp lệ.",
   "The request could not be completed. Retry or check the connection.": "Không thể hoàn thành yêu cầu. Hãy thử lại hoặc kiểm tra kết nối.",
   "API response exceeds the 5 MiB frontend limit. Request a shorter range or coarser resolution.": "Phản hồi API vượt giới hạn 5 MiB của frontend. Hãy yêu cầu khoảng thời gian ngắn hơn hoặc bước lấy mẫu lớn hơn.",
+  "The API returned incomplete or invalid JSON. Please retry.": "API trả về JSON không đầy đủ hoặc không hợp lệ. Vui lòng thử lại.",
   "The API did not respond within 15 seconds. Please retry.": "API không phản hồi trong 15 giây. Vui lòng thử lại.",
   "Choose an increasing UTC range of at most 31 days (draft limit).": "Chọn khoảng UTC có thời điểm kết thúc sau thời điểm bắt đầu, dài tối đa 31 ngày (giới hạn dự thảo).",
   "Choose 60–86400 seconds per sample and at most 10,000 requested samples per series.": "Chọn bước từ 60–86400 giây mỗi mẫu và tối đa 10.000 mẫu yêu cầu cho mỗi chuỗi.",

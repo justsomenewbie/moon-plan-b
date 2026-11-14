@@ -27,23 +27,41 @@ const dataset = {
 };
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined,
   chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
-try {
+const pinned = new URL(origin);
+pinned.search = new URLSearchParams({ from: start, to: end, resolutionSeconds: step, run_id: run, view_site: site, at, saved: site });
+pinned.hash = "terrain-observations";
+const cases = [
+  { fault: "404", attempts: 1, message: "Dataset temporarily unavailable" },
+  { fault: "500", attempts: 3, message: "Test server error" },
+  { fault: "offline", attempts: 3, message: "The request could not be completed. Retry or check the connection." },
+  { fault: "truncated", attempts: 3, message: "The API returned incomplete or invalid JSON. Please retry." },
+  { fault: "timeout", attempts: 3, message: "The API did not respond within 15 seconds. Please retry." },
+];
+
+async function checkFault({ fault, attempts, message }) {
   const page = await browser.newPage({ serviceWorkers: "block" });
-  const requests = [];
+  const requests = [], pageErrors = [], demoFiles = [];
+  page.on("pageerror", error => pageErrors.push(error.message));
+  page.on("request", req => { if (new URL(req.url()).pathname === "/data/demo.json") demoFiles.push(req.url()); });
+  let recovered = false;
   await page.route("**/api/**", async route => {
     const url = new URL(route.request().url());
     assert.equal(url.pathname, "/api/v1/dataset");
     assert.equal(route.request().method(), "GET");
     requests.push(Object.fromEntries(url.searchParams));
-    await route.fulfill(requests.length === 1 ? { status: 404, json: { detail: "Dataset temporarily unavailable" } } : { json: dataset });
+    if (recovered) return route.fulfill({ json: dataset });
+    if (fault === "timeout") return; // Hold the actual fetch until the client aborts it.
+    if (fault === "offline") {
+      if (requests.length === 1) await page.context().setOffline(true);
+      return route.abort("internetdisconnected");
+    }
+    if (fault === "truncated") return route.fulfill({ status: 200, contentType: "application/json", body: '{"schema_version":' });
+    return route.fulfill({ status: Number(fault), json: { detail: message } });
   });
-  const pinned = new URL(origin);
-  pinned.search = new URLSearchParams({ from: start, to: end, resolutionSeconds: step, run_id: run, view_site: site, at, saved: site });
-  pinned.hash = "terrain-observations";
-  const alert = page.locator("#data-error");
+  const alert = page.locator("#data-error[role=alert]");
   const retry = alert.getByRole("button", { name: "Retry API request", exact: true });
   async function rejectFile() {
-    await page.locator("input[type=file]").setInputFiles({ name: "invalid.json", mimeType: "application/json", buffer: Buffer.from("{") });
+    await page.getByLabel("Import JSON dataset").setInputFiles({ name: "invalid.json", mimeType: "application/json", buffer: Buffer.from("{") });
     await alert.getByText(/previous dataset has not changed/i).waitFor();
   }
   async function checkSelection() {
@@ -52,23 +70,49 @@ try {
     assert.equal(await page.getByRole("combobox", { name: "Compare saved results" }).inputValue(), site);
     assert.equal(page.url(), pinned.href);
   }
-  await page.goto(pinned.href);
-  await retry.waitFor();
-  assert.equal(requests[0].run_id, run);
-  assert.equal(requests[0].step_s, step);
-  assert.equal(requests[0].start, start);
-  assert.equal(requests[0].end, end);
-  assert.equal(requests[0].site_ids, sites.join(","));
-  await rejectFile();
-  await Promise.all([
-    page.waitForResponse(response => new URL(response.url()).pathname === "/api/v1/dataset" && response.ok()),
-    retry.click(),
-  ]);
-  assert.deepEqual(requests, [requests[0], requests[0]], "Retry must replay the pinned dataset request");
-  await checkSelection();
-  await rejectFile();
-  await checkSelection();
-  assert.equal(await retry.count(), 0, "An invalid file alone provides no API request to retry");
-  assert.equal(requests.length, 2);
-  console.log("Pinned API retry restored the selected terrain site, UTC sample and saved comparison after an invalid import.");
+  const began = Date.now();
+  try {
+    await page.goto(pinned.href, { waitUntil: "domcontentloaded" });
+    await alert.getByText(message, { exact: true }).waitFor({ timeout: 65000 });
+    const elapsed = Date.now() - began;
+    assert.equal(requests.length, attempts, fault);
+    assert.equal(requests[0].run_id, run);
+    assert.equal(requests[0].step_s, step);
+    assert.equal(requests[0].start, start);
+    assert.equal(requests[0].end, end);
+    assert.equal(requests[0].site_ids, sites.join(","));
+    assert.equal(await page.locator("#workspace[aria-busy=true], .terrain-result, .timeline-svg").count(), 0);
+    assert.ok(await page.getByRole("button", { name: "Import data", exact: true }).isEnabled());
+    if (fault === "timeout") assert.ok(elapsed >= 45000, "All three real 15-second deadlines must elapse");
+    if (fault === "truncated") {
+      await page.getByRole("combobox", { name: "Language" }).selectOption("vi");
+      await alert.getByText("API trả về JSON không đầy đủ hoặc không hợp lệ. Vui lòng thử lại.", { exact: true }).waitFor();
+      await page.getByRole("combobox", { name: "Ngôn ngữ" }).selectOption("en");
+    }
+    if (fault === "404" || fault === "offline") await rejectFile();
+    if (fault === "offline") {
+      assert.equal(await page.evaluate(() => navigator.onLine), false);
+      await page.context().setOffline(false);
+    }
+    recovered = true;
+    await Promise.all([
+      page.waitForResponse(response => new URL(response.url()).pathname === "/api/v1/dataset" && response.ok()),
+      retry.click(),
+    ]);
+    await checkSelection();
+    if (fault === "404") {
+      await rejectFile();
+      await checkSelection();
+    }
+    assert.equal(await retry.count(), 0);
+    assert.deepEqual(requests, Array(attempts + 1).fill(requests[0]), fault + " retry must preserve the pinned request");
+    assert.deepEqual(demoFiles, []);
+    assert.deepEqual(pageErrors, []);
+    console.log(fault, attempts, "failed requests then one successful manual retry;", elapsed, "ms to alert");
+  } finally { await page.close(); }
+}
+
+try {
+  for (const scenario of cases) await checkFault(scenario);
+  console.log("Passed in Chromium", browser.version(), new Date().toISOString());
 } finally { await browser.close(); }
