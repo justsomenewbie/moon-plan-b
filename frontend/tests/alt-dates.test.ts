@@ -15,7 +15,7 @@ function example() {
     run_id: request.run_id, site_id: request.site_id, cache_id: "d".repeat(64), step_s: 3600, precision_h: 1,
     earliest_utc: request.earliest, latest_utc: request.latest, mission_duration_h: 3,
     constraints: {
-      min_sun_pct: 0, min_earth_pct: 0, min_both_pct: 100, min_separation_h: 1, objective: "earliest",
+      min_sun_pct: 0, min_earth_pct: 0, min_both_pct: 100, min_separation_h: 1, objective: "earliest" as const,
       require_sun_at_landing: true, require_earth_at_landing: false, min_continuous_sun_h: 0, min_continuous_earth_h: 0,
       max_dark_gap_h: null, max_comms_gap_h: null, min_sun_el_at_landing_deg: null,
     },
