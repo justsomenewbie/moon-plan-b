@@ -18,7 +18,17 @@ The application uses published npm packages through their normal distribution, p
 
 Swagger assets are copied locally during preparation, with their license; online validation is disabled. Install with `npm ci --ignore-scripts` to avoid dependency lifecycle telemetry, then run the explicit project generation/build commands. MSW's generated service worker retains its upstream notice. The OpenAPI proposal, mock behavior and generated-type integration were AI-assisted. API conventions came from Chung's rules supplied by Sơn; the exact endpoints and payload remain an unagreed frontend proposal.
 
-No external image, lunar texture/model, web font, soundtrack or copied UI component is included. System fonts are used. The project-level license is still a team decision; public GitHub visibility is not permission to reuse team code. Hosting and final release require the corresponding license/submission checks.
+System fonts are used; no external web font, soundtrack, 3D model or copied UI component is included. The project-level license is still a team decision; public GitHub visibility is not permission to reuse team code. Hosting and final release require the corresponding license/submission checks.
+
+## Lunar reference image — 14 November 2026
+
+The hero uses the existing [Moon Mosaic, NASA SVS ID 5001](https://svs.gsfc.nasa.gov/5001/), released 5 May 2022. Credit: **NASA's Scientific Visualization Studio**. It combines LRO Narrow Angle Camera images collected in 2018; it is a photographic mosaic, not AI-generated imagery. The app labels it as context, separate from current illumination, selected-site evidence and synthetic comparison values.
+
+Original [1024 × 1024 JPEG](https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005001/moon_mosaic_print.jpg) retained unchanged as `frontend/public/images/moon-mosaic.jpg`: 252,499 bytes, SHA-256 `36fbe604043f1403acbc4db6fbd36d04db1db1c8a3749aa81d1e6ffea072a5fa`. Retrieved and visually inspected 14 November 2026. Display scales it within a circular frame; no generated pixels, logos or people were added.
+
+Permission basis checked on that date: [SVS reuse FAQ](https://svs.gsfc.nasa.gov/help/) permits reuse/redistribution unless an item states otherwise; the item shows no separate restriction. [NASA media guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/) permit factual educational/informational web use with acknowledgment and no implied endorsement, excluding marked third-party copyrighted works. This supports the educational app, linked source repository and informational demo/judging use of this item, not an eligibility declaration or permission for unrelated branding/merchandise. Preserve its credit/source if reused in slides or recordings.
+
+Codex implemented the appearance controls, layout and reference links. No AI image generation was used for this refresh. The synthetic dataset and AI-assisted proposal history remain unchanged.
 
 ### Notice recovery check — 14 November 2026
 

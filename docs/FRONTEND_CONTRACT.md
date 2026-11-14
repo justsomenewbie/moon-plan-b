@@ -2,6 +2,8 @@
 
 **Status: proposed by the frontend, awaiting Chung/data-producer and scientific review.** Sơn explicitly authorized a marked draft after supplying Chung's mandatory coordination rules. No agreed OpenAPI or real Colab export has been supplied. This is not an agreed backend API. The frontend accepts local JSON or calls a fixed same-origin API; it never calls Horizons.
 
+Chung's subsequently supplied backend plan is an evolving proposal with richer terrain/series/run APIs. Its naming, model and jobs differ from this draft; see [the reconciliation and AI-assistant proposal](BACKEND_RECONCILIATION.md). The current fixture is a working baseline, not a ceiling on future features. No endpoint or scientific model has been silently switched.
+
 The single authored structural definition is [`contracts/openapi.draft.json`](../contracts/openapi.draft.json), OpenAPI 3.1. `npm run generate:api` produces `frontend/lib/api/schema.d.ts`; API types must not be handwritten. Semantic checks remain in [`frontend/lib/dataset.ts`](../frontend/lib/dataset.ts) and `frontend/lib/api/client.ts`; generated TypeScript is not runtime validation. The OpenAPI response example and [`frontend/public/data/demo.json`](../frontend/public/data/demo.json) are **invented UI fixtures**, never NASA datasets.
 
 ## Proposed API and transport

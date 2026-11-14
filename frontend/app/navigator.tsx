@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
+import ThemeControl from "./theme-control";
 import { alternatives, commonOffsets, durationHours, laterMatch, readSelection, selectionParams, validateDataset } from "../lib/dataset";
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
 import { Comparison, formatUtc, SampleTable, SkyPosition, Sources, Timeline, Windows } from "./observations";
@@ -186,12 +187,14 @@ export default function Navigator() {
 
   return <div className="app-shell">
     <a className="skip-link" href="#workspace">Skip to comparison</a>
-    <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label="Main"><a href="#workspace" className="active-link">Compare</a><a href="#sources">Sources &amp; method</a><button className="button outline" onClick={() => fileInput.current?.click()} disabled={loading}>Import data</button></nav>
+    <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label="Main"><a href="#workspace" className="active-link">Compare</a><a href="#sources">Sources &amp; method</a><ThemeControl /><button className="button outline" onClick={() => fileInput.current?.click()} disabled={loading}>Import data</button></nav>
       <input ref={fileInput} aria-label="Import JSON dataset" type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
     </header>
-    <section className="intro"><h1>Find a clearer window.</h1><p className="lead">Compare the Sun and Earth above the lunar horizon.</p>
-      <p className="muted text-sm">{isMock ? "Synthetic mock API · draft contract, pending backend agreement" : "Backend API · draft compatibility requires producer review"} · <a href="/api-docs">API explorer</a></p>
+    <section className="intro"><div className="hero-copy"><p className="eyebrow">Lunar observation explorer</p><h1>Find a clearer window.</h1><p className="lead">Compare the Sun and Earth above the lunar horizon.</p>
+      <div className="hero-actions"><a className="button primary" href="#workspace">Explore the comparison <span aria-hidden="true">&nbsp;↗</span></a><a className="button outline" href="#resources">Explore lunar resources</a></div>
+      <p className="muted text-sm hero-meta">{isMock ? "Synthetic mock API · draft contract, pending backend agreement" : "Backend API · draft compatibility requires producer review"} · <a href="/api-docs">API explorer</a></p>
       <p className="data-notice">{!data ? isMock ? "No scientific dataset connected. Use the demonstration or import a release." : "Waiting for a valid API dataset. You can also import a release." : data.evidence === "synthetic-fixture" ? "Demonstration data — fictional sites and values. Not for mission planning." : "Supplied data — scientific validity has not been independently verified. Not for mission planning."}</p>
+      </div><figure className="lunar-figure"><div className="lunar-frame"><img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt="Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images." fetchPriority="high" /></div><figcaption><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />Context image, not current illumination or a selected-site view.</figcaption></figure>
     </section>
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
@@ -226,6 +229,11 @@ export default function Navigator() {
       </div>
     </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>No observation windows in this dataset</h2><p>{isMock ? "Import a release containing scenarios, or explore the clearly labeled demonstration." : "Request another UTC range above, or import a release containing scenarios."}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? "Explore demonstration" : "Load default date range"}</button></main> : null}
     {data && !loading ? <Sources data={data} a={a} b={b} /> : null}
+    <section id="resources" className="reference-resources" aria-labelledby="resources-heading"><p className="eyebrow">Beyond the comparison</p><h2 id="resources-heading">Explore the Moon through its sources.</h2><p className="muted">Reference material for learning and cross-checks. These links do not supply the synthetic comparison values.</p><div className="resource-links">
+      <a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer"><strong>The Moon, frame by frame ↗</strong><span>See the source and credits for the LRO photographic mosaic above.</span></a>
+      <a href="https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table" target="_blank" rel="noreferrer"><strong>Understand the observations ↗</strong><span>Read the JPL Horizons observer-table documentation and coordinate conventions.</span></a>
+      <a href="https://trek.nasa.gov/moon/" target="_blank" rel="noreferrer"><strong>Explore lunar terrain ↗</strong><span>Open NASA Moon Trek in a separate tab to explore its lunar map.</span></a>
+    </div></section>
     <footer className="app-footer"><p>Ideal horizon only. Terrain, power and radio links are not modeled.</p><p>Frontend draft · AI-assisted implementation · <a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">Project repository</a></p></footer>
   </div>;
 }
