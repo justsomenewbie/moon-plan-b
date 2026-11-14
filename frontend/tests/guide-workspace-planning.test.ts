@@ -16,6 +16,18 @@ const sites = ["Odysseus", "Athena"].map(name => ({ id: name.toLowerCase(), name
   windows: { sun: spans([[12,38],[42,53]]), earth: spans([[0,72]]), both: spans([[12,38],[42,53]]) } }));
 const terrain = { schema_version: "lunarnav-dataset-1", run: { run_id: source }, range, sites } as TerrainSummary;
 const context: GuideContext = { kind: "terrain", rows: sites.map(site => ({ site: site.name, source, from, to, sunHours: 37, earthHours: 72, bothHours: 37 })) };
+
+test("selecting one of two retained sites keeps the workspace and its exact dates", () => {
+  const plan = planningIntent("When should I visit Odysseus or Athena for 3 hours from 2026-11-15 to 2026-11-16?")!;
+  const offered = answerWorkspacePlanning(plan, "en", context, terrain);
+  assert.ok("siteChoices" in offered && offered.siteChoices);
+  const chosen = planningIntent("Athena", plan, offered.siteChoices)!;
+  const answer = answerWorkspacePlanning(chosen, "en", context, terrain).answer;
+  assert.match(answer, /Athena/);
+  assert.match(answer, /2026-11-15T00:00:00Z → 2026-11-15T03:00:00Z/);
+  assert.ok(answer.includes(source));
+  assert.doesNotMatch(answer, /Odysseus/);
+});
 function query(question: string, evidence: TerrainSummary | SiteComparison = terrain, selected = context, locale: "en" | "vi" = "en") {
   const plan = planningIntent(question);
   assert.ok(plan);

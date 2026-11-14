@@ -6,13 +6,13 @@ import { getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type Planne
 import { rankSavedMissionWindows, type MissionWindowRanking } from "../mission-window-ranking.ts";
 import { usesSmoothSphere } from "../site-horizon.ts";
 import { translate } from "../i18n.ts";
-import { hasPlanningQualifications, matchSites, type PlanningIntent } from "../guide-planning.ts";
+import { hasPlanningQualifications, matchSites, type PlanningIntent, type PlanningSite } from "../guide-planning.ts";
 export { matchSites } from "../guide-planning.ts";
 
 type Locale = "en" | "vi";
 export type PlanningArchive = "saved" | "saved-b2";
 export type PlanningSource = PlanningArchive | PlannerRun;
-export type PlanningAnswer = { answer: string; href: string };
+export type PlanningAnswer = { answer: string; href: string; siteChoices?: readonly PlanningSite[]; choiceSource?: PlanningSource };
 type Services = { run: typeof getPlannerRun; ranking: typeof getPlannerRanking; missionRanking: typeof getPlannerMissionRanking; dates: typeof findAltDates; observation: typeof getTerrainAggregate; online: boolean };
 const services: Services = { run: getPlannerRun, ranking: getPlannerRanking, missionRanking: getPlannerMissionRanking, dates: findAltDates, observation: getTerrainAggregate, online: !isMock };
 
@@ -81,7 +81,7 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     const savedSource = "\n" + tr("Saved run", "Run đã lưu") + " · " + run.runId;
     const matches = matchSites(plan.siteText, run.sites);
     if (from < run.start || to > run.end) return outsideRun(run);
-    if (matches.length > 1) return reply(tr("Which catalog site do you mean? ", "Bạn muốn chọn địa điểm nào? ") + matches.map(s => s.name).join(" · "));
+    if (matches.length > 1) return { ...reply(tr("Which catalog site do you mean? ", "Bạn muốn chọn địa điểm nào? ") + matches.map(s => s.name).join(" · ")), siteChoices: matches, choiceSource: fallback };
     if (plan.mode === "sites" && !matches.length && plan.missionHours !== null) {
       const result = rankSavedMissionWindows(fallback, { from, to, priority: plan.priority, missionHours: plan.missionHours });
       return result ? missionReply(result, run.sites, savedSource) : reply(tr("The archive has no site windows covering these dates.", "Bản lưu không có các khoảng quan sát bao phủ những ngày này.") + savedSource);
@@ -140,8 +140,8 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
         ? tr("Highest " + metric + " among catalog sites with complete coverage", "Các địa điểm có tỷ lệ " + metric + " cao nhất trong số các địa điểm có đủ dữ liệu") + ":\n" + rows.join("\n")
         : tr("No catalog site has complete coverage for this ranking.", "Chưa có địa điểm nào đủ dữ liệu để xếp hạng.")) + source);
     }
-    if (matches.length !== 1) return reply((matches.length ? tr("Which of these sites do you mean? ", "Bạn muốn chọn địa điểm nào trong số này? ") + matches.map(s => s.name).join(" · ")
-      : tr("Which catalog site should I check? Please give its name or ID, for example Athena.", "Bạn muốn tra địa điểm nào trong danh mục? Hãy ghi tên hoặc mã, ví dụ Athena.")));
+    if (matches.length > 1) return { ...reply(tr("Which of these sites do you mean? ", "Bạn muốn chọn địa điểm nào trong số này? ") + matches.map(s => s.name).join(" · ")), siteChoices: matches, choiceSource: run };
+    if (!matches.length) return reply(tr("Which catalog site should I check? Please give its name or ID, for example Athena.", "Bạn muốn tra địa điểm nào trong danh mục? Hãy ghi tên hoặc mã, ví dụ Athena."));
     const [site] = matches;
     href = plannerHref(plan, site.id, run);
     if (plan.mode !== "dates" && !(plan.mode === "sites" && plan.missionHours !== null)) {
