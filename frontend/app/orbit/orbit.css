@@ -55,3 +55,7 @@
 .orbit-view-switch span { color:var(--gold); padding-inline-start:.35rem; }
 .orbit-tabs button[aria-pressed=true] { background:var(--ink); border-color:var(--ink); }
 @media(max-width:740px) { .orbit-view-switch { margin-bottom:.85rem; } }
+
+.app-shell .orbit-page { min-height:auto; padding:0 clamp(12px,3vw,50px); }
+.app-shell .orbit-layout { min-height:min(74svh,760px); }
+@media(max-width:740px) { .app-shell .orbit-layout { min-height:auto; } }

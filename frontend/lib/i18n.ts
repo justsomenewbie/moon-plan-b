@@ -15,7 +15,7 @@ export const vietnamese: Record<string, string> = {
   "Inspect this site and week with the live API": "Tra địa điểm và tuần này bằng API trực tuyến",
   "21–27 Nov": "21–27/11",
   "14–20 Nov": "14–20/11",
-  "Explore the landing sites": "Khám phá điểm đáp",
+  "Open presentation view": "Mở chế độ trình chiếu",
   "Earlier example · run B": "Ví dụ trước đây · mô hình B",
   "Earlier model · run B": "Mô hình trước đây · bản B",
   "Explore the imagery and observation methods. Each result identifies its own data source.": "Khám phá hình ảnh và phương pháp quan sát. Mỗi kết quả ghi rõ nguồn dữ liệu riêng.",

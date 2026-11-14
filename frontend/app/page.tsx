@@ -5,7 +5,7 @@ import { useLanguage } from "./language";
 import { SiteFooter, SiteHeader, SkyBackground, LunarResources } from "./site-chrome";
 import { savedResultFromUrl } from "./observed-week";
 import AstronautGuide from "./astronaut-guide";
-import MoonGlobe from "./moon-globe";
+import OrbitScene from "./orbit/orbit-scene";
 
 const savedResult = savedResultFromUrl(new URLSearchParams());
 const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
@@ -26,21 +26,10 @@ export default function Home() {
   }, []);
   return <div className="app-shell">
     <SkyBackground />
-    <a className="skip-link" href="#home-title">{t("Skip to content")}</a>
+    <a className="skip-link" href="#orbit-title">{t("Skip to content")}</a>
     <SiteHeader />
     <main>
-      <section className="intro" aria-labelledby="home-title">
-        <div className="hero-copy">
-          <p className="eyebrow">{t("Lunar observation explorer")}</p>
-          <h1 id="home-title" tabIndex={-1}>{t("Find a clearer window")}</h1>
-          <p className="lead">{t("Near the lunar south pole, the Sun stays low. Compare landing sites and dates to see how many hours both the Sun and Earth are in view.")}</p>
-          <div className="hero-actions">
-            <a className="button primary" href="/orbit">{t("Explore the landing sites")}</a>
-            <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
-          </div>
-        </div>
-        <MoonGlobe home savedResult={savedResult} />
-      </section>
+      <OrbitScene />
       <section className="home-about" id="about" tabIndex={-1} aria-labelledby="home-about-title">
         <div>
           <h2 id="home-about-title">{t("How a crater changes the view")}</h2>

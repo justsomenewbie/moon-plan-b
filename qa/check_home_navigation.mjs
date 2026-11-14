@@ -14,11 +14,11 @@ try {
     const nav = page.locator("header nav");
     const mobile = width < 760;
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
-    const primary = page.locator(".hero-actions .primary");
-    assert.equal(await primary.innerText(), "Explore the landing sites");
-    assert.equal(await primary.getAttribute("href"), "/orbit");
-    const guideLink = page.locator('.hero-actions a[href="#home-guide"]');
-    assert.equal(await page.locator(".hero-actions a").count(), 2);
+    const title = page.locator("#orbit-title");
+    const method = page.locator(".orbit-method");
+    const guideLink = method.locator('a[href="#home-guide"]');
+    assert.equal(await title.innerText(), "Where can we see both the Sun and Earth?");
+    await method.locator("summary").press("Enter");
     await guideLink.press("Enter");
     await page.waitForFunction(() => document.activeElement.id === "home-guide");
     for (const mode of ["sites", "dates"]) {
@@ -26,8 +26,7 @@ try {
     }
     assert.ok(await page.getByRole("img", { name: /Low sunlight reaches the left rim/ }).isVisible());
     await page.route("**/api/**", route => route.abort());
-    await primary.press("Enter");
-    await page.locator(".orbit-method summary").press("Enter");
+
     await page.getByRole("link", {name: "Earlier example · run B"}).press("Enter");
     await page.waitForURL(url => url.pathname === "/compare" && url.hash === "#observed-week" &&
       url.searchParams.get("saved") === "2026-11-14T00:00:00Z");
@@ -38,7 +37,7 @@ try {
     }
     await page.unroute("**/api/**");
     await page.goto(new URL("/", origin).href);
-    await primary.waitFor();
+    await title.waitFor();
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
     assert.equal(await page.locator("#globe-site, .site-pin-key").count(), 0);
     assert.equal(await menu.isVisible(), mobile);
@@ -53,7 +52,8 @@ try {
       await menu.click();
     }
     await nav.getByLabel("Language").selectOption("vi");
-    assert.equal(await primary.innerText(), "Khám phá điểm đáp");
+    assert.equal(await title.innerText(), "Ở đâu có thể thấy cả Mặt Trời và Trái Đất?");
+    await method.locator("summary").press("Enter");
     assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
     const guide = page.locator("#home-guide");
     for (const [i, img] of (await guide.locator("img").all()).entries()) {
