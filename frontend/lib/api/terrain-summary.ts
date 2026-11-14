@@ -262,7 +262,37 @@ function readSeries(value: unknown, range: Range, inRange: Coverage, windows: Re
     sun_visible: visibility("sun"), earth_visible: visibility("earth"), both_visible: visibility("both") };
 }
 
-function readSite(value: unknown, range: Range, include: unknown[]) {
+function readCriteriaHours(value: unknown) {
+  const hours = items(value, "criteria hours", 30).map(hour => number(hour, "minimum hours"));
+  check(hours.length && hours.every((hour, i) => hour > 0 && (!i || hour > hours[i - 1])),
+    "Expected distinct positive criteria hours in ascending order.");
+  return hours;
+}
+
+function readCriteria(value: unknown, hours: number[], inRange: Coverage, both: Span[]): components["schemas"]["DatasetCriterion"][] {
+  if (inRange === "missing" && value === undefined) return [];
+  const rows = items(value, "site criteria", 30);
+  check(rows.length === (inRange === "missing" ? 0 : hours.length), "Site criteria do not cover the supplied thresholds.");
+  const remaining = new Set(hours);
+  const longest = both.reduce((max, span) => Math.max(max, (span.end - span.start) / HOUR), 0);
+  let sharedClipping: boolean | undefined;
+  return rows.map(item => {
+    const c = row(item, "criterion"), minimum_hours = number(c.minimum_hours, "minimum hours");
+    check(remaining.delete(minimum_hours), "Unknown or duplicate duration threshold.");
+    check(c.metric === "longest_both_h", "Unknown duration criterion metric.");
+    const value_h = number(c.value_h, "criterion value");
+    check(value_h >= 0, "Invalid criterion duration.");
+    close(value_h, longest, "criterion longest joint interval");
+    const value_clipped = boolean(c.value_clipped, "value_clipped");
+    check(!value_clipped || both.length > 0, "An empty joint interval set cannot have a clipped longest interval.");
+    check(sharedClipping === undefined || sharedClipping === value_clipped, "Duration thresholds disagree on longest interval clipping.");
+    sharedClipping = value_clipped;
+    check(c.result === "meets" || c.result === "below" || c.result === "borderline", "Unknown duration criterion verdict.");
+    return { minimum_hours, metric: c.metric, value_h, value_clipped, result: c.result, reason: text(c.reason, "criterion reason") };
+  });
+}
+
+function readSite(value: unknown, range: Range, include: unknown[], criteriaHours: number[] | null) {
   const s = row(value, "site"), c = coverage(s.coverage), inRange = coverage(s.coverage_in_range);
   const clamped = range.start !== range.requested_start || range.end !== range.requested_end;
   check(c === (clamped && inRange === "complete" ? "partial" : inRange), "Contradictory requested and evaluated site coverage.");
@@ -274,6 +304,7 @@ function readSite(value: unknown, range: Range, include: unknown[]) {
   return {
     id: identifier(s.id, "site", /^[A-Za-z0-9_.:-]{1,64}$/), name: text(s.name, "site name"), coverage: c, coverage_in_range: inRange,
     windows, metrics: readMetrics(s.metrics, range, bodySpans, inRange),
+    criteria: criteriaHours && readCriteria(s.criteria, criteriaHours, inRange, bodySpans.both),
     horizon: include.includes("horizon") && (s.horizon !== undefined || inRange !== "missing") ? readHorizon(s.horizon) : null,
     series: include.includes("series") && (s.series !== undefined || inRange !== "missing") ? readSeries(s.series, range, inRange, bodySpans) : null,
   };
@@ -288,6 +319,7 @@ export function parseTerrainSummary(input: unknown, request?: { from: string; to
   const include = items(d.include, "included sections", 32);
   check(include.includes("windows") && include.includes("metrics"), "The terrain summary needs windows and metrics.");
   const range = readRange(d.range, request);
+  const criteria_hours = include.includes("criteria") ? readCriteriaHours(d.criteria_hours) : null;
   const sources = uniqueIds(items(d.sources, "sources", 500).map(item => {
     const s = row(item, "source");
     return { id: identifier(s.id, "source", /^[a-z0-9._-]{1,100}$/), title: text(s.title, "source title"),
@@ -296,12 +328,13 @@ export function parseTerrainSummary(input: unknown, request?: { from: string; to
   return {
     schema_version: d.schema_version, dataset_id: identifier(d.dataset_id, "dataset", /^[A-Za-z0-9._-]{1,100}$/),
     evidence: d.evidence, attribution: text(d.attribution, "attribution"), run: readRun(d.run), model: readModel(d.model),
-    range, sources, sites: uniqueIds(items(d.sites, "sites", 100).map(site => readSite(site, range, include)), "site"),
+    range, sources, criteria_hours, sites: uniqueIds(items(d.sites, "sites", 100).map(site => readSite(site, range, include, criteria_hours)), "site"),
   };
 }
 export type TerrainSummary = {
   schema_version: "lunarnav-dataset-1"; dataset_id: string; evidence: "computed-ephemeris"; attribution: string;
   run: ReturnType<typeof readRun>; model: ReturnType<typeof readModel>; range: Range;
+  criteria_hours: number[] | null;
   sites: ReturnType<typeof readSite>[];
   sources: { id: string; title: string; url: string | null; sha256: string | null }[];
 };

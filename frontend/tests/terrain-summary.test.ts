@@ -40,13 +40,15 @@ test("reads summary-only aggregates and leaves unavailable plotting sections nul
   assert.deepEqual(parsed.model, d.model);
   assert.equal(parsed.sites[0].series, null);
   assert.equal(parsed.sites[0].horizon, null);
+  assert.equal(parsed.criteria_hours, null);
+  assert.equal(parsed.sites[0].criteria, null);
 });
 
 test("requires the requested sections on a live response and accepts a covered range with a missing site", async t => {
   const d = example(), site = d.sites[0];
-  const sections = ["horizon", "series", "windows", "metrics"];
+  const sections = ["horizon", "series", "windows", "metrics", "criteria"];
   const missing = { ...site, coverage: "missing", coverage_in_range: "missing", windows: { sun: [], earth: [], both: [] }, metrics: null };
-  const response = { ...d, sites: [missing] };
+  const response = { ...d, criteria_hours: [24, 72, 168], sites: [{ ...missing, criteria: [] }] };
   t.mock.method(globalThis, "fetch", async () => Response.json(response));
   const request = { from: d.range.start, to: d.range.end, resolutionSeconds: 3600 };
   const target = { run_id: d.run.run_id, site_id: site.id };
@@ -59,6 +61,7 @@ test("requires the requested sections on a live response and accepts a covered r
   const result = await getTerrainWindow(request, undefined, target);
   assert.equal(result.sites[0].coverage_in_range, "missing");
   assert.equal(result.sites[0].horizon, null);
+  assert.deepEqual(result.sites[0].criteria, []);
   assert.equal(result.sites[0].series, null);
 });
 
@@ -222,4 +225,36 @@ test("shared terrain observations select an actual timestamp of the named site",
   assert.throws(() => read({ view_site: second.id, at: stamp(6) }), /sample/);
   assert.throws(() => read({ at: stamp(7) }), /site/);
   assert.throws(() => read({ view_site: "unknown" }), /site/);
+});
+
+test("retains the producer verdict at sampled edges and validates thresholds and measured duration", () => {
+  const d = example(), site = d.sites[0];
+  const criterion = { minimum_hours: 2, metric: "longest_both_h", value_h: 2, value_clipped: false, result: "borderline", reason: "The transition falls between samples." };
+  const input = { ...d, criteria_hours: [2], include: [...d.include, "criteria"], sites: [{ ...site, criteria: [criterion] }] };
+  const result = parseTerrainSummary(input);
+  assert.deepEqual(result.criteria_hours, [2]);
+  assert.deepEqual(result.sites[0].criteria, [criterion]);
+  for (const bad of [{ minimum_hours: 0 }, { minimum_hours: 3 }, { metric: "total_both_h" }, { value_h: 3 }, { value_clipped: "true" }, { result: "unknown" }, { reason: 1 }]) {
+    assert.throws(() => parseTerrainSummary({ ...input, sites: [{ ...site, criteria: [{ ...criterion, ...bad }] }] }));
+  }
+  for (const hours of [undefined, [], [0], [2, 2], [3, 2], [2, 3]]) {
+    assert.throws(() => parseTerrainSummary({ ...input, criteria_hours: hours }));
+  }
+  assert.throws(() => parseTerrainSummary({ ...input, sites: [site] }), /site criteria/);
+  assert.throws(() => parseTerrainSummary({ ...input, criteria_hours: [2, 3], sites: [{ ...site, criteria: [criterion, criterion] }] }), /duplicate/);
+
+  assert.throws(() => parseTerrainSummary({ ...input, criteria_hours: [2, 3], sites: [{
+    ...site, criteria: [criterion, { ...criterion, minimum_hours: 3, result: "below", value_clipped: true }],
+  }] }), /disagree/);
+
+  const partial = { ...site, coverage: "partial", coverage_in_range: "partial", metrics: null,
+    windows: { ...site.windows, both: site.windows.both.map(w => ({ ...w, clipped_end: true })) },
+    criteria: [{ ...criterion, value_clipped: true }] };
+  assert.deepEqual(parseTerrainSummary({ ...input, sites: [partial] }).sites[0].criteria, partial.criteria);
+  const missing = { ...site, coverage: "missing", coverage_in_range: "missing", metrics: null, windows: { sun: [], earth: [], both: [] } };
+  assert.deepEqual(parseTerrainSummary({ ...input, sites: [{ ...missing, criteria: [] }] }).sites[0].criteria, []);
+  assert.throws(() => parseTerrainSummary({ ...input, sites: [{ ...missing, criteria: [criterion] }] }), /thresholds/);
+  const dark = { ...partial, windows: { sun: [], earth: site.windows.earth, both: [] }, criteria: [{ ...criterion, result: "below", value_h: 0 }] };
+  assert.equal(parseTerrainSummary({ ...input, sites: [dark] }).sites[0].criteria?.[0].value_h, 0);
+  assert.throws(() => parseTerrainSummary({ ...input, sites: [{ ...dark, criteria: [{ ...dark.criteria[0], value_clipped: true }] }] }), /clipped/);
 });
