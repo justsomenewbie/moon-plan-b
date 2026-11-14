@@ -1,4 +1,5 @@
 // The live aggregate and synthetic workflow each use their published or draft OpenAPI types.
+import { browserTimeoutMs } from "../producer-deadline.ts";
 import createClient from "openapi-fetch";
 import type { components, paths } from "./schema";
 import type { paths as ProducerPaths } from "./producer";
@@ -72,13 +73,13 @@ export function jobReceiptUncertain(error: unknown): boolean {
   return !(error.status === 503 && error.code === "STORAGE_FULL") &&
     !(error.status === 501 && error.code === "JOB_TYPE_UNAVAILABLE");
 }
-export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && !error.retryAt && (error.status === 0 || error.status >= 500);
+export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && !error.retryAt && (isMock || error.status !== 504) && (error.status === 0 || error.status >= 500);
 const baseUrl = typeof window === "undefined" ? "http://localhost" : "";
 async function boundedFetch(request: Request, retainBytes?: (bytes: Uint8Array<ArrayBuffer>) => void) {
   await ensureMock();
-  // The producer can spend 30 seconds on its synchronous alternative-date search.
-  const dateSearch = request.method === "POST" && new URL(request.url).pathname === "/api/v1/alt-dates";
-  const deadline = AbortSignal.timeout(dateSearch ? 35000 : 15000);
+  const mockDateSearch = isMock && request.method === "POST" && new URL(request.url).pathname === "/api/v1/alt-dates";
+  const timeout = isMock ? (mockDateSearch ? 35_000 : 15_000) : browserTimeoutMs;
+  const deadline = AbortSignal.timeout(timeout);
   try {
     const response = await fetch(new Request(request, { signal: AbortSignal.any([request.signal, deadline]) }));
     if (!response.body) return response;
@@ -94,7 +95,16 @@ async function boundedFetch(request: Request, retainBytes?: (bytes: Uint8Array<A
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
     if (response.ok) retainBytes?.(bytes);
     return new Response(bytes, { status: response.status, statusText: response.statusText, headers: response.headers });
-  } catch (error) { if (request.signal.aborted) throw error; if (deadline.aborted) throw new ApiError(dateSearch ? "The date search did not respond within 35 seconds. Please retry." : "The API did not respond within 15 seconds. Please retry.", 504); throw apiError(error); }
+  } catch (error) {
+    request.signal.throwIfAborted();
+    if (deadline.aborted) {
+      const detail = !isMock ? "The data request timed out after 190 seconds. Please retry."
+        : mockDateSearch ? "The date search did not respond within 35 seconds. Please retry."
+        : "The API did not respond within 15 seconds. Please retry.";
+      throw new ApiError(detail, 504);
+    }
+    throw apiError(error);
+  }
 }
 const api = createClient<paths>({ baseUrl, fetch: request => boundedFetch(request) });
 export const producer = createClient<ProducerPaths>({ baseUrl, fetch: request => boundedFetch(request) });

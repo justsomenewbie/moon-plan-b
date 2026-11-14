@@ -61,7 +61,9 @@ On 14 November 2026 at 08:31 UTC, Playwright opened a pinned Athena result at 02
 
 After each fault, one manual retry recovered the same requested run, site selection, saved comparison, cadence and exact UTC. While the error was visible, the workspace showed neither a terrain result nor a synthetic timeline. The browser made no request for the demo JSON. These injections exercise client recovery. An independent smoke check reached the live backend and rendered the two-site dataset.
 
-Replay with `node qa/check_pinned_retry.mjs <live-mode-frontend-origin>`. Allow about one minute for the five cases. OpenAI Codex extended the regression and corrected the offline and malformed-response paths.
+On November 15 the live client adopted the producer’s 180-second relay budget. Chromium accepted a delayed 16.5-second dataset with one GET. Both a structured relay 504 and the browser’s own deadline showed Retry after one attempt. Manual recovery preserved the pinned run, UTC, sites and sample. The browser test checks the configured 190,000 ms and accelerates that single timer. Separate loopback checks delivered complete JSON after a real 37-second delay, both before headers and during body streaming.
+
+Replay with `node qa/check_pinned_retry.mjs <live-mode-frontend-origin>`. OpenAI Codex extended the regression and corrected the offline and malformed-response paths.
 
 ## UI-04 and UI-05 plot retest
 

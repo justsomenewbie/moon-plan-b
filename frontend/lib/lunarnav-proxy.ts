@@ -1,6 +1,7 @@
 // Server-side relay for the public team's authenticated data service.
 import { createHash } from "node:crypto";
 import { BodyLimitError, readBoundedJson } from "./guide-chat.ts";
+import { producerTimeoutMs } from "./producer-deadline.ts";
 import { publicRoute } from "./lunarnav-scope.ts";
 
 const origin = "https://api.lunavigator.com";
@@ -92,7 +93,6 @@ export async function proxyLunarnav(request: Request, key: string | undefined, s
   const headers = new Headers({ "X-API-Key": key, accept: "*/*" });
   const conditional = request.method === "GET" ? validators(request.headers.get("if-none-match")) : [];
   if (conditional.length) headers.set("if-none-match", conditional.join(", "));
-  const deadline = AbortSignal.any([request.signal, AbortSignal.timeout(match.body ? 35000 : 30000)]);
   let body: string | undefined;
   if (match.body) {
     const clientOrigin = request.headers.get("origin");
@@ -103,23 +103,32 @@ export async function proxyLunarnav(request: Request, key: string | undefined, s
       return problem(403, "Same-origin request required.");
     if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json")
       return problem(415, "Send a JSON query.");
+    const uploadDeadline = AbortSignal.any([request.signal, AbortSignal.timeout(35_000)]);
     try {
-      const input = await readBoundedJson(request, 16384, deadline);
+      const input = await readBoundedJson(request, 16384, uploadDeadline);
       if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).some(k => !match.body!.includes(k)))
         return problem(400, "Unsupported query body.");
       body = JSON.stringify(input);
     } catch (error) {
-      return problem(error instanceof BodyLimitError ? 413 : deadline.aborted ? 408 : 400, "Invalid or incomplete JSON query.");
+      request.signal.throwIfAborted();
+      return problem(error instanceof BodyLimitError ? 413 : uploadDeadline.aborted ? 408 : 400, "Invalid or incomplete JSON query.");
     }
     headers.set("content-type", "application/json");
   }
+  request.signal.throwIfAborted();
+  const deadline = AbortSignal.timeout(producerTimeoutMs);
   let upstream: Response;
   try {
     upstream = await send(origin + "/api/v1/" + match.path + url.search, {
-      method: request.method, headers, body, cache: "no-store", redirect: "error", signal: deadline,
+      method: request.method, headers, body, cache: "no-store", redirect: "error", signal: AbortSignal.any([request.signal, deadline]),
     });
   } catch {
-    return problem(deadline.aborted ? 504 : 502, "The public team API could not complete this request.");
+    request.signal.throwIfAborted();
+    if (deadline.aborted) return Response.json({
+      type: "about:blank", title: "Upstream timeout", status: 504, code: "UPSTREAM_TIMEOUT",
+      detail: "The team API did not respond within 180 seconds. Please retry.",
+    }, { status: 504, headers: { "content-type": "application/problem+json", "cache-control": "no-store" } });
+    return problem(502, "The public team API could not complete this request.");
   }
   const type = upstream.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
   const json = type === "application/json" || type === "application/problem+json" || type === "application/geo+json";

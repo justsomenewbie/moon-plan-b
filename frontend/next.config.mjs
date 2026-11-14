@@ -1,4 +1,5 @@
 // One switch: "mock" for the synthetic demo, or the backend origin. Browser calls stay same-origin.
+import { producerTimeoutMs } from './lib/producer-deadline.ts';
 const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'mock';
 let origin;
 if (base !== 'mock') {
@@ -9,6 +10,7 @@ if (base !== 'mock') {
 }
 const publicTeamApi = origin === 'https://api.lunavigator.com';
 export default {
+  ...(origin && !publicTeamApi ? { experimental: { proxyTimeout: producerTimeoutMs } } : {}),
   env: { NEXT_PUBLIC_LUNARNAV_PROXY: publicTeamApi ? '1' : '0' },
   async rewrites() {
     if (publicTeamApi) return { beforeFiles: [{ source: '/api/v1/openapi.json', destination: '/api-contract/lunarnav.json' }] };
