@@ -258,7 +258,7 @@ The revised day/night suggestion added four system-rendered cloud silhouettes to
 | Item | Verified outcome | Remaining input or limit |
 |---|---|---|
 | I · Appearance | The circular day/night switch, hover tilt, local-time Auto and reduced-motion behavior were already on main before this review. | None for the specified controls. |
-| II · Globe | Rotation was already available. Added 1–4× reference zoom, named coordinate pins and per-site Sun/Earth hours. | Close-up terrain and radio strength need their own data and model. |
+| II · Globe | The homepage globe turns automatically until the visitor drags, zooms, uses the arrows or selects a site. A paused or reduced-motion view stays still. Saved comparisons retain a link to the globe, named coordinate pins, 1–4× zoom and per-site Sun/Earth hours. | Close-up terrain and radio strength need their own data and model. |
 | III · Footer | The project repository was already linked. Added the repository’s verified feedback channel. | The team has not supplied institute, social or sponsor links or confirmed affiliations. |
 | IV · Home and language | The language selector, resources navigation and a guide were already present. Home now introduces the comparison and links separately to the instructions and saved results. | Founder names require confirmation if the team wants them displayed. |
 | V · Typography | The title already had no terminal period and the lead was smaller. The current ellipsis-bearing status messages are standalone labels; no following sentence in those messages starts lowercase. | Recheck new copy when added. |

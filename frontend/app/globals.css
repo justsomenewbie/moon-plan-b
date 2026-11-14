@@ -70,8 +70,11 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .theme-control select { border: 1px solid var(--line); border-radius: 4px; min-height: 44px; max-width: 100%; background: var(--surface); color: var(--text); padding: 7px 10px; font-size: .82rem; }
 .reference-resources { padding: 28px 0; border-top: 1px solid var(--line); }
 .observed-week { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
-.saved-comparison { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(250px, .65fr); gap: clamp(28px, 5vw, 84px); align-items: start; }
-.saved-comparison .lunar-figure { padding-top: 20px; }
+@media screen and (min-width: 761px) {
+  .intro .hero-copy { align-self: end; }
+  .intro .home-guide { align-self: start; }
+  .intro .lunar-figure { grid-column: 2; grid-row: 1 / span 2; }
+}
 .terrain-result { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 .week-selection { display: block; max-width: 26rem; margin-top: 14px; }
 .week-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
@@ -261,7 +264,7 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 @media (max-width: 760px) {
   .app-shell { padding: 0 20px; } .app-header { align-items: flex-start; padding: 18px 0; gap: 16px; flex-direction: column; }
   .brand { font-size: 1.6rem; } .app-header nav { width: 100%; gap: 18px; flex-wrap: wrap; justify-content: flex-start; } .app-header nav a { font-size: .86rem; } .app-header nav .button { margin-left: auto; font-size: .85rem; padding: 7px 12px; }
-  .saved-comparison { grid-template-columns: 1fr; } .intro { grid-template-columns: 1fr; gap: 32px; padding: 32px 0; } .lunar-frame { max-width: 260px; } .resource-links { grid-template-columns: 1fr; } .workspace { display: block; padding-top: 24px; } .controls { border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 24px; margin-bottom: 28px; }
+  .intro { grid-template-columns: 1fr; gap: 32px; padding: 32px 0; } .lunar-frame { max-width: 260px; } .resource-links { grid-template-columns: 1fr; } .workspace { display: block; padding-top: 24px; } .controls { border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 24px; margin-bottom: 28px; }
   .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; } .mode-switch, .control-actions, .share-field, .controls > p, .controls > .text-button { grid-column: 1 / -1; }
   .controls > .field { min-width: 0; } .field select { padding-left: 8px; font-size: .82rem; } .control-actions { margin-top: 8px; grid-template-columns: 1fr 1fr; }
   .window-labels { gap: 12px; font-size: .76rem; } .section-heading h2 { font-size: 1.5rem; } .axis-label { font-size: 15px; }
