@@ -6,6 +6,7 @@ import { parseGuideRequest, answerGuide } from "../lib/guide-chat.ts";
 import { savedGuideContext } from "../lib/api/guide-chat.ts";
 import type { PlannerRun, PlannerRanking } from "../lib/api/planner.ts";
 import type { AltDatesResponse } from "../lib/api/alt-dates.ts";
+import type { TerrainSummary } from "../lib/api/terrain-summary.ts";
 
 const first = "2026-11-21T00:00:00Z", end = "2026-11-28T00:00:00Z";
 const examples = {
@@ -195,6 +196,40 @@ test("offline or unavailable live catalog uses all B2 sites for the actual 2029 
     assert.match(reply.answer, /B2_spice_pgda/);
     assert.match(reply.href, /source=saved-b2/);
     assert.match(reply.href, /from=2029-02-12&to=2029-02-19/);
+  }
+});
+
+test("observation actions open the section provided for the pinned run and exact UTC span", async () => {
+  const live = { ...run, end: "2031-01-01T00:00:00Z" };
+  for (const [to, anchor] of [["2027-01-02", "#terrain-observations"], ["2027-01-03", "#workspace"], ["2031-01-01", "#workspace"]]) {
+    const plan = planningIntent("How many hours of Sun and Earth visibility does Athena have from 2026-01-01 to " + to + "?")!;
+    const reply = await answerPlanning(plan, "en", signal, { ...api, run: async () => live, observation: async (request, id, runId) => {
+      assert.deepEqual([id, runId, request.to], ["im2_athena", live.runId, to + "T00:00:00Z"]);
+      return { range: { start: request.from, end: request.to }, sites: [{ id, coverage: "partial", coverage_in_range: "partial" }] } as TerrainSummary;
+    } });
+    const url = new URL(reply.href, "https://example.org");
+    assert.equal(url.pathname, "/compare");
+    assert.equal(url.hash, anchor);
+    assert.equal(url.searchParams.get("view_site"), "im2_athena");
+    assert.equal(url.searchParams.get("run_id"), live.runId);
+  }
+});
+
+test("a failed A2 lookup after discovery retains the same result source and recovery link as an explicit A2 pin", async () => {
+  const a2 = { ...run, runId: "A2_horizons_trek_raymarch_2026_2030_fix676af9d" };
+  const plan = planningIntent("How many hours of sun and earth visibility does Athena have from 2026-11-14 to 2026-11-21?")!;
+  for (const locale of ["en", "vi"] as const) {
+    let discoveries = 0, lookups = 0;
+    const outage = { ...api, run: async () => { discoveries++; return a2; }, observation: async () => { lookups++; throw Error("Unavailable"); } };
+    const discovered = await answerPlanning(plan, locale, signal, outage);
+    const pinned = await answerPlanning(plan, locale, signal, outage, a2);
+    assert.equal(discoveries, 1); assert.equal(lookups, 2);
+    assert.deepEqual(discovered, pinned);
+    assert.ok(discovered.answer.includes(a2.runId));
+    assert.doesNotMatch(discovered.answer, /B2_|139 h/);
+    const params = new URL(discovered.href, "https://example.org").searchParams;
+    assert.deepEqual([params.get("run_id"), params.get("site"), params.get("from"), params.get("to")],
+      [a2.runId, "im2_athena", "2026-11-14", "2026-11-21"]);
   }
 });
 

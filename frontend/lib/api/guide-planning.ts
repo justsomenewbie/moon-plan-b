@@ -2,7 +2,7 @@ import { archiveB2Run, rankArchiveB2, savedB2JointWindows, searchArchiveB2 } fro
 import { getSavedPlannerDates, getSavedPlannerRanking, savedJointWindows, savedPlannerRun, savedPlannerWindows } from "../saved-planner.ts";
 import { describeLongestJoint, longestJointWindow } from "../joint-window.ts";
 import { findAltDates } from "./alt-dates.ts";
-import { getTerrainAggregate, isMock } from "./client.ts";
+import { getTerrainAggregate, terrainSummaryRequested, isMock } from "./client.ts";
 import { getCatalogEvidence, getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type PlannerRun } from "./planner.ts";
 import { rankSavedMissionWindows, type MissionWindowRanking } from "../mission-window-ranking.ts";
 import { usesSmoothSphere } from "../site-horizon.ts";
@@ -136,8 +136,10 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       .map(r => r.name + " · " + r[key] + " h").join("\n") + savedSource);
   }
   if (archive || !api.online) return offline();
+  let knownRun = liveRun;
   try {
-    const run = liveRun ?? await api.run(signal);
+    const run = knownRun ?? await api.run(signal);
+    knownRun = run;
     href = plannerHref(plan, undefined, run);
     if (run.runId === savedPlannerRun.runId) fallback = "saved";
     if (from < run.start || to > run.end) return outsideRun(run);
@@ -168,11 +170,13 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
     const [site] = matches;
     href = plannerHref(plan, site.id, run);
     if (plan.mode !== "dates" && !(plan.mode === "sites" && plan.missionHours !== null)) {
-      const result = await api.observation({ from, to, resolutionSeconds: run.stepSeconds }, site.id, run.runId, false, signal);
+      const request = { from, to, resolutionSeconds: run.stepSeconds };
+      const target = { run_id: run.runId, site_id: site.id };
+      const result = await api.observation(request, site.id, run.runId, false, signal);
       const row = result.sites[0];
       if (!row || row.id !== site.id || result.range.start !== from || result.range.end !== to) return reply(unavailable);
-      const query = new URLSearchParams({ run_id: run.runId, site_id: site.id, view_site: site.id, from, to, resolutionSeconds: String(run.stepSeconds) });
-      href = "/compare?" + query + "#terrain-observations";
+      const query = new URLSearchParams({ ...target, view_site: site.id, from, to, resolutionSeconds: String(run.stepSeconds) });
+      href = "/compare?" + query + (terrainSummaryRequested(request, target) ? "#workspace" : "#terrain-observations");
       const m = row.coverage === "complete" && row.coverage_in_range === "complete" ? row.metrics : null;
       return reply(site.name + "\n" + period + "\n" + (m
         ? tr("Sun / Earth / both", "Mặt Trời / Trái Đất / cả hai") + " · " + [m.sun_hours, m.earth_hours, m.both_hours].join(" / ") + " h"
@@ -190,7 +194,9 @@ export async function answerPlanning(plan: PlanningIntent, locale: Locale, signa
       : tr("No qualifying model window was returned.", "Mô hình không trả về khoảng nào đáp ứng yêu cầu.")) + source);
   } catch {
     signal.throwIfAborted();
-    if (liveRun) return reply(unavailable + "\n" + tr("Source run", "Run nguồn") + " · " + liveRun.runId);
+    const archivedId = fallback === "saved" ? savedPlannerRun.runId : archiveB2Run.runId;
+    if (knownRun && (liveRun || knownRun.runId !== archivedId))
+      return reply(unavailable + "\n" + tr("Source run", "Run nguồn") + " · " + knownRun.runId);
     return offline();
   }
 }

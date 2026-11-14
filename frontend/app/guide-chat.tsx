@@ -18,6 +18,7 @@ const copy = {
     hours: "Hours visible · Sun / Earth / both", unknown: "unknown", invalid: "Edit the question and send it again.", prompt: "Your question", send: "Send", cancel: "Cancel", reset: "Clear chat", retry: "Try again",
     waiting: "The astronaut is thinking…", failed: "The guide couldn’t answer. You can try again or use the questions below.",
     offline: "The model is unavailable. You can still use the questions below.", slow: "The guide timed out. Try again.", limited: "The guide is busy. Please try again shortly.",
+    openSummary: "Open visibility summary", openObservations: "Open site observations", openPlanner: "Open planner",
     you: "You", guide: "Astronaut", actions: { workspace: "Open workspace", saved: "Open saved result", sources: "View sources", compareSites: "Compare sites", compareDates: "Compare dates" },
   },
   vi: {
@@ -27,6 +28,7 @@ const copy = {
     hours: "Số giờ nhìn thấy · Mặt Trời / Trái Đất / cả hai", unknown: "chưa xác định", invalid: "Hãy sửa câu hỏi rồi gửi lại.", prompt: "Câu hỏi của bạn", send: "Gửi", cancel: "Hủy", reset: "Xóa cuộc trò chuyện", retry: "Thử lại",
     waiting: "Phi hành gia đang suy nghĩ…", failed: "Chưa có câu trả lời. Bạn có thể thử lại hoặc chọn một câu hỏi bên dưới.",
     offline: "Mô hình hiện chưa hoạt động. Bạn vẫn có thể chọn một câu hỏi bên dưới.", slow: "Đã hết thời gian chờ. Hãy thử lại.", limited: "Phi hành gia đang bận. Bạn vui lòng thử lại sau.",
+    openSummary: "Mở tóm tắt thời gian quan sát", openObservations: "Mở kết quả quan sát địa điểm", openPlanner: "Mở công cụ lập kế hoạch",
     you: "Bạn", guide: "Phi hành gia", actions: { workspace: "Mở phần quan sát", saved: "Mở kết quả đã lưu", sources: "Xem nguồn dữ liệu", compareSites: "So sánh hai địa điểm", compareDates: "So sánh hai khoảng thời gian" },
   },
 } as const;
@@ -121,7 +123,7 @@ function Conversation({ context, actions, source, localScope, evidence }: {
     <div role="log" aria-label={labels.title} aria-live="polite">{turns.map((turn, i) => {
       const dest = turn.action && actions[turn.action];
       return <div key={i} className={styles.turn}><p><b>{labels.you}</b> · {turn.question}</p><p><b>{labels.guide}</b> · {turn.answer}</p>
-        {turn.href && <a href={turn.href}>{turn.href.startsWith("/compare?") ? (locale === "en" ? "Open site observations" : "Mở kết quả quan sát địa điểm") : (locale === "en" ? "Open planner" : "Mở công cụ lập kế hoạch")}</a>}
+        {turn.href && <a href={turn.href}>{turn.href.endsWith("#workspace") ? labels.openSummary : turn.href.startsWith("/compare?") ? labels.openObservations : labels.openPlanner}</a>}
         {turn.action && dest && (typeof dest === "string" ? <a href={dest} onClick={e => e.currentTarget.closest("aside")?.hidePopover()}>{labels.actions[turn.action]}</a>
           : <button type="button" onClick={e => { e.currentTarget.closest("aside")?.hidePopover(); dest(); }}>{labels.actions[turn.action]}</button>)}
       </div>;
