@@ -18,10 +18,10 @@ Vietnamese mobile QA covered home, comparison, import errors, site selectors, UT
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
 
-[ENV-001](qa/README.md#supported-runtime-retest) passed on macOS arm64.
+[ENV-001](qa/README.md#supported-runtime-retest) passed on Mac arm64. [QA-004](qa/docs/JPL_CHECK.md#archived-four-response-check) verified four Horizons responses.
 
 The astronaut answers EN/VI questions via local Ollama. EN/VI lower/higher comparisons preserve saved joint visibility: Odysseus 33 h, Athena 139 h, UTC and source. [Runtime](README.md#ask-the-astronaut).
 
 ## Pending
 
-Backend fractional bounds, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.
+Backend fractional bounds, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync work remain in named local stashes.
