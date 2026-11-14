@@ -4,6 +4,14 @@ Status: review proposal, 14 November 2026. The user supplied Chung's `WEB_BACKEN
 
 The frontend remains a working synthetic baseline. The current draft must not constrain a reviewed scientific model to its original assumptions. Equally, do not silently feed a richer model into the old validator. Reconcile the public contract and a small sourced example, then adapt the API layer, views and checks together.
 
+## Colab precompute and the first science comparison
+
+The team supplied a precompute notebook on 14 November. Its full-run settings select 23 catalog sites, hourly UTC samples from 2026-01-01 inclusive to 2031-01-01 exclusive, and an observer 2 m above ground. A uses JPL Horizons, a Moon Trek elevation model and ray marching. B uses NAIF SPICE, a PGDA elevation model and a brute-force horizon calculation. These are configured methods and dates. The shared copy saved the settings and a failed Google Drive mount. Its precompute, validation and archive cells contain no saved results.
+
+For a first comparison, obtain the run archive or a two-site slice with `RUN_INFO.json`, the manifests, the two site records, horizon masks, timestamped ephemeris and visibility tables, and the relevant rows of `checks.csv`. Preserve the raw source references and the code version. Validate the same UTC start and end for both sites, align the body observations, and independently compare every simultaneous interval, its total duration and the longest interval. Retain gaps, clipped bounds and the uncertainty of crossings between hourly samples. A sunlight percentage alone cannot establish joint visibility.
+
+The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The existing importer expects a flat horizon and body centers. A producer release under the existing model can use the importer directly. Terrain-resolved flags require an agreed model and interface before display. For discrepant rim sites, compare identical coordinates, observer height, window and visibility definition, then compare the horizon masks in the directions actually crossed by the Sun. For example, Table 1 in Gläser et al. lists 81.0% and 86.7% maximum average illumination at two different surface locations on Shackleton rim. Its separate solar visibility column measures the time any part of the Sun is visible. Compare like quantities and heights before choosing a pipeline. [Gläser et al., Table 1 and method](https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf)
+
 ## Decisions to reconcile with Chung
 
 | Area | Backend plan | Current frontend / proposed next step |
