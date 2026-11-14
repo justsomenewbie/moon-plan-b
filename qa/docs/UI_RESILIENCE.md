@@ -7,13 +7,32 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | UI-01 | Throttle initial data loading; change selection during pending load | Visible loading; no old data labeled as new; controls recover | NOT RUN |
 | UI-02 | Import invalid JSON, each invalid fixture, wrong schema, >5 MiB and empty file | Accessible error, no crash or partial acceptance; prior valid dataset remains recoverable | [PASS in Chromium](#ui-02-import-retest) |
 | UI-03 | Inject HTTP 404/500, network disconnect, timeout and truncated body on actual data route | Error/retry with bounded attempts; live mode must not silently show mocks | NOT RUN |
-| UI-04 | Import partial and missing fixtures | Unknown text and null metrics, broken lines across missing samples; no zero-filled darkness | NOT RUN |
-| UI-05 | Import crossing_wrap; inspect both sites and zero values | North seam does not draw a full-width spike; exact-zero displayed accurately | NOT RUN |
+| UI-04 | Import partial and missing fixtures | Unknown text and null metrics, broken lines across missing samples; no zero-filled darkness | [PASS in Chromium](#ui-04-and-ui-05-plot-retest) |
+| UI-05 | Import crossing_wrap; inspect both sites and zero values | North seam does not draw a full-width spike; exact-zero displayed accurately | [PASS in Chromium](#ui-04-and-ui-05-plot-retest) |
 | UI-06 | Switch English/Vietnamese and share/reopen selection | Same UTC `Z`, source identity, degrees/km and dataset version; English default retained | NOT RUN |
 | UI-07 | Block globe texture, simulate image decode failure and unavailable Canvas 2D context separately | Fallback/retry or explicit error; numeric tables and SVG charts still usable, selection retained | [PASS in Chromium](#ui-07-browser-retest) |
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
 | UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
 | UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | NOT RUN |
+
+## UI-04 and UI-05 plot retest
+
+On 14 November 2026 at 08:19 UTC, Playwright ran Chromium 158.0.8127.18 at 1280 × 720 on the production frontend at `/` with mock startup and imported fixtures. The [plot fix](https://github.com/justsomenewbie/moon-plan-b/commit/2dc97be8798dade778e51c989707f20c58b16194) removes a 1.5-step tolerance from the polar skyplot. On the old build, moving the partial basin's 01:00 sample to 01:15 joined both polar trails across 75 minutes despite the 60-minute cadence. The elevation chart already broke there. The corrected polar plot breaks both trails at that gap.
+
+With the original partial and missing fixtures, all six summary values and interval labels reported unavailable. The exact-sample table retained Earth when only Sun was missing. The empty windows had no markers and a disabled slider. With `crossing_wrap`, the polar trails broke across north in both directions. A genuine 0° Sun lay exactly on the horizon ring. The [browser regression](../check_observation_plots.mjs) checks both sites. Replay with `node qa/check_observation_plots.mjs <frontend-origin>`.
+
+## Horizon clearance and direction diagram
+
+Minh introduced these controls in [d32bdd6](https://github.com/justsomenewbie/moon-plan-b/commit/d32bdd6c385de9f117fe529c0fd7df57a4a3e997). Chromium verified the [corrections](https://github.com/justsomenewbie/moon-plan-b/commit/d67d917ec819f6ddf1e5f0a2ba2f317a2f48ab09) at 08:19 UTC on the same build and viewport. The slider moved the threshold in both plots, both sites retained their original producer totals, and switching English/Vietnamese retained the selected angle and duration. At Sun elevations of 0.2° and 1°, the displayed ideal shadow lengths were 286.5 and 57.29 object heights. Neither a missing sample row nor a null Sun filled either neighboring ribbon interval. An absent body had no hardware direction. An independent browser replay also opened the two sites’ interval details in turn and verified the UTC list for each.
+
+Replay with `node qa/check_mission_clearance.mjs <frontend-origin>`. [Frontend tests](../../frontend/tests/mission-studio.test.ts) check two threshold crossings in one step, exact touches, missing neighbors, minute cadence and shadow limits. OpenAI Codex assisted this work and the plot regression. Both checks use [synthetic QA fixtures](../fixtures/).
+
+| Fixture | SHA-256 |
+| --- | --- |
+| normal | `0f7773320fa3e8b3da60841aa88d02e9d03a34c213cbf0af9e441b724d0b92fb` |
+| partial | `da3aeafc87838922dcfc4faf1ef6fe6f4cd881b748854860644b0ffa2940929a` |
+| missing | `f84ff67bef6cd9f79b45e0ca51f2a59589a05e095e70bc9201bd77e5c321116f` |
+| crossing_wrap | `9224dbd8ec958aa58ddbd03e0b4f8a9e39f026d719fefdf39b1009a419e21f18` |
 
 ## UI-02 import retest
 

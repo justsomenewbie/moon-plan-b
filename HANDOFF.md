@@ -4,13 +4,11 @@
 
 Wi-Fi mock jobs work. [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) verified nine rejections and 5 MiB recovery. [Chromium](qa/check_pinned_retry.mjs) verified rejected imports preserve pinned retries and selections.
 
-Minh’s `8b53003` added offline QA, supplied overlap bands, a polar skyplot and the `?qa=true` scenario inspector. [Minh’s QA report](qa/LOCAL_WEB_DEEP_TEST_REPORT.md) and [frontend verification](docs/FRONTEND_VERIFICATION.md) distinguish synthetic tests from release evidence.
+Minh added offline QA, supplied overlap bands, the polar plot, a scenario inspector and horizon clearance controls. [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) passed missing data, 0° and north crossings. The [clearance replay](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram) verifies threshold crossings, gaps and the flat-ground shadow display. QA monitors Minh’s GitHub submissions.
 
-English defaults with optional Vietnamese, lunar resources and local-time appearance. Compare dates at one site or sites within one UTC window. The timeline and local 3D sky follow the supplied samples. The NASA reference globe and photograph retain [credits](docs/CREDITS.md); the globe locates sites and does not calculate terrain or visibility. [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) passed texture, decoding and Canvas failures with comparison-preserving retry. Earlier native Safari checks covered JSON import, both languages, 320px width and window closure.
+English defaults with optional Vietnamese. Compare dates at one site or sites within one UTC window. [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) passed texture, decoding and Canvas failures with comparison-preserving retry. Native Safari checks covered JSON import, both languages, 320px width and window closure. Chromium checked four saved comparisons. [Frontend verification](docs/FRONTEND_VERIFICATION.md).
 
-The combined revision passed 58 frontend tests, eight offline QA gates, TypeScript and both production builds. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
-
-The [synthetic regression](frontend/tests/observations.test.ts) preserves 0° markers. Chromium checked the JPL [single-site](qa/evidence/odysseus-hour-gap/README.md) and [two-site](qa/evidence/odysseus-athena-hour-gap/README.md) gap cases. Removing Athena’s 02:00 UTC row broke both paths and skipped that hour on the shared slider. Odysseus retained five original markers per body.
+The JPL [single-site](qa/evidence/odysseus-hour-gap/README.md) and [paired](qa/evidence/odysseus-athena-hour-gap/README.md) replays check missing samples against retained source values. Removing Athena’s 02:00 UTC row broke only its two paths. Odysseus kept five markers per body. The latest clearance build passed 67 frontend tests and eight offline QA gates.
 
 ## Backend integration
 
