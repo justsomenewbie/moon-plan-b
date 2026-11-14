@@ -50,14 +50,18 @@ try {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto(new URL("/compare", origin).href);
-  await page.getByRole("button", { name: "Import data", exact: true, disabled: false }).waitFor();
+  const importButton = page.getByRole("button", { name: "Import data", exact: true });
   const observed = {};
   const cases = [["control", control], ["gap", gap]];
   if (paired) cases.push(["athena-primary", gap], ["odysseus-restored", gap]);
   for (const [name, data] of cases) {
     const athenaPrimary = name === "athena-primary";
     const switchSite = athenaPrimary || name === "odysseus-restored";
-    if (!switchSite) await page.getByLabel("Import JSON dataset").setInputFiles(file(name));
+    if (!switchSite) {
+      await importButton.click();
+      await page.getByRole("dialog", { name: "Import a comparison dataset" })
+        .getByLabel("Import JSON dataset").setInputFiles(file(name));
+    }
     await page.locator("#sources").getByText(data.datasetId, { exact: true }).waitFor({ state: "attached" });
     const compare = page.getByRole("button", { name: "Compare sites", exact: true });
     if (!switchSite) await compare.click();

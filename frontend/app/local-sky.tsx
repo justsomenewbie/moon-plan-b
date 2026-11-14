@@ -48,9 +48,9 @@ function polarXY(cx: number, cy: number, r: number, azDeg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-function sideElevationPoint(elevationDeg: number, length = 70) {
+function sideElevationPoint(elevationDeg: number, length = 46) {
   const radians = elevationDeg * Math.PI / 180;
-  return { x: 28 + Math.cos(radians) * length, y: 62 - Math.sin(radians) * Math.min(length, 50) };
+  return { x: 28 + Math.cos(radians) * length, y: 62 - Math.sin(radians) * length };
 }
 
 export default function LocalSky({
@@ -366,7 +366,7 @@ export default function LocalSky({
                 <polygon points="90,82 97,87 95,96 85,96 83,87" className="hud-lander-deck" />
               </svg>
               <svg viewBox="0 0 180 120" className="lander-side-svg" role="img" aria-label={t("Sun and Earth elevation beside the simulated clearance band")}>
-                <path d={`M28 62 L168 62 L${clearanceSide.x.toFixed(2)} ${clearanceSide.y.toFixed(2)} Z`} className="hud-clearance-band" />
+                <path d={`M28 62 L168 62 L${clearanceSide.x} ${clearanceSide.y} Z`} className="hud-clearance-band" />
                 <line x1="12" y1="62" x2="172" y2="62" className="hud-horizon-line" />
                 <text x="170" y="58" textAnchor="end" className="hud-side-label">0°</text>
                 <polygon points="22,62 34,62 30,54 26,54" className="hud-lander-deck" />

@@ -15,7 +15,10 @@ try {
 
   async function importFixture(name) {
     const file = fileURLToPath(new URL("./fixtures/" + name + ".json", import.meta.url));
-    await page.getByLabel("Import JSON dataset").setInputFiles(file);
+    await page.getByRole("button", { name: "Import data", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Import a comparison dataset" });
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), dialog.getByLabel("Import JSON dataset").click()]);
+    await chooser.setFiles(file);
     await page.locator("#sources").getByText("qa-" + name + "-v1", { exact: true }).waitFor({ state: "attached" });
   }
   const mask = page.locator("#horizon-clearance-input");
@@ -28,6 +31,29 @@ try {
   const ring = page.locator(".skyplot .clearance-ring");
   async function stateMatches(state) {
     assert.equal(await hud.first().innerText(), await page.locator(".state-legend ." + state).innerText());
+  }
+
+  // Read the actual band edge and displayed ray from the SVG. Its viewBox uses the same units on both axes.
+  async function checkSideAngle(body, expectedElevation, expectedMask) {
+    const side = page.locator(".lander-side-svg");
+    const coordinates = await side.locator(".hud-clearance-band").getAttribute("d");
+    const [x, y, , , edgeX, edgeY] = coordinates.match(/-?\d+(?:\.\d+)?/g).map(Number);
+    const ray = side.locator(".hud-" + body + "-ray");
+    const endX = Number(await ray.getAttribute("x2")), endY = Number(await ray.getAttribute("y2"));
+    const degrees = (endX, endY) => Math.atan2(y - endY, endX - x) * 180 / Math.PI;
+    assert.ok(Math.abs(degrees(edgeX, edgeY) - expectedMask) < 0.01, "Drawn side-view threshold " + expectedMask);
+    assert.ok(Math.abs(degrees(endX, endY) - expectedElevation) < 0.01, "Drawn side-view " + body + " " + expectedElevation);
+    assert.equal(Boolean(await ray.getAttribute("stroke-dasharray")), expectedElevation <= expectedMask);
+  }
+
+  async function checkRibbon(row, expectedStates, spans) {
+    const segments = row.locator(".ribbon-seg");
+    const drawn = await segments.evaluateAll(nodes => nodes.map(n => [n.classList[1], n.style.left, n.style.width]));
+    assert.deepEqual(drawn, expectedStates.map((state, i) => [state, ...spans[i]]));
+    const unavailable = segments.and(row.locator(".unavailable"));
+    const label = await unavailable.getAttribute("title");
+    assert.match(label, expectedStates.length === 1 ? /Unavailable: .*T00:00:00.* → .*T04:00:00.* \(4 h\)/ :
+      /Unavailable: .*T01:00:00.* → .*T03:00:00.* \(2 h\)/);
   }
 
   async function checkShadow(bearing, elevation) {
@@ -58,11 +84,17 @@ try {
   await mask.press("ArrowRight");
   assert.equal(await mask.inputValue(), "0.1");
   assert.equal(await mask.getAttribute("aria-valuetext"), "0.1° simulated uniform clearance");
-  for (let i = 0; i < 4; i++) await mask.press("ArrowRight");
+  await checkSideAngle("sun", 0.2, 0.1);
+  await mask.press("ArrowRight");
+  await checkSideAngle("sun", 0.2, 0.2);
+  await stateMatches("comms-only");
+  for (let i = 0; i < 3; i++) await mask.press("ArrowRight");
   assert.equal(await mask.inputValue(), "0.5");
   assert.equal(await mask.getAttribute("aria-valuetext"), "0.5° simulated uniform clearance");
   assert.equal(Number(await line.getAttribute("y1")), (90 - 0.5) / 180 * 240);
   assert.equal(Number(await ring.getAttribute("r")), 82 * (90 - 0.5) / 90);
+  await checkSideAngle("sun", 0.2, 0.5);
+  await checkSideAngle("earth", 1, 0.5);
   await stateMatches("comms-only");
   await key.locator('button[data-site="B"]').click();
   assert.equal(await key.locator('button[data-site="B"]').getAttribute("aria-pressed"), "true");
@@ -72,8 +104,12 @@ try {
   await page.locator(".preset-pills button").filter({ hasText: /^2°/ }).click();
   assert.equal(await mask.inputValue(), "2");
   await stateMatches("blackout");
-  await limit.selectOption("24");
-  for (const row of await rows.all()) assert.match(await row.locator(".mission-metrics-row").innerText(), /4 h\s*\/\s*24 h/);
+  await limit.selectOption("100");
+  for (const row of await rows.all()) {
+    assert.match(await row.locator(".mission-metrics-row").innerText(), /4 h\s*\/\s*100 h/);
+    assert.match(await row.locator(".battery-badge").innerText(), /Unresolved at window boundary/);
+    assert.match(await row.getByRole("img").getAttribute("aria-label"), /Neither above 4 h · 100%/);
+  }
   assert.deepEqual(await producerHours.allTextContents(), baseline);
 
   const labelEN = await page.locator('label[for="horizon-clearance-input"]').innerText();
@@ -84,10 +120,19 @@ try {
   assert.notEqual(await page.locator('label[for="horizon-clearance-input"]').innerText(), labelEN);
   assert.notEqual(await page.locator(".battery-picker span").innerText(), limitEN);
   assert.notEqual(await rows.first().getByRole("img").getAttribute("aria-label"), ribbonEN);
-  assert.equal(await limit.inputValue(), "24");
+  assert.equal(await limit.inputValue(), "100");
+  assert.equal(await mask.inputValue(), "2");
+  await mask.press("ArrowLeft");
+  assert.equal(await mask.inputValue(), "1.9");
+  assert.match(await mask.getAttribute("aria-valuetext"), /^Ngưỡng thông thoáng đồng đều mô phỏng 1[,.]9°$/);
+  await checkSideAngle("earth", 1, 1.9);
+  await mask.press("ArrowRight");
   assert.equal(await mask.inputValue(), "2");
   await stateMatches("blackout");
   await page.getByRole("combobox", { name: "Ngôn ngữ" }).selectOption("en");
+  assert.equal(await mask.getAttribute("aria-valuetext"), "2.0° simulated uniform clearance");
+  assert.equal(await rows.first().getByRole("img").getAttribute("aria-label"), ribbonEN);
+  await mask.press("Home");
 
   await importFixture("partial");
   await page.getByRole("button", { name: "Compare dates", exact: true }).click();
@@ -98,21 +143,22 @@ try {
   assert.deepEqual((await hud.allInnerTexts()).slice(0, 4), ["Unavailable", "Unavailable", "Az 182° · El 1°", "Unavailable"]);
   assert.equal(await hud.last().innerText(), "Unavailable");
   assert.equal(await page.locator(".hud-sun-node, .hud-solar-wing, .hud-shadow-ray").count(), 0);
-  assert.equal(await page.locator(".hud-earth-node").count(), 1);
+  for (const view of [".lander-hud-svg", ".lander-side-svg"]) {
+    assert.equal(await page.locator(view + " .hud-earth-node").count(), 1);
+  }
   assert.equal(await rows.locator(".mission-metrics-row").count(), 0);
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
   assert.equal(await rows.count(), 2);
   assert.equal(await rows.locator(".mission-metrics-row").count(), 0);
-  for (const row of await rows.all()) {
-    const covered = await row.locator(".ribbon-seg").evaluateAll(segments =>
-      segments.map(segment => [segment.style.left, segment.style.width]));
-    assert.deepEqual(covered, [["0%", "25%"], ["75%", "25%"]]);
-  }
+  const spans = [["0%", "25%"], ["25%", "50%"], ["75%", "25%"]];
+  await checkRibbon(rows.nth(0), ["comms-only", "unavailable", "comms-only"], spans);
+  await checkRibbon(rows.nth(1), ["golden", "unavailable", "golden"], spans);
 
   await importFixture("missing");
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
-  assert.deepEqual(await rows.locator(".ribbon-empty").allInnerTexts(), ["Unavailable", "Unavailable"]);
-  assert.equal(await rows.locator(".mission-metrics-row, .ribbon-seg").count(), 0);
+  assert.equal(await rows.count(), 2);
+  for (const row of await rows.all()) await checkRibbon(row, ["unavailable"], [["0%", "100%"]]);
+  assert.equal(await rows.locator(".mission-metrics-row").count(), 0);
   assert.ok(await slider.isDisabled());
   assert.deepEqual(await hud.allInnerTexts(), Array(5).fill("Unavailable"));
   assert.equal(await page.locator(".hud-solar-wing, .hud-dish-arc, .hud-dish-boom, .hud-sun-node, .hud-earth-node, .hud-shadow-ray").count(), 0);
