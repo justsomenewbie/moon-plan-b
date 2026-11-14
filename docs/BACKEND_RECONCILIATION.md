@@ -30,13 +30,19 @@ For a five-hour visit to Apollo 11 starting February 12–18, 2029, the saved B2
 
 A production call to `POST /alt-dates` for a five-hour mission at Athena on November 15 tested three conditions together: at least three continuous hours of sunlight after landing, five of Earth visibility and a minimum solar elevation of −10°. With both bodies required at landing and no minimum spacing, the API returned both tested starts, 06:00 and 07:00 UTC. The B2 archive independently reproduced the uninterrupted sunlight/Earth durations, 379/459 hours and 378/458 hours respectively. These durations extend beyond the five-hour mission.
 
-**Open backend message issue.** On the public proxy, a one-day Haworth dataset returned HTTP 200 for `max_points=10000` and HTTP 400 for `10001`. The rejected response's `detail` and field error give the correct maximum of 10,000. Its `hint` gives the 5,000-point limit and the field-count guidance for the separate series route. The aggregate contract permits 10,000. Both requests used `site_ids=a3_haworth`, `include=series`, and November 15 00:00 through November 16 00:00 UTC. The closed export filename report above concerns a different endpoint.
+**Open backend message issue.** At 04:17 Hanoi on November 15, both the authenticated producer and the public relay reproduced this issue. On the public proxy, a one-day Haworth dataset returned HTTP 200 for `max_points=10000` and HTTP 400 for `10001`. The rejected response's `detail` and field error give the correct maximum of 10,000. Its `hint` gives the 5,000-point limit and the field-count guidance for the separate series route. The aggregate contract permits 10,000. Both requests used `site_ids=a3_haworth`, `include=series`, and November 15 00:00 through November 16 00:00 UTC. The closed export filename report above concerns a different endpoint.
 
 ### Fixed-duration visits within travel dates
 
 On run B2, November 14–21, 2026 UTC contains 168 hourly samples and 145 admissible starts for a 24-hour visit. Whole-week ranking by joint visibility gives Vikram 162 of 168 hours. For a visit lasting 24 hours, 15 of 23 sites tie at 24 of 24 hours. Vikram’s earliest such visit starts November 14 at 06:00 UTC (139 tied starts). Athena’s starts November 15 at 05:00 (116), and Odysseus’s starts November 19 at 01:00 (24). Nobile Rim 1 peaks at 18 of 24 hours, first starting November 19 at 15:00 UTC. Shackleton crater floor has zero hours for every start.
 
 These values were independently counted from the public producer aggregate windows and each site's original windows file. All 23 individual file hashes match the producer manifest. The app ranks complete site windows for the requested duration. The score counts visible time within one contiguous visit. Visibility may be interrupted during that visit. The earlier B archive identifies the sites it can evaluate for the selected range. [Native B2 archive](B2_VISIBILITY_ARCHIVE.md)
+
+### Longest uninterrupted joint visibility
+
+For the 336 hourly samples from November 28 to December 12, 2026 UTC (exclusive end), all 23 B2 sites had complete coverage. Malapert Massif has the greatest total overlap, 114 hours across two separate intervals of 76 and 38 hours. Odysseus has the longest uninterrupted overlap, 92 hours, from November 28 at 00:00 through December 1 at 20:00 UTC. Apollo 15 follows at 85 hours. Recomputing totals and continuous durations from the public aggregate intervals matched the returned metrics for every site.
+
+The [planner](https://moon-plan-b.vercel.app/plan?mode=sites&priority=joint&order=longest&source=saved-b2&from=2026-11-28&to=2026-12-12) and the English and Vietnamese astronaut guide distinguish these rankings. The guide reports the earliest matching interval for each tied site, the UTC range and the selected run. Earlier run B retains intervals for a subset of dates for Odysseus and Athena. Imported comparisons use the sites and intervals in the file.
 
 ### Planning from an imported run
 

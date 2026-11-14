@@ -22,7 +22,7 @@ The [Data catalog](docs/BACKEND_RECONCILIATION.md#live-run-directory-and-earth-v
 
 [Astronaut guide configuration](frontend/README.md#ask-the-astronaut).
 
-**Plan and data** — B2 covers 23 sites and 43,824 hours per site, with EN/VI coordinate notes. The planner and astronaut rank fixed-duration visits inside travel dates. For November 14–21, 15 sites tie at 24/24 hours, while Vikram leads the whole week at 162/168. Smooth-sphere sites carry terrain caveats. Zero visibility yields no recommendation. [Evidence and backend hint](docs/BACKEND_RECONCILIATION.md#fixed-duration-visits-within-travel-dates) · [Four-file archive replay](docs/B2_VISIBILITY_ARCHIVE.md#verify-the-published-files).
+**Plan and data** — B2 covers 23 sites and 43,824 hours per site, with EN/VI coordinate notes. Planner and astronaut rank fixed-duration visits and [uninterrupted visibility](docs/BACKEND_RECONCILIATION.md#longest-uninterrupted-joint-visibility). For November 14–21, 15 sites tie at 24/24 hours, while Vikram leads the whole week at 162/168. Smooth-sphere sites carry terrain caveats. Zero visibility yields no recommendation. [Evidence and backend hint](docs/BACKEND_RECONCILIATION.md#fixed-duration-visits-within-travel-dates) · [Four-file archive replay](docs/B2_VISIBILITY_ARCHIVE.md#verify-the-published-files).
 
 ## Pending
 
