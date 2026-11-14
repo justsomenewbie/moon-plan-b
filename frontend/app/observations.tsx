@@ -91,7 +91,7 @@ export function SkyPosition({ scenario, offset, clearanceDeg = 0 }: { scenario: 
       const value = entry[body];
       if (!value || value.elevationDeg < 0) { paths.push(""); return; }
       const previous = index ? scenario.samples[index - 1][body] : null;
-      const gap = index > 0 && Date.parse(entry.utc) - Date.parse(scenario.samples[index - 1].utc) > scenario.sampleStepSeconds * 1500;
+      const gap = index > 0 && Date.parse(entry.utc) - Date.parse(scenario.samples[index - 1].utc) > scenario.sampleStepSeconds * 1000;
       const wrap = previous && Math.abs(value.azimuthDeg - previous.azimuthDeg) > 180;
       const p = point(value.azimuthDeg, value.elevationDeg);
       if (!paths.length || !paths.at(-1) || gap || wrap || !previous) paths.push(`M${p.x},${p.y}`);
