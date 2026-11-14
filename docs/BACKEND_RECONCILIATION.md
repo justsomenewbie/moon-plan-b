@@ -165,7 +165,7 @@ Opening the form fetches `GET /api/v1/capabilities` and checks the custom-site j
 
 The team backend supplies terrain geometry and visibility results. Its `spice` provider computes ephemerides. The Next.js application separately handles free-text questions at `POST /guide/chat` so they do not enter the `/api/*` proxy. The server uses a fixed loopback Ollama model to classify questions. A limited response schema identifies the topic, metric and relevant rows. The application reads the reported hours, UTC bounds and source IDs from the selected comparison. Missing totals and fictional data retain their labels.
 
-Question text and imported labels are untrusted. The model has no tools, external destinations or ability to change the page. The client displays plain text and offers explicit controls for supported navigation and comparison modes. A user must choose a suggested control. The chat has no instrument feed or landing-safety model. See the [local runtime and data flow](../README.md#ask-the-astronaut).
+Question text and imported labels are untrusted. The model has no tools, external destinations or ability to change the page. The client displays plain text and offers explicit controls for supported navigation and comparison modes. A user must choose a suggested control. The chat has no instrument feed or landing-safety model. See the [local runtime and data flow](../frontend/README.md#ask-the-astronaut).
 
 ## Open feature path
 
