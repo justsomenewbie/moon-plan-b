@@ -33,7 +33,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     {liveWindow && <TerrainPair onDisplayedPair={onDisplayedPair} key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}
     {liveWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={liveWindow} />}
 
-    {result.sites.length > 0 && <TerrainObservations result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
+    {result.sites.length > 0 && <TerrainObservations live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
 
     {view.link && observationSite && <AlternativeDates key={result.dataset_id + "/" + observationSite.id} result={result} site={observationSite} />}
 

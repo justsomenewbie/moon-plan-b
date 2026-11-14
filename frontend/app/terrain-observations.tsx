@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
+import TerrainInstant from "./terrain-instant";
 import styles from "./terrain-observations.module.css";
 
 type Site = TerrainSummary["sites"][number];
@@ -125,8 +126,8 @@ function SiteObservations({ site, range, sample, onSample }: {
   </>;
 }
 
-export default function TerrainObservations({ result, siteIndex, sample, onSelect }: {
-  result: TerrainSummary; siteIndex: number; sample: number; onSelect: (siteIndex: number, sample: number) => void;
+export default function TerrainObservations({ result, siteIndex, sample, onSelect, live }: {
+  result: TerrainSummary; siteIndex: number; sample: number; live: boolean; onSelect: (siteIndex: number, sample: number) => void;
 }) {
   const { t } = useLanguage();
   const site = result.sites[siteIndex];
@@ -138,5 +139,8 @@ export default function TerrainObservations({ result, siteIndex, sample, onSelec
         {result.sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
       </select></label> : <p className={styles.screenSite}>{site.name}</p>}
     <SiteObservations site={site} range={result.range} sample={sample} onSample={next => onSelect(siteIndex, next)} />
+    {live && site.coverage_in_range !== "missing" && <TerrainInstant
+      key={JSON.stringify([result.dataset_id, result.run.run_id, site.id, result.range.start, result.range.end])}
+      runId={result.run.run_id} site={site} range={result.range} initialUtc={site.series?.t[sample] ?? result.range.start} />}
   </section>;
 }
