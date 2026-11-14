@@ -6,7 +6,7 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | --- | --- | --- | --- |
 | UI-01 | Throttle initial data loading; change selection during pending load | Visible loading; no old data labeled as new; controls recover | NOT RUN |
 | UI-02 | Import invalid JSON, each invalid fixture, wrong schema, >5 MiB and empty file | Accessible error, no crash or partial acceptance; prior valid dataset remains recoverable | [PASS in Chromium](#ui-02-import-retest) |
-| UI-03 | Inject HTTP 404/500, network disconnect, timeout and truncated body on actual data route | Error/retry with bounded attempts; live mode must not silently show mocks | NOT RUN |
+| UI-03 | Inject HTTP 404/500, network disconnect, timeout and truncated body on actual data route | Error/retry with bounded attempts; live mode must not silently show mocks | [PASS in Chromium](#ui-03-live-api-failures) |
 | UI-04 | Import partial and missing fixtures | Unknown text and null metrics, broken lines across missing samples; no zero-filled darkness | [PASS in Chromium](#ui-04-and-ui-05-plot-retest) |
 | UI-05 | Import crossing_wrap; inspect both sites and zero values | North seam does not draw a full-width spike; exact-zero displayed accurately | [PASS in Chromium](#ui-04-and-ui-05-plot-retest) |
 | UI-06 | Switch English/Vietnamese and share/reopen selection | Same UTC `Z`, source identity, degrees/km and dataset version; English default retained | NOT RUN |
@@ -14,6 +14,22 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
 | UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
 | UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | NOT RUN |
+
+## UI-03 live API failures
+
+On 14 November 2026 at 08:31 UTC, Playwright opened a pinned Athena result at 02:00 UTC on a local live-mode production build (Chromium 158.0.8127.18, 1280 × 720). The [regression](../check_pinned_retry.mjs) intercepts the same-origin `GET /api/v1/dataset`. Each case starts in a fresh browser context. On the [integrated revision](https://github.com/justsomenewbie/moon-plan-b/commit/3878e1107e58e5da453e11c4da061fcb8a00d72b), the successful synthetic response has SHA-256 `0950b2162f5486a30cc741042116cec8eaf38d0b40e7d28b405cbefe64be8dbd`.
+
+| Injected fault | Requests before the error alert | Observed behavior |
+| --- | --- | --- |
+| HTTP 404 with a problem detail | 1 | Showed the server's detail immediately. |
+| HTTP 500 with a problem detail | 3 | Showed the detail after two automatic retries. |
+| Browser switched offline during the first request, dataset connections aborted | 3 | Showed the connection error and enabled local file import while the browser was still offline. Rejecting an invalid local file preserved the pinned retry. |
+| HTTP 200 with an incomplete JSON object | 3 | Displayed an actionable error in English and Vietnamese. |
+| No response to each of three requests | 3 | Each reached the frontend's real 15-second deadline. The final alert appeared after 47.2 seconds. |
+
+After each fault, one manual retry recovered the same requested run, site selection, saved comparison, cadence and exact UTC. While the error was visible, the workspace showed neither a terrain result nor a synthetic timeline. The browser made no request for the demo JSON. These injections exercise client recovery. An independent smoke check reached the live backend and rendered the two-site dataset.
+
+Replay with `node qa/check_pinned_retry.mjs <live-mode-frontend-origin>`. Allow about one minute for the five cases. OpenAI Codex extended the regression and corrected the offline and malformed-response paths.
 
 ## UI-04 and UI-05 plot retest
 
