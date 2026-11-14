@@ -6,11 +6,13 @@ Chung owns the production OpenAPI. The FE requests one aggregate per UTC range a
 
 ## Aggregate update on 14 November
 
-At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The live summary sends the query below through the configured same-origin proxy. Full-resolution windows and metrics do not require a downsampled series.
+At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The frontend requests the following bounded comparison through its same-origin proxy. Changing the requested spacing affects the displayed series. Full visibility intervals still come from the source grid.
 
 ```text
-GET /api/v1/dataset?site_ids=im1_odysseus,im2_athena&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&include=windows,metrics
+GET /api/v1/dataset?site_ids=im1_odysseus,im2_athena&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&step_s=3600&horizon_step_deg=0.5&max_points=10000&include=horizon,series,windows,metrics
 ```
+
+At 14:46 Hanoi the bare link again returned HTTP 422. Its detail reported 230,000 requested series points for 23 sites against a 50,000-point limit and suggested at most 2,173 per site. The error title was `Range outside run`, although the reported cause was the point limit. The bounded example above returned 200, with 168 UTC samples and 721 horizon points per site.
 
 For a source cross-check, the data request pinned `run_id=B_spice_pgda_bruteforce_2026_2030`, requested `step_s=3600` and included all components. For November 14–21 and 21–28 UTC, 672 site-hours of flags and all returned intervals matched separate per-site series and windows. The full aggregate byte hashes were `9d0c272c78f24065157a551a6ce60305fbf5bbd2bc0d166e4e96f1a4fdae02a8` and `7b01480d90c9a314b6287cf90274badfc77b5f0e24cb410016055918c9f3db53`. The retrieved run manifest matched `35601268e464e2e610e3cf33cf7e7b8588e59e23877857708799f29a8ac615a4`. All five individual source checksums were null. This checks server consistency and the FE summary. Physical ephemeris validation belongs to the science team.
 
