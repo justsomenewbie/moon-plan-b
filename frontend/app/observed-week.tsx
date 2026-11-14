@@ -32,9 +32,9 @@ function savedComparisonRows(selection: string) {
 }
 
 function SavedResultSelect({ selection, onSelect }: { selection: string; onSelect: (value: string) => void }) {
-  const { t } = useLanguage();
+  const { t, ready } = useLanguage();
   return <label className="field week-selection">{t("Compare saved results")}
-    <select value={selection} onChange={event => onSelect(event.target.value)}>
+    <select disabled={!ready} value={selection} onChange={event => onSelect(event.target.value)}>
       <optgroup label={t("Two sites in one week")}>{weeks.map(week =>
         <option key={week.startUtc} value={week.startUtc}>{weekLabel(week)}</option>)}</optgroup>
       <optgroup label={t("Two weeks at one site")}>{weeks[0].sites.map(site =>

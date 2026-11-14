@@ -9,7 +9,21 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
 try {
   for (const width of [320, 375, 1280]) {
     const page = await browser.newPage({ viewport: { width, height: 568 }, reducedMotion: "reduce" });
-    await page.goto(new URL("/", origin).href, { waitUntil: "domcontentloaded" });
+    if (width === 320) {
+      const hydration = Promise.withResolvers();
+      await page.route("**/_next/static/**/*.js*", async route => { await hydration.promise; await route.continue(); });
+      try {
+        await page.goto(new URL("/", origin).href, { waitUntil: "commit" });
+        const initialSelect = page.locator(".home-comparison-example select");
+        await initialSelect.waitFor({ state: "attached" });
+        assert.equal(await initialSelect.isDisabled(), true);
+      } finally {
+        hydration.resolve();
+      }
+      await page.unrouteAll({ behavior: "wait" });
+    } else {
+      await page.goto(new URL("/", origin).href, { waitUntil: "domcontentloaded" });
+    }
     const menu = page.locator(".home-menu");
     const nav = page.locator("header nav");
     const mobile = width < 760;
