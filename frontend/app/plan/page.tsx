@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { hasLiveOptions, landingClock, liveExtras, plannerFormState, type PlannerSource } from "../../lib/planner-source";
 import { useQuery } from "@tanstack/react-query";
 import { isMock } from "../../lib/api/client";
@@ -123,10 +123,14 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   const hours = Number(seed.get("missionHours"));
   const mission = Number.isSafeInteger(hours) && hours > 0 && hours <= (Date.parse(run.end)-Date.parse(run.start))/3600000 ? hours : undefined;
   const loading = !isMock && !forced && catalog.isPending;
+  const capture = useCallback((form: HTMLFormElement) => {
+    setEdited({ mode, params: plannerFormState(seed, mode, source, new FormData(form)) });
+  }, [seed, mode, source]);
+  const savedLanding = mode === "dates" && source !== "live";
   useLayoutEffect(() => {
     const form = formArea.current?.querySelector("form");
-    if (form) setEdited({ mode, params: plannerFormState(seed, mode, source, new FormData(form)) });
-  }, [seed, mode, source, loading]);
+    if (!savedLanding && form) capture(form);
+  }, [capture, loading, savedLanding]);
   function sourceLink(next: PlannerSource) {
     const params = new URLSearchParams(edited?.mode === mode ? edited.params : seed);
     if (next === "live") params.delete("source"); else params.set("source", next);
@@ -150,11 +154,11 @@ function Planner({ seed }: { seed: URLSearchParams }) {
     <div ref={formArea} onChange={e => {
       const input = e.target;
       if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
-        if (input.form) setEdited({ mode, params: plannerFormState(seed, mode, source, new FormData(input.form)) });
+        if (!savedLanding && input.form) capture(input.form);
       }
     }}>
     {mode === "sites" ? <CatalogSearch key={source} run={run} first={first} last={last} priority={priority} source={source} /> :
-      source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} /> :
+      source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialEarliest={landingClock(seed, "earliest")} initialLatest={landingClock(seed, "latest")}
         initialExtras={liveExtras(seed)} initialSunAtLanding={seed.get("sunAtLanding") === "1"} initialEarthAtLanding={seed.get("earthAtLanding") === "1"}

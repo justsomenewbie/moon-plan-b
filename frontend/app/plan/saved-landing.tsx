@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { savedLandingHour } from "../../lib/planner-source";
 import { archiveB2Run, searchArchiveB2 } from "../../lib/archive-b2";
 import { getSavedPlannerDates, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
@@ -39,7 +39,7 @@ function rank(fields: Fields) {
   return { ...saved, rows: rows.slice(0, 5), nEvaluated: rows.length, best, first: stamp(first), last: stamp(last), ties: rows.filter(row => row[metric[fields.priority]] === best).length };
 }
 
-export default function SavedLanding({ siteId, from, to, missionHours, priority, source, earliest, latest, liveOptions }: Props & { source: "saved" | "saved-b2"; earliest?: string; latest?: string; liveOptions?: boolean }) {
+export default function SavedLanding({ siteId, from, to, missionHours, priority, source, earliest, latest, liveOptions, onFieldsChange }: Props & { source: "saved" | "saved-b2"; earliest?: string; latest?: string; liveOptions?: boolean; onFieldsChange: (form: HTMLFormElement) => void }) {
   const { locale, t } = useLanguage();
   const vi = locale === "vi";
   const b2 = source === "saved-b2";
@@ -48,6 +48,10 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
   const initial: Fields = { ...example, siteId: siteId ?? example.siteId, from: from ?? example.from, to: to ?? example.to,
     missionHours: missionHours ?? example.missionHours, priority: priority ?? example.priority, earliest: earliest ?? "", latest: latest ?? "" };
   const [fields, setFields] = useState(initial);
+  const formRef = useRef<HTMLFormElement>(null);
+  useLayoutEffect(() => {
+    if (formRef.current) onFieldsChange(formRef.current);
+  }, [fields, onFieldsChange]);
   const [submitted, setSubmitted] = useState<Fields | null>(liveOptions ? null : initial);
   const change = <K extends keyof Fields>(key: K, value: Fields[K]) => {
     setFields(previous => ({ ...previous, [key]: value }));
@@ -68,7 +72,7 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
     {liveOptions && <p className="data-notice" role="status">{vi
       ? "Bản lưu giữ nguyên địa điểm, giới hạn giờ và thời lượng. Tìm kiếm tại đây xếp theo giờ quan sát; điều kiện bổ sung và cách xếp hạng riêng của API chỉ áp dụng khi bạn quay lại dữ liệu trực tuyến."
       : "Your site, landing bounds and duration are retained. The saved search ranks visibility hours. Additional live constraints and live-only ranking options apply again when you return to live data."}</p>}
-    <form className="request-fields print:hidden" onSubmit={event => { event.preventDefault(); setSubmitted(fields); }}>
+    <form ref={formRef} className="request-fields print:hidden" onSubmit={event => { event.preventDefault(); setSubmitted(fields); }}>
       <label className="field">{t("Site")}<select name="savedLandingSite" value={fields.siteId} onChange={event => change("siteId", event.target.value)}>
         {!validSite && <option value={fields.siteId}>{(b2 ? archiveB2Run : savedPlannerRun).sites.find(s => s.id === fields.siteId)?.name ?? fields.siteId}</option>}
         {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
