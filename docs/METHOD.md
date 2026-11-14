@@ -1,8 +1,10 @@
 # Display method and scientific limits
 
-The current app is a tested frontend with invented demonstration data. It has **not** used NASA data to produce a validated lunar result. The fixture has fictitious sites with no coordinates; its simple angles and precomputed intervals exist to exercise interactions and missing-data behavior.
+The live terrain summary uses the team’s producer model and the supplied Sun, Earth and simultaneous intervals. It reports requested and evaluated UTC ranges, coverage against each, and the run and source evidence. The checked SPICE/PGDA run samples hourly. Its visibility intervals can miss sub-hour events, and its transitions are uncertain by one hour. See the [source checks](BACKEND_RECONCILIATION.md#aggregate-update-on-14-november).
 
-The intended source is JPL Horizons, selected in the reviewed preparation plan. The [Horizons observer-table documentation](https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table) describes azimuth/elevation quantities. A future producer must confirm the actual target, observer, body-fixed location/frame, airless apparent-angle definition, UTC conversion and source coverage before integration. The frontend's draft conventions are recorded in [the contract](FRONTEND_CONTRACT.md), not assumed to match an unseen response.
+The default mock workspace uses invented demonstration data. The fixture has fictitious sites with no coordinates; its simple angles and precomputed intervals exist to exercise interactions and missing-data behavior.
+
+JPL Horizons supplied the separate ideal-horizon browser fixtures. The [Horizons observer-table documentation](https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table) describes azimuth/elevation quantities. A future producer must confirm the actual target, observer, body-fixed location/frame, airless apparent-angle definition, UTC conversion and source coverage before integration. The frontend's draft conventions are recorded in [the contract](FRONTEND_CONTRACT.md), not assumed to match an unseen response.
 
 For the proposed ideal-horizon center model, elevation greater than 0° denotes a center above the local ideal horizon. Exactly 0° is the boundary. The producer supplies all intervals, total durations, longest simultaneous duration and criterion assessments. Structural agreement between these fields is checked at import; it is not independent scientific validation. The frontend only selects, compares, plots and presents supplied values.
 
@@ -14,7 +16,7 @@ The 2D sky chart plots azimuth horizontally and elevation vertically; it is a sc
 
 Terrain obstruction, crater/mountain shadows, disk edges, eclipses, electrical generation/storage/load, antenna configuration, ground stations and radio link budgets are not modeled by this frontend draft. Earth above an ideal horizon does not establish communication. Sun above it does not establish usable power. No displayed result establishes landing safety or a best landing site. Cadence can hide short events; interpolation or agreement between two numeric summaries cannot establish physical accuracy.
 
-The interactive surface globe uses an orthographic sphere and a north-up NASA color map centered on the lunar prime meridian. Rotation changes the viewing center. Its fixed display shading carries no observation time, terrain elevation or landing-site prediction. Ground-level rendering would require compatible sourced terrain, site coordinates and elevation data. The responsive chart/table experience remains usable without WebGL. Backend integration, producer/scientific review and actual-device acceptance remain outstanding.
+The interactive surface globe uses an orthographic sphere and a north-up NASA color map centered on the lunar prime meridian. Rotation changes the viewing center. Its fixed display shading carries no observation time, terrain elevation or landing-site prediction. Ground-level rendering would require compatible sourced terrain, site coordinates and elevation data. The responsive chart/table experience remains usable without WebGL. Scientific review and final device acceptance remain outstanding.
 
 ## Site locations on the reference globe
 

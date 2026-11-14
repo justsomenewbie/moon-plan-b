@@ -68,6 +68,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .observed-week { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 .saved-comparison { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(250px, .65fr); gap: clamp(28px, 5vw, 84px); align-items: start; }
 .saved-comparison .lunar-figure { padding-top: 20px; }
+.terrain-result { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 .week-selection { display: block; max-width: 26rem; margin-top: 14px; }
 .week-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .week-sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px; margin: 16px 0; }
@@ -269,6 +270,7 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media print {
   .qa-inspector, .observed-week { display: none; }
+  .terrain-print { display: none; }
   .app-shell:is([data-print-report="saved"], :not([data-print-report]):has(> #observed-week:target)) {
     padding: 6mm;
     > :not(.app-header, .observed-week, .app-footer), .app-footer p:first-child { display: none; }

@@ -1,10 +1,20 @@
 # Evolving backend plan and frontend handoff
 
-Status on 14 November 2026: the team has selected the backend contract and a single aggregate GET for frontend integration. The aggregate payload and its mapping to the frontend are pending. The user supplied Chung's `WEB_BACKEND_PLAN.md` and confirmed that it may grow as more resources are discovered. It is a snapshot, not a feature ceiling or evidence of a deployed service. Its first paragraph says implementation has not started; its response numbers are illustrative. Source SHA-256: `d9062845466b1d093640026cf5b547965197a958e55f5dd0c34a3b9501e615c9`. The original internal document is not redistributed here.
+Status on 14 November 2026: the team has selected the backend contract and a single aggregate GET for frontend integration. The live aggregate is available, with a scoped [producer contract](../contracts/openapi.dataset.json) for the frontend. The user supplied Chung's `WEB_BACKEND_PLAN.md` and confirmed that it may grow as more resources are discovered. It is a snapshot, not a feature ceiling or evidence of a deployed service. Its first paragraph says implementation has not started; its response numbers are illustrative. Source SHA-256: `d9062845466b1d093640026cf5b547965197a958e55f5dd0c34a3b9501e615c9`. The original internal document is not redistributed here.
 
-Chung owns the production OpenAPI and will add **GET `/api/v1/dataset`** after the current backend workflow. The frontend already calls this route once per requested window through its typed API client. Once Chung supplies the versioned schema and a bounded example, regenerate the client types and adapt the API layer. Preserve the current UI where the meanings match. Where the backend supplies a different horizon model, review the affected labels and validation before displaying it. A separate team member owns Colab execution and testing.
+Chung owns the production OpenAPI. The FE requests one aggregate per UTC range and can import the producer JSON export. A separate team member owns Colab execution and testing.
 
-## Live producer API checked on 14 November
+## Aggregate update on 14 November
+
+At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The live summary sends the query below through the configured same-origin proxy. Full-resolution windows and metrics do not require a downsampled series.
+
+```text
+GET /api/v1/dataset?site_ids=im1_odysseus,im2_athena&start=2026-11-14T00:00:00Z&end=2026-11-21T00:00:00Z&include=windows,metrics
+```
+
+For a source cross-check, the data request pinned `run_id=B_spice_pgda_bruteforce_2026_2030`, requested `step_s=3600` and included all components. For November 14–21 and 21–28 UTC, 672 site-hours of flags and all returned intervals matched separate per-site series and windows. The full aggregate byte hashes were `9d0c272c78f24065157a551a6ce60305fbf5bbd2bc0d166e4e96f1a4fdae02a8` and `7b01480d90c9a314b6287cf90274badfc77b5f0e24cb410016055918c9f3db53`. The retrieved run manifest matched `35601268e464e2e610e3cf33cf7e7b8588e59e23877857708799f29a8ac615a4`. All five individual source checksums were null. This checks server consistency and the FE summary. Physical ephemeris validation belongs to the science team.
+
+## Per-site checks before the aggregate was available
 
 The team service returned HTTP 200 for Swagger and its JSON spec. `/docs/json` and `/api/v1/openapi.json` returned the same OpenAPI 3.1.0 document (`Lunar Landing Site Navigator API` version `1.0.0`, SHA-256 `f457e46fab414266f9647444350ead9cbd8e46d675217e889b903c18e914010d`). It documents 21 paths, including runs, sites, sky tracks, series, visibility windows and ranking. At 13:01 Hanoi (06:01 UTC), the selected aggregate route was absent. Both a direct GET and the frontend’s proxied GET returned the producer’s 404 `NOT_FOUND` with detail `no route GET /api/v1/dataset`. Keep the configured origin local to each environment.
 
@@ -59,7 +69,7 @@ The team supplied a precompute notebook on 14 November. Its full-run settings se
 
 For a first comparison, obtain the run archive or a two-site slice with `RUN_INFO.json`, the manifests, the two site records, horizon masks, timestamped ephemeris and visibility tables, and the relevant rows of `checks.csv`. Preserve the raw source references and the code version. Validate the same UTC start and end for both sites, align the body observations, and independently compare every simultaneous interval, its total duration and the longest interval. Retain gaps, clipped bounds and the uncertainty of crossings between hourly samples. A sunlight percentage alone cannot establish joint visibility.
 
-The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The existing importer expects a flat horizon and body centers. A producer release under the existing model can use the importer directly. Terrain-resolved flags require an agreed model and interface before display. For discrepant rim sites, compare identical coordinates, observer height, window and visibility definition, then compare the horizon masks in the directions actually crossed by the Sun. For example, Table 1 in Gläser et al. lists 81.0% and 86.7% maximum average illumination at two different surface locations on Shackleton rim. Its separate solar visibility column measures the time any part of the Sun is visible. Compare like quantities and heights before choosing a pipeline. [Gläser et al., Table 1 and method](https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf)
+The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The legacy draft importer expects a flat horizon and body centers. A producer release under the existing model can use the importer directly. Terrain exports now use the producer’s separate model and summary view. For discrepant rim sites, compare identical coordinates, observer height, window and visibility definition, then compare the horizon masks in the directions actually crossed by the Sun. For example, Table 1 in Gläser et al. lists 81.0% and 86.7% maximum average illumination at two different surface locations on Shackleton rim. Its separate solar visibility column measures the time any part of the Sun is visible. Compare like quantities and heights before choosing a pipeline. [Gläser et al., Table 1 and method](https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf)
 
 ## Decisions to reconcile with Chung
 
@@ -73,7 +83,7 @@ The notebook uses a terrain horizon, solar semidiameter and Earth clearance. The
 
 Frontend answers already available: Next.js 16.4.6, TypeScript 5.9.3, TanStack Query 5.107.1, openapi-fetch 0.17.0, generated OpenAPI types and MSW. Same-origin `/api/*` proxy is prepared. Hosting is still undecided.
 
-Remaining input: an OpenAPI revision including the aggregate GET, the referenced OUTPUT_SPEC/model definitions, and a small sourced two-site/two-window fixture with complete/gap/empty and job terminal examples. A tested origin or reproducible mock unlocks integration. No need to finish every optional endpoint first.
+The aggregate schema and two bounded responses have been checked. Live custom jobs still need agreement on their lifecycle and result handoff.
 
 ## AI planning assistant — proposed addition
 

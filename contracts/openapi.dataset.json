@@ -1,0 +1,1073 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lunar Landing Site Navigator API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/dataset": {
+      "get": {
+        "operationId": "getDataset",
+        "summary": "Everything the comparison page needs in one call: run, model, per-site horizon, series, windows, metrics, criteria",
+        "tags": [
+          "analysis"
+        ],
+        "description": "Defaults: default run, every site of the run, the whole run range, data step (3600 s), max_points 10000, horizon_step_deg 1, criteria_hours 24,72,168, include all. Series are decimated per site to <= max_points while keeping both samples around every visibility transition (see DatasetSeries). Windows / metrics / criteria are computed from the full-resolution windows over the requested range (whole run -> exactly summary.csv / windows.json). Payload limit: the series points of all sites together (regular + transition samples, exactly as returned) must be <= 50000 (about 4.5 MB of JSON, ~1 MB gzip), else 422 OUT_OF_RANGE with the numbers and a fitting max_points; first check (before any read): sites x min(max_points, n_samples / k) - so a call with no parameters on a 23-site 5-year run is 422; e.g. all 23 sites x 31 days hourly = 17 112 points is fine, the whole 5-year run for many sites needs max_points <= 50000 / n_sites or fewer site_ids (a large step_s alone may not be enough: transition samples are always kept). Windows and horizon bytes are not counted. Without `series` in include there is no point limit (whole run, 23 sites: ~0.7 MB, ~0.2 s); a whole-run series for all sites takes ~8 s, so request series for <= 1 year or a few sites. A range partly outside the run is clamped (coverage = partial); no overlap -> 422 OUT_OF_RANGE. Unknown site id -> 404 SITE_NOT_FOUND.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "example": "pf_21c3f3f6dc56b1e1",
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "description": "Run to read; default = the run flagged is_default (GET /api/v1/runs)"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "site_ids",
+            "required": false,
+            "description": "Comma separated site ids (max 100, duplicates ignored, response keeps this order). Default: every site of the run in sites.json order."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+            },
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "description": "Inclusive start (default: run start). Snapped DOWN to the sample grid."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+            },
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "description": "EXCLUSIVE end (default: run end). Snapped UP to the sample grid. A range partly outside the run is clamped (coverage = partial); no overlap -> 422 OUT_OF_RANGE."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 3600,
+              "maximum": 2678400
+            },
+            "in": "query",
+            "name": "step_s",
+            "required": false,
+            "description": "Desired spacing of the series, seconds (default = the data step, 3600). The server keeps every k-th sample, k = floor(step_s / data step), PLUS both samples around every Sun/Earth visibility transition, and raises k further if needed so a site never exceeds max_points. The spacing actually used is series.step_s."
+          },
+          {
+            "schema": {
+              "default": 10000,
+              "type": "integer",
+              "minimum": 16,
+              "maximum": 10000
+            },
+            "in": "query",
+            "name": "max_points",
+            "required": false,
+            "description": "Cap on series points per site (default and max 10000), transition samples included. Also: the series points of all sites together must be <= 50000, else 422 OUT_OF_RANGE."
+          },
+          {
+            "schema": {
+              "default": 1,
+              "enum": [
+                0.5,
+                1
+              ],
+              "type": "number"
+            },
+            "in": "query",
+            "name": "horizon_step_deg",
+            "required": false,
+            "description": "Azimuth step of the returned horizon curve: 1 (default, 361 points 0..360) or 0.5 (721 points, ~4 KB per site). The stored silhouette is 0.5 deg for most sites: 1 POINT-SAMPLES it at whole degrees (the half-degree samples are dropped, so a narrow peak between two whole degrees is not drawn and a Sun / Earth marker can appear on the wrong side of the drawn curve near it). Only 0.5 is exactly consistent with sun_visible / earth_visible; prefer it for rim sites (or all sites) when drawing markers against the horizon."
+          },
+          {
+            "schema": {
+              "default": "24,72,168",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "criteria_hours",
+            "required": false,
+            "description": "Comma separated minimum durations in hours (> 0, max 30; deduplicated and sorted ascending). Each one is evaluated against longest_both_h."
+          },
+          {
+            "schema": {
+              "default": "horizon,series,windows,metrics,criteria",
+              "type": "string",
+              "pattern": "^[\\s,]*(?:horizon|series|windows|metrics|criteria)(?:\\s*,[\\s,]*(?:horizon|series|windows|metrics|criteria))*[\\s,]*$"
+            },
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "description": "Comma separated parts of each site to return: horizon, series, windows, metrics, criteria (default: all). Omitted parts are absent from sites[]."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetResponse"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified: the ETag sent in If-None-Match is current (empty body)"
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable (SERVICE_UNAVAILABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CriterionResult": {
+        "type": "string",
+        "enum": [
+          "meets",
+          "below",
+          "borderline"
+        ]
+      },
+      "DatasetConventions": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string"
+          },
+          "azimuth": {
+            "type": "string"
+          },
+          "longitude": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "string"
+          },
+          "elevation": {
+            "type": "string"
+          },
+          "distance": {
+            "type": "string"
+          },
+          "height": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          },
+          "percent": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "azimuth",
+          "longitude",
+          "latitude",
+          "elevation",
+          "distance",
+          "height",
+          "duration",
+          "percent"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetCriterion": {
+        "type": "object",
+        "properties": {
+          "minimum_hours": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "metric": {
+            "type": "string",
+            "const": "longest_both_h"
+          },
+          "value_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "longest_both_h of the site over the range"
+          },
+          "value_clipped": {
+            "type": "boolean",
+            "description": "A longest interval is cut by the range or run boundary: the full interval may be longer outside the range (show e.g. \"may be longer\" next to a below result)"
+          },
+          "result": {
+            "description": "Rise / set times are known to one data step: a start after the range start can add up to one step, an end not cut by the range end (clipped_end false) can remove up to one step; a start at the range start and a clipped end are exact inside the range. meets = every possible true in-range length >= minimum_hours, below = every possible length < minimum_hours, else borderline. With both edges sampled: borderline <=> |value_h - minimum_hours| < one data step; with both edges cut by the range: meets or below, never borderline.",
+            "$ref": "#/components/schemas/CriterionResult"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "minimum_hours",
+          "metric",
+          "value_h",
+          "value_clipped",
+          "result",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetHorizon": {
+        "type": "object",
+        "properties": {
+          "step_deg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Azimuth step of az_deg"
+          },
+          "az_deg": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "0, step, ..., 360 inclusive (the last point repeats azimuth 0 so the curve is closed)"
+          },
+          "el_deg": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Terrain horizon elevation, deg (periodic linear interpolation of the stored silhouette; exact where the grids coincide)"
+          },
+          "min_el_deg": {
+            "type": "number"
+          },
+          "max_el_deg": {
+            "type": "number"
+          },
+          "source_step_deg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Azimuth step of the stored silhouette"
+          },
+          "method": {
+            "type": "string",
+            "description": "bruteforce | raymarch | flat"
+          },
+          "dem_source": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_deg",
+          "az_deg",
+          "el_deg",
+          "min_el_deg",
+          "max_el_deg",
+          "source_step_deg",
+          "method",
+          "dem_source"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetMetrics": {
+        "type": "object",
+        "properties": {
+          "duration_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Length of the evaluated range (= range), h"
+          },
+          "pct_sun": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "pct_earth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "pct_both": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "sun_hours": {
+            "type": "number",
+            "minimum": 0
+          },
+          "earth_hours": {
+            "type": "number",
+            "minimum": 0
+          },
+          "both_hours": {
+            "type": "number",
+            "minimum": 0
+          },
+          "longest_sun_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "longest_earth_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "longest_both_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "longest_dark_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Longest continuous period without Sun, h"
+          },
+          "longest_comms_gap_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Longest continuous period without Earth, h"
+          }
+        },
+        "required": [
+          "duration_h",
+          "pct_sun",
+          "pct_earth",
+          "pct_both",
+          "sun_hours",
+          "earth_hours",
+          "both_hours",
+          "longest_sun_h",
+          "longest_earth_h",
+          "longest_both_h",
+          "longest_dark_h",
+          "longest_comms_gap_h"
+        ],
+        "additionalProperties": false,
+        "description": "Over the REQUESTED range (clamped to the run). Whole run -> pct_* / longest_* equal summary.csv exactly."
+      },
+      "DatasetModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable id of the visibility model"
+          },
+          "label": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "string",
+            "description": "Plain-English definition of \"visible\""
+          },
+          "limits": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Plain-English caveats to show next to the numbers"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "definition",
+          "limits"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetRange": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Snapped start actually used (requested start clamped to the run)",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Snapped EXCLUSIVE end actually used",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Data step of the run, s (series.step_s is the spacing after decimation)",
+            "examples": [
+              3600
+            ]
+          },
+          "n_samples": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Data samples in [start, end) per site"
+          },
+          "requested_start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Requested start snapped to the grid, before clamping to the run",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "requested_end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Requested end snapped to the grid, before clamping to the run",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "step_s",
+          "n_samples",
+          "requested_start",
+          "requested_end"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetResponse": {
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "lunarnav-dataset-1"
+          },
+          "dataset_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{1,100}$",
+            "description": "<run_id>.<hash of the selection (sites, range, step, limits, include, criteria)>"
+          },
+          "evidence": {
+            "type": "string",
+            "const": "computed-ephemeris"
+          },
+          "attribution": {
+            "type": "string"
+          },
+          "run": {
+            "$ref": "#/components/schemas/DatasetRun"
+          },
+          "model": {
+            "$ref": "#/components/schemas/DatasetModel"
+          },
+          "range": {
+            "$ref": "#/components/schemas/DatasetRange"
+          },
+          "conventions": {
+            "$ref": "#/components/schemas/DatasetConventions"
+          },
+          "criteria_hours": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "include": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "horizon",
+                "series",
+                "windows",
+                "metrics",
+                "criteria"
+              ]
+            }
+          },
+          "sites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetSite"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetSource"
+            }
+          }
+        },
+        "required": [
+          "schema_version",
+          "dataset_id",
+          "evidence",
+          "attribution",
+          "run",
+          "model",
+          "range",
+          "conventions",
+          "criteria_hours",
+          "include",
+          "sites",
+          "sources"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetRun": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Ephemeris provider (spice | horizons)"
+          },
+          "dem": {
+            "type": "string",
+            "description": "Terrain model family (pgda | trek | flat ...)"
+          },
+          "horizon_method": {
+            "type": "string",
+            "description": "bruteforce | raymarch | flat"
+          },
+          "code_version": {
+            "type": "string",
+            "description": "lunarnav version that computed the run"
+          },
+          "run_timestamp_utc": {
+            "type": "string",
+            "description": "When the precompute ran (manifest.json, verbatim)"
+          },
+          "observer_height_m": {
+            "type": "number",
+            "description": "Mast height above the surface, m"
+          },
+          "min_earth_clearance_deg": {
+            "type": "number",
+            "description": "Earth counts as visible when its centre is more than this above the terrain horizon"
+          },
+          "git_commit": {
+            "description": "Git commit of the lunarnav code that computed the run (null when unknown)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manifest_sha256": {
+            "type": "string",
+            "description": "sha256 of the run manifest.json (lists every raw file with its sha256)"
+          },
+          "manifest_url": {
+            "type": "string",
+            "description": "Path of the processing evidence: the run manifest.json (GET, same origin)"
+          }
+        },
+        "required": [
+          "run_id",
+          "label",
+          "provider",
+          "dem",
+          "horizon_method",
+          "code_version",
+          "run_timestamp_utc",
+          "observer_height_m",
+          "min_earth_clearance_deg",
+          "git_commit",
+          "manifest_sha256",
+          "manifest_url"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetSeries": {
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+              "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ]
+            },
+            "description": "Sample instants, strictly increasing (irregular where transition samples were kept)"
+          },
+          "sun_az_deg": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Sun centre azimuth [0,360), clockwise from north"
+          },
+          "sun_el_deg": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Sun centre elevation, deg (airless)"
+          },
+          "sun_visible": {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            },
+            "description": "Upper solar limb above the terrain horizon"
+          },
+          "earth_az_deg": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "earth_el_deg": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "earth_visible": {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            },
+            "description": "Earth centre above the terrain horizon + min_earth_clearance_deg"
+          },
+          "both_visible": {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            },
+            "description": "sun_visible AND earth_visible"
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Spacing of the regular samples actually used, s (multiple of the data step). PER SITE: max_points can raise it differently for each site"
+          },
+          "decimated": {
+            "type": "boolean",
+            "description": "false = every data sample of the range is present"
+          },
+          "n_transitions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Sun / Earth visibility changes inside the range; both samples around each are always present"
+          }
+        },
+        "required": [
+          "t",
+          "sun_az_deg",
+          "sun_el_deg",
+          "sun_visible",
+          "earth_az_deg",
+          "earth_el_deg",
+          "earth_visible",
+          "both_visible",
+          "step_s",
+          "decimated",
+          "n_transitions"
+        ],
+        "additionalProperties": false,
+        "description": "Columnar series (all arrays have the same length, <= max_points). Decimation keeps sample 0, every k-th sample, the last sample, and the samples i-1 and i around every change of sun_visible or earth_visible, so a rise or set is never lost (exact to +- one data step). When decimated, t is IRREGULAR (transition samples sit between the regular ones): plot by timestamp. The last sample is range.end - range.step_s (end is exclusive). Use the *_visible flags (or windows) for visibility: they are NOT el > 0 (Sun upper limb, Earth centre + clearance, terrain horizon, mast height)."
+      },
+      "DatasetSite": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "lat_deg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Planetocentric latitude, deg [-90, 90]"
+          },
+          "lon_deg": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 360,
+            "description": "EAST longitude, deg [0, 360)"
+          },
+          "surface_height_m": {
+            "type": "number",
+            "description": "m above the 1737.4 km sphere"
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial",
+              "missing"
+            ],
+            "description": "Against the REQUESTED range: complete = a stored sample for every grid instant of [range.requested_start, range.requested_end); partial = some missing (range clamped to the run, or gaps); missing = none"
+          },
+          "coverage_in_range": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial",
+              "missing"
+            ],
+            "description": "Same, against the range actually used [range.start, range.end) (after clamping to the run). complete here = every number of this site is fully backed by data"
+          },
+          "horizon": {
+            "$ref": "#/components/schemas/DatasetHorizon"
+          },
+          "series": {
+            "$ref": "#/components/schemas/DatasetSeries"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/DatasetWindows"
+          },
+          "metrics": {
+            "description": "null when coverage = missing",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DatasetMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "criteria": {
+            "description": "One per criteria_hours value; empty when coverage = missing",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetCriterion"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "group",
+          "lat_deg",
+          "lon_deg",
+          "surface_height_m",
+          "coverage",
+          "coverage_in_range"
+        ],
+        "additionalProperties": false,
+        "description": "Parts not listed in `include` are absent"
+      },
+      "DatasetSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9._-]{1,100}$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "url",
+          "sha256"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetWindow": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "First sample of the visible interval (inside the range)",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "EXCLUSIVE end (first sample after it, or range end)",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "duration_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "clipped_start": {
+            "type": "boolean",
+            "description": "The true start is earlier or unknown: cut by the range start, or the run starts inside the interval"
+          },
+          "clipped_end": {
+            "type": "boolean",
+            "description": "The true end is later or unknown: cut by the range end, or the run ends inside the interval"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "duration_h",
+          "clipped_start",
+          "clipped_end"
+        ],
+        "additionalProperties": false
+      },
+      "DatasetWindows": {
+        "type": "object",
+        "properties": {
+          "sun": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetWindow"
+            },
+            "description": "Sun visible"
+          },
+          "earth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetWindow"
+            },
+            "description": "Earth visible (direct-to-Earth link possible)"
+          },
+          "both": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasetWindow"
+            },
+            "description": "Sun AND Earth visible"
+          }
+        },
+        "required": [
+          "sun",
+          "earth",
+          "both"
+        ],
+        "additionalProperties": false,
+        "description": "ONLY the visible intervals inside the range, sorted by start (boundaries +- one data step)"
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "URI identifying the problem type"
+          },
+          "title": {
+            "type": "string",
+            "description": "Short human-readable summary of the problem type"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599,
+            "description": "HTTP status code (same as the response status)"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "VALIDATION_ERROR",
+              "TOO_MANY_POINTS",
+              "NOT_FOUND",
+              "SITE_NOT_FOUND",
+              "RUN_NOT_FOUND",
+              "JOB_NOT_FOUND",
+              "JOB_NOT_YOURS",
+              "FILE_NOT_FOUND",
+              "METHOD_NOT_ALLOWED",
+              "RUN_NOT_READY",
+              "JOB_NOT_CANCELLABLE",
+              "PAYLOAD_TOO_LARGE",
+              "UNSUPPORTED_MEDIA_TYPE",
+              "OUT_OF_RANGE",
+              "BAD_MISSION_LENGTH",
+              "CAPABILITY_UNAVAILABLE",
+              "JOB_TOO_LARGE",
+              "RATE_LIMITED",
+              "QUEUE_FULL",
+              "TOO_MANY_JOBS",
+              "TOO_MANY_STREAMS",
+              "INTERNAL",
+              "JOB_TYPE_UNAVAILABLE",
+              "PYTHON_FAILED",
+              "SERVICE_UNAVAILABLE",
+              "PYTHON_TIMEOUT"
+            ],
+            "description": "Stable machine-readable error code - switch on this in the FE"
+          },
+          "detail": {
+            "description": "Human-readable explanation of this occurrence",
+            "type": "string"
+          },
+          "instance": {
+            "description": "Request path that produced the problem",
+            "type": "string"
+          },
+          "errors": {
+            "description": "Per-field details (validation errors)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProblemFieldError"
+            }
+          },
+          "hint": {
+            "description": "How to fix the request, when known",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "additionalProperties": {},
+        "description": "RFC 9457 problem details. Extra members (e.g. `max_latest`, `limits`) may be present."
+      },
+      "ProblemFieldError": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Dotted path of the offending field (\"\" = whole object), e.g. \"end\" or \"site_ids.2\""
+          },
+          "in": {
+            "description": "Where the field was sent",
+            "type": "string",
+            "enum": [
+              "querystring",
+              "params",
+              "body",
+              "headers"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "description": "zod issue code, e.g. \"too_big\", \"invalid_type\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

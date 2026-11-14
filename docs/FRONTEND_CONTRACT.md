@@ -1,10 +1,10 @@
-# Frontend API contract — draft 2
+# Frontend API and import formats
 
-**The team selected the backend OpenAPI and one aggregate GET. The response schema in this document remains a frontend draft.** Sơn explicitly authorized a marked draft after supplying Chung's mandatory coordination rules. Chung’s live OpenAPI 1.0.0 documents the science endpoints. Its aggregate GET and payload are still pending. The frontend accepts local JSON or calls a fixed same-origin API; it never calls Horizons.
+The [producer OpenAPI extract](../contracts/openapi.dataset.json) defines the live aggregate. It uses `lunarnav-dataset-1` with terrain-model metadata, site coverage and half-open UTC intervals. The [integration record](BACKEND_RECONCILIATION.md#aggregate-update-on-14-november) documents the request parameters and checked responses. Producer exports with windows and metrics open through the same summary validator.
 
-Chung's subsequently supplied backend plan is an evolving proposal with richer terrain/series/run APIs. Its naming, model and jobs differ from this draft; see [the reconciliation and AI-assistant proposal](BACKEND_RECONCILIATION.md). The current fixture is a working baseline, not a ceiling on future features. No endpoint or scientific model has been silently switched.
+## Synthetic API and legacy ideal-horizon imports
 
-The single authored structural definition is [`contracts/openapi.draft.json`](../contracts/openapi.draft.json), OpenAPI 3.1. `npm run generate:api` produces `frontend/lib/api/schema.d.ts`; API types must not be handwritten. Semantic checks remain in [`frontend/lib/dataset.ts`](../frontend/lib/dataset.ts) and `frontend/lib/api/client.ts`; generated TypeScript is not runtime validation. The OpenAPI response example and [`frontend/public/data/demo.json`](../frontend/public/data/demo.json) are **invented UI fixtures**, never NASA datasets.
+The structural definition for this format is [`contracts/openapi.draft.json`](../contracts/openapi.draft.json), OpenAPI 3.1. `npm run generate:api` produces `frontend/lib/api/schema.d.ts`; API types must not be handwritten. Semantic checks remain in [`frontend/lib/dataset.ts`](../frontend/lib/dataset.ts) and `frontend/lib/api/client.ts`; generated TypeScript is not runtime validation. The OpenAPI response example and [`frontend/public/data/demo.json`](../frontend/public/data/demo.json) are **invented UI fixtures**, never NASA datasets.
 
 ## Proposed API and transport
 

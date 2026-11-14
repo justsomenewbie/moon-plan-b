@@ -7,7 +7,7 @@
     "predev": "npm run generate:api",
     "pretest": "npm run generate:api",
     "dev": "next dev --hostname 127.0.0.1",
-    "generate:api": "openapi-typescript ../contracts/openapi.draft.json -o lib/api/schema.d.ts && node scripts/prepare-api.mjs",
+    "generate:api": "openapi-typescript ../contracts/openapi.draft.json -o lib/api/schema.d.ts && openapi-typescript ../contracts/openapi.dataset.json -o lib/api/producer.d.ts && node scripts/prepare-api.mjs",
     "build": "npm run generate:api && next build",
     "start": "next start --hostname 127.0.0.1",
     "check": "npm run generate:api && next typegen && tsc --noEmit",
