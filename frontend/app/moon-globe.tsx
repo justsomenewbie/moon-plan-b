@@ -92,7 +92,7 @@ export default function MoonGlobe() {
     <figcaption>
       <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
         setCenter(origin); setAnnounced(null); setReady(false); setFailed(false); setEnabled(!enabled);
-      }}>{t(enabled ? "Return to photograph" : "Rotate the Moon")}</button>
+      }}>{t(failed ? "Retry globe" : enabled ? "Return to photograph" : "Rotate the Moon")}</button>
       {ready && <div className="globe-controls" role="group" aria-label={t("Rotate the lunar globe")}>
         {([["←", "Look west", -30, 0], ["→", "Look east", 30, 0], ["↑", "Look north", 0, 30], ["↓", "Look south", 0, -30]] as const).map(([icon, label, dx, dy]) =>
           <button type="button" key={label} aria-label={t(label)} title={t(label)} onClick={() => selectCenter(globeCenter(center.longitude + dx, center.latitude + dy))}>{icon}</button>)}
@@ -101,7 +101,7 @@ export default function MoonGlobe() {
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)}</p>}
       <p role="status">{failed ? t("Globe unavailable. The photograph is shown. Try again to reload the map.") : enabled && !ready ? t("Loading lunar surface map…") :
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>
-      {ready ? <><a href="https://svs.gsfc.nasa.gov/4720/" target="_blank" rel="noreferrer">{t("LRO surface map")} · NASA’s Scientific Visualization Studio</a><br />{t("Reference globe with fixed lighting. Drag or use the arrows to explore.")}</> :
+      {ready ? <><a href="https://svs.gsfc.nasa.gov/4720/" target="_blank" rel="noreferrer">{t("LRO surface map")} · NASA’s Scientific Visualization Studio</a><br />{t("Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</> :
         <><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</>}
     </figcaption>
   </figure>;
