@@ -34,6 +34,8 @@ Replay with `node qa/check_mission_clearance.mjs <frontend-origin>`. [Frontend t
 | missing | `f84ff67bef6cd9f79b45e0ca51f2a59589a05e095e70bc9201bd77e5c321116f` |
 | crossing_wrap | `9224dbd8ec958aa58ddbd03e0b4f8a9e39f026d719fefdf39b1009a419e21f18` |
 
+At 08:22 UTC, Chromium reran both scripts and the [paired Horizons replay](../evidence/odysseus-athena-hour-gap/README.md) on the [integrated build](https://github.com/justsomenewbie/moon-plan-b/commit/f2f7599235e118010f0b8317c264f0721327655c). The same-origin dataset API returned HTTP 200 with both sites and the browser rendered the terrain summary. Importing the checked Horizons copy with only Athena’s 02:00 UTC sample removed broke both Athena paths. Odysseus kept both continuous paths. With either site primary, pressing Right then Left gave 01:00 → 03:00 → 01:00 UTC on both visible and accessible time labels. The integrated source passed all 72 frontend tests and eight offline QA gates.
+
 ## UI-02 import retest
 
 At 08:02 UTC on 14 November 2026, Chromium 158.0.8127.18 exercised the [corrected importer](https://github.com/justsomenewbie/moon-plan-b/commit/8ddc9bb1421b70629ec71817a1029d0f539ffeff) at `/` on a local production build with the mock startup API. The browser used its default 1280 × 720 viewport. It started with the [paired Horizons gap copy](../evidence/odysseus-athena-hour-gap/gap.json), SHA-256 `7acb4779b02e8c743f9f04d5c69da5b51e33a31eb2f6b525d2d1a87851a0579b`, with Athena primary and Odysseus alternative at 03:00 UTC.
