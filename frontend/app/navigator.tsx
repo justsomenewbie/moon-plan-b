@@ -47,9 +47,16 @@ export default function Navigator() {
   const loadGeneration = useRef(0);
   const loadFocus = useRef<Element | null>(null);
   const lastLocation = useRef<string | null>(null);
+  const openObservation = useRef(false);
 
   useEffect(() => {
     if (loading) return;
+    // The fragment target is absent until the live dataset has rendered.
+    if (openObservation.current) {
+      openObservation.current = false;
+      if (!error && window.location.hash === "#terrain-observations")
+        document.getElementById("terrain-observations")?.scrollIntoView();
+    }
     const initiator = loadFocus.current;
     loadFocus.current = null;
     // Restore focus lost during loading without taking it from another control.
@@ -111,6 +118,7 @@ export default function Navigator() {
       if (target?.site_id) url.searchParams.set("site_id", target.site_id);
       url.hash = "workspace";
     }
+    openObservation.current = !reset && Boolean(request) && window.location.hash === "#terrain-observations";
     setData(null); setSelection(null); setTerrain(next); setSharedJobId(""); setShareUrl(""); setError(""); setPlaying(false);
     showObservation(next, siteIndex, sample, url, reset);
   }
