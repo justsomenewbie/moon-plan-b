@@ -275,8 +275,9 @@ export default function Navigator() {
       if (!shell.dataset.printReport) {
         const { hash, search } = window.location;
         const params = new URLSearchParams(search);
-        const savedLink = !hash && params.size === 1 && params.get("saved") === savedResultFromUrl(params);
-        shell.dataset.printReport = hash === "#observed-week" || savedLink ? "saved" : "workspace";
+        const validSaved = params.getAll("saved").length === 1 && params.get("saved") === savedResultFromUrl(params);
+        const savedLink = validSaved && ((!hash && params.size === 1) || hash === "#lunar-reference");
+        shell.dataset.printReport = hash === "#observed-week" || hash === "#saved-model-source" || savedLink ? "saved" : "workspace";
       }
       const selector = shell.dataset.printReport === "saved" ? "#observed-week details:not([open])" : "details:not([open])";
       for (const details of shell.querySelectorAll<HTMLDetailsElement>(selector)) {

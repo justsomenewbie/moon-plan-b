@@ -44,7 +44,30 @@ try {
   await page.goto(new URL("?saved=im2_athena", origin).href);
   await saved.getByText("139 h", { exact: true }).waitFor();
   checkAthena(await printText());
-  console.log("Saved selection, workspace override, browser history and direct URL printed correctly.");
+  const globe = page.locator("#lunar-reference");
+  await saved.getByRole("link", { name: "View lunar globe" }).click();
+  checkAthena(await printText());
+  await globe.getByRole("link", { name: "Source and interval checks" }).click();
+  const source = saved.locator("#saved-model-source");
+  await source.waitFor({ state: "visible" });
+  checkAthena(await printText());
+
+  await page.evaluate(() => { window.print = () => {}; });
+  await page.getByRole("button", { name: "Print report", exact: true }).click();
+  assert.match(await printText(), /Demo ridge A/);
+  checkAthena(await printText());
+
+  await page.goto(new URL("?saved=im2_athena#saved-model-source", origin).href);
+  await source.waitFor({ state: "visible" });
+  checkAthena(await printText());
+
+  await page.goto(new URL("#lunar-reference", origin).href);
+  await page.getByRole("button", { name: "Print report", exact: true }).waitFor();
+  assert.match(await printText(), /Demo ridge A/);
+  await page.goto(new URL("?saved=im2_athena#workspace", origin).href);
+  await page.getByRole("button", { name: "Print report", exact: true }).waitFor();
+  assert.match(await printText(), /Demo ridge A/);
+  console.log("Saved selection, globe and source links, explicit workspace print, history and direct URLs printed correctly.");
 } finally {
   await browser.close();
 }

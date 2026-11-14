@@ -54,9 +54,9 @@ export default function ObservedWeek({ selection, onSelect, onPrint }: { selecti
           </article>;
         }))}
       </div>
-      <details id="saved-model-source">
+      <details>
         <summary>{t("How the team obtained these hours")}</summary>
-        <p>{t("Each site has one continuous overlap per week. The total shown is also the longest overlap inside that week. The bars share a scale of 168 hours from the start of each week.")}</p>
+        <p id="saved-model-source" tabIndex={-1}>{t("Each site has one continuous overlap per week. The total shown is also the longest overlap inside that week. The bars share a scale of 168 hours from the start of each week.")}</p>
         <p>{t("The team sampled once per hour with SPICE and a PGDA terrain horizon for an observer 2 m above the surface. Sun visibility uses the upper limb. Earth visibility uses clearance above the local horizon.")}</p>
         <p>{t("Source run")} · <code>{runId}</code> · <a href="https://github.com/justsomenewbie/moon-plan-b/blob/953a39cf1b5ac7e8b61d82d6b0dc5bc0469807f1/docs/BACKEND_RECONCILIATION.md#reproduce-the-odysseus-and-athena-weeks" target="_blank" rel="noreferrer">{t("Source and interval checks")} ↗</a></p>
       </details>
