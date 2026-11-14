@@ -1,6 +1,6 @@
 # Moon Plan B
 
-Shared repository for the team's NASA Space Apps 2026 project. The Next.js + Tailwind frontend supports site/date comparison, Sun/Earth tracks and visibility bands, dataset import, bounded API requests, job progress, source inspection, shareable selections and printing. **The included mock API and demonstration are synthetic, not lunar data. The OpenAPI contract is a frontend proposal awaiting Chung's agreement.** No real backend integration, validated scientific dataset, deployment or submitted entry is established.
+Shared repository for the team's NASA Space Apps 2026 project. The Next.js + Tailwind frontend supports site/date comparison, Sun/Earth tracks and visibility bands, dataset import, bounded API requests, job progress, source inspection, shareable selections and printing. **The included mock API and demonstration are synthetic, not lunar data. The backend owns the production OpenAPI for the agreed aggregate route `GET /api/v1/dataset`. The bundled schema and response are drafts.** No real backend integration, validated scientific dataset, deployment or submitted entry is established.
 
 ## Run the frontend
 
@@ -27,9 +27,13 @@ Browser Back/Forward restores the comparison encoded in a shared URL, including 
 
 **Language** defaults to English; choose **Tiếng Việt** for the Vietnamese interface. The choice is saved locally when browser storage is available. Switching keeps the comparison, timeline sample, edited request and running job intact. Exact UTC values, units and supplied scientific/source text are preserved. Original OpenAPI documentation remains English. **Appearance** offers automatic local-time light/dark mode and saved manual overrides.
 
-Choose **Rotate the Moon** below the opening photograph to explore the lunar surface. Drag to turn the globe or use the four direction buttons and **Reset view**. Its center coordinates describe the view. The surface uses a fixed light and NASA’s photographic color map. [NASA CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/)
+The opening photograph gives way to the rotatable lunar globe as soon as the surface map loads. **Return to photograph** switches back. Drag to turn the globe or use the four direction buttons and **Reset view**. Its center coordinates describe the view. The surface uses a fixed light and NASA’s photographic color map. [NASA CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/)
+
+Use **Locate a site** under the globe to find the published landing regions of Odysseus and Athena and open the corresponding source. These mission references are available without importing data. Select **Primary** or **Alternative** to open that observation in the local sky. The globe can also mark a sourced comparison site when its declared coordinate convention matches the map. [Coordinate handling](docs/METHOD.md)
 
 **Compare sites** starts with a published UTC window. Choose a joint visibility threshold to see every site’s supplied assessment, its longest joint interval when available, and the original explanation. Catalog sites without a result for those exact bounds appear separately. The primary and alternative selectors control the two tracks in the chart.
+
+Choose **Explore the 3D sky** to see the directions supplied for one site and UTC sample. Switch between primary and alternative observations, rotate the sky around the site, or move the timeline. A dashed ray points below the ideal horizon. The 2D tracks and sample table remain available for reading the values.
 
 The app opens a conspicuously labeled synthetic fixture. Switch between **Compare dates** and **Compare sites**, select an available window, and move the sample slider. `Find a later published match` searches only supplied assessments; it never treats unresolved earlier candidates as a confirmed first match. Missing observations remain missing. `Import data` validates a local JSON file up to 5 MiB; the file is not uploaded. API response reads are capped at 5 MiB and 15 seconds. A selection link contains IDs/settings/request range, not the imported dataset. Real job links also identify the completed job and depend on backend retention/access. A loopback link works only on the same computer.
 

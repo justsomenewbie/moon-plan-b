@@ -1,33 +1,31 @@
 # Current handoff — 14 November 2026
 
-## Minh creative QA update — 14 November, 12:36 UTC+07
+## Minh integration update — 14 November 2026
 
-Outcome: the validated frontend now shows producer-supplied simultaneous intervals as Golden windows, replaces the rectangular sky schematic with an accessible polar skyplot, and exposes a `?qa=true` inspector for complete/partial/missing fixture scenarios. Scientific results remain producer-owned; no readiness score or named Artemis data was fabricated. Evidence: 34 frontend tests, full offline `qa.run_checks`, TypeScript and Next production build passed; live Edge verified the inspector, Golden rows, skyplot semantics, missing state and persistent QA flag. Full record: `qa/LOCAL_WEB_DEEP_TEST_REPORT.md`. Owner: Minh. Git state: verified local implementation on branch `Minh`; remote publication not performed. Environment limit: Node 24.22.1 is below the declared 24.22.3 minimum. Pending: real producer export, OpenAPI agreement, browser network/fallback/mobile evidence. Next action: review `http://localhost:3001/?qa=true` and approve or revise the UI before any remote publication.
-
-**Minh's QA branch** starts at fetched `origin/main` commit `4328c85329250d3f2e80fb7ae61ba7b9aa564458` in `justsomenewbie/moon-plan-b`. Owner: Minh. The team can test the offline validator, synthetic edge cases and the existing frontend importer with `python -B -m qa.run_checks`. [Instructions](qa/README.md) · [terminal evidence](qa/evidence/2026-11-14/terminal.txt) · [two JPL parser samples](qa/docs/JPL_CHECK.md).
+Branch `Minh` now combines the QA/scientific validation work with current `main`. The opening globe locates mission references and supported comparison sites; the bilingual comparison and local 3D sky use synthetic demo observations. Minh adds producer-supplied Golden-window bands, an accessible polar skyplot and a `?qa=true` inspector for complete/partial/missing scenarios. No readiness score, named-site observation or new scientific boundary is fabricated. Run `python -B -m qa.run_checks` and the frontend test/check/build before publication. Detailed QA record: `qa/LOCAL_WEB_DEEP_TEST_REPORT.md`.
 
 ## Current decisions
 
-Chung's mandatory rules and the clearly marked frontend draft remain recorded in AGENTS/FRONTEND_CONTRACT. Chung's evolving `WEB_BACKEND_PLAN.md` describes an unimplemented service. Read [reconciliation](docs/BACKEND_RECONCILIATION.md) before integration: naming, repository placement, terrain model, result transport and jobs differ from the earlier draft. No agreed exported OpenAPI, sourced fixture or running origin has been supplied. Do not silently change models or relabel illustrative values.
+The backend owns the production OpenAPI. Chung will add `GET /api/v1/dataset` after the backend workflow. The frontend already calls this aggregate route. A separate team member owns Colab execution and testing. FE needs the versioned response schema and one bounded sample. Terrain horizons and visibility definitions need review before display. See [reconciliation](docs/BACKEND_RECONCILIATION.md).
 
 AI planning assistance remains a proposed backend capability, with server-side keys, explicit criteria/UTC interpretation and answers grounded in supplied releases. No provider/model/assistant endpoint is established. Richer terrain, 3D and alternate-date features remain open candidates; the synthetic baseline is not a feature ceiling.
 
 ## Current result and evidence
 
-The hero opens with a credited NASA LRO photograph. **Rotate the Moon** loads the 457,942-byte NASA CGI Moon Kit color map on demand. Drag, direction buttons and reset change the view center. Its bilingual caption identifies fixed-light reference imagery and excludes terrain and Sun/Earth visibility calculations. NASA credits and reuse terms are in [credits](docs/CREDITS.md).
+The hero loads the NASA CGI Moon Kit globe after hydration, with a credited photograph during loading and on texture failure. The site locator links mission coordinates to NASA/LROC and the selected comparison role to its sky. **Explore the 3D sky** follows the comparison cursor. Switch between primary and alternative samples, orbit the compass and read the supplied body angles at the selected site's UTC. The ideal horizon omits terrain. See [method](docs/METHOD.md) and [NASA credits](docs/CREDITS.md).
 
-Auto/Light/Dark follows local time or a saved manual choice. English is the default with a saved Vietnamese option. Animate UI supplies Share comparison’s press feedback.
+Auto/Light/Dark follows local time or a saved manual choice. English is the default with a saved Vietnamese option. Animate UI supplies Share comparison’s press feedback. Its redistribution restriction conflicts with the published judging terms. The team’s release decision remains open. See [credits](docs/CREDITS.md).
 
-**Compare sites** lists the producer’s assessments, reasons and source IDs for a published UTC window and selected threshold. Prior browser checks covered all three demo thresholds, swaps, partial coverage, absent sites, shared links and the 320px Vietnamese layout. Prior bilingual date reports were reviewed across ten Letter pages.
+**Compare sites** lists the producer’s assessments, reasons and source IDs for a published UTC window and selected threshold. Checks covered demo thresholds, swaps, partial coverage, absent sites, share links and bilingual printing.
 
-**32 tests and the production build including TypeScript passed.** Globe checks covered orientation, seam, poles, keyboard, drag, 320px Vietnamese and reduced motion. With a forced texture 404, both languages offered Retry. The photograph retained its NASA credit. Retry restored the globe and its map credit on HTTP 200 with the comparison still selected. The accessibility status reflected keyboard rotation. See [verification](docs/FRONTEND_VERIFICATION.md).
+**36 tests, TypeScript and a production build passed.** The offline [joint-interval check](docs/METHOD.md) flags incomplete overlaps and longest-duration discrepancies for source review. A forced texture 404 preserved the photograph and credit. Retry restored the globe. The 3D sky passed checks for both roles, their UTC instants, missing samples, zero elevation, pointer and keyboard rotation, reduced motion and Vietnamese at 320px. See [verification](docs/FRONTEND_VERIFICATION.md).
 
-Native Safari in a separate QA window loaded six observation windows and successfully imported the local synthetic fixture. Earlier keyboard criterion change passed. Language switching, exact CSS width, console and final window closure remain unconfirmed. Existing tabs were untouched.
+Browser checks confirmed a later range edit survives a pending GET and a pending file import hides stale recovery controls. Native Safari imported synthetic JSON. In an isolated window English → Vietnamese → English passed with measured 320px viewport and document widths in both languages. The direct production page loaded six windows in Vietnamese with no visible console error. Safari’s Window menu confirmed the QA window was closed.
 
-External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `globe-retry-verified.json` and `site-finder-final.json`. Saved language applies after hydration. Theme can flash dark, Auto can lag one minute, and a press animation can finish after reduced motion is enabled. Real science/backend, full release licensing and spoken screen-reader checks remain open.
+Evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `native-safari-language-width.json` and `globe-retry-verified.json`. Appearance and language apply after hydration. Real science/backend, full release licensing and spoken screen-reader checks remain open.
 
 ## Ownership and publication
 
-The earlier globe review used `dc6e179a9d2d277b9b7530dd73d5f08af1ff878e`. Minh's QA work is local. Production build, network trace, three usability sessions, licensing and science sign-off remain open. See the [freeze checklist](qa/docs/RUNBOOK.md).
+Root edited; agents reviewed. `main` checkpoint `da7d43b413349497e0525e291b549da7b9512997` is being integrated into `Minh`. No deployment, merge to `main` or submission. Network trace, three usability sessions, licensing and science sign-off remain open. See the [freeze checklist](qa/docs/RUNBOOK.md).
 
-Next input from Chung and Trang is one versioned site-pair export for a shared UTC window, with raw source responses and processing evidence for every joint interval.
+Next input for FE: Chung’s versioned OpenAPI and one sourced, bounded response from the backend/data team.

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { comparisonLocation, diskPosition, missionSites } from "../lib/globe-sites.ts";
+import type { GlobeSite } from "../lib/globe-sites.ts";
 import { drawGlobe, globeCenter } from "../lib/moon-globe.ts";
 
 // Red encodes longitude columns, green latitude rows. Angles are independent of fixture observations.
@@ -25,4 +27,32 @@ test("visible disk is north-up, east-right and clips pixels outside the sphere",
   assert.equal(pixel(3, 3, 3), 255);
   assert.ok(pixel(1, 3, 0) < pixel(5, 3, 0));
   assert.ok(pixel(3, 1, 1) < pixel(3, 5, 1));
+});
+
+
+test("site marker follows the globe, crossing the seam and clipping the limb", () => {
+  const center = { latitude: 0, longitude: 0 };
+  assert.deepEqual(diskPosition(center, center), { x: 0, y: 0 });
+  assert.equal(diskPosition({ latitude: 0, longitude: 90 }, center), null);
+  assert.equal(diskPosition({ latitude: 0, longitude: 180 }, center), null);
+  assert.ok(diskPosition({ latitude: 30, longitude: 0 }, center)!.y < 0);
+  assert.ok(diskPosition({ latitude: 0, longitude: -179 }, { latitude: 0, longitude: 179 })!.x > 0);
+  for (const target of [...missionSites, { latitude: 90, longitude: 120 }, { latitude: -90, longitude: -120 }]) {
+    const projected = diskPosition(target, target)!;
+    assert.ok(Math.hypot(projected.x, projected.y) < 1e-12);
+  }
+});
+
+test("only a sourced, explicitly compatible comparison location can produce a map point", () => {
+  const location = { latitudeDeg: 0, longitudeEastDeg: 0, elevationKm: 2, elevationDatum: "test", frame: "MOON_ME_DE421 (planetocentric)" };
+  const site: GlobeSite = { id: "test", name: "test", location, sourceIds: ["test-source"] };
+  const real = "computed-ephemeris";
+  assert.deepEqual(comparisonLocation(site, real), { point: { latitude: 0, longitude: 0 } });
+  assert.ok("point" in comparisonLocation({ ...site, location: { ...location, frame: "planetocentric; MOON_ME_DE421" } }, real));
+  for (const frame of ["J2000", "MOON_PA_DE421", "MOON_ME_DE421", "MOON_ME_DE421 not planetocentric", "MOON_ME_DE421 planetographic"]) {
+    assert.ok("reason" in comparisonLocation({ ...site, location: { ...location, frame } }, real));
+  }
+  assert.ok("reason" in comparisonLocation(site, "synthetic-fixture"));
+  assert.ok("reason" in comparisonLocation({ ...site, sourceIds: [] }, real));
+  assert.ok("reason" in comparisonLocation({ ...site, location: null }, real));
 });

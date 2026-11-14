@@ -8,6 +8,7 @@ import type { WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
 import ThemeControl from "./theme-control";
 import MoonGlobe from "./moon-globe";
+import LocalSky from "./local-sky";
 import { LanguageControl, useLanguage } from "./language";
 import type { Message } from "../lib/i18n";
 import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindows, readSelection, selectionParams, validateDataset } from "../lib/dataset";
@@ -21,6 +22,7 @@ export default function Navigator() {
   const { t, locale } = useLanguage();
   const queryClient = useQueryClient();
   const [requestWindow, setRequestWindow] = useState(defaultWindow);
+  const [skyAlternative, setSkyAlternative] = useState(false);
   const [sharedJobId, setSharedJobId] = useState("");
   const [data, setData] = useState<Dataset | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -58,7 +60,7 @@ export default function Navigator() {
   }
 
   function acceptDataset(next: Dataset, reset: boolean) {
-    setData(next); setTick(0); setPlaying(false); setShareUrl("");
+    setData(next); setSkyAlternative(false); setTick(0); setPlaying(false); setShareUrl("");
     if (reset) replaceUrl(window.location.pathname);
     try {
       setSelection(readSelection(new URLSearchParams(window.location.search), next)); setError("");
@@ -144,7 +146,7 @@ export default function Navigator() {
     if (!file) return;
     const generation = ++loadGeneration.current;
     loadFocus.current = document.activeElement;
-    setLoading(true); setPlaying(false); setMessage(""); setRetryLoad(null);
+    setLoading(true); setPlaying(false); setMessage(""); setRetryLoad(null); setError("");
     try {
       if (file.size > MAX_FILE_BYTES) throw new Error("Choose a JSON dataset smaller than 5 MB.");
       const next = validateDataset(JSON.parse(await file.text()));
@@ -210,10 +212,11 @@ export default function Navigator() {
       <input ref={fileInput} aria-label={t("Import JSON dataset")} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
     </header>
     <section className="intro"><div className="hero-copy"><p className="eyebrow">{t("Lunar observation explorer")}</p><h1>{t("Find a clearer window.")}</h1><p className="lead">{t("Compare the Sun and Earth above the lunar horizon.")}</p>
-      <div className="hero-actions"><a className="button primary" href="#workspace">{t("Explore the comparison")}{" "}<span aria-hidden="true">&nbsp;↗</span></a><a className="button outline" href="#resources">{t("Explore lunar resources")}</a></div>
+      <div className="hero-actions"><a className="button primary" href="#workspace">{t("Explore the comparison")}{" "}<span aria-hidden="true">&nbsp;↗</span></a>{data && a && !loading ? <a className="button outline" href="#local-sky">{t("Explore the 3D sky")}</a> : <a className="button outline" href="#resources">{t("Explore lunar resources")}</a>}</div>
       <p className="muted text-sm hero-meta">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Backend API · draft compatibility requires producer review")} · <a href="/api-docs">{t("API explorer")}</a></p>
       <p className="data-notice">{!data ? isMock ? t("No scientific dataset connected. Use the demonstration or import a release.") : t("Waiting for a valid API dataset. You can also import a release.") : data.evidence === "synthetic-fixture" ? t("Demonstration data — fictional sites and values. Not for mission planning.") : t("Supplied data — scientific validity has not been independently verified. Not for mission planning.")}</p>
-      </div><MoonGlobe />
+      </div><MoonGlobe primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
+        alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
     </section>
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
@@ -257,6 +260,7 @@ export default function Navigator() {
         </div>
         <p className="sample-time">{offsets.length ? <>{t("Primary:")}{" "}{formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale)}{b ? <> · {t("Alternative:")}{" "}{formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale)}</> : null}</> : t("The pair has no shared sample times. Exact observations are available in the sample table where present.")}</p>
         {reducedMotion ? <p className="muted text-sm">{t("Reduced motion is on. Use the slider to select samples without playback.")}</p> : null}
+        <LocalSky data={data} a={a} b={b} alternative={skyAlternative} setAlternative={setSkyAlternative} offset={offsets.length ? offset : undefined} />
         <div className="detail-row"><SkyPosition scenario={a} offset={offsets.length ? offset : -1} /><Comparison a={a} b={b} h={selection.h} /></div>
         <SampleTable a={a} b={b} /><Windows a={a} b={b} />
       </div>
