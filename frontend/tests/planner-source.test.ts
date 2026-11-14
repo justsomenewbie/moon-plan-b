@@ -16,6 +16,17 @@ test("links after editing dates use the two displayed dates and visibility prior
   assert.equal(seed.get("priority"), "sun");
 });
 
+test("date-first searches keep the requested mission hours when switching sources and clear them for full-range rankings", () => {
+  const seed = new URLSearchParams({ run_id: "model-A", missionHours: "24" });
+  const inputs = { from: "2026-11-14", to: "2026-11-21", priority: "joint", missionHours: "6" };
+  const linked = plannerFormState(seed, "sites", "live", form(inputs));
+  assert.equal(linked.get("missionHours"), "6");
+  assert.equal(linked.get("run_id"), "model-A");
+  const back = plannerFormState(linked, "sites", "saved-b2", form({ ...inputs, missionHours: "" }));
+  assert.equal(back.has("missionHours"), false);
+  assert.equal(back.get("run_id"), "model-A");
+});
+
 test("same-hour landing, duration, unsupported constraints and ranking survive switching sources", () => {
   const site = "im2_athena", instant = "2026-11-15T23:00";
   const p = plannerFormState(new URLSearchParams(), "dates", "live", form({

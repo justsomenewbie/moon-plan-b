@@ -58,7 +58,7 @@ export function plannerFormState(seed: URLSearchParams, mode: string, source: Pl
   const set = (key: string, value: string) => { if (value) p.set(key, value); else p.delete(key); };
   p.set("mode", mode);
   if (mode === "sites") {
-    for (const name of ["from", "to", "priority"]) set(name, text(form, name));
+    for (const name of ["from", "to", "priority", "missionHours"]) set(name, text(form, name));
     return p;
   }
   if (source === "live") {

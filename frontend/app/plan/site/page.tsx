@@ -13,6 +13,7 @@ import ThemeControl from "../../theme-control";
 import B2CoordinateSource from "../../b2-coordinate-source";
 
 const fields = ["source", "site", "from", "to", "priority"] as const;
+const savedBound = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:00:00Z)?$/;
 const priorities = { joint: "Sun and Earth together", sun: "Sunlight", earth: "Earth visibility" } as const;
 
 function SiteReport() {
@@ -25,7 +26,7 @@ function SiteReport() {
   const priority = query.get("priority");
   const run = source === "saved-b2" ? archiveB2Run : source === "saved" ? savedPlannerRun : null;
   const valid = run && siteId && fields.every(key => query.getAll(key).length === 1) &&
-    /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to) &&
+    savedBound.test(from) && savedBound.test(to) &&
     (priority === "joint" || priority === "sun" || priority === "earth");
   const ranking = valid && (source === "saved-b2" ? rankArchiveB2 : getSavedPlannerRanking)({ from, to, priority });
   const site = run?.sites.find(row => row.id === siteId);
@@ -33,8 +34,15 @@ function SiteReport() {
   const planner = new URLSearchParams({ mode: "sites" });
   if (run && source) planner.set("source", source);
   if (ranking && priority) {
-    planner.set("from", from);
-    planner.set("to", to);
+    const searchFrom = query.get("searchFrom") ?? "", searchTo = query.get("searchTo") ?? "";
+    const duration = Number(query.get("missionHours"));
+    const reproducible = ["searchFrom","searchTo","missionHours"].every(key => query.getAll(key).length === 1) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(searchFrom) && /^\d{4}-\d{2}-\d{2}$/.test(searchTo) &&
+      Number.isSafeInteger(duration) && duration > 0 && Date.parse(ranking.to) - Date.parse(ranking.from) === duration * 3600000 &&
+      Date.parse(searchFrom) <= Date.parse(ranking.from) && Date.parse(searchTo) >= Date.parse(ranking.to);
+    planner.set("from", reproducible ? searchFrom : from.slice(0, 10));
+    planner.set("to", reproducible ? searchTo : new Date(Math.ceil(Date.parse(ranking.to) / 86400000) * 86400000).toISOString().slice(0,10));
+    if (reproducible) planner.set("missionHours", String(duration));
     planner.set("priority", priority);
     if (row) planner.set("site", row.id);
   }
