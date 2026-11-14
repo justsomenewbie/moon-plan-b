@@ -1,4 +1,5 @@
 import type { TerrainSummary } from "../lib/api/terrain-summary";
+import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
 
 function UtcTime({ value }: { value: string }) {
@@ -52,6 +53,8 @@ export default function TerrainResult({ result, onPrint, permalink }: { result: 
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
+
+    {result.sites.length > 0 && <TerrainObservations key={result.dataset_id} result={result} />}
 
     <section id="sources" className="sources-section" aria-labelledby="terrain-sources" tabIndex={-1}>
       <h2 id="terrain-sources">{t("Sources & method")}</h2>
