@@ -10,7 +10,7 @@ try {
   const page = await browser.newPage({ timezoneId: "UTC", reducedMotion: "reduce" });
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto(origin);
+  await page.goto(new URL("/compare", origin).href);
   await page.getByRole("button", { name: "Import data", disabled: false }).waitFor();
 
   async function importFixture(name) {

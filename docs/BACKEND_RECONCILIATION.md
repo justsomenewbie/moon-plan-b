@@ -18,6 +18,20 @@ For a source cross-check, the data request pinned `run_id=B_spice_pgda_bruteforc
 
 At 15:15–15:16 Hanoi a fresh request to the same instance returned the identical size-limit error body. A separate request for 1–8 January 2032 fell outside the model run and received the same title with the correct date-range detail. The bounded November request still returned 200. The 336 hourly flags in its joint comparison agreed with the per-site intervals. A connection timeout earlier in this retest ended before the service sent an HTTP response.
 
+At 15:37 Hanoi the team service returned `422 Series point limit exceeded` for the bare aggregate and `422 Range outside run` for January 2032. The bounded November 14–21 request returned 200. All 336 site-hours and the joint interval boundaries agreed with the per-site windows: Odysseus had 33 joint hours and Athena had 139. The OpenAPI document then had 29 paths (SHA-256 `b3ef4109b7686fd676333f8eb0f4d327ddf4618931a89854a1d3c53b9ef954c6`).
+
+### Alternative landing dates
+
+On the same run, an Athena search on November 15 from 03:00 through 06:00 UTC requested a three-hour mission with 100% simultaneous Sun and Earth visibility, both visible at landing, earliest-first ranking, one-hour spacing and at most two proposals. Four starts were evaluated. The two feasible starts were 05:00 and 06:00 UTC, and each pinned aggregate confirmed the three-hour overlap. The same search on December 1 from 00:00 through 02:00 UTC evaluated three starts and found none.
+
+A separate request used the UTC bounds `2026-11-15T05:00:00.500Z` and `2026-11-15T06:00:00.750Z`. The published schema permits fractional seconds. Both a cache hit and a miss returned 05:00:00Z as a candidate, half a second before the requested earliest start. The frontend currently accepts whole-second bounds.
+
+### Default run and provisional engineering routes
+
+The initial live aggregate omits `run_id`. On November 14 it selected `B_spice_pgda_bruteforce_2026_2030`. A bounded Athena read on November 15 from 05:00 to 08:00 UTC returned three hourly samples. Searches and shared links carry the returned run ID.
+
+For an Odysseus trial, both `GET /api/v1/sites/{site_id}/pointing` and `POST /api/v1/mission/survival` returned 200 through the same-origin production frontend proxy. Response hashes matched direct backend reads. The pointing response distinguishes the requested instant from its hourly sample. The survival response records the test battery capacity, loads, panel and state of charge. These routes are provisional. The frontend uses neither trial output for site ranking.
+
 ### Two dates at one site
 
 The live frontend uses two bounded aggregate GETs, each with one site, the same run and `include=windows,metrics,criteria`. On run `B_spice_pgda_bruteforce_2026_2030`, Athena returned 0 hours of sunlight, 72 hours of Earth visibility and 0 hours of overlap from December 1 at 00:00 UTC to December 4 at 00:00 UTC. From December 18 at 00:00 UTC to December 21 at 00:00 UTC, all three totals were 72 hours. Both windows had complete hourly coverage and exclusive ends. The single joint interval in the second window reached both query boundaries. All 144 sets of hourly visibility flags matched the separate site windows. The point-limit diagnostic above does not affect these bounded reads.

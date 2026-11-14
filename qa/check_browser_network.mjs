@@ -46,7 +46,7 @@ try {
   });
 
   const terrain = page.getByRole("heading", { name: "Sun and Earth visibility above the terrain horizon" });
-  await page.goto(origin);
+  await page.goto(new URL("/compare", origin).href);
   await terrain.waitFor();
   assert.equal(await page.locator(".terrain-result article").count(), 2);
 

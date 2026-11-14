@@ -10,7 +10,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
 function windowOn(day, pin = false) {
   const date = "2026-01-0" + day;
   const spec = { run: "qa-day-" + day, start: date + "T00:00:00Z", at: date + "T02:00:00Z", end: date + "T04:00:00Z" };
-  const url = new URL(origin);
+  const url = new URL("/compare", origin);
   url.search = new URLSearchParams({ from: spec.start, to: spec.end, resolutionSeconds: "7200", run_id: spec.run });
   if (pin) {
     url.searchParams.set("view_site", "im2_athena");
@@ -65,7 +65,7 @@ async function exercise(lateSuccess) {
   }
   try {
     const firstRequest = page.waitForRequest(req => new URL(req.url()).searchParams.get("run_id") === initial.run);
-    await Promise.all([firstRequest, page.goto(origin, { waitUntil: "domcontentloaded" })]);
+    await Promise.all([firstRequest, page.goto(new URL("/compare", origin).href, { waitUntil: "domcontentloaded" })]);
     await busy.waitFor();
     await page.getByText("Request observation windows", { exact: true }).click();
     assert.ok(await load.isDisabled());

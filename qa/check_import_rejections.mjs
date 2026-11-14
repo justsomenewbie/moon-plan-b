@@ -34,10 +34,28 @@ try {
   const page = await browser.newPage({ timezoneId: "UTC", reducedMotion: "reduce" });
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto(origin);
+  await page.goto(new URL("/", origin).href);
+  assert.equal(await page.locator('input[type="file"]').count(), 0);
+  await page.getByRole("link", { name: "Open comparison tool" }).click();
+  await page.waitForURL(url => url.pathname === "/compare");
+  assert.equal(await page.locator("header").getByRole("button", { name: "Import data" }).count(), 0);
   const button = page.getByRole("button", { name: "Import data", exact: true, disabled: false });
+  await button.click();
+  const instructions = page.getByRole("dialog");
+  await instructions.getByRole("heading", { name: "Import a comparison dataset" }).waitFor();
+  assert.ok(await instructions.getByRole("heading").evaluate(el => document.activeElement === el));
+  assert.match(await instructions.innerText(), /5 MiB/);
+  assert.match(await instructions.innerText(), /frontend-draft-2/);
+  assert.match(await instructions.innerText(), /lunarnav-dataset-1/);
+  assert.equal(await instructions.getByRole("link").getAttribute("href"), "/data/demo.json");
+  await page.keyboard.press("Escape");
+  await instructions.waitFor({ state: "hidden" });
+  assert.ok(await button.evaluate(el => document.activeElement === el));
+
   async function choose(file) {
-    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), button.click()]);
+    await button.click();
+    const dialog = page.getByRole("dialog", { name: "Import a comparison dataset" });
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), dialog.getByLabel("Import JSON dataset").click()]);
     await chooser.setFiles(file);
   }
   await choose(fileURLToPath(gap));

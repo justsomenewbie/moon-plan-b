@@ -36,7 +36,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
   chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
 try {
   const page = await browser.newPage();
-  await page.goto(origin);
+  await page.goto(new URL("/compare", origin).href);
   await page.getByRole("button", { name: "Import data", disabled: false }).waitFor();
   await page.getByLabel("Import JSON dataset").setInputFiles({
     name: "coverage.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(dataset)),

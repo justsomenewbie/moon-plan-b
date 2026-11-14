@@ -37,7 +37,7 @@ export default function DateComparisonPage() {
         ? <TerrainDates key={terrainDatesHref(request)} initialRequest={request}
             onCompared={next => window.history.replaceState(window.history.state, "", terrainDatesHref(next))} />
         : <p role="status">{t("Loading dataset…")}</p>}
-      <a className="terrain-print" href="/#workspace">{t("Open the observation workspace")}</a>
+      <a className="terrain-print" href="/compare#workspace">{t("Open the observation workspace")}</a>
     </main>
   </div>;
 }
