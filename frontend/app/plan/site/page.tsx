@@ -9,6 +9,7 @@ import { LanguageControl, useLanguage } from "../../language";
 import { SiteFooter, SkyBackground } from "../../site-chrome";
 import { SiteHorizonSource, TimeRange } from "../../terrain-site-result";
 import ThemeControl from "../../theme-control";
+import B2CoordinateSource from "../../b2-coordinate-source";
 
 const fields = ["source", "site", "from", "to", "priority"] as const;
 const priorities = { joint: "Sun and Earth together", sun: "Sunlight", earth: "Earth visibility" } as const;
@@ -66,6 +67,7 @@ function SiteReport() {
     <section className="space-y-3" aria-labelledby="site-location">
       <h2 id="site-location">{text("Reported coordinates", "Tọa độ trong danh mục")}</h2>
       <p>{t("Planetocentric latitude")} {site.lat_deg}° · {text("East longitude", "Kinh độ đông")} {site.lon_deg}° · MOON_ME</p>
+      {source === "saved-b2" && <B2CoordinateSource siteId={site.id} />}
       <a href={lrocSiteUrl({ latitude: site.lat_deg, longitude: site.lon_deg })} target="_blank" rel="noreferrer">{t("View this site in LROC imagery ↗")}</a>
     </section>
     <section className="space-y-3" aria-labelledby="site-sources">

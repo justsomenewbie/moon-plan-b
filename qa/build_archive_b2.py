@@ -68,12 +68,14 @@ def build(source):
     require(stamps[-1] == end, "Exclusive end")
     sites = {s["id"]: s for s in catalog["sites"]}
     output = {}
+    site_records = {}
     for sid in ids:
         digest = manifest["files"][f"sites/{sid}/windows.json"]
         w = parse((source / f"windows-{sid}.json").read_bytes(), digest, sid)
         require(w["site_id"] == w["site_record"]["id"] == sid and w["params_fingerprint"] == manifest["params_fingerprint"], f"Site identity: {sid}")
         require((w["range_start_utc"], w["range_end_utc"], w["n_samples"], w["step_s"]) == (start, end, samples, 3600), f"Site range: {sid}")
         require(all(w["site_record"][k] == sites[sid][k] for k in ("name", "group", "lat_deg", "lon_deg", "dem_source", "horizon_method")), f"Site metadata: {sid}")
+        site_records[sid] = w["site_record"]
         edges = {k: read_series(w[k], sid + "/" + k, stamps, samples) for k in ("sun", "earth", "both")}
         a, b, both = (positives(edges[k], samples) for k in ("sun", "earth", "both"))
         require(all((sun and earth) == overlap for sun, earth, overlap in zip(a, b, both)), f"Joint visibility: {sid}")
@@ -84,7 +86,11 @@ def build(source):
     archive = {"schema": "lunarnav-hourly-visibility-1", "runId": RUN, "manifestSha256": MANIFEST_SHA,
                "catalogSha256": CATALOG_SHA, "start": start, "end": end, "stepSeconds": 3600, "sampleCount": samples,
                "sites": output}
-    return {"manifest.json": manifest_raw, "catalog.json": catalog_raw,
+    # Each window contains the original site record. The manifest pins the full sites.json, including order and formatting.
+    records = {"format_version": 1, "sites": [site_records[sid] for sid in params["site_ids"]]}
+    records_raw = (json.dumps(records, sort_keys=True, indent=1) + "\n").encode()
+    require(hashlib.sha256(records_raw).hexdigest() == manifest["files"]["sites.json"], "Original sites.json checksum")
+    return {"manifest.json": manifest_raw, "catalog.json": catalog_raw, "sites.json": records_raw,
             "visibility.json": (json.dumps(archive, separators=(",", ":")) + "\n").encode()}
 
 

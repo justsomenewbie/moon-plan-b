@@ -10,6 +10,8 @@ import { TimeRange } from "../terrain-site-result";
 import { isMock } from "../../lib/api/client";
 import { LanguageControl, useLanguage } from "../language";
 import ThemeControl from "../theme-control";
+import B2CoordinateSource from "../b2-coordinate-source";
+import { usesSmoothSphere } from "../../lib/site-horizon";
 
 const files = Object.entries(manifest.files);
 const runFiles = files.filter(([path]) => !path.includes("/"));
@@ -55,7 +57,7 @@ export default function DataPage() {
         <h2 id="b2-title">{text("Run B2 · hourly visibility for all 23 sites", "Lần chạy B2 · tầm nhìn theo giờ cho cả 23 địa điểm")}</h2>
         <p className="lead">{text("Compare sites or search landing times throughout five model years. The saved archive includes hourly Sun, Earth and joint visibility.", "So sánh địa điểm hoặc tìm giờ hạ cánh trong suốt 5 năm mô hình. Kho lưu trữ có trạng thái nhìn thấy Mặt Trời, Trái Đất và cả hai theo giờ.")}</p>
         <p><TimeRange start={archiveB2Run.start} end={archiveB2Run.end} /> · {text("end exclusive", "không gồm mốc cuối")}</p>
-        <p><code>{archiveB2Run.runId}</code><br/><code className="hash">SHA-256 {archiveB2Run.manifestSha256}</code></p>
+        <p><code>{archiveB2Run.runId}</code><br/><code className="hash">manifest.json · SHA-256 {archiveB2Run.manifestSha256}</code></p>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           <a href="/plan?source=saved-b2&mode=sites">{text("Compare sites with run B2", "So sánh địa điểm với lần chạy B2")}</a>
           <a href="/plan?source=saved-b2&mode=dates">{text("Find landing hours with run B2", "Tìm giờ hạ cánh với lần chạy B2")}</a>
@@ -63,6 +65,7 @@ export default function DataPage() {
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           <a href="/data/run-b2/visibility.json" download="run-b2-visibility.json">{text("Hourly visibility archive (JSON)", "Kho tầm nhìn theo giờ (JSON)")}</a>
           <a href="/data/run-b2/catalog.json" download="run-b2-catalog.json">{text("B2 site catalog (JSON)", "Danh mục địa điểm B2 (JSON)")}</a>
+          <a href="/data/run-b2/sites.json" download="run-b2-sites.json">{text("Original coordinate records (JSON)", "Hồ sơ tọa độ gốc (JSON)")}</a>
           <a href="/data/run-b2/manifest.json" download="run-b2-manifest.json">{text("B2 source manifest (JSON)", "Manifest nguồn B2 (JSON)")}</a>
         </div>
       </section>
@@ -84,7 +87,8 @@ export default function DataPage() {
           </select>
         </label>
         <p>{text("Planetocentric latitude", "Vĩ độ tâm Mặt Trăng")} {site.lat_deg}° · {text("east longitude", "kinh độ Đông")} {site.lon_deg}° · MOON_ME</p>
-        {site.horizon_method === "flat" && <p className="data-notice">{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
+        <B2CoordinateSource siteId={site.id} />
+        {usesSmoothSphere({ horizonMethod: site.horizon_method, demSource: site.dem_source }) && <p className="data-notice">{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
         {fileList(siteFiles)}
       </section>
       <section className="space-y-3" aria-labelledby="bundled-data">
