@@ -9,7 +9,7 @@ export type SiteComparisonRequest = { runId: string; siteIds: readonly [string, 
 
 const HOUR = 3600000;
 const kinds = ["sun", "earth", "both"] as const;
-const fields = ["pct_sun", "pct_earth", "pct_both", "pct_sun_no_earth"] as const;
+export const rankingMetrics = ["pct_sun", "pct_earth", "pct_both", "pct_sun_no_earth"] as const;
 const weights = { pct_sun: 0.4, pct_earth: 0.3, pct_both: 0.3, pct_sun_no_earth: 0 };
 
 function check(condition: unknown): asserts condition {
@@ -50,7 +50,7 @@ function checkSite(site: Schemas["CompareSite"], rank: Schemas["RankingRow"], st
   let coverage: Coverage = "complete";
   if (spans.every(list => !list.length)) coverage = "missing";
   else if (spans.some(list => list.reduce((sum, w) => sum + (w.end - w.start), 0) !== end - start)) coverage = "partial";
-  for (const field of fields) check(within(metrics[field], 100) && close(rank[field], metrics[field]));
+  for (const field of rankingMetrics) check(within(metrics[field], 100) && close(rank[field], metrics[field]));
   check(metrics.pct_both + 0.000002 >= metrics.pct_sun + metrics.pct_earth - 100 &&
     metrics.pct_both <= Math.min(metrics.pct_sun, metrics.pct_earth) + 0.000002 &&
     close(metrics.pct_sun_no_earth, metrics.pct_sun - metrics.pct_both));
@@ -117,7 +117,7 @@ export async function compareSites(request: SiteComparisonRequest, signal?: Abor
   const start = sourceTime(data.range.start), end = sourceTime(data.range.end), step = data.step_s * 1000;
   check(start <= first && first - start < step && end >= last && end - last < step &&
     Number.isSafeInteger(data.range.n_samples) && data.range.n_samples > 0 && end - start === step * data.range.n_samples);
-  check(data.weights && fields.every(field => (data.weights[field] ?? 0) === weights[field]) &&
+  check(data.weights && rankingMetrics.every(field => (data.weights[field] ?? 0) === weights[field]) &&
     data.sites && Object.keys(data.sites).length === 2 && siteIds.every(id => Object.hasOwn(data.sites, id)) &&
     Array.isArray(data.ranking) && data.ranking.length === 2);
   const coverageBySite: Record<string, Coverage> = Object.create(null);
@@ -127,7 +127,7 @@ export async function compareSites(request: SiteComparisonRequest, signal?: Abor
       typeof row.name === "string" && row.name.length && typeof row.group === "string" && strings(row.reasons));
     const observed = checkSite(data.sites[row.site_id], row, start, end, step);
     coverageBySite[row.site_id] = observed.coverage;
-    check(close(row.score, fields.reduce((sum, f) => sum + weights[f] * row[f], 0)));
+    check(close(row.score, rankingMetrics.reduce((sum, f) => sum + weights[f] * row[f], 0)));
     if (previous) {
       const prior = data.ranking[i - 1];
       check(row.score <= prior.score + 0.000002);

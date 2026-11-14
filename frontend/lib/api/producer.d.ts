@@ -181,6 +181,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ranking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ranking table of all sites
+         * @description source=summary: full range + the run's rank weights (default 0.4/0.3/0.3) -> summary.csv values verbatim; otherwise recomputed (source=computed) with lunarnav's scoring and tie-break (shorter longest_dark_h, then site_id). With `group`, only that group is listed and rank is the position in this table.
+         */
+        get: operations["getRanking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2338,6 +2358,187 @@ export interface components {
             earth?: components["schemas"]["ClippedWindow"][];
             both?: components["schemas"]["ClippedWindow"][];
         };
+        /**
+         * @example {
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "step_s": 3600,
+         *       "precision_h": 1,
+         *       "range": {
+         *         "start": "2026-01-01T00:00:00Z",
+         *         "end": "2026-04-01T00:00:00Z",
+         *         "step_s": 3600,
+         *         "n_samples": 2160
+         *       },
+         *       "weights": {
+         *         "pct_sun": 0.4,
+         *         "pct_earth": 0.3,
+         *         "pct_both": 0.3
+         *       },
+         *       "source": "summary",
+         *       "ranking": [
+         *         {
+         *           "rank": 1,
+         *           "site_id": "ref_connecting_ridge_c1",
+         *           "name": "Shackleton-de Gerlache connecting ridge, point C1",
+         *           "group": "reference",
+         *           "score": 71.162037,
+         *           "pct_sun": 98.564815,
+         *           "pct_earth": 53.611111,
+         *           "pct_both": 52.175926,
+         *           "pct_sun_no_earth": 46.388889,
+         *           "longest_dark_h": 26,
+         *           "longest_dark_truncated": false,
+         *           "longest_comms_gap_h": 326,
+         *           "longest_comms_gap_truncated": false,
+         *           "mean_power_tracking": 0.971631,
+         *           "reasons": [
+         *             "Sun visible 98.6% of the time",
+         *             "Earth in view 53.6%",
+         *             "Sun and Earth together 52.2%",
+         *             "longest night only 26 h",
+         *             "longest comms gap 326 h"
+         *           ]
+         *         },
+         *         {
+         *           "rank": 2,
+         *           "site_id": "ref_shackleton_rim",
+         *           "name": "Shackleton crater rim, point S",
+         *           "group": "reference",
+         *           "score": 70.185186,
+         *           "pct_sun": 97.268519,
+         *           "pct_earth": 52.268519,
+         *           "pct_both": 51.990741,
+         *           "pct_sun_no_earth": 45.277778,
+         *           "longest_dark_h": 29,
+         *           "longest_dark_truncated": false,
+         *           "longest_comms_gap_h": 334,
+         *           "longest_comms_gap_truncated": false,
+         *           "mean_power_tracking": 0.956751,
+         *           "reasons": [
+         *             "Sun visible 97.3% of the time",
+         *             "Earth in view 52.3%",
+         *             "Sun and Earth together 52.0%",
+         *             "longest night only 29 h",
+         *             "longest comms gap 334 h"
+         *           ]
+         *         },
+         *         {
+         *           "rank": 3,
+         *           "site_id": "apollo11",
+         *           "name": "Apollo 11 LM Eagle (Tranquility Base)",
+         *           "group": "apollo",
+         *           "score": 65.680555,
+         *           "pct_sun": 50.972222,
+         *           "pct_earth": 100,
+         *           "pct_both": 50.972222,
+         *           "pct_sun_no_earth": 0,
+         *           "longest_dark_h": 354,
+         *           "longest_dark_truncated": false,
+         *           "longest_comms_gap_h": 0,
+         *           "longest_comms_gap_truncated": false,
+         *           "mean_power_tracking": 0.508127,
+         *           "reasons": [
+         *             "Sun visible 51.0% of the time",
+         *             "Earth in view 100.0%",
+         *             "Sun and Earth together 51.0%",
+         *             "longest night 354 h"
+         *           ]
+         *         },
+         *         {
+         *           "rank": 4,
+         *           "site_id": "a3_de_gerlache_rim_2",
+         *           "name": "Artemis III region: de Gerlache Rim 2",
+         *           "group": "south_pole",
+         *           "score": 35.12963,
+         *           "pct_sun": 41.851852,
+         *           "pct_earth": 49.027778,
+         *           "pct_both": 12.268519,
+         *           "pct_sun_no_earth": 29.583333,
+         *           "longest_dark_h": 430,
+         *           "longest_dark_truncated": true,
+         *           "longest_comms_gap_h": 352,
+         *           "longest_comms_gap_truncated": false,
+         *           "mean_power_tracking": 0.401216,
+         *           "reasons": [
+         *             "Sun visible 41.9% of the time",
+         *             "Earth in view 49.0%",
+         *             "Sun and Earth together 12.3%",
+         *             "longest night 430 h+",
+         *             "longest comms gap 352 h"
+         *           ]
+         *         },
+         *         {
+         *           "rank": 5,
+         *           "site_id": "a3_haworth",
+         *           "name": "Artemis III region: Haworth",
+         *           "group": "south_pole",
+         *           "score": 23.662037,
+         *           "pct_sun": 32.87037,
+         *           "pct_earth": 35.046296,
+         *           "pct_both": 0,
+         *           "pct_sun_no_earth": 32.87037,
+         *           "longest_dark_h": 479,
+         *           "longest_dark_truncated": false,
+         *           "longest_comms_gap_h": 445,
+         *           "longest_comms_gap_truncated": false,
+         *           "mean_power_tracking": 0.322023,
+         *           "reasons": [
+         *             "Sun visible 32.9% of the time",
+         *             "Earth in view 35.0%",
+         *             "longest night 479 h",
+         *             "longest comms gap 445 h"
+         *           ]
+         *         },
+         *         {
+         *           "rank": 6,
+         *           "site_id": "change6",
+         *           "name": "Chang'e-6 lander (Statio Tianjiang, Apollo basin)",
+         *           "group": "far_side",
+         *           "score": 19.888889,
+         *           "pct_sun": 49.722222,
+         *           "pct_earth": 0,
+         *           "pct_both": 0,
+         *           "pct_sun_no_earth": 49.722222,
+         *           "longest_dark_h": 353,
+         *           "longest_dark_truncated": false,
+         *           "longest_comms_gap_h": 2160,
+         *           "longest_comms_gap_truncated": true,
+         *           "mean_power_tracking": 0.494577,
+         *           "reasons": [
+         *             "Sun visible 49.7% of the time",
+         *             "Earth in view 0.0%",
+         *             "longest night 353 h",
+         *             "no direct-to-Earth link (far side or blocked by terrain)"
+         *           ]
+         *         }
+         *       ]
+         *     }
+         */
+        RankingResponse: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            /**
+             * @description = step_s / 3600. Every boundary and "hours until" value is accurate to +- this many hours.
+             * @example 1
+             */
+            precision_h: number;
+            range: components["schemas"]["TimeRange"];
+            weights: components["schemas"]["RankWeights"];
+            /**
+             * @description summary = values of summary.csv verbatim (full range, default weights); computed = recomputed for this range/weights
+             * @enum {string}
+             */
+            source: "summary" | "computed";
+            ranking: components["schemas"]["RankingRow"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -3201,6 +3402,101 @@ export interface operations {
             };
             /** @description Database unavailable (SERVICE_UNAVAILABLE) */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getRanking: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Run to read; default = the run flagged is_default (GET /api/v1/runs)
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id?: string;
+                /** @description Only rank sites of this group */
+                group?: string;
+                /** @description Default: run start */
+                start?: string;
+                /** @description EXCLUSIVE end; default: run end */
+                end?: string;
+                /** @description Comma separated metric:weight pairs (weights 0..1, each metric at most once, at least one > 0), e.g. pct_sun:0.4,pct_earth:0.3,pct_both:0.3. Metrics: pct_sun, pct_earth, pct_both, pct_sun_no_earth */
+                weights?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RankingResponse"];
+                };
+            };
+            /** @description Not Modified: the ETag sent in If-None-Match is current (empty body) */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
