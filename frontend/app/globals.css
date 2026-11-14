@@ -75,6 +75,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .lunar-frame { position: relative; }
 .lunar-frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; background: #050609; touch-action: pan-y pinch-zoom; cursor: grab; }
 .lunar-frame canvas:active { cursor: grabbing; }
+.lunar-frame:has(canvas:focus-visible) { outline: 3px solid var(--earth); outline-offset: 4px; }
 .lunar-figure figcaption > button { display: block; margin: 0 auto 8px; font-size: .82rem; }
 .globe-marker { position: absolute; width: 14px; height: 14px; border: 2px solid #ffde83; border-radius: 50%; box-shadow: 0 0 0 1px #171717, inset 0 0 0 1px #171717; transform: translate(-50%, -50%); pointer-events: none; }
 .globe-locator { margin: 12px auto 0; text-align: start; font-size: .9rem; overflow-wrap: anywhere; }
