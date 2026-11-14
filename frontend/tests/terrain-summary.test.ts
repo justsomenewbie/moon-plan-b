@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiError, getTerrainAggregate, getTerrainWindow, validateTerrainTargetWindow } from "../lib/api/client.ts";
-import { guideObservation } from "../lib/guide-observation.ts";
+import { guideObservation, nextGuideUpdate } from "../lib/guide-observation.ts";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary.ts";
 
 const stamp = (hour: number) => `2026-01-01T${String(hour).padStart(2, "0")}:00:00Z`;
@@ -238,6 +238,20 @@ test("saved guide reports only joint visibility and honors exclusive saved range
   assert.equal(read("2026-11-21T00:00:00Z", "2026-11-14T00:00:00Z"), null);
   assert.equal(read("2026-11-28T00:00:00Z"), null);
   assert.equal(read("2026-11-18T00:00:00Z", "unknown"), null);
+});
+
+test("schedules guide updates at the selected model's sample and coverage boundaries", () => {
+  const terrain = parseTerrainSummary(example());
+  const start = Date.parse(stamp(0));
+  const range = { ...terrain.range, end: new Date(start + 100 * 60_000).toISOString() };
+  const shortened = { ...terrain, range };
+  assert.equal(nextGuideUpdate(start - 1, "", shortened), start);
+  assert.equal(nextGuideUpdate(start + 1, "", shortened), Date.parse(stamp(1)));
+  assert.equal(nextGuideUpdate(Date.parse(stamp(1)), "", shortened), Date.parse(range.end));
+  assert.equal(nextGuideUpdate(Date.parse(range.end), "", shortened), null);
+  const secondWeek = "2026-11-21T00:00:00Z";
+  assert.equal(nextGuideUpdate(Date.parse(secondWeek) - 500, secondWeek, null), Date.parse(secondWeek));
+  assert.equal(nextGuideUpdate(Date.parse(secondWeek), "2026-11-14T00:00:00Z", null), null);
 });
 
 function plotted(hours = [0, 1, 2, 3, 4, 5, 7]) {

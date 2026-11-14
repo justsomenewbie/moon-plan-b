@@ -44,6 +44,7 @@ export default function Home() {
       <section className="home-about" id="about" tabIndex={-1} aria-labelledby="home-about-title">
         <h2 id="home-about-title">{t("About Moon Plan B")}</h2>
         <p>{t("At a lunar landing site, the Sun and Earth can rise above the local horizon at different times. Moon Plan B compares sites and dates to find when both are in view.")}</p>
+        <a href="#team">{t("Meet the team behind Moon Plan B")}</a>
       </section>
       <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
         <h2 id="home-guide-title">{t("Quick guide")}</h2>
