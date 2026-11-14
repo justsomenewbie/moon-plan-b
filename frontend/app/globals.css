@@ -66,9 +66,9 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
   .home-about { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
 }
 .home-guide { margin-bottom: 32px; max-width: 48ch; padding-inline-start: 24px; border-inline-start: 1px solid var(--line); font-size: .95rem; }
-.home-team { max-width: 48rem; margin: 28px 0; }
+.home-team { margin: 28px 0; padding-top: 24px; border-top: 1px solid var(--line); }
 .home-team h2 { font-size: 1.2rem; }
-.home-team ul { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem 1.2rem; margin-top: .75rem; }
+.home-team ul { max-width: 48rem; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem 1.2rem; margin-top: .75rem; }
 .home-team li { border-top: 1px solid var(--line); padding-top: .5rem; overflow-wrap: anywhere; }
 .home-guide h2 { font-size: 1.2rem; }
 .home-guide a { display: inline-block; margin-top: 12px; }
