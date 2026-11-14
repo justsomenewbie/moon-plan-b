@@ -303,6 +303,12 @@ Pinned offline recovery rejected six incompatible exports, retained the retry UR
 
 Chromium submitted the [November and December Athena searches](BACKEND_RECONCILIATION.md#alternative-landing-dates) to the team service. The form issued one POST per submission and none on opening or editing. Opening the first candidate returned its three-hour interval through a pinned GET. The December search displayed overlapping rejection counts and zero candidates. A separate intercepted replay exercised site-switch cancellation and the Vietnamese interface at 320 CSS pixels. Native Safari 26.6.2 confirmed the two November starts, retained the result after switching to Vietnamese, opened the first three-hour mission in a separate tab and closed the isolated test session.
 
+### Catalog ranking and site-specific horizon
+
+Chromium compared Apollo 11 and Haworth for November 14–15 UTC. Opening the form and selecting sites made no ranking request. Showing catalog ranks produced one GET with the pair’s run, dates and weights. An injected 503 left the pair visible, and retry recovered with one additional GET. Editing the pair cleared the prior ranks. An isolated native Safari 26.6.2 session displayed the same 10th and 17th positions in English and Vietnamese, then verified sixth and seventh for the [Malapert/C1 rounded-score case](BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). The session closed after the checks.
+
+For Apollo 11 on November 15 at 00:00–03:00 UTC, the producer reported a flat horizon outside PGDA coverage. Chromium verified the smooth-sphere legend and source notice on the live result and after importing the same response locally. Switching to Vietnamese at 320 CSS pixels preserved them and made no additional API request.
+
 ## Run-pinned CSV downloads
 
 Chromium downloaded six real CSV attachments for bounded result cards and matched their bytes and filenames to direct producer responses. From 00:00 up to 03:00 UTC on November 15, Athena and Odysseus each yielded three hourly observation rows. Two Athena date cards opened distinct ranges under the same producer filename. An injected HTTP 422 opened the problem in a separate tab and preserved the original report. The [repeatable browser check](../qa/check_terrain_csv.mjs) also covers evaluated bounds after clamping, a custom site ID and the absence of remote downloads on local imports and in mock mode.
