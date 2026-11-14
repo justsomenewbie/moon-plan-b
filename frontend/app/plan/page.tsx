@@ -270,7 +270,9 @@ export default function PlanPage() {
   return <div className="app-shell"><SkyBackground />
     <a className="skip-link" href="#plan-title">{t("Skip to content")}</a>
     <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label={t("Main")}><a href="/data">{t("Data catalog")}</a><a href="/compare">{t("Compare")}</a><LanguageControl /><ThemeControl /></nav></header>
-    <main className="plan-main"><h1 id="plan-title" tabIndex={-1}>{t("Plan a lunar visit")}</h1>{seed && <Planner key={seed.toString()} seed={seed} />}</main>
+    <main className="plan-main"><h1 id="plan-title" tabIndex={-1}>{t("Plan a lunar visit")}</h1>
+      <p>{t("Already have dates? Compare sites for that period. Already have a site? Look for a time to land there.")}</p>
+      {seed && <Planner key={seed.toString()} seed={seed} />}</main>
     <SiteFooter />
   </div>;
 }

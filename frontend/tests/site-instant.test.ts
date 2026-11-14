@@ -46,7 +46,7 @@ test("reads the containing model sample with pinned IDs and preserves visibility
   const last = await getSiteInstant(run, site, inside, 3600, time);
   assert.equal(last.t, inside);
   assert.equal(last.sample_utc, time);
-  assert.deepEqual(last.sun, { ...sun, fraction: 0.08 }); assert.deepEqual(last.earth, earth); assert.equal(last.both_visible, true);
+  assert.deepEqual(last.sun, { ...sun, fraction: 0.08, power_tracking: 0.08 }); assert.deepEqual(last.earth, earth); assert.equal(last.both_visible, true);
   for (const at of ["2026-11-19T15:00", "2026-11-19T15:00:00", time]) {
     assert.equal((await getSiteInstant(run, site, at, 3600, time)).t, time);
   }
@@ -76,6 +76,10 @@ test("preserves supplied tracking irradiance and disc fraction independently of 
     [{ fraction: 1.1, irradiance_tracking_wm2: 10 }, { irradiance_tracking_wm2: 10 }],
     [{ fraction: 0.5, irradiance_tracking_wm2: -1 }, { fraction: 0.5 }],
     [{ fraction: null, irradiance_tracking_wm2: "259.149" }, {}],
+    [{ power_horizontal: 0.079297, power_tracking: 1 }, { power_horizontal: 0.079297, power_tracking: 1 }],
+    [{ power_horizontal: 0, power_tracking: 0 }, { power_horizontal: 0, power_tracking: 0 }],
+    [{ power_horizontal: -0.1, power_tracking: 0.5 }, { power_tracking: 0.5 }],
+    [{ power_horizontal: 1.01, power_tracking: "0.5" }, {}],
     [{}, {}],
   ] as const;
   for (const [input, expected] of cases) {

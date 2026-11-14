@@ -1,6 +1,6 @@
 # Current handoff — 15 November 2026
 
-Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. The inspector and table link to the selected site’s saved report or hourly live observations. Homepage `Compare` sits beside the quick guide. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers, saved site reports and date presets [preserve the live run](qa/check_planner_run_links.mjs) on return. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
+Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. The inspector and table link to the selected site’s saved report or hourly live observations. The quick guide includes an optional illustrated planner example. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers, saved site reports and date presets [preserve the live run](qa/check_planner_run_links.mjs) on return. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
 
 ## Live comparison
 
@@ -14,9 +14,9 @@ Imports, saved links, EN/VI, printing and sources work. View from switches or ov
 
 Comparison globes expand from 1×, support location-centered zoom and retain the selected site. Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md).
 
-Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup labels optional solar-disc fraction and Sun-facing irradiance. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup compares flat and Sun-facing panels. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Reference cards appear on the homepage and comparison page. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Reference cards remain on both pages. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
