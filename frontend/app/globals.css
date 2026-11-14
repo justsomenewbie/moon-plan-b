@@ -66,6 +66,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .reference-resources { padding: 28px 0; border-top: 1px solid var(--line); }
 .observed-week { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 .week-selection { display: block; max-width: 26rem; margin-top: 14px; }
+.week-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .week-sites { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 24px; margin: 16px 0; }
 .week-hours { font-size: 1.55rem; font-variant-numeric: tabular-nums; }
 .week-track { position: relative; height: 7px; margin: 6px 0; background: var(--grid); }
@@ -265,6 +266,15 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media print {
   .qa-inspector, .observed-week { display: none; }
+  .app-shell:is([data-print-report="saved"], :not([data-print-report]):has(> #observed-week:target)) {
+    padding: 6mm;
+    > :not(.app-header, .observed-week, .app-footer), .app-footer p:first-child { display: none; }
+    > .observed-week { display: block; border: 0; }
+    .week-selection, .week-actions, .week-track { display: none; }
+    .week-sites { grid-template-columns: 1fr 1fr; }
+    .week-sites article { break-inside: avoid; }
+    .observed-week details a::after { content: " (" attr(href) ")"; font-size: 9pt; overflow-wrap: anywhere; }
+  }
   .request-panel, .lunar-figure, .home-guide, .hero-actions, .reference-resources, .eyebrow { display: none; }
   .intro { display: block; }
   .intro h1 { font-size: 26pt; max-width: none; }

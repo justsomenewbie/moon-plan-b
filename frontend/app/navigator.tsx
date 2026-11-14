@@ -205,13 +205,42 @@ export default function Navigator() {
     } catch { setMessage("Copy the selection link below. Imported datasets must be supplied separately; a localhost link opens only on this computer."); }
   }
 
-  function printReport() {
+  const reportShell = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const shell = reportShell.current;
+    if (!shell) return;
+    const openedForPrint = new Set<HTMLDetailsElement>();
+    const beforePrint = () => {
+      if (!shell.dataset.printReport) {
+        const { hash, search } = window.location;
+        const params = new URLSearchParams(search);
+        const savedLink = !hash && params.size === 1 && params.get("saved") === savedResultFromUrl(params);
+        shell.dataset.printReport = hash === "#observed-week" || savedLink ? "saved" : "workspace";
+      }
+      const selector = shell.dataset.printReport === "saved" ? "#observed-week details:not([open])" : "details:not([open])";
+      for (const details of shell.querySelectorAll<HTMLDetailsElement>(selector)) {
+        openedForPrint.add(details);
+        details.open = true;
+      }
+    };
+    const afterPrint = () => {
+      for (const details of openedForPrint) details.open = false;
+      openedForPrint.clear();
+      delete shell.dataset.printReport;
+    };
+    window.addEventListener("beforeprint", beforePrint);
+    window.addEventListener("afterprint", afterPrint);
+    return () => {
+      window.removeEventListener("beforeprint", beforePrint);
+      window.removeEventListener("afterprint", afterPrint);
+      afterPrint();
+    };
+  }, []);
+
+  function printReport(report: "saved" | "workspace") {
     setPlaying(false);
-    const details = Array.from(document.querySelectorAll("details"));
-    const before = details.map((d) => d.open);
-    details.forEach((d) => { d.open = true; });
+    if (reportShell.current) reportShell.current.dataset.printReport = report;
     window.print();
-    details.forEach((d, i) => { d.open = before[i]; });
   }
 
   function findMatch() {
@@ -223,7 +252,7 @@ export default function Navigator() {
     } else setMessage(result.unresolvedBefore ? "No definite later match. Some published candidates have missing or near-threshold assessments." : "No later published candidate meets this criterion. Dates outside this dataset were not searched.");
   }
 
-  return <div className="app-shell">
+  return <div className="app-shell" ref={reportShell}>
     <a className="skip-link" href={comparisonHref}>{t("Skip to comparison")}</a>
     <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
       <nav aria-label={t("Main")}>
@@ -255,7 +284,7 @@ export default function Navigator() {
       </div><MoonGlobe primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
         alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
     </section>
-    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} />
+    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")} />
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
@@ -283,7 +312,7 @@ export default function Navigator() {
         <div className="field">{t("Window")}<p className="fixed-value">{durationHours(a)} {t("hours")}{" "}<span className="muted text-sm">{t("from the dataset")}</span></p></div>
         <label className="field">{t("Joint-window criterion")}<select value={selection.h} onChange={(e) => { setSelection({ ...selection, h: Number(e.target.value) }); setShareUrl(""); replaceUrl(window.location.pathname); }}>{data.criteriaHours.map((h) => <option value={h} key={h}>{h} {t("hours")}</option>)}</select></label>
         {selection.mode === "dates" ? <button className="text-button find-match" onClick={findMatch}>{t("Find a later published match")}</button> : null}
-        <div className="control-actions"><button type="button" className="button primary share-comparison" disabled={!b} onClick={() => void share()}>{t("Share comparison")}</button><button className="button outline" onClick={printReport}>{t("Print report")}</button></div>
+        <div className="control-actions"><button type="button" className="button primary share-comparison" disabled={!b} onClick={() => void share()}>{t("Share comparison")}</button><button className="button outline" onClick={() => printReport("workspace")}>{t("Print report")}</button></div>
         {shareUrl ? <label className="field share-field">{t("Selection link")}<input readOnly value={shareUrl} onFocus={(e) => e.target.select()} /></label> : null}
         <p className="muted text-xs mt-5">{t("Only supplied windows are selectable. Requests include a bounded UTC range and desired resolution; the server supplies the observations.")}</p>
         <button className="text-button mt-4" onClick={() => void loadDemo(true, requestWindow, sharedJobId)}>{t("Reload current window")}</button>

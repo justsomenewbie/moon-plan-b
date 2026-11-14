@@ -15,7 +15,7 @@ function weekLabel(week: typeof weeks[number]) {
   return `${week.startUtc.slice(0, 10)} → ${lastDay} UTC`;
 }
 
-export default function ObservedWeek({ selection, onSelect }: { selection: string; onSelect: (value: string) => void }) {
+export default function ObservedWeek({ selection, onSelect, onPrint }: { selection: string; onSelect: (value: string) => void; onPrint: () => void }) {
   const { t, locale } = useLanguage();
   const selectedWeek = weeks.find(week => week.startUtc === selection);
 
@@ -30,7 +30,10 @@ export default function ObservedWeek({ selection, onSelect }: { selection: strin
           <option key={site.id} value={site.id}>{site.name}</option>)}</optgroup>
       </select>
     </label>
-    <a href={`?saved=${encodeURIComponent(selection)}#observed-week`} target="_blank" rel="noreferrer">{t("Open this saved result in a new tab")} ↗</a>
+    <div className="week-actions">
+      <button className="button outline" type="button" onClick={onPrint}>{t("Print saved result")}</button>
+      <a href={`?saved=${encodeURIComponent(selection)}#observed-week`} target="_blank" rel="noreferrer">{t("Open this saved result in a new tab")} ↗</a>
+    </div>
     <div className="week-sites" aria-live="polite">
       {(selectedWeek ? [selectedWeek] : weeks).map(week => week.sites.filter(site => selectedWeek || site.id === selection).map(site => {
         const interval = site.overlap;
