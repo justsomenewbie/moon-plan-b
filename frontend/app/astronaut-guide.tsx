@@ -61,8 +61,8 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
   const [imageMode, setImageMode] = useState<"motion" | "still" | "text">("motion");
   const [now, setNow] = useState<number | null>(null);
   function recoverImage(image: HTMLImageElement) {
-    if (image.currentSrc.endsWith("/guide-copper-wave.webp")) setImageMode("still");
-    else if (image.currentSrc.endsWith("/guide-copper-rest.webp")) setImageMode("text");
+    if (image.currentSrc.endsWith("/guide-visor-wave.webp")) setImageMode("still");
+    else if (image.currentSrc.endsWith("/guide-visor-rest.webp")) setImageMode("text");
   }
   const [guideChoice, setGuideChoice] = useState<GuideScope | null>(null);
   useEffect(() => {
@@ -100,8 +100,8 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
       {imageMode === "text" ? <span className={styles.helpLabel}>{copy.help}</span> : <picture>
         {imageMode === "motion" && <source media="screen and (prefers-reduced-motion: no-preference) and (forced-colors: none)"
-          srcSet="/images/guide-copper-wave.webp" />}
-        <img className={imageMode === "motion" ? styles.animated : undefined} src="/images/guide-copper-rest.webp"
+          srcSet="/images/guide-visor-wave.webp" />}
+        <img className={imageMode === "motion" ? styles.animated : undefined} src="/images/guide-visor-rest.webp"
           alt="" width="60" height="70" onError={event => recoverImage(event.currentTarget)}
           ref={image => {
             // The browser can finish a failed image request before hydration attaches onError.
