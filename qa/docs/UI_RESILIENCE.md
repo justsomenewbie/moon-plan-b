@@ -1,6 +1,6 @@
 # Frontend resilience — manual evidence checklist
 
-Status: **NOT RUN in this QA task**. Node source integration tests cover the importer and chart paths, not a rendered browser. Record commit, dataset hash, UTC test time, browser/version, viewport, route, exact injection, observed result and evidence path for every row. Failures go to `../BUG_LOG.md` with owner and retest commit.
+The table records browser evidence. Minh’s original QA run exercised the importer and chart paths in Node. Record commit, dataset hash, UTC test time, browser/version, viewport, route, exact injection, observed result and evidence path for every row. Failures go to `../BUG_LOG.md` with owner and retest commit.
 
 | ID | Procedure | Expected result | Status |
 | --- | --- | --- | --- |
@@ -10,10 +10,18 @@ Status: **NOT RUN in this QA task**. Node source integration tests cover the imp
 | UI-04 | Import partial and missing fixtures | Unknown text and null metrics, broken lines across missing samples; no zero-filled darkness | NOT RUN |
 | UI-05 | Import crossing_wrap; inspect both sites and zero values | North seam does not draw a full-width spike; exact-zero displayed accurately | NOT RUN |
 | UI-06 | Switch English/Vietnamese and share/reopen selection | Same UTC `Z`, source identity, degrees/km and dataset version; English default retained | NOT RUN |
-| UI-07 | Block globe texture, simulate image decode failure and unavailable Canvas 2D context separately | Fallback/retry or explicit error; numeric tables and SVG charts still usable, selection retained | NOT RUN |
+| UI-07 | Block globe texture, simulate image decode failure and unavailable Canvas 2D context separately | Fallback/retry or explicit error; numeric tables and SVG charts still usable, selection retained | [PASS in Chromium](#ui-07-browser-retest) |
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
 | UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
 | UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | NOT RUN |
+
+## UI-07 browser retest
+
+On 14 November 2026 at 07:41 UTC, Chromium 158.0.8127.18 at 1280 × 860 exercised the production frontend at [9234822](https://github.com/justsomenewbie/moon-plan-b/commit/9234822d3c34f395737c4e547616c22ba6bec6e4), route `/`. The [Horizons fixture](../evidence/odysseus-athena-hour-gap/gap.json) had SHA-256 `7acb4779b02e8c743f9f04d5c69da5b51e33a31eb2f6b525d2d1a87851a0579b`.
+
+The [Playwright check](../check_globe_recovery.mjs) separately returned HTTP 404 for the map, served invalid JPEG bytes with HTTP 200, and made the globe canvas return a null 2D context. Each fault showed the photograph and an accessible retry control. With Athena primary and Odysseus alternative, both exact-sample tables and all four SVG paths matched the working globe. The slider still stepped from 01:00 to 03:00 UTC. After moving back to 01:00 and pressing Retry, the globe rendered again with the original comparison and time. No uncaught page errors occurred.
+
+Replay with `node qa/check_globe_recovery.mjs <frontend-origin>` against a running production build. OpenAI Codex wrote and ran this check.
 
 ## Browser-to-JPL isolation evidence
 
