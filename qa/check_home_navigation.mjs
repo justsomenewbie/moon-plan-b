@@ -9,7 +9,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
 try {
   for (const width of [320, 375, 1280]) {
     const page = await browser.newPage({ viewport: { width, height: 568 }, reducedMotion: "reduce" });
-    await page.goto(new URL("/", origin).href);
+    await page.goto(new URL("/", origin).href, { waitUntil: "domcontentloaded" });
     const menu = page.locator(".home-menu");
     const nav = page.locator("header nav");
     const mobile = width < 760;
