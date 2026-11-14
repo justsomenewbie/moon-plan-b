@@ -14,7 +14,7 @@ import MoonGlobe from "./moon-globe";
 import LocalSky from "./local-sky";
 import { LanguageControl, useLanguage } from "./language";
 import type { Message } from "../lib/i18n";
-import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindows, readSelection, selectionParams, validateDataset } from "../lib/dataset";
+import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindows, readSelection, sampleAt, selectionParams, validateDataset } from "../lib/dataset";
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
 import { Comparison, formatUtc, SampleTable, SiteAssessments, SkyPosition, Sources, Timeline, Windows } from "./observations";
 import QaInspector from "./qa-inspector";
@@ -39,7 +39,6 @@ export default function Navigator() {
   const [message, setMessage] = useState<Message>("");
   const [shareUrl, setShareUrl] = useState("");
   const [savedResult, setSavedResult] = useState(() => savedResultFromUrl(new URLSearchParams()));
-  const [tick, setTick] = useState(0);
   const [clearanceDeg, setClearanceDeg] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -88,7 +87,7 @@ export default function Navigator() {
 
   function acceptDataset(next: Dataset, reset: boolean) {
     setTerrain(null);
-    setData(next); setSkyAlternative(false); setTick(0); setPlaying(false); setShareUrl("");
+    setData(next); setSkyAlternative(false); setPlaying(false); setShareUrl("");
     if (reset) replaceUrl(window.location.pathname);
     try {
       setSelection(readSelection(new URLSearchParams(window.location.search), next)); setError("");
@@ -162,7 +161,7 @@ export default function Navigator() {
     lastLocation.current = location;
     loadGeneration.current++;
     loadFocus.current = null;
-    setRetryLoad(null); setSelection(null); setTick(0); setPlaying(false); setShareUrl(""); setMessage(""); setError("");
+    setRetryLoad(null); setSelection(null); setPlaying(false); setShareUrl(""); setMessage(""); setError("");
     const params = new URLSearchParams(window.location.search);
     setQaEnabled(params.get("qa") === "true");
     const hasObservation = params.has("view_site") || params.has("at");
@@ -210,11 +209,24 @@ export default function Navigator() {
     return name + " · " + s.id;
   }
   const offsets = a ? commonOffsets(a, b) : [];
+  const tick = selection?.tick ?? 0;
   const offset = offsets[Math.min(tick, offsets.length - 1)] ?? 0;
+  function selectTick(next: number) {
+    if (!selection || !a || offsets[next] === undefined) return;
+    setSelection({ ...selection, tick: next });
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("v") === data?.datasetId) {
+      url.searchParams.set("sample", sampleAt(a, offsets[next])!.utc);
+      replaceUrl(url.href);
+      setShareUrl("");
+      setMessage("");
+    }
+  }
+  const advance = useEffectEvent(() => selectTick(tick + 1));
   useEffect(() => {
     if (!playing || reducedMotion || offsets.length < 2) return;
     if (tick >= offsets.length - 1) { setPlaying(false); return; }
-    const timer = window.setTimeout(() => setTick((v) => v + 1), 900);
+    const timer = window.setTimeout(advance, 900);
     return () => window.clearTimeout(timer);
   }, [playing, reducedMotion, tick, offsets.length]);
 
@@ -247,8 +259,8 @@ export default function Navigator() {
   function choose(nextA: Scenario, mode: Mode, nextB?: string) {
     if (!data || !selection) return;
     const compatible = alternatives(data, nextA, mode);
-    setSelection({ ...selection, mode, a: nextA.id, b: compatible.find((s) => s.id === nextB)?.id ?? compatible[0]?.id ?? "" });
-    setTick(0); setPlaying(false); setShareUrl(""); setMessage(""); setError("");
+    setSelection({ ...selection, mode, tick: 0, a: nextA.id, b: compatible.find((s) => s.id === nextB)?.id ?? compatible[0]?.id ?? "" });
+    setPlaying(false); setShareUrl(""); setMessage(""); setError("");
     replaceUrl(window.location.pathname);
   }
 
@@ -392,8 +404,8 @@ export default function Navigator() {
         <div className="window-labels"><p><strong>{t("Primary")}</strong> {data.sites.find((s) => s.id === a.siteId)?.name}<span>{formatUtc(a.startUtc, locale)} → {formatUtc(a.endUtc, locale)}</span></p>{b ? <p><strong>{t("Alternative")}</strong> {data.sites.find((s) => s.id === b.siteId)?.name}<span>{formatUtc(b.startUtc, locale)} → {formatUtc(b.endUtc, locale)}</span></p> : <p>{t("No compatible alternative in this release. The primary remains visible.")}</p>}</div>
         {a.coverage !== "complete" || b && b.coverage !== "complete" ? <p className="coverage-notice">{t("Incomplete coverage: unavailable totals are not zero. Gaps are not bridged, and no definite threshold result is inferred.")}</p> : null}
         <Timeline a={a} b={b} mode={selection.mode} offset={offset} clearanceDeg={clearanceDeg} />
-        <div className="playback"><button className="button play-button" aria-label={playing ? t("Pause timeline") : t("Play timeline")} disabled={offsets.length < 2 || reducedMotion} onClick={() => { if (tick === offsets.length - 1) setTick(0); setPlaying((v) => !v); }}><svg viewBox="0 0 20 20" aria-hidden="true">{playing ? <path d="M5 3h3v14H5zm7 0h3v14h-3z" /> : <path d="m6 3 11 7-11 7z" />}</svg></button>
-          <label className="slider-label"><span className="sr-only">{t("Timeline sample")}</span><input aria-label={t("Timeline sample")} aria-valuetext={offsets.length ? t("{hours} hours elapsed. Primary {primary}{alternative}", { hours: offset / 3600000, primary: formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale), alternative: b ? t(". Alternative {time}", { time: formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale) }) : "" }) : t("No shared samples")} type="range" min="0" max={Math.max(0, offsets.length - 1)} step="1" value={Math.min(tick, Math.max(0, offsets.length - 1))} disabled={offsets.length === 0} onChange={(e) => { setTick(Number(e.target.value)); setPlaying(false); }} /></label><output className="mono">{offsets.length ? `+${(offset / 3600000).toFixed(1)} h` : t("No shared samples")}</output>
+        <div className="playback"><button className="button play-button" aria-label={playing ? t("Pause timeline") : t("Play timeline")} disabled={offsets.length < 2 || reducedMotion} onClick={() => { if (tick === offsets.length - 1) selectTick(0); setPlaying((v) => !v); }}><svg viewBox="0 0 20 20" aria-hidden="true">{playing ? <path d="M5 3h3v14H5zm7 0h3v14h-3z" /> : <path d="m6 3 11 7-11 7z" />}</svg></button>
+          <label className="slider-label"><span className="sr-only">{t("Timeline sample")}</span><input aria-label={t("Timeline sample")} aria-valuetext={offsets.length ? t("{hours} hours elapsed. Primary {primary}{alternative}", { hours: offset / 3600000, primary: formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale), alternative: b ? t(". Alternative {time}", { time: formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale) }) : "" }) : t("No shared samples")} type="range" min="0" max={Math.max(0, offsets.length - 1)} step="1" value={Math.min(tick, Math.max(0, offsets.length - 1))} disabled={offsets.length === 0} onChange={(e) => { selectTick(Number(e.target.value)); setPlaying(false); }} /></label><output className="mono">{offsets.length ? `+${(offset / 3600000).toFixed(1)} h` : t("No shared samples")}</output>
         </div>
         <p className="sample-time">{offsets.length ? <>{t("Primary:")}{" "}{formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale)}{b ? <> · {t("Alternative:")}{" "}{formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale)}</> : null}</> : t("The pair has no shared sample times. Exact observations are available in the sample table where present.")}</p>
         {reducedMotion ? <p className="muted text-sm">{t("Reduced motion is on. Use the slider to select samples without playback.")}</p> : null}

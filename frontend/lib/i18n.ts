@@ -69,6 +69,7 @@ export const vietnamese: Record<string, string> = {
   "The completed job is inconsistent.": "Dữ liệu của tác vụ đã hoàn tất không nhất quán.",
   "The job result is inconsistent with its status.": "Kết quả tác vụ không nhất quán với trạng thái.",
   "The server returned a different job.": "Máy chủ trả về một tác vụ khác.",
+  "The selected UTC sample is unavailable for this comparison.": "Không có mẫu tại mốc UTC đã chọn cho phép so sánh này.",
   "The shared selection is incomplete or contains duplicate fields.": "Lựa chọn được chia sẻ chưa đầy đủ hoặc có trường bị lặp.",
   "This link needs a different dataset version. Import that exact release before reopening it.": "Liên kết này cần phiên bản dữ liệu khác. Hãy nhập đúng bản dữ liệu đó trước khi mở lại.",
   "The comparison mode in this link is invalid.": "Chế độ so sánh trong liên kết không hợp lệ.",
