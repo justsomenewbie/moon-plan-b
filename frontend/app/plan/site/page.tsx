@@ -2,13 +2,13 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { archiveB2Run, rankArchiveB2 } from "../../../lib/archive-b2";
-import { getSavedPlannerRanking, savedJointWindows, savedPlannerRun } from "../../../lib/saved-planner";
+import { archiveB2Run, rankArchiveB2, savedB2EarthWindows } from "../../../lib/archive-b2";
+import { getSavedPlannerRanking, savedEarthWindows, savedJointWindows, savedPlannerRun } from "../../../lib/saved-planner";
 import { plannerLink } from "../../../lib/planner-source";
 import { lrocSiteUrl } from "../../../lib/globe-sites";
 import { LanguageControl, useLanguage } from "../../language";
 import { SiteFooter, SkyBackground } from "../../site-chrome";
-import { SiteHorizonSource, TimeRange } from "../../terrain-site-result";
+import { SiteHorizonSource, TimeRange, EarthSightTimes } from "../../terrain-site-result";
 import ThemeControl from "../../theme-control";
 import B2CoordinateSource from "../../b2-coordinate-source";
 
@@ -64,7 +64,7 @@ function SiteReport() {
     savedInterval ? savedInterval.window?.hours ?? 0 : undefined;
   const metrics = [
     [text("Sun visible", "Nhìn thấy Mặt Trời"), row.sunHours],
-    [text("Earth visible", "Nhìn thấy Trái Đất"), row.earthHours],
+    [text("Earth visible", "Nhìn thấy Trái Đất"), t("{hours} of {total} h", { hours: row.earthHours, total: (Date.parse(ranking.to) - Date.parse(ranking.from)) / 3600000 })],
     [text("Sun and Earth visible together", "Đồng thời nhìn thấy Mặt Trời và Trái Đất"), row.bothHours],
     ...(longest && uninterrupted !== undefined ? [[t("Longest joint window"), uninterrupted] as const] : []),
   ] as const;
@@ -76,8 +76,9 @@ function SiteReport() {
       <p><TimeRange start={ranking.from} end={ranking.to} /> · {text("end excluded", "không gồm mốc kết thúc")}</p>
       <p>{text("Ranking priority", "Tiêu chí xếp hạng")} · {t(longest ? "Longest joint window" : priorities[priority])}</p>
       <dl className="grid gap-4 sm:grid-cols-3">{metrics.map(([label, hours]) => <div key={label}>
-        <dt>{label}</dt><dd className="text-xl font-semibold">{hours} h</dd>
+        <dt>{label}</dt><dd className="text-xl font-semibold">{typeof hours === "number" ? `${hours} h` : hours}</dd>
       </div>)}</dl>
+      <EarthSightTimes windows={(source === "saved-b2" ? savedB2EarthWindows : savedEarthWindows)(row.id, ranking.from, ranking.to)} />
     </section>
     <section className="space-y-3" aria-labelledby="site-location">
       <h2 id="site-location">{text("Reported coordinates", "Tọa độ trong danh mục")}</h2>

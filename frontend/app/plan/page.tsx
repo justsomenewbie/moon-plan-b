@@ -9,8 +9,8 @@ import { hasRetryDeadline, isMock } from "../../lib/api/client";
 import { getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type PlannerRun, type PlannerPriority } from "../../lib/api/planner";
 import { rankSavedMissionWindows, type MissionWindowRanking } from "../../lib/mission-window-ranking";
 import type { TerrainSummary } from "../../lib/api/terrain-summary";
-import { archiveB2Run, rankArchiveB2 } from "../../lib/archive-b2";
-import { getSavedPlannerRanking, savedJointWindows, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
+import { archiveB2Run, rankArchiveB2, savedB2EarthWindows } from "../../lib/archive-b2";
+import { getSavedPlannerRanking, savedEarthWindows, savedJointWindows, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
 import { useLanguage, LanguageControl } from "../language";
 import MissionDateSearch from "../mission-date-search";
 import SavedLanding from "./saved-landing";
@@ -21,6 +21,7 @@ import AstronautGuide from "../astronaut-guide";
 import { savedResultFromUrl } from "../observed-week";
 import { pairLocation, type PairLocation } from "../../lib/globe-sites";
 import SiteMap from "./site-map";
+import { clipEarthWindows, type EarthWindow } from "../../lib/earth-windows";
 import { usesSmoothSphere } from "../../lib/site-horizon";
 import "./plan.css";
 
@@ -30,11 +31,11 @@ const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const midnight = (date: string) => date + "T00:00:00Z";
 type SearchResult = {
   from: string; to: string; scope: "live" | "catalog" | "pair";
-  rows: (PairLocation & { smoothSphere: boolean; hours: number[] | null; trackingPower?: number; longest?: number; coverage?: string; missionWindow?: { start: string; end: string } })[];
+  rows: (PairLocation & { smoothSphere: boolean; hours: number[] | null; earthWindows?: EarthWindow[]; trackingPower?: number; longest?: number; coverage?: string; missionWindow?: { start: string; end: string } })[];
   leaders: string[]; missionHours?: number; excludedSites?: string[];
 };
 
-function missionResult(ranking: MissionWindowRanking, run: PlannerRun, evidence?: TerrainSummary): SearchResult {
+function missionResult(ranking: MissionWindowRanking, run: PlannerRun, source: PlannerSource, evidence?: TerrainSummary): SearchResult {
   return {
     from: ranking.from, to: ranking.to, scope: evidence ? "live" : ranking.scope,
     missionHours: ranking.missionHours, leaders: ranking.leaders,
@@ -44,7 +45,12 @@ function missionResult(ranking: MissionWindowRanking, run: PlannerRun, evidence?
       const location = evidence ? pairLocation({ site_id: row.id, name: row.name }, run.sites, evidence.sites, evidence.conventions).location
         : site && site.lat_deg != null && site.lon_deg != null ? { point: { latitude: site.lat_deg, longitude: site.lon_deg } }
         : { reason: "This release supplies no coordinates for this site." };
-      return { id: row.id, name: row.name, location, smoothSphere: usesSmoothSphere(site),
+      const verified = evidence?.sites.find(s => s.id === row.id);
+      const earthWindows = source === "live"
+        ? verified?.coverage === "complete" && verified.coverage_in_range === "complete"
+          ? clipEarthWindows(verified.windows.earth, row.start, row.end) : undefined
+        : (source === "saved-b2" ? savedB2EarthWindows : savedEarthWindows)(row.id, row.start, row.end);
+      return { id: row.id, name: row.name, location, smoothSphere: usesSmoothSphere(site), earthWindows,
         hours: [row.sunHours, row.earthHours, row.bothHours], missionWindow: { start: row.start, end: row.end } };
     }),
   };
@@ -60,7 +66,7 @@ function storedResult(from: string, to: string, priority: PlannerPriority, sourc
   if (longest && missionHours !== undefined) return null;
   if (missionHours !== undefined) {
     const ranking = rankSavedMissionWindows(source, { from, to, priority, missionHours });
-    return ranking && missionResult(ranking, source === "saved-b2" ? archiveB2Run : savedPlannerRun);
+    return ranking && missionResult(ranking, source === "saved-b2" ? archiveB2Run : savedPlannerRun, source);
   }
   const saved = source === "saved-b2" ? rankArchiveB2({ from, to, priority }) : getSavedPlannerRanking({ from, to, priority });
   const run = source === "saved-b2" ? archiveB2Run : savedPlannerRun;
@@ -76,6 +82,7 @@ function storedResult(from: string, to: string, priority: PlannerPriority, sourc
     const longest = pair ? pair.find(site => site.id === row.id)?.window?.hours ?? 0 :
       "longestBothHours" in row && typeof row.longestBothHours === "number" ? row.longestBothHours : undefined;
     return { id: row.id, name: row.name, location, smoothSphere: usesSmoothSphere(site),
+      earthWindows: (source === "saved-b2" ? savedB2EarthWindows : savedEarthWindows)(row.id, saved.from, saved.to),
       hours: [row.sunHours, row.earthHours, row.bothHours], longest };
   }) };
   return longest ? rankByLongest(result) : result;
@@ -157,7 +164,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
       try {
         if (missionHours !== undefined) {
           const { ranking, evidence } = await getPlannerMissionRanking(run, { from, to, priority: metric, missionHours }, controller.signal);
-          if (!controller.signal.aborted) setResult(missionResult(ranking, run, evidence));
+          if (!controller.signal.aborted) setResult(missionResult(ranking, run, source, evidence));
           return;
         }
         const { ranking, evidence, recommendedIds } = await getPlannerRanking(run, { from, to, priority: metric }, controller.signal);
@@ -167,6 +174,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
             const site = evidence.sites.find(s => s.id === row.site_id)!;
             const m = site.coverage === "complete" && site.coverage_in_range === "complete" ? site.metrics : null;
             return { ...pairLocation(row, run.sites, evidence.sites, evidence.conventions),
+              earthWindows: m ? clipEarthWindows(site.windows.earth, ranking.range.start, ranking.range.end) : undefined,
               trackingPower: m ? row.mean_power_tracking : undefined,
               smoothSphere: usesSmoothSphere(run.sites.find(s => s.id === row.site_id)), hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
           }) };
@@ -203,7 +211,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
         ? longest ? <>{label} · {best[0].longest} h · {best.map(r => r.name).join(" · ")}</> : t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
         : t("No evaluated site meets this visibility priority for any hour in this window.")}
         {flatLeaders.length > 0 && <span className="block">{t("Local terrain shadows are omitted for {sites}.", { sites: flatLeaders.map(r => r.name).join(" · ") })}</span>}</p>
-      <SiteMap startUtc={result.from} sites={result.rows} leaders={result.leaders} column={longest ? "longest" : column} criterion={label} initialSite={initialSite} detailHref={detailHref} />
+      <SiteMap startUtc={result.from} evaluatedHours={result.missionHours ?? (Date.parse(result.to) - Date.parse(result.from)) / 3600000} sites={result.rows} leaders={result.leaders} column={longest ? "longest" : column} criterion={label} initialSite={initialSite} detailHref={detailHref} />
       <div className="table-scroll"><table><caption>{t(result.missionHours ? "Visibility hours in each site’s best mission window" : "Visibility hours in the selected window")}</caption>
         <thead><tr><th scope="col">{t("Site")}</th>{result.missionHours && <th scope="col">{t("Earliest best mission window (UTC, end exclusive)")}</th>}{["Sun visible","Earth visible","Both visible",...(showLongest ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
         <tbody>{result.rows.map(row => {
@@ -296,7 +304,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
       }
     }}>
     {mode === "sites" ? <CatalogSearch key={source + "/" + run.runId} initialSite={seed.get("site")} runIds={pins} initialDuration={seed.get("missionHours") ?? ""} initialLongest={seed.get("order") === "longest" && priority === "joint"} run={run} first={first} last={last} priority={priority} source={source} /> :
-      source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
+      source !== "live" ? <SavedLanding key={source} source={source} runIds={pins} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialEarliest={landingClock(seed, "earliest")} initialLatest={landingClock(seed, "latest")}
         initialExtras={liveExtras(seed)} initialSunAtLanding={seed.get("sunAtLanding") === "1"} initialEarthAtLanding={seed.get("earthAtLanding") === "1"}

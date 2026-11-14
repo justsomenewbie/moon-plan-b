@@ -1,5 +1,6 @@
 import { usesSmoothSphere } from "../lib/site-horizon";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
+import { clipEarthWindows, type EarthWindow } from "../lib/earth-windows";
 import type { operations } from "../lib/api/producer";
 import { useLanguage } from "./language";
 
@@ -9,6 +10,21 @@ function UtcTime({ value }: { value: string }) {
 
 export function TimeRange({ start, end }: { start: string; end: string }) {
   return <><UtcTime value={start} /> → <UtcTime value={end} /></>;
+}
+
+export function EarthSightTimes({ windows }: { windows?: readonly EarthWindow[] }) {
+  const { t } = useLanguage();
+  return <details className="earth-sight-times my-3">
+    <summary>{t("When is Earth in direct view?")}</summary>
+    {windows === undefined ? <p>{t("Exact times are unavailable for this site and date range.")}</p>
+      : windows.length === 0 ? <p>{t("The model shows no direct view of Earth’s centre during this period.")}</p>
+      : <>
+        <p>{t("These are the UTC intervals when the model shows a direct view of Earth’s centre. Each interval includes its start and ends just before the time on the right.")}</p>
+        <ol className="interval-list list-decimal space-y-2">{windows.map(window => <li key={window.start}>
+          <TimeRange start={window.start} end={window.end} />
+        </li>)}</ol>
+      </>}
+  </details>;
 }
 
 const criterionLabels = {
@@ -55,7 +71,7 @@ export function SiteHorizonSource({ method, source }: { method: string; source: 
 }
 
 export function SiteResult({ site, source, liveResult }: {
-  source: Pick<TerrainSummary, "run" | "conventions">;
+  source: Pick<TerrainSummary, "run" | "conventions" | "summaryOnly" | "range">;
   site: TerrainSummary["sites"][number];
   liveResult?: Pick<TerrainSummary, "run" | "range">;
 }) {
@@ -97,6 +113,7 @@ export function SiteResult({ site, source, liveResult }: {
         </details>
       </li>)}</ul>
     </section>}
+    {source.summaryOnly && <EarthSightTimes windows={complete ? clipEarthWindows(site.windows.earth, source.range.start, source.range.end) : undefined} />}
     <h4 className="font-semibold">{t("Sun and Earth overlap intervals")}</h4>
     {intervals.length ? <ol className="interval-list list-decimal space-y-2">
       {intervals.map(window => <li key={window.start} className="break-inside-avoid">

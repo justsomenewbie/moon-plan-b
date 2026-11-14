@@ -3,11 +3,13 @@ import dynamic from "next/dynamic";
 import { lrocRegionalImageUrl, lrocSiteUrl, type MapPoint, type PairLocation } from "../../lib/globe-sites";
 import { compassHeading } from "../../lib/compass";
 import { plannerSunAt, plannerSunSource, sunBearing } from "../../lib/planner-sunlight";
+import { EarthSightTimes } from "../terrain-site-result";
+import type { EarthWindow } from "../../lib/earth-windows";
 import { useLanguage } from "../language";
 
 const MoonGlobe = dynamic(() => import("../moon-globe"));
 
-type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null; longest?: number; trackingPower?: number };
+type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null; earthWindows?: EarthWindow[]; longest?: number; trackingPower?: number };
 
 // Each bin is a quarter of unobstructed sunlight on a Sun-facing panel.
 const sunlightBins = [
@@ -80,8 +82,8 @@ function SurfaceCloseUp({ point, name }: { point: MapPoint | null; name: string 
   </figure>;
 }
 
-export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref, startUtc }: {
-  startUtc: string; sites: MapSite[]; leaders: string[]; column: number | "longest"; criterion: string; initialSite: string | null;
+export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref, startUtc, evaluatedHours }: {
+  startUtc: string; evaluatedHours: number; sites: MapSite[]; leaders: string[]; column: number | "longest"; criterion: string; initialSite: string | null;
   detailHref: (siteId: string) => string | undefined;
 }) {
   const { t, locale } = useLanguage();
@@ -99,6 +101,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   const selected = sites.find(site => site.id === selectedId) ?? sites.find(isLeader) ?? sites[0];
   if (!selected) return null;
   const details = detailHref(selected.id);
+  const hours = value(selected);
   const point = "point" in selected.location ? selected.location.point : null;
   const bearing = point && sun ? sunBearing(point, sun) : undefined;
   const flatSun = sun ? project(sun) : undefined;
@@ -202,11 +205,13 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           <strong>{selected.name}</strong>
           {markerColors && view !== "surface" && <p>{solar.key} · <strong>{selected.trackingPower === undefined ? solar.missing :
             new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(selected.trackingPower)}</strong></p>}
-          <p>{criterion} · {value(selected) !== undefined ? `${value(selected)} h` : t("Incomplete coverage")}</p>
+          <p>{criterion} · {hours === undefined ? t("Incomplete coverage") : column === 1
+            ? t("{hours} of {total} h", { hours, total: evaluatedHours }) : `${hours} h`}</p>
           {selected.smoothSphere && <p>{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
           {point ? <p>{point.latitude}° {t("latitude")} · {point.longitude}° {t("east longitude")}</p> :
             "reason" in selected.location && <p>{t(selected.location.reason)}</p>}
         </div>
+        <EarthSightTimes windows={selected.earthWindows} />
         {details && <a href={details}>{t("Site details")}</a>}
         {point && <>
           {!imageFailed && view === "flat" && <div className="plan-map-zoom">

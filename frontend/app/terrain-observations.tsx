@@ -4,6 +4,8 @@ import LocalSky from "./local-sky";
 import { SampleTable, SkyPosition, Timeline } from "./observations";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
+import { EarthSightTimes } from "./terrain-site-result";
+import { clipEarthWindows } from "../lib/earth-windows";
 import TerrainInstant from "./terrain-instant";
 import styles from "./terrain-observations.module.css";
 
@@ -97,6 +99,7 @@ function VisibilityBands({ site, range, selected }: { site: Site; range: Range; 
         </svg>
       </div>;
     })}
+    <EarthSightTimes windows={site.coverage_in_range === "complete" ? clipEarthWindows(site.windows.earth, range.start, range.end) : undefined} />
     {site.coverage_in_range !== "complete" && <p className="muted text-xs">{t("Coverage is incomplete. Unmarked time may have no data.")}</p>}
   </section>;
 }
