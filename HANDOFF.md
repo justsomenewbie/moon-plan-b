@@ -2,11 +2,11 @@
 
 ## Combined frontend and QA
 
-Synthetic jobs work over Wi-Fi HTTP. [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) verified nine rejected imports, comparison retention and recovery at exactly 5 MiB.
+Wi-Fi mock jobs work. [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) verified nine rejections and 5 MiB recovery. [Chromium](qa/check_pinned_retry.mjs) verified rejected imports preserve pinned retries and selections.
 
 Minh’s `8b53003` added offline QA, supplied overlap bands, a polar skyplot and the `?qa=true` scenario inspector. [Minh’s QA report](qa/LOCAL_WEB_DEEP_TEST_REPORT.md) and [frontend verification](docs/FRONTEND_VERIFICATION.md) distinguish synthetic tests from release evidence.
 
-English defaults with optional Vietnamese, lunar resources and local-time appearance. Compare dates at one site or sites within one UTC window. The timeline and local 3D sky follow the supplied samples. The NASA reference globe and photograph retain [credits](docs/CREDITS.md); the globe locates sites and does not calculate terrain or visibility. [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) passed texture, decoding and Canvas failures with comparison-preserving retry. Earlier isolated native Safari checks covered JSON import, both languages, 320px width and window closure.
+English defaults with optional Vietnamese, lunar resources and local-time appearance. Compare dates at one site or sites within one UTC window. The timeline and local 3D sky follow the supplied samples. The NASA reference globe and photograph retain [credits](docs/CREDITS.md); the globe locates sites and does not calculate terrain or visibility. [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) passed texture, decoding and Canvas failures with comparison-preserving retry. Earlier native Safari checks covered JSON import, both languages, 320px width and window closure.
 
 The combined revision passed 58 frontend tests, eight offline QA gates, TypeScript and both production builds. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
 
