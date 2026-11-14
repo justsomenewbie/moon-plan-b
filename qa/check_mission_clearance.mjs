@@ -25,7 +25,8 @@ try {
   const limit = page.locator(".battery-picker select");
   const rows = page.locator(".mission-scenario-row");
   const hud = page.locator(".hud-readouts dd");
-  const key = page.locator(".sky-scenario-key");
+  const view = page.getByRole("combobox", { name: "View from" });
+  const markers = page.locator(".sky-stage [data-sky-body]");
   const slider = page.getByRole("slider", { name: "Timeline sample" });
   const line = page.locator(".timeline-svg .clearance-line");
   const ring = page.locator(".skyplot .clearance-ring");
@@ -96,8 +97,15 @@ try {
   await checkSideAngle("sun", 0.2, 0.5);
   await checkSideAngle("earth", 1, 0.5);
   await stateMatches("comms-only");
-  await key.locator('button[data-site="B"]').click();
-  assert.equal(await key.locator('button[data-site="B"]').getAttribute("aria-pressed"), "true");
+  assert.equal(await view.inputValue(), "A");
+  assert.equal(await markers.count(), 2);
+  await view.selectOption("both");
+  assert.equal(await markers.count(), 4);
+  const alternativeEarth = page.locator('.sky-ray[data-site="B"] [data-sky-body="earth"]');
+  await alternativeEarth.press("Enter");
+  assert.equal(await alternativeEarth.getAttribute("aria-pressed"), "true");
+  await view.selectOption("B");
+  assert.equal(await markers.count(), 2);
   assert.match(await hud.nth(1).innerText(), /200°.*1°/);
   await checkShadow(20, 1);
   await stateMatches("golden");
