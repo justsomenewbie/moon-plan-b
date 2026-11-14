@@ -56,3 +56,19 @@ test("only a sourced, explicitly compatible comparison location can produce a ma
   assert.ok("reason" in comparisonLocation({ ...site, sourceIds: [] }, real));
   assert.ok("reason" in comparisonLocation({ ...site, location: null }, real));
 });
+
+test("magnification keeps a site centered and clips zoomed points outside the circular viewport", () => {
+  const view = { latitude: -58, longitude: 15 };
+  const base = diskPosition(missionSites[0], view)!;
+  const twice = diskPosition(missionSites[0], view, 2)!;
+  assert.ok(Math.abs(twice.x - 2 * base.x) < 1e-12);
+  assert.ok(Math.abs(twice.y - 2 * base.y) < 1e-12);
+  assert.equal(diskPosition(missionSites[0], view, 4), null);
+  assert.ok(Math.hypot(...Object.values(diskPosition(missionSites[1], missionSites[1], 4)!)) < 1e-12);
+  const full = frame(7), close = frame(7);
+  drawGlobe(texture, full, 15, -50);
+  drawGlobe(texture, close, 15, -50, 4);
+  assert.equal(full.data[3], 0);
+  assert.equal(close.data[3], 255);
+  assert.deepEqual(close.data.slice(96, 100), full.data.slice(96, 100));
+});

@@ -5,11 +5,11 @@ export function globeCenter(longitude: number, latitude: number) {
 }
 
 // Inverse orthographic projection of a north-up, zero-meridian-centered color map.
-export function drawGlobe(texture: Raster, frame: Raster, longitude: number, latitude: number) {
+export function drawGlobe(texture: Raster, frame: Raster, longitude: number, latitude: number, zoom = 1) {
   const lon = longitude * Math.PI / 180, lat = latitude * Math.PI / 180;
   const sinLat = Math.sin(lat), cosLat = Math.cos(lat);
   const { width: w, height: h, data: pixels } = texture;
-  const radius = Math.min(frame.width, frame.height) / 2;
+  const radius = zoom * Math.min(frame.width, frame.height) / 2;
   for (let row = 0; row < frame.height; row++) {
     const y = (frame.height / 2 - row - 0.5) / radius;
     for (let col = 0; col < frame.width; col++) {
