@@ -53,17 +53,21 @@ try {
   await page.getByRole("button", { name: "Import data", exact: true }).waitFor();
   const observed = {};
   const cases = [["control", control], ["gap", gap]];
-  if (paired) cases.push(["athena-primary", gap]);
+  if (paired) cases.push(["athena-primary", gap], ["odysseus-restored", gap]);
   for (const [name, data] of cases) {
-    const swapped = name === "athena-primary";
-    if (!swapped) await page.getByLabel("Import JSON dataset").setInputFiles(file(name));
+    const athenaPrimary = name === "athena-primary";
+    const switchSite = athenaPrimary || name === "odysseus-restored";
+    if (!switchSite) await page.getByLabel("Import JSON dataset").setInputFiles(file(name));
     await page.locator("#sources").getByText(data.datasetId, { exact: true }).waitFor({ state: "attached" });
     const compare = page.getByRole("button", { name: "Compare sites", exact: true });
-    if (!swapped) await compare.click();
+    if (!switchSite) await compare.click();
     assert.equal(await compare.getAttribute("aria-pressed"), "true");
     const primary = page.getByLabel(/^Primary site/);
-    if (swapped) await primary.selectOption("athena-jan07");
-    const scenarios = swapped ? data.scenarios.toReversed() : data.scenarios;
+    const scenarios = athenaPrimary ? data.scenarios.toReversed() : data.scenarios;
+    if (switchSite) {
+      assert.equal(await primary.inputValue(), scenarios[1].id);
+      await primary.selectOption(scenarios[0].id);
+    }
     assert.equal(await primary.inputValue(), scenarios[0].id);
     if (paired) assert.equal(await page.getByLabel(/^Alternative site/).inputValue(), scenarios[1].id);
     const details = page.locator("details").filter({ has: page.getByText("Inspect exact samples", { exact: true }) });
@@ -103,7 +107,7 @@ try {
       else observed[name] = view;
       if (evidenceDir && !paired) await table.screenshot({ path: join(evidenceDir,name+"-table.png") });
     }
-    if (evidenceDir && !swapped) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
+    if (evidenceDir && !switchSite) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
     if (paired) {
       const slider = page.getByRole("slider", { name: "Timeline sample" });
       const sharedHours = data === gap ? [0, 1, 3, 4] : hours;
@@ -121,16 +125,17 @@ try {
       for (const h of sharedHours) {
         if (h) await slider.press("ArrowRight");
         readouts.push((await readAt(h)).visible);
-        if (swapped && h === 3 && evidenceDir) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
+        if (athenaPrimary && h === 3 && evidenceDir) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
       }
       observed[name].sharedHours = sharedHours;
-      if (swapped) {
+      if (switchSite) {
         observed[name].sliderReadouts = readouts;
         await slider.press("ArrowLeft"); // Move from the final sample to 03:00 UTC.
         const before = await readAt(3);
         await slider.press("ArrowLeft");
         const after = await readAt(1);
         observed[name].arrowLeft = { before, after };
+        if (!athenaPrimary) observed[name].roles = { primary: scenarios[0].siteId, alternative: scenarios[1].siteId };
       }
     }
   }
