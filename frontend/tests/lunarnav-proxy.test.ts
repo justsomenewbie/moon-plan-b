@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { proxyLunarnav } from "../lib/lunarnav-proxy.ts";
 import { publicContract } from "../scripts/public-contract.mjs";
 
@@ -163,7 +163,39 @@ test("public CSV filenames distinguish site, run, requested UTC bounds and selec
   assert.equal(await download("export/summary.csv", { run_id: "B2" }), 'attachment; filename="summary~B2.csv"');
   assert.equal(await download("export/summary.csv"), 'attachment; filename="summary~@default.csv"');
   assert.notEqual(await download("export/summary.csv", { run_id: "B" }), await download("export/summary.csv", { run_id: "B2" }));
-  assert.equal(await download("runs/B2/files/sites%2Fapollo11%2Fhorizon.csv"), 'attachment; filename="horizon.csv"');
   const unsafe = await download(base + "series.csv", { run_id: '../bad"\r\nX-Test:1', start: "../../bad", end: 'bad";extra=1' });
   assert.match(unsafe!, /^attachment; filename="series~apollo11~@value-[a-f0-9]{16}~@value-[a-f0-9]{16}~@value-[a-f0-9]{16}\.csv"$/);
+});
+
+test("original run downloads retain the manifest bytes, ETag and path while qualifying local names", async () => {
+  const bytes = new Uint8Array([0x1f, 0x8b, 0, 255]);
+  const etag = '"' + createHash("sha256").update(bytes).digest("hex") + '"';
+  async function name(run: string, path: string, separate = false) {
+    const encoded = encodeURIComponent(path);
+    const route = "runs/" + encodeURIComponent(run) + "/files/";
+    const res = await proxyLunarnav(request(route + (separate ? encoded.replaceAll("%2F", "/") : encoded)), freshKey(), async url => {
+      assert.equal(new URL(String(url)).pathname, "/api/v1/" + route + encoded);
+      return new Response(bytes, { headers: { "content-type": "application/octet-stream", etag } });
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(new Uint8Array(await res.arrayBuffer()), bytes);
+    assert.equal(res.headers.get("etag"), etag);
+    const filename = /^attachment; filename="([a-zA-Z0-9_.~+-]+)"$/.exec(res.headers.get("content-disposition") ?? "")?.[1];
+    assert.ok(filename);
+    assert.ok(Buffer.byteLength(filename) <= 240);
+    return filename;
+  }
+  const file = "horizon_bruteforce.csv";
+  const odysseus = await name("B2", "sites/im1_odysseus/" + file);
+  const athena = await name("B2", "sites/im2_athena/" + file);
+  assert.match(odysseus, /^raw~B2~sites~im1_odysseus~[a-f0-9]{16}~horizon_bruteforce\.csv$/);
+  assert.notEqual(odysseus, athena);
+  assert.equal(await name("B2", "sites/im2_athena/" + file, true), athena);
+  assert.notEqual((await name("b2", "sites/im2_athena/" + file)).toLowerCase(), athena.toLowerCase());
+  assert.notEqual(await name("B", "manifest.json"), await name("B2", "manifest.json"));
+  assert.match(await name("B2", "sites/custom:1/windows.json"), /~custom\+1~.+~windows\.json$/);
+  const longPath = "sites/" + "a".repeat(228) + "/p/" + "b".repeat(240) + ".csv.gz";
+  const longName = await name("B2", longPath);
+  assert.ok(longName.endsWith(".csv.gz"));
+  assert.notEqual(longName, await name("B2", longPath.replace("/p/", "/q/")));
 });

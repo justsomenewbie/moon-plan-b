@@ -11,7 +11,13 @@ const utcPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/;
 function attachmentName(path: string, query: URLSearchParams) {
   const parts = decodeURIComponent(path).split("/");
   const basename = parts.at(-1)!;
-  if (path.startsWith("runs/")) return basename;
+  if (path.startsWith("runs/")) {
+    // publicRoute accepts ASCII path segments. Keep the original suffix for file associations.
+    // The digest distinguishes case-only names on macOS and names shortened to fit one component.
+    const prefix = ["raw", parts[1], ...parts.slice(3, -1)].join("~").replaceAll(":", "+");
+    const tail = "~" + fingerprint(path) + "~" + basename.replaceAll(":", "+").slice(-128);
+    return prefix.slice(0, 240 - tail.length) + tail;
+  }
 
   // Only contract-shaped values are printed literally. Keep the original request untouched.
   const part = (value: string | null, pattern: RegExp, omitted: string) => value === null ? omitted
