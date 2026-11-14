@@ -53,7 +53,23 @@ try {
     assert.equal(await page.locator("#home-guide").getByRole("link", { name: "Orbit view" }).getAttribute("href"), "/orbit");
     assert.ok(await page.getByRole("img", { name: /Low sunlight reaches the left rim/ }).isVisible());
     await page.route("**/api/**", route => route.abort());
-    await page.getByRole("link", { name: "Try the saved example" }).press("Enter");
+    const example = page.getByRole("region", { name: "How do I compare two sites or two weeks?" });
+    const demoSelect = example.getByRole("combobox", { name: "Compare saved results" });
+    const exampleLink = example.getByRole("link", { name: "Open this comparison" });
+    for (const [value, hours] of [
+      ["2026-11-14T00:00:00Z", [33, 139]], ["im1_odysseus", [33, 168]],
+      ["im2_athena", [139, 168]], ["2026-11-21T00:00:00Z", [168, 168]],
+    ]) {
+      await demoSelect.selectOption(value);
+      assert.deepEqual(await example.locator("li strong").allTextContents(), hours.map(h => h + " of 168 h"));
+      assert.equal(new URL(await exampleLink.getAttribute("href"), origin).searchParams.get("saved"), value);
+      for (const [i, bar] of (await example.locator(".week-track span").all()).entries()) {
+        const ratio = await bar.evaluate(el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
+        assert.ok(Math.abs(ratio - hours[i] / 168) < .005);
+      }
+    }
+    await demoSelect.selectOption("2026-11-14T00:00:00Z");
+    await exampleLink.press("Enter");
     await page.waitForURL(url => url.pathname === "/compare" && url.hash === "#observed-week" &&
       url.searchParams.get("saved") === "2026-11-14T00:00:00Z");
     const week = page.locator("#observed-week");
@@ -90,6 +106,17 @@ try {
     assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
     assert.match(await steps.locator("summary").innerText(), /ngày tôi chọn/);
     assert.equal(await firstStep.isVisible(), true);
+    const viDemo = page.getByRole("region", { name: "Làm sao so sánh hai địa điểm hoặc hai tuần?" });
+    await viDemo.getByRole("combobox", { name: "So sánh kết quả đã lưu" }).selectOption("im1_odysseus");
+    assert.deepEqual(await viDemo.locator("li strong").allTextContents(), ["33 trên 168 giờ", "168 trên 168 giờ"]);
+    const viHref = await viDemo.getByRole("link", { name: "Mở kết quả so sánh này" }).getAttribute("href");
+    assert.equal(new URL(viHref, origin).searchParams.get("saved"), "im1_odysseus");
+    await page.getByRole("button", { name: "Hướng dẫn của phi hành gia", exact: true }).click();
+    const panel = page.locator("aside:popover-open");
+    await panel.getByText("Trong kết quả đã chọn, cả Mặt Trời và Trái Đất cùng xuất hiện trong bao lâu?", { exact: true }).click();
+    assert.deepEqual(await panel.locator("details[open] li strong").allTextContents(), ["Odysseus · IM-1 · 33 h", "Odysseus · IM-1 · 168 h"]);
+    assert.equal(await panel.getByRole("link", { name: "Đến phần so sánh kết quả đã lưu" }).getAttribute("href"), viHref);
+    await page.keyboard.press("Escape");
     const pictures = steps.locator("li img");
     assert.deepEqual(await pictures.evaluateAll(imgs => imgs.map(img => img.src.split("/").pop())),
       [1, 2, 3].map(i => `plan-step-${i}-vi.webp`));

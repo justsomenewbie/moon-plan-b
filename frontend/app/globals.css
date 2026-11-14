@@ -73,6 +73,12 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .home-guide h2 { font-size: 1.2rem; }
 .home-guide > p { max-width: 60ch; }
 .home-guide a { display: inline-block; margin-top: 12px; }
+.home-comparison-example { max-width: 40rem; margin-top: 1rem; }
+.home-comparison-example p { margin-block: .4rem; }
+.home-comparison-example ul { padding: 0; list-style: none; }
+.home-comparison-example li { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: .5rem; margin: .65rem 0; }
+.home-comparison-example .week-track { flex-basis: 100%; }
+.home-comparison-example small { display: block; color: var(--muted); }
 .home-guide-links { display: flex; flex-wrap: wrap; gap: 0 20px; }
 .home-guide ol { list-style: decimal; padding-inline-start: 1.5em; margin-top: 6px; color: var(--muted); }
 .home-walkthrough { margin-top: 1rem; }

@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "./language";
 import { SiteFooter, SiteHeader, SkyBackground, LunarResources } from "./site-chrome";
-import { savedResultFromUrl } from "./observed-week";
+import { ComparisonExample, savedResultFromUrl } from "./observed-week";
 import AstronautGuide from "./astronaut-guide";
 import MoonGlobe from "./moon-globe";
 
-const savedResult = savedResultFromUrl(new URLSearchParams());
-const exampleHref = "/compare?saved=2026-11-14T00%3A00%3A00Z#observed-week";
 const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
 
 export default function Home() {
   const { t, locale } = useLanguage();
+  const [savedResult, setSavedResult] = useState(() => savedResultFromUrl(new URLSearchParams()));
+  const comparisonPath = "/compare?saved=" + encodeURIComponent(savedResult);
   useEffect(() => {
     function restoreComparisonLink() {
       const { search, hash } = window.location;
@@ -41,7 +41,7 @@ export default function Home() {
             <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
           </div>
         </div>
-        <MoonGlobe home savedResult={savedResult} />
+        <MoonGlobe home />
       </section>
       <section className="home-about" id="about" tabIndex={-1} aria-labelledby="home-about-title">
         <div>
@@ -72,8 +72,7 @@ export default function Home() {
       </section>
       <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
         <h2 id="home-guide-title">{t("Quick guide")}</h2>
-        <p>{t("Start with Athena and Odysseus. Which site can see both the Sun and Earth for longer in the same week?")}</p>
-        <a href={exampleHref}>{t("Try the saved example")}</a>
+        <ComparisonExample selection={savedResult} onSelect={setSavedResult} comparisonPath={comparisonPath} />
         <details className="home-walkthrough" open>
           <summary>{t("How do I find a site for my dates?")}</summary>
           <p>{t("Try the week of November 14–20, 2026 (UTC). You can then change the dates.")}</p>
@@ -104,7 +103,7 @@ export default function Home() {
       </section>
       <LunarResources />
     </main>
-    <AstronautGuide savedResult={savedResult} terrain={null} comparisonPath="/compare" />
+    <AstronautGuide savedResult={savedResult} terrain={null} comparisonPath={comparisonPath} />
     <SiteFooter />
   </div>;
 }

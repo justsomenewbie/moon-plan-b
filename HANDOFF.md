@@ -1,6 +1,6 @@
 # Current handoff — 15 November 2026
 
-Sơn selected the 3D globe as the default planner map, with a flat-map toggle. The close-up and its LROC link share coordinates and layer, including off-site positions. The inspector and table link to the selected site’s saved report or hourly live observations. Home links to Compare, Plan and the illustrated guide. Its three steps open by default. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers, saved site reports and date presets [preserve the live run](qa/check_planner_run_links.mjs) on return. The [guide](qa/check_astronaut_guide.mjs) uses the selected source for its hourly UTC reading. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
+Sơn selected the 3D globe as the default planner map, with a flat-map toggle. The close-up and its LROC link share coordinates and layer, including off-site positions. The inspector and table link to the selected site’s saved report or hourly live observations. Home lets visitors compare two sites or weeks and opens three illustrated planner steps. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers, saved site reports and date presets [preserve the live run](qa/check_planner_run_links.mjs) on return. The [guide](qa/check_astronaut_guide.mjs) uses the selected source for its hourly UTC reading. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
 
 ## Live comparison
 
