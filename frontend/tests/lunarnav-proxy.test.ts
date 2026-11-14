@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { proxyLunarnav } from "../lib/lunarnav-proxy.ts";
 
@@ -85,4 +86,37 @@ test("missing credentials and upstream authentication errors produce local messa
     assert.equal(response.headers.get("location"), null);
     assert.equal(response.headers.get("www-authenticate"), null);
   }
+});
+
+test("public Swagger operations match the relay and retain producer parameter definitions", async () => {
+  const readJson = async (path: string) => JSON.parse(await readFile(new URL(path, import.meta.url), "utf8"));
+  const producer = await readJson("../../contracts/openapi.dataset.json");
+  const published = await readJson("../public/api-contract/lunarnav.json");
+  // An accepted route stops at the missing-key check before forwarding anything.
+  const forward = async (req: Request) => (await proxyLunarnav(req, undefined)).status === 503;
+  for (const [path, methods] of Object.entries(producer.paths)) {
+    const concrete = path.replaceAll(/\{[^}]+\}/g, "sample");
+    for (const [method, operation] of Object.entries(methods as Record<string, {
+      parameters?: { in: string; name: string }[];
+      requestBody?: { content: Record<string, { schema: { $ref: string } }> };
+    }>)) {
+      const methodName = method.toUpperCase();
+      const req = (suffix = "") => new Request(frontend + concrete + suffix, { method: methodName });
+      const exposed = published.paths[path]?.[method];
+      assert.equal(Boolean(exposed), await forward(req()), methodName + " " + path);
+      if (!exposed) continue;
+      const allowed = [];
+      for (const param of operation.parameters ?? []) {
+        if (param.in === "path" || await forward(req("?" + param.name + "=example"))) allowed.push(param);
+      }
+      assert.deepEqual(exposed.parameters ?? [], allowed);
+      if (operation.requestBody) {
+        const ref = operation.requestBody.content["application/json"].schema.$ref;
+        const name = ref.split("/").at(-1)!;
+        assert.deepEqual(published.components.schemas[name], producer.components.schemas[name]);
+      }
+    }
+  }
+  assert.equal(published.components.schemas.CreateJobRequest, undefined);
+  assert.equal(published.components.schemas.Job, undefined);
 });
