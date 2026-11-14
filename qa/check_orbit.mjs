@@ -1,0 +1,58 @@
+import assert from "node:assert/strict";
+const [origin, imageDir] = process.argv.slice(2);
+if (!origin) throw Error("Pass the URL of the production frontend.");
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE,
+  chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
+try {
+  for (const width of [1280, 390, 320]) {
+    const page = await browser.newPage({ viewport: { width, height: width === 1280 ? 860 : 844 }, reducedMotion: "reduce" });
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.route("**/api/**", route => route.abort());
+    await page.goto(origin);
+    await page.getByRole("link", {name:"Explore the landing sites"}).click();
+    await page.waitForURL("**/orbit");
+    const value = page.locator(".orbit-value");
+    await page.getByRole("button", {name:"Inspect Athena · IM-2",exact:true}).waitFor();
+    assert.equal(await value.textContent(), "139 / 168 h");
+    if (imageDir && width !== 320) await page.screenshot({path:imageDir + "/orbit-" + width + ".png"});
+    await page.getByRole("button", {name:"See the sky from this site"}).press("Enter");
+    const sky = page.locator(".site-sky");
+    assert.match(await sky.innerText(), /Sun · Hidden/);
+    assert.match(await sky.innerText(), /Earth · Visible/);
+    await sky.getByRole("button", {name:"Look toward Earth"}).click();
+    assert.equal(await sky.getByRole("button", {name:"Look toward Earth"}).getAttribute("aria-pressed"), "true");
+    if (imageDir && width === 1280) await page.screenshot({path:imageDir + "/athena-horizon.png"});
+    await page.getByRole("button", {name:"Return to the Moon"}).click();
+    await page.getByRole("button", {name:"Inspect Odysseus · IM-1",exact:true}).click();
+    assert.equal(await value.textContent(), "47 / 168 h");
+    await page.locator(".orbit-weeks button").nth(1).press("Enter");
+    assert.equal(await value.textContent(), "168 / 168 h");
+    assert.match(await page.locator(".orbit-other").innerText(), /same visibility/);
+    await page.getByLabel("Language", { exact:true }).selectOption("vi");
+    assert.match(await page.locator(".orbit-other").innerText(), /cùng số giờ/);
+    await page.getByRole("button", {name:"Xem bầu trời tại điểm đáp"}).click();
+    assert.match(await sky.innerText(), /Odysseus.*2026-11-21/);
+    await sky.getByRole("button", {name:"Nhìn về Trái Đất"}).click();
+    await page.getByRole("button", {name:"Trở lại quả cầu"}).click();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await page.locator(".orbit-method summary").press("Enter");
+    assert.ok(await page.getByRole("link", {name:"Thông tin và nguồn của mô hình"}).isVisible());
+    await page.locator(".orbit-detail-link").click();
+    assert.ok(page.url().includes("source=saved-b2") && page.url().includes("from=2026-11-21"));
+    await page.locator(".plan-results").waitFor();
+    assert.deepEqual(errors, []);
+    await page.close();
+  }
+  const page = await browser.newPage();
+  await page.route("**/lroc-color-2k.jpg", route => route.abort());
+  await page.goto(origin + "/orbit");
+  await page.getByText(/Map unavailable/).waitFor();
+  await page.locator(".orbit-tabs button").nth(1).press("Enter");
+  assert.equal(await page.locator(".orbit-value").textContent(), "47 / 168 h");
+  await page.unroute("**/lroc-color-2k.jpg");
+  await page.getByRole("button", {name:"Retry globe"}).click();
+  await page.getByRole("button", {name:"Inspect Odysseus · IM-1",exact:true}).waitFor();
+  console.log("Orbit: 3 widths, both sites and weeks, EN/VI, pinned offline ranking, texture failure and retry passed.");
+} finally { await browser.close(); }

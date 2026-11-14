@@ -23,6 +23,7 @@ function coordinates(c: MapPoint, rounded = true) {
 
 type GlobeProps = {
   home?: boolean;
+  orbit?: { site: typeof missionSites[number]; weekUtc: string; onSite: (id: string) => void };
   primary?: GlobeSite;
   alternative?: GlobeSite;
   evidence?: Dataset["evidence"];
@@ -40,14 +41,14 @@ type Target = {
   missionId?: string;
 };
 
-export default function MoonGlobe({ home = false, primary, alternative, evidence, savedResult, pairSites, showSky }: GlobeProps) {
+export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, showSky }: GlobeProps) {
   const { t } = useLanguage();
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState(origin);
-  const [rotating, setRotating] = useState(true);
+  const [rotating, setRotating] = useState(!orbit);
   const [sunUtc, setSunUtc] = useState("");
   const [reducedMotion, setReducedMotion] = useState(true);
   const [announced, setAnnounced] = useState<typeof origin | null>(null);
@@ -76,7 +77,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
   const savedSite = saved.weeks.some(week => week.sites.some(site => site.id === savedResult));
   const solarChoices = home || pairSites || (target && !target.missionId) ? [] : sunlight.samples.filter(sample =>
     sample.utc === selectedWeek?.startUtc || (savedSite && !selectedWeek));
-  const sun = solarChoices.find(sample => sample.utc === sunUtc);
+  const sun = orbit ? sunlight.samples.find(sample => sample.utc === orbit.weekUtc) : solarChoices.find(sample => sample.utc === sunUtc);
   const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<{ context: CanvasRenderingContext2D; texture: ImageData; frame: ImageData } | null>(null);
@@ -98,6 +99,11 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     } else { setChosen(null); setCenter(origin); }
     setZoom(1); setAnnounced(null); setSunUtc("");
   }, [savedResult, pairSites]);
+
+  const orbitSite = orbit?.site;
+  useEffect(() => {
+    if (orbitSite) { setCenter(orbitSite); setZoom(1); setRotating(false); }
+  }, [orbitSite]);
 
   const currentCenter = useEffectEvent(() => ({ ...center, zoom, sun }));
   useEffect(() => { setEnabled(true); }, []);
@@ -268,22 +274,29 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
         tabIndex={0} onKeyDown={turnWithKeyboard}
-        aria-describedby={home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : "globe-zoom-help"}
+        aria-describedby={orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : "globe-zoom-help"}
         onPointerDown={startDrag} onPointerMove={moveDrag}
         onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} />}
-      {ready && sunMarker && <span className="subsolar-marker" aria-hidden="true"
+      {ready && !orbit && sunMarker && <span className="subsolar-marker" aria-hidden="true"
         style={{ left: `${(1 + sunMarker.x) * 50}%`, top: `${(1 + sunMarker.y) * 50}%` }}>☉</span>}
-      {ready && !home && pins.map((item, index) => {
+      {ready && (!home || orbit) && pins.map((item, index) => {
         if (!("point" in item.location)) return null;
         const position = diskPosition(item.location.point, center, zoom);
         if (!position) return null;
         return <span key={item.key} className="site-pin" data-pin={index} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%` }}>
           <button type="button" title={item.name} aria-label={t("Inspect {site}", {site: item.name})}
-            aria-pressed={target?.key === item.key} onClick={() => locate(item)}>{index + 1}</button>
+            aria-pressed={orbit ? orbit.site.id === item.missionId : target?.key === item.key}
+            onClick={() => { if (orbit && item.missionId) orbit.onSite(item.missionId); locate(item); }}>{orbit ? item.name.split(" · ")[0] : index + 1}</button>
         </span>;
       })}
     </div>
-    <figcaption>
+    {orbit ? <figcaption id="orbit-help">
+      {ready ? t("Drag or use the arrow keys to rotate. Use + or − to zoom.") : failed ?
+        t("Map unavailable. The photograph and site readings are still available.") : t("Lunar reference photograph")}
+      {failed && <button type="button" onClick={() => { setFailed(false); setEnabled(true); }}>{t("Retry globe")}</button>}
+      {ready && <><button type="button" onClick={() => { selectCenter(orbit.site); setZoom(1); }}>{t("Center on site")}</button>
+        <span className="sr-only" role="status">{t("View center")} · {coordinates(center)} · {zoom}×</span></>}
+    </figcaption> : <figcaption>
       <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
         setRotating(false);
         setCenter(point ?? origin); setZoom(1); setAnnounced(null); setSunUtc(""); setReady(false); setFailed(false); setEnabled(!enabled);
@@ -363,6 +376,6 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
               <a href="#sources">{t("Sources & method")}</a></>}
         </div>}
       </div>}
-    </figcaption>
+    </figcaption>}
   </figure>;
 }

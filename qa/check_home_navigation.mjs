@@ -15,7 +15,8 @@ try {
     const mobile = width < 760;
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
     const primary = page.locator(".hero-actions .primary");
-    assert.equal(await primary.innerText(), "Compare Athena and Odysseus");
+    assert.equal(await primary.innerText(), "Explore the landing sites");
+    assert.equal(await primary.getAttribute("href"), "/orbit");
     const guideLink = page.locator('.hero-actions a[href="#home-guide"]');
     assert.equal(await page.locator(".hero-actions a").count(), 2);
     await guideLink.press("Enter");
@@ -25,7 +26,7 @@ try {
     }
     assert.ok(await page.getByRole("img", { name: /Low sunlight reaches the left rim/ }).isVisible());
     await page.route("**/api/**", route => route.abort());
-    await primary.press("Enter");
+    await page.locator('#home-guide a[href*="saved="]').press("Enter");
     await page.waitForURL(url => url.pathname === "/compare" && url.hash === "#observed-week" &&
       url.searchParams.get("saved") === "2026-11-14T00:00:00Z");
     const week = page.locator("#observed-week");
@@ -50,7 +51,7 @@ try {
       await menu.click();
     }
     await nav.getByLabel("Language").selectOption("vi");
-    assert.equal(await primary.innerText(), "So sánh Athena và Odysseus");
+    assert.equal(await primary.innerText(), "Khám phá điểm đáp");
     assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
     assert.deepEqual(await nav.getByRole("link").allTextContents(),
       ["So sánh", "Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);

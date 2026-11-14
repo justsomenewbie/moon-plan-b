@@ -36,7 +36,7 @@ export default function Home() {
           <h1 id="home-title" tabIndex={-1}>{t("Find a clearer window")}</h1>
           <p className="lead">{t("Near the lunar south pole, the Sun stays low. Compare landing sites and dates to see how many hours both the Sun and Earth are in view.")}</p>
           <div className="hero-actions">
-            <a className="button primary" href={exampleHref}>{t("Compare Athena and Odysseus")}</a>
+            <a className="button primary" href="/orbit">{t("Explore the landing sites")}</a>
             <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function Home() {
           <li>{t("Compare the hours in bold. More hours means a longer time with both the Sun and Earth in view.")}</li>
           <li>{t("To try a different comparison, choose another week or select a site to compare its two weeks.")}</li>
         </ol>
-        <a href={exampleHref}>{t("Try the saved example")}</a>
+        <a href={exampleHref}>{t("Earlier example · run B")}</a>
         <div className="home-guide-links">
           <a href="/plan?mode=sites">{t("Find sites for my dates")}</a>
           <a href="/plan?mode=dates">{t("Find dates for my site")}</a>
