@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import manifest from "../../public/data/run-b/manifest.json";
-import catalog from "../../public/data/run-b/catalog.json";
+import manifest from "../../public/data/run-b2/manifest.json";
+import catalog from "../../public/data/run-b2/catalog.json";
+import earlierCatalog from "../../public/data/run-b/catalog.json";
 import weeks from "../../lib/odysseus-athena-weeks.json";
 import { archiveB2Run } from "../../lib/archive-b2";
 import { TimeRange } from "../terrain-site-result";
@@ -69,7 +70,7 @@ export default function DataPage() {
         <h2 id="bundled-data">{text("Earlier run B · bundled sources", "Lần chạy B trước đó · nguồn có sẵn")}</h2>
         <p>{text("Run B covers 23 catalog sites from 1 January 2026 through 31 December 2030, sampled every hour in UTC.",
           "Lần chạy B gồm 23 địa điểm, lấy mẫu mỗi giờ theo UTC từ ngày 1/1/2026 đến hết ngày 31/12/2030.")}</p>
-        <code>{runId}</code>
+        <code>{earlierCatalog.run_id}</code>
 
         <p>{text("The manifest lists the original files and their SHA-256 checksums. The saved site catalog includes names, coordinates, terrain methods and full-run summary values.",
           "Manifest liệt kê các tệp gốc và mã SHA-256 của từng tệp. Danh mục địa điểm lưu sẵn có tên, tọa độ, phương pháp mô hình địa hình và số liệu tổng hợp của cả lần chạy.")}</p>
@@ -96,7 +97,7 @@ export default function DataPage() {
           {text("Find landing times within the saved intervals", "Tìm giờ hạ cánh trong các khoảng đã lưu")}</a>
       </section>
       <section className="space-y-3" aria-labelledby="source-files">
-        <h2 id="source-files">{text("Original run B files on the team API", "Tệp gốc của lần chạy B trên API của nhóm")}</h2>
+        <h2 id="source-files">{text("Original run B2 files on the team API", "Tệp gốc của lần chạy B2 trên API của nhóm")}</h2>
         <p>{text("The manifest indexes 94 files. Full hourly ephemerides and visibility tables, local horizons and full-run intervals are served by the backend.",
           "Manifest liệt kê 94 tệp. Backend cung cấp bảng thiên văn và trạng thái tầm nhìn mỗi giờ, đường chân trời địa phương và các khoảng tầm nhìn của cả lần chạy.")}</p>
         {isMock && <p className="data-notice">{text("This build has no team API configured. Use the routes below with the team API host.",
