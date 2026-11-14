@@ -8,18 +8,20 @@ Chung owns the production OpenAPI and will add **GET `/api/v1/dataset`** after t
 
 The team service returned HTTP 200 for Swagger and its JSON spec. `/docs/json` and `/api/v1/openapi.json` returned the same OpenAPI 3.1.0 document (`Lunar Landing Site Navigator API` version `1.0.0`, SHA-256 `f457e46fab414266f9647444350ead9cbd8e46d675217e889b903c18e914010d`). It documents 21 paths, including runs, sites, sky tracks, series, visibility windows and ranking. At 13:01 Hanoi (06:01 UTC), the selected aggregate route was absent. Both a direct GET and the frontend’s proxied GET returned the producer’s 404 `NOT_FOUND` with detail `no route GET /api/v1/dataset`. Keep the configured origin local to each environment.
 
-For a bounded read-only check, the default run reported SPICE, PGDA terrain, brute-force horizons, a 2 m observer and hourly samples. For the Odysseus and Athena candidate sites we retrieved site details, hourly Sun/Earth/joint flags and all three interval lists over the week from 2026-11-14 00:00Z inclusive to 2026-11-21 00:00Z exclusive. Each list covered the requested half-open range. At all 168 samples per site the joint flag equalled the conjunction of the two body flags. Re-expanding every returned interval reproduced the corresponding hourly flags. The model returned one positive joint interval for Odysseus, starting November 19 at 15:00Z (33 hours in range), and one for Athena, starting November 15 at 05:00Z (139 hours in range). Both ended at the query boundary with `clipped_end=true`; visibility after that instant was not tested. The local evidence retains the raw responses, run ID, coordinate sources and SHA-256 for each response. This verifies the meaning and consistency of the responses consumed by FE. Independent ephemeris and terrain validation belongs to the science team.
+For a bounded read-only check, the default run reported SPICE, PGDA terrain, brute-force horizons, a 2 m observer and hourly samples. For the Odysseus and Athena candidate sites we retrieved site details, hourly Sun/Earth/joint flags and all three interval lists over the week from 2026-11-14 00:00Z inclusive to 2026-11-21 00:00Z exclusive. Each list covered the requested half-open range. At all 168 samples per site the joint flag equalled the conjunction of the two body flags. Re-expanding every returned interval reproduced the corresponding hourly flags. The model returned one positive joint interval for Odysseus, starting November 19 at 15:00Z (33 hours in range), and one for Athena, starting November 15 at 05:00Z (139 hours in range). Both ended at the query boundary with `clipped_end=true`; the next seven days were checked separately below. The local evidence retains the raw responses, run ID, coordinate sources and SHA-256 for each response. This verifies the meaning and consistency of the responses consumed by FE. Independent ephemeris and terrain validation belongs to the science team.
 
 Unlike the draft, the service uses snake_case, east longitude in [0, 360), terrain-aware upper-limb sunlight and Earth clearance. Preserve the producer’s `precision_h`, UTC bounds and clipped versus run-truncated flags in the eventual aggregate. The existing ideal-horizon importer cannot represent these semantics. The next integration input is the versioned aggregate response and its example.
 
-## Reproduce the Odysseus and Athena week
+## Reproduce the Odysseus and Athena weeks
 
-Use the team API with run `B_spice_pgda_bruteforce_2026_2030`. The candidate site IDs are `im1_odysseus` and `im2_athena`. The start is inclusive at `2026-11-14T00:00:00Z` and the end exclusive at `2026-11-21T00:00:00Z`. Each site returned 168 hourly samples. The windows endpoint reports boundary precision of ±1 hour. The table gives the hours and limits within the queried week.
+Use the team API with run `B_spice_pgda_bruteforce_2026_2030`. The candidate site IDs are `im1_odysseus` and `im2_athena`. The two equal windows begin at `2026-11-14T00:00:00Z` and `2026-11-21T00:00:00Z`. Each ends seven days later, at `2026-11-21T00:00:00Z` and `2026-11-28T00:00:00Z` respectively. Start is inclusive and end is exclusive. Each site returned 168 hourly samples per window. The windows endpoint reports boundary precision of ±1 hour. The table lists every positive joint interval within each queried week.
 
-| Candidate site | Sun visible | Earth visible | Both visible (also the longest overlap in the week) | Joint interval, UTC |
-| --- | ---: | ---: | ---: | --- |
-| Odysseus · IM-1 | 33 h | 168 h | 33 h | Nov 19 15:00 to Nov 21 00:00 |
-| Athena · IM-2 | 139 h | 168 h | 139 h | Nov 15 05:00 to Nov 21 00:00 |
+| Week starts (UTC) | Candidate site | Sun visible | Earth visible | Both visible (also the longest overlap in the week) | Joint interval, UTC |
+| --- | --- | ---: | ---: | ---: | --- |
+| Nov 14 | Odysseus · IM-1 | 33 h | 168 h | 33 h | Nov 19 15:00 to Nov 21 00:00 |
+| Nov 14 | Athena · IM-2 | 139 h | 168 h | 139 h | Nov 15 05:00 to Nov 21 00:00 |
+| Nov 21 | Odysseus · IM-1 | 168 h | 168 h | 168 h | Nov 21 00:00 to Nov 28 00:00 |
+| Nov 21 | Athena · IM-2 | 168 h | 168 h | 168 h | Nov 21 00:00 to Nov 28 00:00 |
 
 For each site, make these GET requests relative to the team service. Substitute the IDs and UTC values above for the placeholders.
 
@@ -29,7 +31,9 @@ For each site, make these GET requests relative to the team service. Substitute 
 /api/v1/sites/{site_id}/windows?run_id={run}&start={start}&end={end}&kinds=sun,earth,both
 ```
 
-Compare the two input flags with the joint flag at every hour. Check that each returned Sun, Earth and joint interval list tiles the full range, then expand each interval back to the hourly grid. Both positive joint intervals have `clipped_end=true`. Their reported end is the query limit. Source responses were read at 05:52 UTC on November 14. The SHA-256 values below identify the original response bodies.
+Compare the two input flags with the joint flag at every hour. Check that each returned Sun, Earth and joint interval list tiles the full range, then expand each interval back to the hourly grid. The first week’s positive joint intervals have only `clipped_end=true`. Both second-week intervals have `clipped_start=true` and `clipped_end=true`. All four have `truncated_start=false` and `truncated_end=false`. The comparison reports durations within each query. The two sets of source responses were read at 05:52 and 06:25 UTC on November 14. The SHA-256 values below identify the original response bodies.
+
+The site detail hashes apply to both weeks. The first set of series and window hashes covers November 14–21.
 
 | Site | Response | SHA-256 |
 | --- | --- | --- |
@@ -39,6 +43,15 @@ Compare the two input flags with the joint flag at every hour. Check that each r
 | im2_athena | detail | `ce0908ad5f4828599151b89b047b00594c2d903b31769659ef54e2bfeb86a753` |
 | im2_athena | series | `d014688972332d022f9870c0eb7fe5ae837a1167c0e1d5317bbcc75d7fe0e264` |
 | im2_athena | windows | `9daa9553fa01ade944506bf67fd115f5799f62931d89095f9d535bd445367f28` |
+
+The second set covers November 21–28.
+
+| Site | Response | SHA-256 |
+| --- | --- | --- |
+| im1_odysseus | series | `a09a37e815dd12ff3e931ec777a2ff107c21d15a65b933c8fb7c5e2387224a88` |
+| im1_odysseus | windows | `7f1f105648fd56ca877302d35de2548b7a12c3d91346eb32ffc7f40c904a9181` |
+| im2_athena | series | `deeac24a0ffa13be1001b1a4015589b7e570ceb271c60321cd933245857275c3` |
+| im2_athena | windows | `440adde809d30ba01e5e900470da79452bdf6b93dcd105bfb14d7d8cee44526c` |
 
 ## Colab precompute and the first science comparison
 
