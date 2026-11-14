@@ -1,0 +1,78 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const [origin] = process.argv.slice(2);
+if (!origin) throw Error("Pass a frontend URL with access to run B2, or set TERRAIN_DATASET_REPLAY.");
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright");
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, chromiumSandbox: true });
+const from = "2026-11-07", to = "2026-11-14";
+const expected = [
+  ["2026-11-07T00:00:00Z", "2026-11-07T13:00:00Z"],
+  ["2026-11-12T11:00:00Z", "2026-11-14T00:00:00Z"],
+];
+const url = (path, params) => new URL(path + "?" + new URLSearchParams(params), origin).href;
+const replay = process.env.TERRAIN_DATASET_REPLAY && await readFile(process.env.TERRAIN_DATASET_REPLAY);
+const labels = {
+  en: { summary: "When is Earth in direct view?", total: "50 of 168 h", empty: /no direct view/, absent: /Exact times are unavailable/, end: /ends just before/ },
+  vi: { summary: "Khi nào có đường nhìn thẳng tới Trái Đất?", total: "50 trên 168 giờ", empty: /không ghi nhận thời điểm nào/, absent: /Chưa có mốc giờ cụ thể/, end: /trước mốc kết thúc/ },
+};
+
+async function inspect(page, region, copy, state) {
+  const box = region.locator("details.earth-sight-times");
+  const summary = box.getByText(copy.summary, { exact: true });
+  await summary.waitFor();
+  if (!(await box.evaluate(node => node.open))) {
+    await summary.focus();
+    await page.keyboard.press("Enter");
+  }
+  assert(await box.evaluate(node => node.open));
+  if (state === "split") {
+    await box.getByText(copy.end).waitFor();
+    const intervals = await box.getByRole("listitem").evaluateAll(items =>
+      items.map(item => [...item.querySelectorAll("time")].map(time => time.dateTime)));
+    assert.deepEqual(intervals, expected);
+  } else {
+    await box.getByText(copy[state]).waitFor();
+    assert.equal(await box.getByRole("listitem").count(), 0);
+  }
+  assert(await box.evaluate(node => node.scrollWidth <= node.clientWidth), "Interval content overflows");
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Page overflows");
+}
+
+try {
+  for (const [locale, width] of [["en", 1280], ["vi", 320]]) {
+    const page = await browser.newPage({ viewport: { width, height: 850 }, reducedMotion: "reduce", serviceWorkers: "block" });
+    await page.addInitScript(lang => localStorage.setItem("moon-plan-b-language", lang), locale);
+    if (replay) await page.route("**/api/v1/dataset?**", route => route.fulfill({ contentType: "application/json", body: replay }));
+    const copy = labels[locale];
+    const query = { mode: "sites", source: "saved-b2", from, to, priority: "earth", site: "im2_athena" };
+    await page.goto(url("/plan", query));
+    const inspector = page.locator(".plan-map-inspector");
+    const site = inspector.getByRole("combobox");
+    await site.selectOption("im2_athena");
+    await inspector.getByText(new RegExp(copy.total)).waitFor();
+    await inspect(page, inspector, copy, "split");
+    await site.selectOption("change4");
+    await inspect(page, inspector, copy, "empty");
+    await site.selectOption("im2_athena");
+    await inspector.locator('a[href*="/plan/site?"]').click();
+    const report = page.locator('section[aria-labelledby="site-visibility"]');
+    await report.getByText(copy.total, { exact: true }).waitFor();
+    await inspect(page, report, copy, "split");
+    await page.goto(url("/plan/site", { source: "saved", site: "apollo11", from: "2026-11-14", to: "2026-11-15", priority: "earth" }));
+    await inspect(page, report, copy, "absent");
+
+    const dataset = page.waitForResponse(response => new URL(response.url()).pathname === "/api/v1/dataset" && response.ok());
+    await page.goto(url("/compare", { run_id: "B2_spice_pgda_bruteforce_2026_2030_fix676af9d",
+      site_id: "im2_athena", view_site: "im2_athena", from: from + "T00:00:00Z", to: to + "T00:00:00Z", resolutionSeconds: "3600" }) + "#terrain-observations");
+    const data = await (await dataset).json();
+    assert.equal(data.range.n_samples, 168);
+    const athena = data.sites.find(row => row.id === "im2_athena");
+    assert.deepEqual(athena.windows.earth.map(w => [w.start, w.end]), expected);
+    await inspect(page, page.locator(".visibility-bands"), copy, "split");
+    await page.close();
+    console.log(locale, width, "px: verified two Earth sight intervals, zero visibility and unavailable times.");
+  }
+} finally {
+  await browser.close();
+}
