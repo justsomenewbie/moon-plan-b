@@ -17,7 +17,7 @@ and runs `lunarnav` as background jobs for custom coordinates.
 * MongoDB 8 on `mongodb://127.0.0.1:27017` without auth for development: a local install, or
   `docker run -d --name lunarnav-mongo -p 27017:27017 mongo:8`.
 * The Python venv `../.venv` with `lunarnav` installed (`pip install -e ".[dev]"` in the parent folder, see the
-  [root README](../README.md#1-python-package)). It is used by the import gate (`lunarnav check`), alternative dates,
+  [Run it locally](../docs/RUN_LOCALLY.md#1-python-package)). It is used by the import gate (`lunarnav check`), alternative dates,
   jobs and tools.
 
 ## First run
