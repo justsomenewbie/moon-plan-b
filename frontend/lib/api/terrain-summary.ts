@@ -269,7 +269,7 @@ function readCriteriaHours(value: unknown) {
   return hours;
 }
 
-function readCriteria(value: unknown, hours: number[], inRange: Coverage, both: Span[]): components["schemas"]["DatasetCriterion"][] {
+function readCriteria(value: unknown, hours: number[], inRange: Coverage, both: Span[], stepSeconds: number): components["schemas"]["DatasetCriterion"][] {
   if (inRange === "missing" && value === undefined) return [];
   const rows = items(value, "site criteria", 30);
   check(rows.length === (inRange === "missing" ? 0 : hours.length), "Site criteria do not cover the supplied thresholds.");
@@ -288,6 +288,12 @@ function readCriteria(value: unknown, hours: number[], inRange: Coverage, both: 
     check(sharedClipping === undefined || sharedClipping === value_clipped, "Duration thresholds disagree on longest interval clipping.");
     sharedClipping = value_clipped;
     check(c.result === "meets" || c.result === "below" || c.result === "borderline", "Unknown duration criterion verdict.");
+    // evaluateCriteria uses the producer's six-decimal value and its native step.
+    // Within one step, sampled and clipped edges can give different verdicts.
+    const difference = value_h - minimum_hours, stepHours = stepSeconds / 3600;
+    const possible = c.result === "meets" ? difference >= 0
+      : c.result === "below" ? difference < 0 : Math.abs(difference) < stepHours;
+    check(possible, "The duration criterion verdict contradicts the longest joint interval and model step.");
     return { minimum_hours, metric: c.metric, value_h, value_clipped, result: c.result, reason: text(c.reason, "criterion reason") };
   });
 }
@@ -320,7 +326,7 @@ function readSite(value: unknown, range: Range, include: unknown[], criteriaHour
     lat_deg, lon_deg, surface_height_m,
     id: identifier(s.id, "site", /^[A-Za-z0-9_.:-]{1,64}$/), name: text(s.name, "site name"), coverage: c, coverage_in_range: inRange,
     windows, metrics: readMetrics(s.metrics, range, bodySpans, inRange),
-    criteria: criteriaHours && readCriteria(s.criteria, criteriaHours, inRange, bodySpans.both),
+    criteria: criteriaHours && readCriteria(s.criteria, criteriaHours, inRange, bodySpans.both, range.step_s),
     horizon: include.includes("horizon") && (s.horizon !== undefined || inRange !== "missing") ? readHorizon(s.horizon) : null,
     series: include.includes("series") && (s.series !== undefined || inRange !== "missing") ? readSeries(s.series, range, inRange, bodySpans) : null,
   };

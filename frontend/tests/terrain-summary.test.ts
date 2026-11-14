@@ -403,6 +403,24 @@ test("retains the producer verdict at sampled edges and validates thresholds and
   assert.throws(() => parseTerrainSummary({ ...input, sites: [{ ...dark, criteria: [{ ...dark.criteria[0], value_clipped: true }] }] }), /clipped/);
 });
 
+test("rejects duration verdicts impossible at the producer's model step and preserves near-threshold reports", () => {
+  const base = example(), site = base.sites[0];
+  function load(minimum: number, result: string, stepSeconds = 3600) {
+    const criteria = [{ minimum_hours: minimum, metric: "longest_both_h", value_h: 2, value_clipped: false, result,
+      reason: "Producer assessment of the retained two-hour span." }];
+    return parseTerrainSummary({ ...base, include: [...base.include, "criteria"], criteria_hours: [minimum],
+      range: { ...base.range, step_s: stepSeconds, n_samples: 8 * 3600 / stepSeconds }, sites: [{ ...site, criteria }] });
+  }
+  for (const [minimum, invalid] of [[24, "meets"], [24, "borderline"], [1, "below"], [1, "borderline"],
+    [2, "below"], [3, "borderline"]] as const) {
+    assert.throws(() => load(minimum, invalid), /criterion verdict contradicts/);
+  }
+  assert.equal(load(24, "below").sites[0].criteria?.[0].result, "below");
+  assert.equal(load(1, "meets").sites[0].criteria?.[0].result, "meets");
+  for (const threshold of [1.75, 2, 2.25]) assert.equal(load(threshold, "borderline", 1800).sites[0].criteria?.[0].result, "borderline");
+  assert.throws(() => load(2.5, "borderline", 1800), /criterion verdict contradicts/);
+});
+
 test("live terrain URL bounds use exact fractional seconds and cap ranges at the final nanosecond", () => {
   const targets = [{ run_id: "run", site_id: "one" }, { run_id: "run", site_ids: "two,one" }, { run_id: "run" }, undefined];
   for (const target of targets) {
