@@ -56,8 +56,11 @@ try {
   await checkShadow(280, 0.2);
   await stateMatches("golden");
   await mask.press("ArrowRight");
+  assert.equal(await mask.inputValue(), "0.1");
+  assert.equal(await mask.getAttribute("aria-valuetext"), "0.1° simulated uniform clearance");
+  for (let i = 0; i < 4; i++) await mask.press("ArrowRight");
   assert.equal(await mask.inputValue(), "0.5");
-  assert.equal(await mask.getAttribute("aria-valuetext"), "0.5°");
+  assert.equal(await mask.getAttribute("aria-valuetext"), "0.5° simulated uniform clearance");
   assert.equal(Number(await line.getAttribute("y1")), (90 - 0.5) / 180 * 240);
   assert.equal(Number(await ring.getAttribute("r")), 82 * (90 - 0.5) / 90);
   await stateMatches("comms-only");
@@ -69,8 +72,8 @@ try {
   await page.locator(".preset-pills button").filter({ hasText: /^2°/ }).click();
   assert.equal(await mask.inputValue(), "2");
   await stateMatches("blackout");
-  await limit.selectOption("6");
-  for (const row of await rows.all()) assert.match(await row.locator(".mission-metrics-row").innerText(), /4 h\s*\/\s*6 h/);
+  await limit.selectOption("24");
+  for (const row of await rows.all()) assert.match(await row.locator(".mission-metrics-row").innerText(), /4 h\s*\/\s*24 h/);
   assert.deepEqual(await producerHours.allTextContents(), baseline);
 
   const labelEN = await page.locator('label[for="horizon-clearance-input"]').innerText();
@@ -81,7 +84,7 @@ try {
   assert.notEqual(await page.locator('label[for="horizon-clearance-input"]').innerText(), labelEN);
   assert.notEqual(await page.locator(".battery-picker span").innerText(), limitEN);
   assert.notEqual(await rows.first().getByRole("img").getAttribute("aria-label"), ribbonEN);
-  assert.equal(await limit.inputValue(), "6");
+  assert.equal(await limit.inputValue(), "24");
   assert.equal(await mask.inputValue(), "2");
   await stateMatches("blackout");
   await page.getByRole("combobox", { name: "Ngôn ngữ" }).selectOption("en");

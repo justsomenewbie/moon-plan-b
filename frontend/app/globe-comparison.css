@@ -52,6 +52,8 @@
 .sky-ray text { fill: currentColor; font: bold 9px monospace; paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
 .sky-clearance-ring, .clearance-ring { fill: none; stroke: var(--sun); stroke-width: 1.25; opacity: .85; }
 .clearance-line { stroke: var(--sun); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: .85; }
+.clearance-band { fill: var(--sun); opacity: .1; }
+.clearance-band-ring { fill: none; stroke: var(--sun); opacity: .12; }
 
 .mission-studio {
   margin-top: 16px;
@@ -74,6 +76,13 @@
   color: var(--sun);
   font-size: .82rem;
 }
+.clearance-caveat {
+  margin-top: 8px;
+  padding-left: 9px;
+  border-left: 2px solid var(--sun);
+  color: var(--text);
+  font-size: .78rem;
+}
 .clearance-controls {
   margin: 12px 0;
   display: grid;
@@ -85,7 +94,7 @@
   gap: 6px;
 }
 .preset-pill {
-  min-height: 36px;
+  min-height: 44px;
   padding: 4px 10px;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -133,7 +142,7 @@
   color: var(--muted);
 }
 .battery-picker select {
-  min-height: 34px;
+  min-height: 44px;
   padding: 4px 8px;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -159,9 +168,15 @@
   vertical-align: middle;
 }
 .state-dot.golden::before, .ribbon-seg.golden { background: var(--positive); }
-.state-dot.solar-only::before, .ribbon-seg.solar-only { background: var(--sun); }
-.state-dot.comms-only::before, .ribbon-seg.comms-only { background: var(--earth); }
-.state-dot.blackout::before, .ribbon-seg.blackout { background: var(--grid); }
+.state-dot.solar-only::before, .ribbon-seg.solar-only {
+  background: repeating-linear-gradient(135deg, var(--sun) 0 3px, var(--surface) 3px 5px);
+}
+.state-dot.comms-only::before, .ribbon-seg.comms-only {
+  background: radial-gradient(circle at 2px 2px, var(--earth) 0 1.4px, var(--surface) 1.6px) 0 0 / 6px 6px;
+}
+.state-dot.blackout::before, .ribbon-seg.blackout {
+  background: repeating-linear-gradient(45deg, var(--error-line) 0 2px, var(--surface) 2px 5px);
+}
 .mission-scenarios {
   display: grid;
   gap: 12px;
@@ -196,6 +211,11 @@
 .mission-ribbon, .state-dot.unavailable::before {
   background: repeating-linear-gradient(135deg, var(--surface) 0 3px, var(--line) 3px 4px);
 }
+.ribbon-seg.unavailable {
+  background: repeating-linear-gradient(135deg, var(--surface) 0 3px, var(--line) 3px 4px);
+  border-left: 1px dashed var(--muted);
+  border-right: 1px dashed var(--muted);
+}
 .mission-intervals { font-size: .78rem; overflow-wrap: anywhere; }
 .mission-intervals summary { cursor: pointer; }
 .ribbon-seg {
@@ -216,7 +236,7 @@
 }
 .mission-metrics-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
   gap: 6px;
   margin: 2px 0 0;
   font-size: .72rem;
@@ -233,17 +253,22 @@
 
 .lander-hud-body {
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-columns: 180px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   margin-top: 8px;
 }
+.lander-hud-diagrams { display: grid; gap: 8px; min-width: 0; }
 .lander-hud-svg {
   width: 100%;
   max-width: 150px;
   margin: 0 auto;
   display: block;
 }
+.lander-side-svg { display: block; width: 100%; max-width: 180px; margin: 0 auto; }
+.hud-clearance-band { fill: var(--sun); opacity: .12; }
+.hud-horizon-line { stroke: var(--horizon); stroke-width: 1.25; stroke-dasharray: 4 3; }
+.hud-side-label { fill: var(--muted); font: 8px monospace; paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
 .hud-compass-ring { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
 .hud-inner-ring { fill: none; stroke: var(--grid); stroke-width: .9; }
 .hud-shadow-ray { stroke: var(--grid); opacity: .65; }
@@ -273,4 +298,15 @@
 @media (max-width: 560px) {
   .mission-metrics-row { grid-template-columns: 1fr 1fr; }
   .lander-hud-body { grid-template-columns: 1fr; }
+}
+@media (forced-colors: active) {
+  .ribbon-seg, .state-dot::before { border: 1px solid CanvasText; }
+  .clearance-band, .clearance-band-ring, .hud-clearance-band { opacity: .25; }
+}
+@media print {
+  .clearance-controls, .sky-orbit, .sky-stage, .sky-scenario-key { display: none !important; }
+  .mission-studio { border-top: 0; }
+  .studio-grid { grid-template-columns: 1fr; }
+  .mission-ribbon-card, .lander-hud-card { break-inside: avoid; }
+  .mission-ribbon, .ribbon-seg { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

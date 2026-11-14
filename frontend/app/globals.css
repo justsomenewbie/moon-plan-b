@@ -163,7 +163,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--earth);
 .sky-orbit { font-size: .9rem; margin: 4px 0 8px; }
 .sky-orbit input { width: min(220px, 100%); max-width: 100%; min-height: 44px; accent-color: var(--earth); }
 @media (max-width: 680px) { .sky-stage { grid-template-columns: 1fr; gap: 4px; } .sky-info dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } }
-@media print { .local-sky { display: none; } }
+@media print { .local-sky { display: block; break-before: page; } }
 .sky { border-right: 1px solid var(--line); padding-right: 24px; }
 .sky svg { width: 100%; margin-top: 18px; }
 .body-label { fill: currentColor; font: 13px Arial, sans-serif; }

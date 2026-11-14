@@ -62,6 +62,7 @@ export function Timeline({ a, b, mode, offset, clearanceDeg = 0 }: { a: Scenario
       {[-90, -45, 0, 45, 90].map((v) => <g key={v}>
         <line x1="0" x2={width} y1={(90 - v) / 180 * height} y2={(90 - v) / 180 * height} className={v === 0 ? "horizon-line" : "grid-line"} />
       </g>)}
+      {clearanceDeg > 0 ? <rect x="0" y={(90 - clearanceDeg) / 180 * height} width={width} height={clearanceDeg / 180 * height} className="clearance-band" /> : null}
       {clearanceDeg > 0 ? <line x1="0" x2={width} y1={(90 - clearanceDeg) / 180 * height} y2={(90 - clearanceDeg) / 180 * height} className="clearance-line" /> : null}
       {[a, b].map((s, i) => s ? ["sun", "earth"].map((body) => <path key={`${s.id}-${body}`} d={chartPath(s, body as "sun" | "earth", width, height)} fill="none" className={`plot-line ${body}`} strokeDasharray={i ? "7 6" : undefined} opacity={i ? 0.65 : 1} />) : null)}
       {a.samples.length > 0 ? <line x1={cursor} x2={cursor} y1="0" y2={height} className="cursor-line" /> : null}
@@ -105,6 +106,7 @@ export function SkyPosition({ scenario, offset, clearanceDeg = 0 }: { scenario: 
     <svg className="skyplot" viewBox="0 0 200 200" role="img" aria-labelledby="sky-description">
       <title id="sky-description">{t("Polar skyplot of Sun and Earth azimuth and elevation at the selected primary sample")}</title>
       {[82, 55, 27].map((r, i) => <circle key={r} cx="100" cy="100" r={r} className={i === 0 ? "horizon-ring" : "grid-ring"} />)}
+      {clearanceDeg > 0 ? <circle cx="100" cy="100" r={82 - (82 - 82 * (90 - clearanceDeg) / 90) / 2} className="clearance-band-ring" strokeWidth={82 - 82 * (90 - clearanceDeg) / 90} /> : null}
       {clearanceDeg > 0 ? <circle cx="100" cy="100" r={82 * (90 - clearanceDeg) / 90} className="clearance-ring" strokeDasharray="4 3" /> : null}
       {[0, 90, 180, 270].map((azimuth, i) => { const edge = point(azimuth, 0); const label = point(azimuth, -10); return <g key={azimuth}><line x1="100" y1="100" x2={edge.x} y2={edge.y} className="grid-line" /><text x={label.x} y={label.y} textAnchor="middle" dominantBaseline="middle" className="axis-label">{["N", "E", "S", "W"][i]}</text></g>; })}
       <text x="104" y="104" className="elevation-label">90°</text><text x="104" y="47" className="elevation-label">30°</text>

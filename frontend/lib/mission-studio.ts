@@ -22,6 +22,7 @@ export interface ScenarioClearanceSummary {
   blackoutHours: number | null;
   longestGoldenStreakHours: number | null;
   longestSolarDarknessHours: number | null;
+  darknessClipped: boolean;
   batteryStatus: "safe" | "risk" | "unknown";
   segments: MissionSegment[];
 }
@@ -41,7 +42,7 @@ export interface LanderHudMetrics {
 
 export function clampClearanceDeg(value: number): number {
   if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(10, Math.round(value * 2) / 2));
+  return Math.max(0, Math.min(10, Math.round(value * 10) / 10));
 }
 
 export function shortestAzimuthDelta(azA: number, azB: number): number {
@@ -100,15 +101,38 @@ export function analyzeScenarioClearance(
   const segments: MissionSegment[] = [];
   const totals = { golden: 0, "solar-only": 0, "comms-only": 0, blackout: 0 };
   let longestGolden = 0, longestDark = 0, currentDark = 0;
+  let cursor = windowStart;
+
+  const appendUnavailable = (from: number, to: number) => {
+    const start = Math.max(windowStart, from), end = Math.min(windowEnd, to);
+    if (end <= start) return;
+    const startUtc = new Date(start).toISOString(), endUtc = new Date(end).toISOString();
+    const previous = segments.at(-1);
+    if (previous?.state === "unavailable" && previous.endUtc === startUtc) {
+      previous.endUtc = endUtc;
+      previous.durationHours = (end - Date.parse(previous.startUtc)) / 3_600_000;
+      previous.widthPct = (end - Date.parse(previous.startUtc)) / span * 100;
+    } else {
+      segments.push({ state: "unavailable", startUtc, endUtc, durationHours: (end - start) / 3_600_000,
+        startPct: (start - windowStart) / span * 100, widthPct: (end - start) / span * 100 });
+    }
+  };
 
   for (let i = 1; i < samples.length; i++) {
     const a = samples[i - 1], b = samples[i];
     const start = Date.parse(a.utc), end = Date.parse(b.utc);
     const step = end - start;
+    if (start > cursor) {
+      appendUnavailable(cursor, start);
+      complete = false;
+      currentDark = 0;
+    }
     if (!(start >= windowStart && end <= windowEnd && step > 0 && step <= maxStep)
         || !a.sun || !b.sun || !a.earth || !b.earth) {
       complete = false;
       currentDark = 0;
+      appendUnavailable(start, end);
+      cursor = Math.max(cursor, Math.min(windowEnd, end));
       continue;
     }
     const sun = a.sun.elevationDeg, earth = a.earth.elevationDeg;
@@ -151,7 +175,15 @@ export function analyzeScenarioClearance(
       }
       if (state === "golden") longestGolden = Math.max(longestGolden, segments[segments.length - 1].durationHours);
     }
+    cursor = Math.max(cursor, end);
   }
+  if (cursor < windowEnd) {
+    appendUnavailable(cursor, windowEnd);
+    complete = false;
+  }
+  const darknessClipped = segments.some(segment =>
+    (segment.state === "comms-only" || segment.state === "blackout")
+    && (Date.parse(segment.startUtc) === windowStart || Date.parse(segment.endUtc) === windowEnd));
   const hours = (milliseconds: number) => complete ? milliseconds / 3_600_000 : null;
   return {
     clearanceDeg: mask,
@@ -162,7 +194,8 @@ export function analyzeScenarioClearance(
     blackoutHours: hours(totals.blackout),
     longestGoldenStreakHours: complete ? longestGolden : null,
     longestSolarDarknessHours: hours(longestDark),
-    batteryStatus: !complete ? "unknown" : longestDark <= batteryLimitHours * 3_600_000 ? "safe" : "risk",
+    darknessClipped,
+    batteryStatus: !complete || darknessClipped ? "unknown" : longestDark <= batteryLimitHours * 3_600_000 ? "safe" : "risk",
     segments,
   };
 }
