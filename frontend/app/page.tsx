@@ -40,7 +40,7 @@ export default function Home() {
             <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
           </div>
         </div>
-        <MoonGlobe savedResult={savedResult} />
+        <MoonGlobe home savedResult={savedResult} />
       </section>
       <section className="home-about" aria-labelledby="home-about-title">
         <h2 id="home-about-title">{t("About Moon Plan B")}</h2>
@@ -50,7 +50,7 @@ export default function Home() {
         <h2 id="home-guide-title">{t("Quick guide")}</h2>
         <ol>
           <li>{t("Open the saved results and choose two sites in one week, or two weeks at one site.")}</li>
-          <li>{t("Read the hours when both the Sun and Earth are visible. Select a site on the globe to inspect it.")}</li>
+          <li>{t("Read the hours when both the Sun and Earth are visible. Choose a site from the list below the globe to inspect it.")}</li>
           <li>{!isMock ? t("Open the observation workspace to inspect the terrain model’s UTC intervals and coverage.") : t("For individual observations, open the timeline and move the slider to a UTC sample.")}</li>
         </ol>
         <a href="/compare#workspace">{t("Open the observation workspace")}</a>
