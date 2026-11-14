@@ -14,6 +14,22 @@ try {
     const nav = page.locator("header nav");
     const mobile = width < 760;
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
+    const primary = page.locator(".hero-actions .primary");
+    assert.equal(await primary.innerText(), "Compare Athena and Odysseus");
+    assert.ok(await page.getByRole("img", { name: /Low sunlight reaches the left rim/ }).isVisible());
+    await page.route("**/api/**", route => route.abort());
+    await primary.press("Enter");
+    await page.waitForURL(url => url.pathname === "/compare" && url.hash === "#observed-week" &&
+      url.searchParams.get("saved") === "2026-11-14T00:00:00Z");
+    const week = page.locator("#observed-week");
+    assert.equal(await week.getByLabel(/^Compare saved results/).inputValue(), "2026-11-14T00:00:00Z");
+    for (const [name, hours] of [["Athena", "139 h"], ["Odysseus", "33 h"]]) {
+      assert.equal(await week.getByRole("article").filter({ has: page.getByRole("heading", { name: new RegExp(name) }) }).locator(".week-hours").innerText(), hours);
+    }
+    await page.unroute("**/api/**");
+    await page.goBack();
+    await primary.waitFor();
+    await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
     assert.equal(await page.locator("#globe-site, .site-pin-key").count(), 0);
     assert.equal(await menu.isVisible(), mobile);
     if (mobile) {
@@ -27,6 +43,7 @@ try {
       await menu.click();
     }
     await nav.getByLabel("Language").selectOption("vi");
+    assert.equal(await primary.innerText(), "So sánh Athena và Odysseus");
     assert.deepEqual(await nav.getByRole("link").allTextContents(),
       ["So sánh", "Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);
     for (const id of ["team", "about", "resources"]) {
@@ -46,5 +63,5 @@ try {
     assert.ok(await page.locator(".globe-place").isVisible());
     await page.close();
   }
-  console.log("Home navigation, keyboard focus and saved sources passed at 320, 375 and 1280 px.");
+  console.log("Homepage example, saved hours, keyboard navigation and sources passed at 320, 375 and 1280 px.");
 } finally { await browser.close(); }

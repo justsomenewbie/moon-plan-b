@@ -55,8 +55,14 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .import-picker:focus-within { outline: 2px solid currentColor; outline-offset: 3px; }
 @media print { .comparison-toolbar button, .import-dialog { display: none; } }
 .comparison-heading { font-size: clamp(2rem, 4vw, 3.25rem); }
-.home-about { max-width: 65ch; padding: 28px 0; }
-.home-about p { color: var(--muted); }
+.home-about { display: grid; gap: 24px 48px; align-items: center; padding: 32px 0; }
+.home-about p { max-width: 60ch; margin: 10px 0; color: var(--muted); }
+.crater-profile { margin: 0; padding: 12px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.crater-profile svg { display: block; width: 100%; font: 600 16px Arial, sans-serif; }
+.crater-profile figcaption { padding-top: 8px; color: var(--muted); font-size: .85rem; }
+@media (min-width: 760px) {
+  .home-about { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+}
 .home-guide { margin-bottom: 32px; max-width: 48ch; padding-inline-start: 24px; border-inline-start: 1px solid var(--line); font-size: .95rem; }
 .home-team { max-width: 48rem; margin: 28px 0; }
 .home-team h2 { font-size: 1.2rem; }
@@ -64,6 +70,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .home-team li { border-top: 1px solid var(--line); padding-top: .5rem; overflow-wrap: anywhere; }
 .home-guide h2 { font-size: 1.2rem; }
 .home-guide a { display: inline-block; margin-top: 12px; }
+.home-guide-links { display: flex; flex-wrap: wrap; gap: 0 20px; }
 .home-guide ol { list-style: decimal; padding-inline-start: 1.5em; margin-top: 6px; color: var(--muted); }
 .home-guide li + li { margin-top: 4px; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }

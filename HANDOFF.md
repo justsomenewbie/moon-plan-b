@@ -1,5 +1,7 @@
 # Current handoff — 14 November 2026
 
+The bilingual homepage illustrates crater shadows and opens Athena (139 h) and Odysseus (33 h) for 14–20 November UTC. [Homepage QA](qa/check_home_navigation.mjs).
+
 ## Mission Survival & Horizon Clearance Studio
 
 The clearance control spans 0–10° in 0.1° steps with 0/2/5° educational presets. The ribbon keeps four known states plus explicit unavailable UTC intervals, shows hours and percentages, and never turns a null or cadence gap into blackout. Educational darkness endurance uses 24/100/150-hour assumptions; a boundary-clipped dark span stays unresolved unless its observed duration already exceeds the selected reference. Producer intervals remain unchanged and separately labeled.
