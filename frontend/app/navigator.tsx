@@ -452,7 +452,7 @@ export default function Navigator() {
     </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>{t("No observation windows in this dataset")}</h2><p>{isMock ? t("Import a release containing scenarios, or explore the clearly labeled demonstration.") : t("Request another UTC range above, or import a release containing scenarios.")}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? t("Explore demonstration") : t("Load default date range")}</button></main> : null}
     {data && !loading ? <Sources data={data} a={a} b={b} /> : null}
     <AstronautGuide savedResult={savedResult} workspaceEvidence={loading ? null : terrain} terrain={loading || error ? null : terrain} onSaved={chooseSavedResult}
-      pair={!loading && displayedPair?.terrain === terrain ? displayedPair ?? undefined : undefined}
+      pair={!loading && displayedPair && displayedPair.terrain === terrain ? displayedPair : undefined}
       workspace={guideContext} workspaceActions={{ workspace: comparisonHref, saved: "#observed-week",
         sources: !loading && (data || terrain) ? "#sources" : undefined,
         compareSites: guideMode("sites"), compareDates: guideMode("dates") }} />

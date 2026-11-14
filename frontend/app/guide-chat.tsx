@@ -62,8 +62,8 @@ export default function GuideChat({ planningSource, choice, onChoice, saved, wor
   const [lastEvidence, setLastEvidence] = useState({ evidence, revision: 0 });
   // A replacement export can retain the same run, totals and site names with different windows.
   if (lastEvidence.evidence !== evidence) setLastEvidence({ evidence, revision: lastEvidence.revision + 1 });
-  const conversationKey = [locale, scope, lastEvidence.revision, JSON.stringify(context), typeof planningSource === "object" ? planningSource.runId : planningSource].join("|");
   const source = planningSource ?? (scope === "saved" && (choice === "saved" || onSavedRoute) ? "saved" : undefined);
+  const conversationKey = [locale, scope, lastEvidence.revision, JSON.stringify(context), typeof source === "object" ? source.runId : source].join("|");
   const actions = scope === "saved" ? savedActions : scope === "pair" ? { ...workspaceActions, workspace: "#terrain-pair" } : workspaceActions ?? {};
   return <section className={styles.chat} aria-label={labels.title}>
     <h3>{labels.title}</h3>
