@@ -39,7 +39,7 @@ try {
   await checkGreeting("en");
   await panel.getByText("Saved model sample · interval boundaries ±1 h", { exact: true }).waitFor();
   await panel.getByText("Athena · IM-2 · Sun and Earth visible").waitFor();
-  await panel.getByText("Odysseus · IM-1 · Outside the joint visibility window").waitFor();
+  await panel.getByText("Odysseus · IM-1 · Sun and Earth are not both in view").waitFor();
   const questions = panel.locator("details[name] > summary");
   assert.equal(await questions.count(), 3);
   for (const [index, expected] of ["choose a week", "no signal-strength estimate"].entries()) {
@@ -114,7 +114,7 @@ try {
   ]);
   await viLauncher.click();
   await panel.getByRole("combobox", { name: "Chọn dữ liệu để hỏi" }).selectOption("saved");
-  await panel.getByText("Odysseus · IM-1 · Ngoài khoảng nhìn thấy đồng thời").waitFor();
+  await panel.getByText("Odysseus · IM-1 · Không thấy đồng thời Mặt Trời và Trái Đất").waitFor();
   await checkGreeting("vi");
   await page.keyboard.press("Escape");
   await page.clock.setFixedTime(new Date("2026-11-28T00:00:00Z"));
@@ -155,7 +155,7 @@ try {
   await sample.getByText(/Odysseus.*Sun and Earth visible/).waitFor();
   assert.match(await sample.locator("small").innerText(), /^B2_/);
   await selectedSource.selectOption("saved");
-  await sample.getByText(/Odysseus.*Outside the joint visibility window/).waitFor();
+  await sample.getByText(/Odysseus.*Sun and Earth are not both in view/).waitFor();
   assert.match(await sample.locator("small").innerText(), /^B_/);
   assert.equal(await sample.locator("time").getAttribute("datetime"), "2026-11-19T08:00:00.000Z");
   await selectedSource.selectOption("workspace");
@@ -164,7 +164,7 @@ try {
     await comparison.goto(new URL("/plan?source=" + archive, origin).href);
     await comparison.getByRole("button", { name: "Astronaut guide", exact: true }).click();
     await guide.getByText("Travel planning uses saved run " + (archive === "saved" ? "B." : "B2.")).waitFor();
-    if (archive === "saved") await sample.getByText(/Odysseus.*Outside the joint visibility window/).waitFor();
+    if (archive === "saved") await sample.getByText(/Odysseus.*Sun and Earth are not both in view/).waitFor();
     else assert.equal(await sample.count(), 0);
   }
   await comparison.close();
@@ -192,7 +192,7 @@ try {
     await current.locator("summary").click();
     assert.equal(await current.locator("time").isVisible(), false);
     await current.locator("summary").click();
-    await current.getByText("Odysseus · IM-1 · Ngoài khoảng nhìn thấy đồng thời").waitFor();
+    await current.getByText("Odysseus · IM-1 · Không thấy đồng thời Mặt Trời và Trái Đất").waitFor();
     await mobileGuide.getByRole("textbox").focus();
     await mobile.keyboard.press("Escape");
   }

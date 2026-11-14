@@ -24,7 +24,7 @@ const messages = {
     otherSites: "Other sites",
     savedSample: "Saved model sample · interval boundaries ±1 h",
     terrainSample: "Loaded terrain model sample",
-    states: { both: "Sun and Earth visible", sun: "Sun visible, Earth out of view", earth: "Earth visible, Sun out of view", neither: "Sun and Earth both out of view", outsideJoint: "Outside the joint visibility window" },
+    states: { both: "Sun and Earth visible", sun: "Sun visible, Earth out of view", earth: "Earth visible, Sun out of view", neither: "Sun and Earth both out of view", outsideJoint: "Sun and Earth are not both in view" },
     source: "Model and sources",
     questions: [
       ["How do I compare sites or dates?", "In the saved results, choose a week to compare Odysseus with Athena. Choose a site to compare its two weeks. Each bar shows when the model places both the Sun and Earth above that site’s horizon."],
@@ -43,9 +43,9 @@ const messages = {
     currentQuestion: "Tôi xem được tình hình hiện tại không?",
     unavailable: "Dữ liệu đang chọn chưa có kết quả mô hình cho thời điểm UTC hiện tại.",
     otherSites: "Các địa điểm khác",
-    savedSample: "Mốc mô hình đã lưu · sai số ranh giới ±1 giờ",
+    savedSample: "Mô hình đã lưu · mốc đầu và cuối mỗi khoảng có thể lệch ±1 giờ",
     terrainSample: "Mốc mô hình địa hình đã tải",
-    states: { both: "Thấy cả Mặt Trời và Trái Đất", sun: "Thấy Mặt Trời, không thấy Trái Đất", earth: "Thấy Trái Đất, không thấy Mặt Trời", neither: "Không thấy Mặt Trời và Trái Đất", outsideJoint: "Ngoài khoảng nhìn thấy đồng thời" },
+    states: { both: "Thấy cả Mặt Trời và Trái Đất", sun: "Thấy Mặt Trời, không thấy Trái Đất", earth: "Thấy Trái Đất, không thấy Mặt Trời", neither: "Không thấy Mặt Trời và Trái Đất", outsideJoint: "Không thấy đồng thời Mặt Trời và Trái Đất" },
     source: "Mô hình và nguồn dữ liệu",
     questions: [
       ["Làm sao so sánh địa điểm hoặc thời gian?", "Trong phần kết quả đã lưu, chọn một tuần để so sánh Odysseus với Athena. Chọn một địa điểm để so sánh hai tuần tại đó. Mỗi thanh biểu thị khoảng thời gian mà theo mô hình, cả Mặt Trời và Trái Đất đều ở phía trên đường chân trời tại địa điểm đó."],
