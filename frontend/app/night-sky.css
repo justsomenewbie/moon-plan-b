@@ -1,12 +1,12 @@
 /* Decorative theme layers stay fixed as the observation tables scroll. */
-.sky-appearance, .sky-clouds { display: none; }
+.sky-appearance, .sky-clouds, .night-stars { display: none; }
 
 @media screen {
   body { isolation: isolate; }
   :root[data-theme] body::before {
     content: "";
     position: fixed;
-    inset: -14px;
+    inset: 0;
     z-index: -2;
     pointer-events: none;
   }
@@ -18,39 +18,76 @@
   :root[data-theme="light"] body::before {
     background: linear-gradient(170deg, #a5cee8, #ebf3f6 70%, #f3f5f4);
   }
-  .sky-clouds {
+  .sky-clouds, .night-stars {
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
     overflow: hidden;
+  }
+  .sky-clouds {
     display: block;
     color: #fff;
   }
   .sky-clouds span {
     position: absolute;
     font: clamp(5rem, 10vw, 9rem)/1 Georgia, serif;
-    opacity: .6;
-    filter: blur(4px);
+    opacity: .65;
+    text-shadow: 0 2px 6px rgb(96 146 170 / 18%);
   }
   :root[data-theme="dark"] .sky-clouds { color: #71819b; }
-  :root[data-theme="dark"] .sky-clouds span { opacity: .12; }
+  :root[data-theme="dark"] .sky-clouds span { opacity: .25; text-shadow: none; }
   .sky-clouds span:nth-child(1) { left: -1%; top: 20%; }
   .sky-clouds span:nth-child(2) { right: 7%; top: 9%; font-size: clamp(3rem, 6vw, 6rem); }
   .sky-clouds span:nth-child(3) { right: -1%; top: 62%; }
   .sky-clouds span:nth-child(4) { left: 19%; bottom: 2%; font-size: clamp(3rem, 7vw, 7rem); }
   .sky-appearance { display: block; }
+  :root[data-theme="dark"] .night-stars { display: block; }
+  .night-stars i {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: #edf3ff;
+    box-shadow: 0 0 3px rgb(208 226 255 / 45%);
+    opacity: .7;
+  }
+  .night-stars i:nth-child(1) { left: 8%; top: 16%; }
+  .night-stars i:nth-child(2) { left: 71%; top: 10%; }
+  .night-stars i:nth-child(3) { left: 94%; top: 31%; }
+  .night-stars i:nth-child(4) { left: 28%; top: 35%; }
   .sky-appearance label, .night-credit { display: none; }
   :root[data-theme="dark"] .night-credit { display: inline; }
 }
 @media screen and (prefers-reduced-motion: no-preference) {
-  :root[data-theme="dark"] body::before { animation: sky-drift 90s ease-in-out infinite alternate; }
-  .sky-clouds span { animation: sky-drift 54s ease-in-out infinite alternate; }
-  .sky-clouds span:nth-child(even) { animation-direction: alternate-reverse; animation-duration: 72s; }
-  :root body:has(#pause-sky-drift:checked)::before, body:has(#pause-sky-drift:checked) .sky-clouds span { animation-play-state: paused; }
+  .sky-clouds span { animation: sky-drift 24s cubic-bezier(.34,.22,.66,.78) -8s infinite alternate; }
+  .sky-clouds span:nth-child(even) { animation-duration: 32s; animation-delay: -17s; animation-direction: alternate-reverse; }
+  .night-stars i { animation: starlight 7s ease-in-out -2s infinite alternate; }
+  .night-stars i:nth-child(even) { animation-duration: 11s; animation-delay: -9s; }
+  .night-stars i:nth-child(3) { animation-delay: -6s; }
+  .night-stars::after {
+    content: "";
+    position: absolute;
+    left: 82%;
+    top: 13%;
+    width: clamp(20px, 3vw, 34px);
+    height: 1px;
+    border-radius: 50%;
+    background: linear-gradient(to right, #f1f5ff, rgb(210 227 255 / 55%) 20%, transparent);
+    opacity: 0;
+    animation: meteor-pass 47s linear 8s infinite;
+  }
+  body:has(#pause-sky-drift:checked) :is(.sky-clouds span, .night-stars i),
+  body:has(#pause-sky-drift:checked) .night-stars::after { animation-play-state: paused; }
   .sky-appearance label { display: inline-flex; align-items: center; min-height: 44px; gap: .4rem; margin-inline-start: .75rem; }
 }
 @keyframes sky-drift {
-  from { transform: translate(-12px, -4px); }
-  to { transform: translate(12px, 4px); }
+  from { transform: translate(-46px, 4px); }
+  to { transform: translate(46px, -4px); }
+}
+@keyframes starlight { from { opacity: .43; } to { opacity: .88; } }
+@keyframes meteor-pass {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-28deg); }
+  0.45% { opacity: .85; }
+  2.6%, 100% { opacity: 0; transform: translate(-106px, 56px) rotate(-28deg); }
 }
