@@ -22,7 +22,7 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The copper-visored astronaut turns and waves. Pause and reduced motion keep it still. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [Local Ollama](README.md#ask-the-astronaut).
+Two cyan visor lights blink once as the astronaut turns and waves. Pause and reduced motion keep it still. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [Local Ollama](README.md#ask-the-astronaut).
 
 **Plan and data:** /plan ranks sites by date or searches landing hours at a selected site. /data distinguishes 94 original files from verified [saved observations](docs/SAVED_PLANNER.md). Five-year summaries cover 23 sites and 43,824 hours per site; offline event timing covers two sites for 14 days. The astronaut uses the requested dates. Printed reports preserve the selected pair and date details; validated comparisons can be downloaded and reimported. Globe wheel, pinch and keyboard zoom retain NASA attribution.
 

@@ -128,12 +128,12 @@ try {
   assert.equal(await viLauncher.isVisible(), false);
   const fallback = await browser.newPage({ reducedMotion: "no-preference" });
   await fallback.addInitScript(() => localStorage.setItem("moon-plan-b-language", "vi"));
-  await fallback.route("**/images/guide-copper-wave.webp", route => route.fulfill({ status: 404 }));
+  await fallback.route("**/images/guide-visor-wave.webp", route => route.fulfill({ status: 404 }));
   await fallback.goto(origin);
   const help = fallback.getByRole("button", { name: "Hướng dẫn của phi hành gia", exact: true });
   await fallback.waitForFunction(() => Array.from(document.images).some(img =>
-    img.currentSrc.endsWith("guide-copper-rest.webp") && img.naturalWidth === 120));
-  await fallback.route("**/images/guide-copper-rest.webp", route => route.fulfill({ status: 404 }));
+    img.currentSrc.endsWith("guide-visor-rest.webp") && img.naturalWidth === 120));
+  await fallback.route("**/images/guide-visor-rest.webp", route => route.fulfill({ status: 404 }));
   await fallback.reload();
   await help.getByText("Trợ giúp", { exact: true }).waitFor();
   await help.press("Enter");
