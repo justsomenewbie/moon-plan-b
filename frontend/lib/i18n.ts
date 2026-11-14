@@ -209,7 +209,7 @@ export const vietnamese: Record<string, string> = {
   "For individual observations, open the timeline and move the slider to a UTC sample.": "Để xem từng lần quan sát, hãy kéo thanh trượt trên dòng thời gian đến mốc UTC cần xem.",
   "Open the observation workspace": "Xem dữ liệu quan sát",
   "Star map": "Bản đồ sao",
-  "Pause sky motion": "Dừng chuyển động của nền trời",
+  "Pause sky and astronaut motion": "Tạm dừng chuyển động của nền trời và phi hành gia",
   "Project feedback": "Góp ý cho dự án",
   "Quick guide": "Hướng dẫn nhanh",
   "Compare dates at one site, or compare sites over the same UTC window.": "So sánh các ngày tại cùng một địa điểm, hoặc so sánh các địa điểm trong cùng một khoảng thời gian UTC.",

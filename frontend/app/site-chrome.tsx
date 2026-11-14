@@ -38,7 +38,7 @@ export function SiteFooter() {
   const { t } = useLanguage();
   return <footer className="app-footer"><p>{t("Visibility alone does not measure solar power or radio signal strength.")}</p><p>{t("Frontend draft · AI-assisted implementation ·")}{" "}<a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">{t("Project repository")}</a> · <a href="https://github.com/justsomenewbie/moon-plan-b/issues" target="_blank" rel="noreferrer">{t("Project feedback")}</a></p>
       <div className="sky-appearance"><a className="night-credit" href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noreferrer">{t("Star map")} · NASA/Goddard SVS · ESA/Gaia/DPAC</a>
-        <label><input type="checkbox" id="pause-sky-drift" />{t("Pause sky motion")}</label>
+        <label><input type="checkbox" id="pause-sky-drift" />{t("Pause sky and astronaut motion")}</label>
       </div>
     </footer>;
 }
