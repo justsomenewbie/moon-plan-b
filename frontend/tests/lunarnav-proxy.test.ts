@@ -12,6 +12,77 @@ const post = (body: unknown): RequestInit => ({
   method: "POST", headers: { "content-type": "application/json", origin: frontend }, body: JSON.stringify(body),
 });
 
+test("a producer deadline before headers returns a structured 504 after the 180-second budget", async t => {
+  const deadlines: number[] = [];
+  let timer = new AbortController();
+  t.mock.method(AbortSignal, "timeout", (ms: number) => {
+    deadlines.push(ms);
+    return ms === 180_000 ? timer.signal : new AbortController().signal;
+  });
+  for (const [path, init] of [["runs?limit=1", undefined], ["alt-dates", post({})]] as const) {
+    deadlines.length = 0;
+    timer = new AbortController();
+    // A POST has already completed its short upload budget when the outbound fetch begins.
+    const result = await proxyLunarnav(request(path, init), freshKey(), async (_url, options) => {
+      const signal = options!.signal!;
+      assert.equal(signal.aborted, false);
+      timer.abort(new DOMException("Simulated producer deadline", "TimeoutError"));
+      signal.throwIfAborted();
+      throw Error("The producer did not receive its deadline signal");
+    });
+    assert.deepEqual(deadlines, init ? [35_000, 180_000] : [180_000]);
+    assert.equal(result.status, 504);
+    assert.equal(result.headers.get("content-type"), "application/problem+json");
+    const problem = await result.json();
+    assert.equal(problem.code, "UPSTREAM_TIMEOUT");
+    assert.equal(problem.status, 504);
+    assert.match(problem.detail, /180/);
+  }
+});
+
+test("upload timeout cancels the input stream while client cancellations propagate before and after dispatch", async t => {
+  const timers: { ms: number; controller: AbortController }[] = [];
+  t.mock.method(AbortSignal, "timeout", (ms: number) => {
+    const controller = new AbortController();
+    timers.push({ ms, controller });
+    return controller.signal;
+  });
+  for (const cause of ["upload", "client"]) {
+    const client = new AbortController();
+    let cancelled = false, sends = 0;
+    const body = new ReadableStream<Uint8Array>({ cancel() { cancelled = true; } });
+    const init: RequestInit & { duplex: "half" } = { ...post({}), body, duplex: "half", signal: client.signal };
+    const pending = proxyLunarnav(request("compare", init), freshKey(), async () => { sends++; return Response.json({}); });
+    assert.deepEqual(timers.map(t => t.ms), [35_000]);
+    if (cause === "upload") {
+      timers[0].controller.abort(new DOMException("Upload deadline", "TimeoutError"));
+      assert.equal((await pending).status, 408);
+    } else {
+      client.abort();
+      await assert.rejects(pending, { name: "AbortError" });
+    }
+    assert.equal(cancelled, true);
+    assert.equal(sends, 0);
+    timers.length = 0;
+  }
+  const client = new AbortController();
+  const pending = proxyLunarnav(request("dataset", { signal: client.signal }), freshKey(), async (_url, options) => {
+    client.abort();
+    options!.signal!.throwIfAborted();
+    throw Error("Upstream fetch did not receive client disconnect");
+  });
+  await assert.rejects(pending, { name: "AbortError" });
+});
+
+test("a producer's own timeout is forwarded with original problem bytes", async () => {
+  const bytes = JSON.stringify({ status: 504, title: "Python timeout", detail: "Narrow the landing window.", code: "PYTHON_TIMEOUT" });
+  const response = await proxyLunarnav(request("alt-dates", post({})), freshKey(), async () =>
+    new Response(bytes, { status: 504, headers: { "content-type": "application/problem+json", "retry-after": "3" } }));
+  assert.equal(response.status, 504);
+  assert.equal(response.headers.get("retry-after"), "3");
+  assert.equal(await response.text(), bytes);
+});
+
 test("public integrations pin the producer origin, filter headers and keep source bytes", async () => {
   const key = freshKey();
   for (const path of [
