@@ -95,6 +95,8 @@ export async function findAltDates(request: AltDatesRequest, stepSeconds: number
         || !Number.isFinite(candidate.score)
         || ![candidate.sun_pct, candidate.earth_pct, candidate.both_pct].every(pct => between(pct, 0, 100))
         || candidate.both_pct > Math.min(candidate.sun_pct, candidate.earth_pct)
+        // Three independently rounded percentages can differ from the exact overlap bound.
+        || candidate.both_pct + 2 * METRIC_TOLERANCE < candidate.sun_pct + candidate.earth_pct - 100
         || candidate.sun_pct + METRIC_TOLERANCE < c.min_sun_pct || candidate.earth_pct + METRIC_TOLERANCE < c.min_earth_pct
         || candidate.both_pct + METRIC_TOLERANCE < c.min_both_pct
         || (c.require_sun_at_landing && !candidate.sun_at_landing) || (c.require_earth_at_landing && !candidate.earth_at_landing)

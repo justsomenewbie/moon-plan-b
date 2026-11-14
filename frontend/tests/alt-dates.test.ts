@@ -121,3 +121,15 @@ test("rejects unknown constraint keys on requests and responses", async t => {
   assert.equal(calls, 0);
   await assert.rejects(findAltDates(request, 3600), (e: unknown) => e instanceof ApiError && e.status === 502);
 });
+
+test("joint visibility respects both marginal percentages even without a minimum", async t => {
+  const results = example();
+  results.constraints.min_both_pct = 0;
+  const search = { ...request, constraints: results.constraints };
+  const candidate = results.candidates[0];
+  t.mock.method(globalThis, "fetch", async () => Response.json(results));
+  Object.assign(candidate, { sun_pct: 100, earth_pct: 100, both_pct: 0 });
+  await assert.rejects(findAltDates(search, 3600, undefined, grid), (error: unknown) => error instanceof ApiError && error.status === 502);
+  Object.assign(candidate, { sun_pct: 66.666667, earth_pct: 66.666667, both_pct: 33.333333 });
+  await findAltDates(search, 3600, undefined, grid);
+});
