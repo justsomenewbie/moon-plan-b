@@ -5,7 +5,30 @@ import { useLanguage } from "../language";
 
 const MoonGlobe = dynamic(() => import("../moon-globe"));
 
-type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null };
+type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null; trackingPower?: number };
+
+// Each bin is a quarter of unobstructed sunlight on a Sun-facing panel.
+const sunlightBins = [
+  { color: "#44517b", label: "0–<25%" },
+  { color: "#29a3a2", label: "25–<50%" },
+  { color: "#ef9b42", label: "50–<75%" },
+  { color: "#fff192", label: "75–100%" },
+];
+const sunlightText = {
+  en: {
+    layer: "Color site rings by sunlight", key: "Average sunlight on a Sun-facing panel",
+    help: "The percentage compares the modelled sunlight at each site with full, unobstructed sunlight. The average includes dark hours in the selected UTC window.",
+    unavailable: "This result has no average sunlight values for the evaluated sites and times.", missing: "Unavailable",
+  },
+  vi: {
+    layer: "Tô màu vòng quanh địa điểm theo mức nắng", key: "Ánh sáng trung bình trên tấm pin luôn hướng về Mặt Trời",
+    help: "Tỷ lệ cho biết mỗi địa điểm nhận được bao nhiêu ánh sáng theo mô hình so với khi Mặt Trời chiếu sáng hoàn toàn. Giá trị trung bình tính cả giờ tối trong khoảng UTC đã chọn.",
+    unavailable: "Kết quả này chưa có mức nắng trung bình cho các địa điểm và thời gian đã xét.", missing: "Chưa có dữ liệu",
+  },
+};
+function sunlightColor(value: number) {
+  return sunlightBins[Math.min(3, Math.floor(value * 4))].color;
+}
 
 function project(point: MapPoint) {
   // The north-up NASA mosaic spans 180°W to 180°E with the prime meridian in its center.
@@ -59,7 +82,9 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   sites: MapSite[]; leaders: string[]; column: number; criterion: string; initialSite: string | null;
   detailHref: (siteId: string) => string | undefined;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const solar = sunlightText[locale];
+  const [sunlight, setSunlight] = useState(false);
   const [selectedId, setSelectedId] = useState(initialSite);
   const [zoom, setZoom] = useState(1);
   const [view, setView] = useState<"globe" | "flat" | "surface">("globe");
@@ -88,6 +113,9 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
     if (!("point" in site.location)) setZoom(1);
   }
   const mapped = sites.filter(site => "point" in site.location);
+  const hasSunlight = mapped.some(site => site.trackingPower !== undefined);
+  const markerColors = sunlight && hasSunlight ? new Map(mapped.flatMap(site =>
+    site.trackingPower === undefined ? [] : [[site.id, sunlightColor(site.trackingPower)] as const])) : undefined;
   // Give the selected site the top hit target when polar markers overlap.
   const ordered = mapped.sort((a, b) => Number(a.id === selected.id) - Number(b.id === selected.id) || Number(isLeader(a)) - Number(isLeader(b)));
   return <figure className="plan-site-map" aria-labelledby="plan-site-map-title">
@@ -100,12 +128,23 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           <button type="button" ref={surfaceButton} aria-pressed={view === "surface"} disabled={!point && !customPoint}
             onClick={() => { setCustomPoint(null); setView("surface"); }}>{t("Surface close-up")}</button>
         </div>}
+        {mapped.length > 0 && view !== "surface" && <div className="plan-sun-layer">
+          {hasSunlight ? <label><input type="checkbox" checked={sunlight} onChange={event => setSunlight(event.target.checked)} /> {solar.layer}</label> :
+            <small>{solar.unavailable}</small>}
+          {markerColors && <div className="plan-sun-legend">
+            <strong>{solar.key}</strong>
+            <p>{solar.help}</p>
+            <ul>{sunlightBins.map(bin => <li key={bin.color}><i aria-hidden="true" style={{ borderColor: bin.color }} />{bin.label}</li>)}
+              {mapped.some(site => site.trackingPower === undefined) && <li><i aria-hidden="true" />{solar.missing}</li>}
+            </ul>
+          </div>}
+        </div>}
         {view === "surface" ? <SurfaceCloseUp point={customPoint ?? point} name={customPoint
           ? t("Map location · {lat}° latitude, {lon}° east longitude", {
             lat: Number(customPoint.latitude.toFixed(3)), lon: Number(((customPoint.longitude + 360) % 360).toFixed(3)),
           }) : selected.name} /> :
           view === "globe" && mapped.length > 0 ? <MoonGlobe pairSites={sites} terrainView={{
-          siteId: selected.id, onSelect: setSelectedId, onCloseUp: inspectPoint, plannerLeaders: sites.filter(isLeader).map(site => site.id),
+          siteId: selected.id, onSelect: setSelectedId, onCloseUp: inspectPoint, markerColors, plannerLeaders: sites.filter(isLeader).map(site => site.id),
         }} /> : imageFailed ? <p role="status">{t("The map image could not load. Select a site to see its coordinates.")}</p> :
           <svg className="plan-map-surface" viewBox={`${left} ${top} ${width} ${height}`} role="group" aria-labelledby="plan-site-map-title">
             <image width="720" height="360" href="/images/lroc-color-2k.jpg" onError={() => setImageFailed(true)}
@@ -127,6 +166,8 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
                 }}>
                 <title>{site.name}</title>
                 <circle r="11" fill="transparent" />
+                {markerColors && <circle r="9.5" fill="none" stroke={markerColors.get(site.id) ?? "#a7abb4"} strokeWidth="3"
+                  strokeDasharray={markerColors.has(site.id) ? undefined : "2 2"} pointerEvents="none" />}
                 {leader ? <path className="map-leader" d="M0 -8 8 0 0 8 -8 0Z" /> : <circle className="map-other" r="4.5" />}
               </g>;
             })}
@@ -143,6 +184,8 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
         }}>{sites.map(site => <option key={site.id} value={site.id}>{isLeader(site) ? "◆ " : ""}{site.name}</option>)}</select></label>
         <div aria-live="polite">
           <strong>{selected.name}</strong>
+          {markerColors && view !== "surface" && <p>{solar.key} · <strong>{selected.trackingPower === undefined ? solar.missing :
+            new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(selected.trackingPower)}</strong></p>}
           <p>{criterion} · {selected.hours ? `${selected.hours[column]} h` : t("Incomplete coverage")}</p>
           {selected.smoothSphere && <p>{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
           {point ? <p>{point.latitude}° {t("latitude")} · {point.longitude}° {t("east longitude")}</p> :

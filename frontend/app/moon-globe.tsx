@@ -29,7 +29,7 @@ type GlobeProps = {
   evidence?: Dataset["evidence"];
   savedResult?: string;
   pairSites?: readonly PairLocation[];
-  terrainView?: { siteId: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[]; onCloseUp?: (point: MapPoint) => void };
+  terrainView?: { siteId: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[]; markerColors?: ReadonlyMap<string, string>; onCloseUp?: (point: MapPoint) => void };
   showSky?: (alternative: boolean) => void;
 };
 
@@ -338,6 +338,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         if (!position) return null;
         const selectedPin = terrainView && target?.key === item.key;
         return <span key={item.key} className="site-pin" data-pin={index} data-site={item.key} data-leading={plannerLeaders?.includes(item.key)} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined }}>
+          {terrainView?.markerColors && <i aria-hidden="true" className="plan-pin-sun-ring" style={{ borderColor: terrainView.markerColors.get(item.key) }} />}
           <button type="button" title={item.name} aria-label={t("Inspect {site}", {site: item.name})}
             aria-pressed={orbit ? orbit.site.id === item.missionId : target?.key === item.key}
             onClick={event => {

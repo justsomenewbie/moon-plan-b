@@ -30,7 +30,7 @@ const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const midnight = (date: string) => date + "T00:00:00Z";
 type SearchResult = {
   from: string; to: string; scope: "live" | "catalog" | "pair";
-  rows: (PairLocation & { smoothSphere: boolean; hours: number[] | null; longest?: number; coverage?: string; missionWindow?: { start: string; end: string } })[];
+  rows: (PairLocation & { smoothSphere: boolean; hours: number[] | null; trackingPower?: number; longest?: number; coverage?: string; missionWindow?: { start: string; end: string } })[];
   leaders: string[]; missionHours?: number; excludedSites?: string[];
 };
 
@@ -146,6 +146,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
             const site = evidence.sites.find(s => s.id === row.site_id)!;
             const m = site.coverage === "complete" && site.coverage_in_range === "complete" ? site.metrics : null;
             return { ...pairLocation(row, run.sites, evidence.sites, evidence.conventions),
+              trackingPower: m ? row.mean_power_tracking : undefined,
               smoothSphere: usesSmoothSphere(run.sites.find(s => s.id === row.site_id)), hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
           }) });
       } catch (cause) {

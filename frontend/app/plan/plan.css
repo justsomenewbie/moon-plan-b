@@ -68,3 +68,20 @@
 }
 #planner-lunar-globe .site-pin button[aria-pressed="true"] { border: 2px solid white; border-radius: 50%; }
 #planner-lunar-globe .lunar-frame { box-shadow: 0 0 0 1px var(--line); }
+
+.plan-sun-layer { margin-block: .6rem .9rem; }
+.plan-sun-layer label { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; cursor: pointer; }
+.plan-sun-layer input { width: 1.1rem; height: 1.1rem; }
+.plan-sun-legend { font-size: .88rem; }
+.plan-sun-legend ul { display: flex; flex-wrap: wrap; gap: .4rem .85rem; margin-top: .3rem; }
+.plan-sun-legend li { display: inline-flex; align-items: center; gap: .35rem; }
+.plan-sun-legend i, #planner-lunar-globe .plan-pin-sun-ring {
+  display: inline-block; border: 4px dashed #a7abb4; border-radius: 50%;
+  box-shadow: 0 0 0 1px #232630, inset 0 0 0 1px #232630;
+}
+.plan-sun-legend i[style], #planner-lunar-globe .plan-pin-sun-ring[style] { border-style: solid; }
+.plan-sun-legend i { width: 15px; height: 15px; }
+#planner-lunar-globe .plan-pin-sun-ring {
+  position: absolute; left: 0; top: 0; width: 22px; height: 22px;
+  transform: translate(-50%, -50%); pointer-events: none;
+}
