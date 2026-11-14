@@ -46,9 +46,9 @@ const messages = {
   },
 };
 
-export default function AstronautGuide({ savedResult, terrain, comparisonPath = "", workspace, workspaceActions, onSaved }: {
+export default function AstronautGuide({ savedResult, terrain, comparisonPath = "", workspace, pair, workspaceActions, onSaved }: {
   savedResult: string; terrain: TerrainSummary | null; comparisonPath?: string;
-  workspace?: GuideContext; workspaceActions?: GuideActions; onSaved?: (value: string) => void;
+  workspace?: GuideContext; pair?: GuideContext; workspaceActions?: GuideActions; onSaved?: (value: string) => void;
 }) {
   const { locale } = useLanguage();
   const copy = messages[locale];
@@ -76,7 +76,7 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
-      {openedAt !== null && <GuideChat saved={savedGuideContext(savedResult)} workspace={workspace} savedActions={savedActions} workspaceActions={workspaceActions} />}
+      {openedAt !== null && <GuideChat saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
       {reading ? <section className={styles.sample}>
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>

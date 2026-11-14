@@ -1,5 +1,6 @@
 import snapshot from "../odysseus-athena-weeks.json" with { type: "json" };
 import type { Dataset, Scenario } from "../dataset";
+import type { SiteComparison } from "./compare-sites";
 import type { TerrainSummary } from "./terrain-summary";
 
 export type GuideRow = { site: string; from: string; to: string; source: string; sunHours: number | null; earthHours: number | null; bothHours: number | null };
@@ -20,6 +21,20 @@ export function savedGuideContext(selection: string): GuideContext {
 function supportedLabel(value: string, maximum: number) {
   return value === value.trim() && value.length > 0 && value.length <= maximum
     && /^[\p{L}\p{M}\p{N} .,_()+'’°:·–—-]+$/u.test(value) && !/www\./i.test(value);
+}
+
+export function pairGuideContext(pair: SiteComparison, rows: SiteComparison["ranking"]): GuideContext {
+  if (!supportedLabel(pair.run_id, 200) || rows.some(row => !supportedLabel(row.name, 120))) return unavailable;
+  return { kind: "terrain", rows: rows.map(({ site_id, name }) => {
+    const windows = pair.sites[site_id].windows;
+    function visibleHours(kind: "sun" | "earth" | "both") {
+      const intervals = windows?.[kind];
+      if (pair.coverageBySite[site_id] !== "complete" || !intervals) return null;
+      return intervals.reduce((ms, w) => w.state ? ms + (Date.parse(w.end) - Date.parse(w.start)) : ms, 0) / 3600000;
+    }
+    return { site: name, source: pair.run_id, from: pair.range.start, to: pair.range.end,
+      sunHours: visibleHours("sun"), earthHours: visibleHours("earth"), bothHours: visibleHours("both") };
+  }) };
 }
 
 export function workspaceGuideContext(terrain: TerrainSummary | null, data: Dataset | null, a?: Scenario, b?: Scenario, siteIndex = 0): GuideContext {

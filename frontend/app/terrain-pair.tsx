@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { compareSites, type SiteComparison } from "../lib/api/compare-sites";
+import { pairGuideContext, type GuideContext } from "../lib/api/guide-chat";
 import { getTerrainDateSites } from "../lib/api/terrain-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
@@ -13,7 +14,11 @@ const weightLabels = [
   ["pct_both", "Both visible"], ["pct_sun_no_earth", "Sun without Earth visibility"],
 ] as const;
 
-export default function TerrainPair({ result }: { result: TerrainSummary }) {
+export type DisplayedPair = { terrain: TerrainSummary; context: GuideContext };
+
+export default function TerrainPair({ result, onDisplayedPair }: {
+  result: TerrainSummary; onDisplayedPair: (pair: DisplayedPair | null) => void;
+}) {
   const { t } = useLanguage();
   const runId = result.run.run_id;
   const { start, end } = result.range;
@@ -34,8 +39,14 @@ export default function TerrainPair({ result }: { result: TerrainSummary }) {
   const completePair = comparison?.ranking.every(row => comparison.coverageBySite[row.site_id] === "complete");
 
   // With incomplete coverage, keep the user's order so placement cannot imply a scientific ranking.
-  const rows = completePair ? comparison?.ranking : comparison?.ranking.toSorted(
-    (a, b) => choice.indexOf(a.site_id) - choice.indexOf(b.site_id));
+  const rows = useMemo(() => completePair ? comparison?.ranking : comparison?.ranking.toSorted(
+    (a, b) => choice.indexOf(a.site_id) - choice.indexOf(b.site_id)), [choice, comparison, completePair]);
+
+  useLayoutEffect(() => {
+    if (!opened || !comparison || !rows) return;
+    onDisplayedPair({ terrain: result, context: pairGuideContext(comparison, rows) });
+    return () => onDisplayedPair(null);
+  }, [opened, comparison, rows, result, onDisplayedPair]);
 
   function choose(index: number, value: string) {
     active.current?.abort();
