@@ -12,6 +12,8 @@ export const vietnamese: Record<string, string> = {
   "Data could not load.": "Không thể tải dữ liệu.",
   "The shared request contains duplicate fields.": "Yêu cầu được chia sẻ có trường bị lặp.",
   "The shared job ID is invalid.": "Mã tác vụ được chia sẻ không hợp lệ.",
+  "Choose an increasing UTC range of up to 366 days for an hourly custom-site job.": "Chọn khoảng UTC có thời điểm kết thúc sau thời điểm bắt đầu, tối đa 366 ngày cho tác vụ tọa độ tự nhập theo giờ.",
+  "The shared site requires a model run and a valid site ID.": "Địa điểm được chia sẻ cần mã lần chạy mô hình và mã địa điểm hợp lệ.",
   "Invalid shared request range.": "Khoảng thời gian yêu cầu được chia sẻ không hợp lệ.",
   "Choose a JSON dataset smaller than 5 MB.": "Chọn bộ dữ liệu JSON nhỏ hơn 5 MB.",
   "This run link requires a live backend and a valid model run ID.": "Liên kết này cần kết nối backend và mã lần chạy mô hình hợp lệ.",
@@ -385,6 +387,18 @@ export const vietnamese: Record<string, string> = {
   "Manifest path on the source server": "Đường dẫn tệp kê khai trên máy chủ nguồn",
   "Data sources": "Nguồn dữ liệu",
   "No source entries were supplied.": "Bộ dữ liệu chưa cung cấp mục nguồn nào.",
+  "Use the UTC range above. The backend calculates hourly positions with SPICE and a PGDA terrain horizon using ray marching.": "Dùng khoảng UTC ở trên. Backend tính vị trí theo từng giờ bằng SPICE và xác định đường chân trời từ dữ liệu địa hình PGDA bằng phương pháp dò tia.",
+  "The server may already have accepted this request.": "Máy chủ có thể đã nhận yêu cầu này.",
+  "Retry the same request": "Gửi lại đúng yêu cầu vừa rồi",
+  "Checking calculation availability…": "Đang kiểm tra khả năng tính toán của máy chủ…",
+  "Check availability again": "Kiểm tra lại khả năng tính toán",
+  "Custom-site calculations are unavailable.": "Máy chủ hiện chưa thể tính cho tọa độ tự nhập.",
+  "This server accepts at most {days} days per custom-site request.": "Máy chủ chấp nhận tối đa {days} ngày cho mỗi yêu cầu tính tại tọa độ tự nhập.",
+  "Planetocentric latitude · degrees": "Vĩ độ tính từ tâm Mặt Trăng · độ",
+  "Observer height above surface · m": "Độ cao điểm quan sát so với bề mặt · m",
+  "The backend reused a matching job.": "Backend đã dùng lại tác vụ có cùng tham số.",
+  "Progress percentage unavailable.": "Chưa có tiến độ theo phần trăm.",
+  "Cancelled": "Đã hủy",
 };
 
 export function translate(locale: Locale, message: Message, values?: MessageValues): string {

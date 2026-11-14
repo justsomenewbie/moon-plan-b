@@ -1,15 +1,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiError, createJob, getJob, isMock, jobPollInterval, windowFromInputs } from "../lib/api/client";
+import { apiError, createJob, getJob, isMock, jobPollInterval, validateCustomWindow, windowFromInputs } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import type { Dataset } from "../lib/dataset";
+import CustomSiteJob from "./custom-site-job";
 import { useLanguage } from "./language";
 
 type ResultHandler = (data: Dataset, request: WindowRequest, jobId: string) => void;
 const windowInputs = (request: WindowRequest) => ({ from: request.from.slice(0, -1), to: request.to.slice(0, -1), resolution: String(request.resolutionSeconds) });
 
-export function ApiControls({ request, loading, onLoad, onResult }: { request: WindowRequest; loading: boolean; onLoad: (request: WindowRequest) => void; onResult: ResultHandler }) {
+export function ApiControls({ request, loading, onLoad, onResult, onTerrainResult }: { request: WindowRequest; loading: boolean; onLoad: (request: WindowRequest) => void; onResult: ResultHandler; onTerrainResult: (request: WindowRequest, result: { run_id: string; site_id: string }) => void }) {
   const { t } = useLanguage();
   const [error, setError] = useState("");
   const [inputs, setInputs] = useState(() => windowInputs(request));
@@ -46,7 +47,7 @@ export function ApiControls({ request, loading, onLoad, onResult }: { request: W
       {isMock && <label className="field">{t("Desired step · seconds")}<input name="resolution" type="number" min="60" max="86400" step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>}
       <button className="button outline" disabled={loading}>{t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}
-  </details>{isMock && <JobForm readRequest={readRequest} onResult={onResult} />}</>;
+  </details>{isMock ? <JobForm readRequest={readRequest} onResult={onResult} /> : <CustomSiteJob readRequest={() => windowFromInputs(inputs.from, inputs.to, "3600", validateCustomWindow)} onResult={onTerrainResult} />}</>;
 }
 
 function JobForm({ readRequest, onResult }: { readRequest: () => WindowRequest; onResult: ResultHandler }) {

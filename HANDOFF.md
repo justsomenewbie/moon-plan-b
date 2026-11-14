@@ -14,7 +14,7 @@ The [synthetic regression](frontend/tests/observations.test.ts) preserves genuin
 
 ## Backend integration
 
-At 14:05 Hanoi, Chung’s producer aggregate returned HTTP 200 for Odysseus and Athena. The bare URL returned the documented 422 size limit. FE matched both weeks to the separate site endpoints across 672 site-hours. November 14–21 returned 33/139 overlap hours and November 21–28 returned 168/168. The live workspace requests terrain-model intervals for a bounded UTC range; the importer also accepts aggregate exports with windows and metrics. The offline saved comparisons remain available. The science team owns physical validation, the data team owns Colab. [Reproduction](docs/BACKEND_RECONCILIATION.md#aggregate-update-on-14-november).
+At 14:05 Hanoi, Chung’s producer aggregate returned HTTP 200 for Odysseus and Athena. The bare URL returned the documented 422 size limit. FE matched both weeks to the separate site endpoints across 672 site-hours. November 14–21 returned 33/139 overlap hours and November 21–28 returned 168/168. Live custom coordinates use the backend job API, preserve unknown progress, and open a single-site result pinned to the returned run. The live catalog workspace requests terrain-model intervals for a bounded UTC range; the importer also accepts aggregate exports with windows and metrics. The offline saved comparisons remain available. The science team owns physical validation, the data team owns Colab. [Reproduction](docs/BACKEND_RECONCILIATION.md#aggregate-update-on-14-november).
 
 ## Open items and ownership
 

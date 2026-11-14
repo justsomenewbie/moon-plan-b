@@ -1,3 +1,4 @@
+import { validateCustomWindow, windowFromInputs } from "../lib/api/client.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { setupServer } from "msw/node";
@@ -67,4 +68,12 @@ test("capabilities require the site job and its actual hourly terrain dependenci
   reply({ horizon_methods: ["flat"] }); assert.equal((await getCustomSiteCapability()).available, false);
   reply({ job_types: [{ ...job, limits: { step_min_allowed: [120] } }] }); assert.equal((await getCustomSiteCapability()).available, false);
   reply({ providers: {} }); await assert.rejects(getCustomSiteCapability());
+});
+
+
+test("the custom coordinate form and permalink support up to 366 hourly days", () => {
+  const request = windowFromInputs("2026-01-01T00:00", "2027-01-02T00:00", "3600", validateCustomWindow);
+  assert.equal(validateCustomWindow(request).to, "2027-01-02T00:00:00Z");
+  assert.throws(() => validateCustomWindow({ ...request, to: "2027-01-03T00:00:00Z" }), /366 days/);
+  assert.throws(() => validateCustomWindow({ ...request, resolutionSeconds: 60 }), /hourly/);
 });

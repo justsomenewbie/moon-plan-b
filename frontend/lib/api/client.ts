@@ -44,7 +44,7 @@ async function boundedFetch(request: Request) {
   } catch (error) { if (request.signal.aborted) throw error; if (deadline.aborted) throw new ApiError("The API did not respond within 15 seconds. Please retry.", 504); throw apiError(error); }
 }
 const api = createClient<paths>({ baseUrl, fetch: boundedFetch });
-const producer = createClient<ProducerPaths>({ baseUrl, fetch: boundedFetch });
+export const producer = createClient<ProducerPaths>({ baseUrl, fetch: boundedFetch });
 
 export type WindowRequest = NonNullable<paths["/api/v1/dataset"]["get"]["parameters"]["query"]>;
 export type JobRequest = components["schemas"]["JobRequest"];
@@ -52,18 +52,23 @@ export type Job = components["schemas"]["Job"];
 export const defaultWindow: WindowRequest = isMock
   ? { from: "2026-11-14T00:00:00Z", to: "2026-11-18T00:00:00Z", resolutionSeconds: 10800 }
   : { from: "2026-11-14T00:00:00Z", to: "2026-11-21T00:00:00Z", resolutionSeconds: 3600 };
+export function validateCustomWindow(request: WindowRequest) {
+  const span = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
+  if (span <= 0 || span > 366 * 86400000 || request.resolutionSeconds !== 3600) throw new ApiError("Choose an increasing UTC range of up to 366 days for an hourly custom-site job.", 422);
+  return request;
+}
 export function validateWindow(request: WindowRequest) {
   const span = utcMillis(request.to, "End UTC") - utcMillis(request.from, "Start UTC");
   if (span <= 0 || span > 31 * 86400000) throw new ApiError("Choose an increasing UTC range of at most 31 days (draft limit).", 422);
   if (!Number.isInteger(request.resolutionSeconds) || request.resolutionSeconds < 60 || request.resolutionSeconds > 86400 || Math.ceil(span / (request.resolutionSeconds * 1000)) + 1 > 10000) throw new ApiError("Choose 60–86400 seconds per sample and at most 10,000 requested samples per series.", 422);
   return request;
 }
-export function windowFromInputs(from: string, to: string, resolution: string) {
+export function windowFromInputs(from: string, to: string, resolution: string, validate = validateWindow) {
   const utc = (value: string) => {
     const timestamp = value.length === 16 ? `${value}:00` : value;
     return `${timestamp.replace(/\.(\d{1,2})$/, (_, fraction: string) => `.${fraction.padEnd(3, "0")}`)}Z`;
   };
-  return validateWindow({ from: utc(from), to: utc(to), resolutionSeconds: Number(resolution) });
+  return validate({ from: utc(from), to: utc(to), resolutionSeconds: Number(resolution) });
 }
 function withinRequestedWindow(dataset: Dataset, request: WindowRequest) {
   if (dataset.scenarios.some((s) => Date.parse(s.startUtc) < Date.parse(request.from) || Date.parse(s.endUtc) > Date.parse(request.to))) throw new ApiError("The server returned observations outside the requested UTC range.", 502);
@@ -78,15 +83,18 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   if (!response.ok) throw apiError(error, response.status);
   return withinRequestedWindow(validateDataset(data), request);
 }
-export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, runId?: string) {
-  validateWindow(request);
+export type TerrainTarget = { run_id: string; site_id?: string };
+export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
+  if (target?.site_id) validateCustomWindow(request);
+  else validateWindow(request);
+  const siteIds = target?.site_id ?? "im1_odysseus,im2_athena";
   const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
-    run_id: runId, site_ids: "im1_odysseus,im2_athena", start: request.from, end: request.to, include: "windows,metrics",
+    run_id: target?.run_id, site_ids: siteIds, start: request.from, end: request.to, include: "windows,metrics",
   } } });
   if (!response.ok) throw apiError(error, response.status);
   const result = parseTerrainSummary(data, request);
-  if (runId && result.run.run_id !== runId) throw new ApiError("The returned model run differs from the shared link.", 502);
-  if (result.sites.map(site => site.id).join(",") !== "im1_odysseus,im2_athena")
+  if (target && result.run.run_id !== target.run_id) throw new ApiError("The returned model run differs from the shared link.", 502);
+  if (result.sites.map(site => site.id).join(",") !== siteIds)
     throw new ApiError("The returned sites do not match the requested comparison.", 502);
   return result;
 }
