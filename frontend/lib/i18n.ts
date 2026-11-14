@@ -6,6 +6,9 @@ export const savedLocale = (value: string | null): Locale => value === "vi" ? "v
 
 // Translate interface text only; producer evidence is rendered verbatim.
 export const vietnamese: Record<string, string> = {
+  "Choose a terrain export for the shared model run.": "Chọn tệp xuất dữ liệu địa hình của lần chạy mô hình trong liên kết.",
+  "The response describes a different requested UTC range.": "Khoảng UTC yêu cầu trong dữ liệu khác với khoảng trong liên kết.",
+  "The export does not contain the observation series at the shared sampling step.": "Tệp xuất không có chuỗi quan trắc với bước lấy mẫu trong liên kết.",
   "The shared observation needs a pinned model run.": "Cần mã lần chạy mô hình để mở quan trắc được chia sẻ.",
   "The shared observation site is unavailable in this result.": "Kết quả này không có địa điểm quan trắc được chia sẻ.",
   "The shared UTC sample was not returned for this site.": "Dữ liệu của địa điểm này không có mẫu tại thời điểm UTC được chia sẻ.",

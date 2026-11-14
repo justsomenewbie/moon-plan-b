@@ -92,6 +92,7 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   if (!response.ok) throw apiError(error, response.status);
   return withinRequestedWindow(validateDataset(data), request);
 }
+export const defaultTerrainSites = "im1_odysseus,im2_athena";
 export type TerrainTarget = { run_id: string; site_id?: string };
 const terrainCriteriaHours = [24, 72, 168];
 
@@ -132,7 +133,7 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
   if (target?.site_id) validateCustomWindow(request);
   else validateTerrainWindow(request);
-  return getTerrainAggregate(request, target?.site_id ?? "im1_odysseus,im2_athena", target?.run_id, true, signal);
+  return getTerrainAggregate(request, target?.site_id ?? defaultTerrainSites, target?.run_id, true, signal);
 }
 export function validateJobRequest(request: JobRequest) {
   validateWindow(request);
