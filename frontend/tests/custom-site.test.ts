@@ -47,6 +47,18 @@ test("custom-site status retains nullable progress, terminal states and matching
   statusReply({ status: "succeeded", result });
   assert.deepEqual((await getCustomSiteJob(jobId, site)).result, result);
   await assert.rejects(getCustomSiteJob(jobId, "wrong-site"));
+  const submitted = { start: "2026-11-14T00:30:00.000Z", end: "2026-11-15T02:25:00.000Z" };
+  for (const params of [
+    { start: "2026-11-14T00:30:00Z", end: "2026-11-15T02:25:00Z" },
+    { start: "2026-11-14T00:00:00Z", end: "2026-11-15T03:00:00Z" },
+  ]) {
+    statusReply({ status: "succeeded", result, params });
+    assert.deepEqual((await getCustomSiteJob(jobId, site, undefined, submitted)).result, result);
+  }
+  for (const params of [{ ...submitted, start: "2026-11-14T01:30:00Z" }, { ...submitted, end: "2026-11-15T02:24:59Z" }]) {
+    statusReply({ status: "succeeded", result, params });
+    await assert.rejects(getCustomSiteJob(jobId, site, undefined, submitted), /different job/);
+  }
   const failed = { code: "PYTHON_FAILED", message: "Computation failed\nprivate line" };
   statusReply({ status: "failed", error: failed });
   assert.equal((await getCustomSiteJob(jobId)).error?.message, "Computation failed");

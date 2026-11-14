@@ -25,7 +25,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const accepted = create.data;
   const status = useQuery({
     queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: !!accepted,
-    queryFn: ({ signal }) => getCustomSiteJob(accepted!.job_id, accepted!.site_id, signal),
+    queryFn: ({ signal }) => getCustomSiteJob(accepted!.job_id, accepted!.site_id, signal, create.variables),
     refetchInterval: query => {
       const state = query.state.data?.status;
       return query.state.error || (state !== "queued" && state !== "running") ? false : 1500;

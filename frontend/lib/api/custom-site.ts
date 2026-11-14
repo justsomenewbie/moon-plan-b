@@ -58,7 +58,9 @@ export async function createCustomSite(input: CustomSiteInput) {
   return { job_id: data.job_id, site_id: data.site_id, status: data.status, cached: data.cached };
 }
 
-export async function getCustomSiteJob(jobId: string, acceptedSiteId?: string, signal?: AbortSignal) {
+export async function getCustomSiteJob(
+  jobId: string, acceptedSiteId?: string, signal?: AbortSignal, submitted?: Pick<CustomSiteInput, "start" | "end">,
+) {
   if (!jobIdPattern.test(jobId)) throw new ApiError("Invalid custom-site job ID.", 422);
   const { data, error, response } = await producer.GET("/api/v1/jobs/{job_id}", { params: { path: { job_id: jobId } }, signal });
   if (!response.ok) throw apiError(error, response.status);
@@ -68,7 +70,17 @@ export async function getCustomSiteJob(jobId: string, acceptedSiteId?: string, s
   const progress = data.progress;
   valid(progress && stages.includes(progress.stage) && (progress.pct === null || finite(progress.pct, 0, 100)), message);
   const { start, end } = data.params ?? {};
-  valid(typeof start === "string" && typeof end === "string" && utcMillis(start) < utcMillis(end), message);
+  valid(typeof start === "string" && typeof end === "string", message);
+  const startMs = utcMillis(start), endMs = utcMillis(end);
+  valid(startMs < endMs, message);
+  if (submitted) {
+    const from = utcMillis(submitted.start), to = utcMillis(submitted.end);
+    const hour = 3_600_000;
+    // The producer may return canonical parameters snapped outward to its hourly grid.
+    const matchesRequest = startMs === from && endMs === to;
+    const matchesGrid = startMs === Math.floor(from / hour) * hour && endMs === Math.ceil(to / hour) * hour;
+    valid(matchesRequest || matchesGrid, "The server returned a different job.");
+  }
   if (data.status === "succeeded") {
     valid(data.result?.run_id === `job_${jobId}` && data.result.site_id === data.site_id, "The completed job refers to a different model run or site.");
   } else valid(data.result === null, message);
