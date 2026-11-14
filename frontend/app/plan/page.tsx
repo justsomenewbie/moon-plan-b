@@ -5,7 +5,7 @@ import { ApiProblemText, useRetryCountdown, useProblemFields } from "../api-prob
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { hasLiveOptions, landingClock, liveExtras, plannerFormState, plannerLink, type PlannerSource } from "../../lib/planner-source";
 import { useQuery } from "@tanstack/react-query";
-import { isMock } from "../../lib/api/client";
+import { hasRetryDeadline, isMock } from "../../lib/api/client";
 import { getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type PlannerRun, type PlannerPriority } from "../../lib/api/planner";
 import { rankSavedMissionWindows, type MissionWindowRanking } from "../../lib/mission-window-ranking";
 import type { TerrainSummary } from "../../lib/api/terrain-summary";
@@ -202,7 +202,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   const pins = seed.getAll("run_id");
   const pinnedRun = pins.length > 1 ? "" : pins[0];
   const forced = requestedSource === "saved" || requestedSource === "saved-b2";
-  const catalog = useQuery({ queryKey: ["mission-planner-run", pinnedRun], queryFn: ({signal}) => getPlannerRun(signal, pinnedRun), enabled: !isMock && !forced, retry:false });
+  const catalog = useQuery({ queryKey: ["mission-planner-run", pinnedRun], queryFn: ({signal}) => getPlannerRun(signal, pinnedRun), enabled: q => !isMock && !forced && !hasRetryDeadline(q.state.error), retry:false });
   const catalogWait = useRetryCountdown(catalog.error ?? "");
   const retryCatalog = <button type="button" className="text-button" disabled={catalog.isFetching || catalogWait > 0}
     onClick={() => void catalog.refetch({ cancelRefetch: false })}>

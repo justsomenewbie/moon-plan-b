@@ -51,6 +51,8 @@ The intercepted fixtures are synthetic. SHA-256 of the January 1, 2 and 3 JSON r
 
 On 14 November 2026 at 08:31 UTC, Playwright opened a pinned Athena result at 02:00 UTC on a local live-mode production build (Chromium 158.0.8127.18, 1280 × 720). The [regression](../check_pinned_retry.mjs) intercepts the same-origin `GET /api/v1/dataset`. Each case starts in a fresh browser context. On the [integrated revision](https://github.com/justsomenewbie/moon-plan-b/commit/3878e1107e58e5da453e11c4da061fcb8a00d72b), the successful synthetic response has SHA-256 `0950b2162f5486a30cc741042116cec8eaf38d0b40e7d28b405cbefe64be8dbd`.
 
+On November 15, controlled 429 and 503 replies exercised [run discovery and the planner](../check_live_model_directory.mjs), [comparison tools](../check_comparison_retry_deadlines.mjs) and [team job controls](../check_custom_site_cancel.mjs). The comparison checks cover the site catalog, ranking, UTC lookup and original run files. The directory checks include a network reconnection during the wait. The job tests intercept all requests.
+
 | Injected fault | Requests before the error alert | Observed behavior |
 | --- | --- | --- |
 | HTTP 404 with a problem detail | 1 | Showed the server's detail immediately. |

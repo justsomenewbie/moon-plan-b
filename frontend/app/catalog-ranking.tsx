@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
-import { hasRetryDeadline } from "./terrain-query";
+import { hasRetryDeadline } from "../lib/api/client";
 
 import { useEffect, useRef, useState } from "react";
 import { getCatalogRanking, type CatalogRanking } from "../lib/api/catalog-ranking";

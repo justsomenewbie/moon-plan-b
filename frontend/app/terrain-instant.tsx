@@ -1,5 +1,5 @@
 import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
-import { hasRetryDeadline } from "./terrain-query";
+import { hasRetryDeadline } from "../lib/api/client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getSiteInstant, type SiteInstant } from "../lib/api/site-instant";
 import type { TerrainSummary } from "../lib/api/terrain-summary";

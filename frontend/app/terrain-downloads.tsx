@@ -1,5 +1,5 @@
 import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
-import { hasRetryDeadline } from "./terrain-query";
+import { hasRetryDeadline } from "../lib/api/client";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { TerrainSummary } from "../lib/api/terrain-summary";

@@ -121,6 +121,12 @@ try {
   assert.ok(await countdown.isDisabled());
   assert.ok(await directory.getByRole("button", { name: "Trang trước" }).isDisabled());
   assert.ok(await savedLink.isVisible());
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("offline"));
+    window.dispatchEvent(new Event("online"));
+  });
+  await directory.getByRole("button", { name: "Thử lại", exact: true }).waitFor();
+  assert.equal(limitedCalls.length, 1, "Reconnecting must preserve the server deadline and leave recovery manual");
   rateLimitedPath = undefined;
   await directory.getByRole("button", { name: "Thử lại", exact: true }).click();
   await runLink("fixture-21").waitFor();

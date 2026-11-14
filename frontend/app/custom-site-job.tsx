@@ -1,7 +1,7 @@
 import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
 import { useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ApiError, jobPollMs, jobReceiptUncertain } from "../lib/api/client";
+import { ApiError, hasRetryDeadline, jobPollMs, jobReceiptUncertain } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import type { Message } from "../lib/i18n";
 import { cancelCustomSiteJob, createCustomSite, getCustomSiteCapability, getCustomSiteJob } from "../lib/api/custom-site";
@@ -21,7 +21,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const [opened, setOpened] = useState(false);
   const [formError, setFormError] = useState<Message>("");
   const submitting = useRef(false);
-  const capability = useQuery({ queryKey: ["custom-site-capability"], queryFn: ({ signal }) => getCustomSiteCapability(signal), enabled: opened });
+  const capability = useQuery({ queryKey: ["custom-site-capability"], queryFn: ({ signal }) => getCustomSiteCapability(signal), enabled: q => opened && !hasRetryDeadline(q.state.error) });
   const capabilityWait = useRetryCountdown(capability.error ?? "");
   const create = useMutation({ mutationFn: createCustomSite, retry: false });
   const createWait = useRetryCountdown(create.error ?? "");
@@ -36,7 +36,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const released = cancel.isSuccess || stoppedFollowing;
   const cancelWait = useRetryCountdown(cancel.error ?? "");
   const status = useQuery({
-    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: !!accepted && !released,
+    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: q => !!accepted && !released && !hasRetryDeadline(q.state.error),
     queryFn: ({ signal }) => getCustomSiteJob(accepted!.job_id, accepted!.site_id, signal, create.variables),
     refetchInterval: query => {
       const state = query.state.data?.status;

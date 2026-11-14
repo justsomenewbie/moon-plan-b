@@ -10,7 +10,7 @@ import earlierCatalog from "../../public/data/run-b/catalog.json";
 import weeks from "../../lib/odysseus-athena-weeks.json";
 import { archiveB2Run } from "../../lib/archive-b2";
 import { TimeRange } from "../terrain-site-result";
-import { isMock } from "../../lib/api/client";
+import { hasRetryDeadline, isMock } from "../../lib/api/client";
 import { LanguageControl, useLanguage } from "../language";
 import ThemeControl from "../theme-control";
 import B2CoordinateSource from "../b2-coordinate-source";
@@ -40,6 +40,7 @@ function LiveModelRuns() {
   const [offset, setOffset] = useState(0);
   const query = useQuery({
     queryKey: ["ready-model-runs", offset],
+    enabled: q => !hasRetryDeadline(q.state.error),
     queryFn: ({ signal }) => getReadyModelRuns(offset, signal),
     retry: false,
   });

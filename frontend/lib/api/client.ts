@@ -29,6 +29,10 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
+export function hasRetryDeadline(error: unknown): error is ApiError {
+  return error instanceof ApiError && Boolean(error.retryAt);
+}
+
 // A Retry-After delay starts at receipt. Store a fixed UTC instant so a language
 // switch or later render cannot restart the wait.
 function retryTime(header: string | null, bodySeconds: unknown): string | undefined {
