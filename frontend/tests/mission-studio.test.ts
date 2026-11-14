@@ -36,8 +36,10 @@ test("analyzeScenarioClearance reproduces 0Â° baseline and degrades windows as Î
   assert.equal(base.darknessClipped, true);
   assert.equal(base.batteryStatus, "unknown");
 
-  const strictBattery = analyzeScenarioClearance(ridge1, 0, 3);
-  assert.equal(strictBattery.batteryStatus, "unknown");
+  // The observed six hours already exceed a shorter reference even if darkness continues outside the window.
+  assert.equal(analyzeScenarioClearance(ridge1, 0, 3).batteryStatus, "risk");
+  assert.equal(analyzeScenarioClearance(ridge1, 0, 6).batteryStatus, "unknown");
+  assert.equal(analyzeScenarioClearance({ ...ridge1, coverage: "partial" }, 0, 3).batteryStatus, "unknown");
 
   const elevatedMask = analyzeScenarioClearance(ridge1, 10, 12);
   assert.ok(elevatedMask.goldenHours! < base.goldenHours!);
@@ -132,7 +134,7 @@ test("null body or missing cadence breaks both neighboring spans and suppresses 
   }
 });
 
-test("endurance is evaluated only for darkness bounded inside a complete UTC window", () => {
+test("darkness bounded inside a complete UTC window can fit or exceed the endurance reference", () => {
   const scenario = fixture().scenarios[0];
   const start = Date.parse(scenario.startUtc);
   const body = (elevationDeg: number) => ({ azimuthDeg: 0, elevationDeg });
