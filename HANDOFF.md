@@ -1,6 +1,6 @@
 # Current handoff — 14 November 2026
 
-**The lunar reference globe and date-first comparison work in English and Vietnamese. Comparison data is synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
+**Minh's QA branch** starts at fetched `origin/main` commit `4328c85329250d3f2e80fb7ae61ba7b9aa564458` in `justsomenewbie/moon-plan-b`. Owner: Minh. The team can test the offline validator, synthetic edge cases and the existing frontend importer with `python -B -m qa.run_checks`. [Instructions](qa/README.md) · [terminal evidence](qa/evidence/2026-11-14/terminal.txt) · [two JPL parser samples](qa/docs/JPL_CHECK.md).
 
 ## Current decisions
 
@@ -24,6 +24,6 @@ External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/f
 
 ## Ownership and publication
 
-Root edited; agents reviewed. Verified globe review head `dc6e179a9d2d277b9b7530dd73d5f08af1ff878e`. Subsequent publication receipts are held outside the repository. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission. Product cloud SHA is unestablished. Preparation unchanged; no preparation sync required.
+The earlier globe review used `dc6e179a9d2d277b9b7530dd73d5f08af1ff878e`. Minh's QA work is local. Production build, network trace, three usability sessions, licensing and science sign-off remain open. See the [freeze checklist](qa/docs/RUNBOOK.md).
 
 Next input from Chung and Trang is one versioned site-pair export for a shared UTC window, with raw source responses and processing evidence for every joint interval.

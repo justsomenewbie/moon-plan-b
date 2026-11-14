@@ -1,0 +1,27 @@
+# QA artifact contract — proposal v1
+
+This proposal accompanies `frontend-draft-2`; it is not an approved Chung backend contract. The authoritative example is `../fixtures/normal.manifest.json`. Every manifest field is required; unknown fields fail. Schema/generator/parser versions must change deliberately when interpretation changes.
+
+## Metadata and identity
+
+`schemaVersion=qa-provenance-1`, `datasetId`, exact-file `datasetSha256`, `generatedAtUtc`, `evidence`, `generatorVersion`, `attribution`, `timeScale=UTC`, `intervalMethod=linear-center-crossing-v1`, and `requests` are required. SHA-256 covers the entire original UTF-8 file, including whitespace/newlines, without JSON reserialization or the manifest itself. Hashes prove byte identity, not authenticity or scientific accuracy.
+
+Each scenario/body with non-null samples requires exactly one request. It records `scenarioId`, `body`, `targetId`, `parameters`, `rawFile`, `rawSha256`, `retrievedAtUtc`, `parserVersion=qa-q4-1`, `frame`, and `elevationDatum`. Local relative raw paths must resolve inside the manifest's directory, including symlink resolution. Files over 5 MiB, duplicate JSON keys, nonfinite values, credentials in URLs and unsupported schemas are rejected. URLs are never fetched by QA.
+
+Query parameters include `CENTER=coord@301`, `COORD_TYPE=GEODETIC`, `QUANTITIES=4`, `APPARENT=AIRLESS`, `EPHEM_TYPE=OBSERVER`, `COMMAND=10` (Sun) or `399` (Earth), `TIME_TYPE=UT`, `CSV_FORMAT=YES`, `CAL_FORMAT=CAL`, and `TIME_DIGITS=SECONDS`. `SITE_COORD` gives east longitude, latitude and elevation in km in the site's declared frame and datum. The validator converts fixed Horizons steps in minutes, hours or days to the product's `sampleStepSeconds`. For example, `STEP_SIZE=1 h` corresponds to 3600 seconds. The manifest uses normalized UTC bounds for START_TIME/STOP_TIME. A query sender must retain the actual outbound request and its time formatting for independent review. [JPL step-size syntax](https://ssd-api.jpl.nasa.gov/doc/horizons.html#step_size).
+
+The API parameter is **UT**, not `UTC`. For this modern-date workflow the normalized application time is UTC; the raw parser refuses pre-1962 timestamps. Leap-second notation is unsupported and fails rather than being silently normalized. See [JPL API](https://ssd-api.jpl.nasa.gov/doc/horizons.html) and [manual time scales](https://ssd.jpl.nasa.gov/horizons/manual.html#time-scales).
+
+## Raw comparison and scientific oracle
+
+Accepted raw input is the Q4 observer table between one `$$SOE` and `$$EOE`, with UT calendar seconds, target and Moon center headers, airless azimuth/elevation labels, and geodetic location. The parser supports CSV and whitespace rows and rejects unrecognized headers, missing angles and additional numeric columns. For printed observer coordinates it accepts differences of at most 0.00001 degrees and 0.000001 km to account for printed precision and roundoff. It accepts equivalent east longitudes modulo 360. Exact decimal equality still applies to the reported **angles**. Two live CSV responses exercised this path in the [JPL parser check](JPL_CHECK.md). Validation against Chung's production export remains open.
+
+All raw timestamps, order, counts and angles must exactly equal the processed non-null records using Decimal numeric comparisons. No angular tolerance hides changed digits. A partial dataset can omit unknown records but must not publish aggregate metrics. Every raw byte hash is checked before parsing. For `--release`, synthetic data is rejected, computed records need source references and the referenced raw hash must match; a passing result is still only artifact consistency, not scientific or release approval.
+
+The QA oracle assumes an exactly regular cadence and piecewise-linear elevation between adjacent valid samples. This is stricter than the frontend's structural contract, which accepts some irregular steps up to its maximum gap. Nulls/gaps are never bridged. Exact zero and signed zero are not visible; missing is unknown. Rising/setting times are estimates, not independently calculated astronomical events.
+
+Intervals use `[start,end)` for duration accounting, with positive length, disjoint ordered spans, strict coverage bounds and explicit end clipping. The rising boundary has elevation exactly zero, so interval membership is not instantaneous visibility. Query point status with `elevation > 0`; never shift timestamps by an epsilon. Positive–zero–positive splits intervals to preserve the zero interruption. Interpolated boundaries allow 1 ms serialization error, but no overlap or coverage overrun. Metrics allow less than 0.000001 hours of serialization error. These are numeric tolerances, not physical uncertainty bounds.
+
+Azimuth uses shortest circular interpolation and rejects an ambiguous exactly 180-degree separation. The current frontend displays supplied samples and breaks chart paths across the north seam; it does not call this Python oracle. Multi-site sampling uses one absolute UTC instant and returns unknown for an absent row; there is no nearest-time substitution.
+
+Sun above an ideal horizon does not calculate usable power. Earth above it does not establish a radio link. Local terrain/craters, eclipses, disk edges, instrument/antenna constraints and landing safety are outside this model. [JPL quantity 4 definition](https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table).

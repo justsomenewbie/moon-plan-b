@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "qa-provenance-1",
+  "datasetId": "qa-missing-v1",
+  "datasetSha256": "f84ff67bef6cd9f79b45e0ca51f2a59589a05e095e70bc9201bd77e5c321116f",
+  "generatedAtUtc": "2026-11-14T05:00:00Z",
+  "evidence": "synthetic-fixture",
+  "generatorVersion": "qa-fixtures-1",
+  "attribution": "Synthetic QA fixture authored with OpenAI Codex assistance; invented angles and locations, not NASA/JPL measurements.",
+  "timeScale": "UTC",
+  "intervalMethod": "linear-center-crossing-v1",
+  "requests": []
+}

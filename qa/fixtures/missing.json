@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "frontend-draft-2",
+  "datasetId": "qa-missing-v1",
+  "evidence": "synthetic-fixture",
+  "attribution": "Synthetic QA fixture authored with OpenAI Codex assistance; invented angles and locations, not NASA/JPL measurements.",
+  "model": {
+    "id": "ideal-horizon-center-v1",
+    "label": "Synthetic ideal-horizon QA",
+    "definition": "Body-center elevation > 0 degrees; exact zero is not visible.",
+    "limits": [
+      "Invented values, no astronomical validity.",
+      "No terrain/crater masking, usable power, validated radio link or landing safety.",
+      "Linear crossing times are estimates; cadence can hide events."
+    ]
+  },
+  "criteriaHours": [
+    1
+  ],
+  "sources": [],
+  "sites": [
+    {
+      "id": "ridge",
+      "name": "Synthetic south-pole ridge",
+      "sourceIds": [],
+      "location": {
+        "latitudeDeg": -89.5,
+        "longitudeEastDeg": 0,
+        "elevationKm": 0,
+        "frame": "IAU_MOON (synthetic test convention)",
+        "elevationDatum": "Synthetic zero-height surface; not surveyed"
+      }
+    },
+    {
+      "id": "basin",
+      "name": "Synthetic south-pole basin",
+      "sourceIds": [],
+      "location": {
+        "latitudeDeg": -89.1,
+        "longitudeEastDeg": 45,
+        "elevationKm": 0,
+        "frame": "IAU_MOON (synthetic test convention)",
+        "elevationDatum": "Synthetic zero-height surface; not surveyed"
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ridge-1",
+      "siteId": "ridge",
+      "startUtc": "2026-11-14T00:00:00Z",
+      "endUtc": "2026-11-14T04:00:00Z",
+      "coverage": "missing",
+      "sampleStepSeconds": 3600,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ],
+      "samples": [],
+      "intervals": null,
+      "metrics": null,
+      "criteria": [
+        {
+          "minimumHours": 1,
+          "result": "unknown",
+          "reason": "Missing data is unknown, not darkness."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null
+    },
+    {
+      "id": "basin-1",
+      "siteId": "basin",
+      "startUtc": "2026-11-14T00:00:00Z",
+      "endUtc": "2026-11-14T04:00:00Z",
+      "coverage": "missing",
+      "sampleStepSeconds": 3600,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ],
+      "samples": [],
+      "intervals": null,
+      "metrics": null,
+      "criteria": [
+        {
+          "minimumHours": 1,
+          "result": "unknown",
+          "reason": "Missing data is unknown, not darkness."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "schemaVersion": "frontend-draft-2",
+  "datasetId": "qa-partial-v1",
+  "evidence": "synthetic-fixture",
+  "attribution": "Synthetic QA fixture authored with OpenAI Codex assistance; invented angles and locations, not NASA/JPL measurements.",
+  "model": {
+    "id": "ideal-horizon-center-v1",
+    "label": "Synthetic ideal-horizon QA",
+    "definition": "Body-center elevation > 0 degrees; exact zero is not visible.",
+    "limits": [
+      "Invented values, no astronomical validity.",
+      "No terrain/crater masking, usable power, validated radio link or landing safety.",
+      "Linear crossing times are estimates; cadence can hide events."
+    ]
+  },
+  "criteriaHours": [
+    1
+  ],
+  "sources": [],
+  "sites": [
+    {
+      "id": "ridge",
+      "name": "Synthetic south-pole ridge",
+      "sourceIds": [],
+      "location": {
+        "latitudeDeg": -89.5,
+        "longitudeEastDeg": 0,
+        "elevationKm": 0,
+        "frame": "IAU_MOON (synthetic test convention)",
+        "elevationDatum": "Synthetic zero-height surface; not surveyed"
+      }
+    },
+    {
+      "id": "basin",
+      "name": "Synthetic south-pole basin",
+      "sourceIds": [],
+      "location": {
+        "latitudeDeg": -89.1,
+        "longitudeEastDeg": 45,
+        "elevationKm": 0,
+        "frame": "IAU_MOON (synthetic test convention)",
+        "elevationDatum": "Synthetic zero-height surface; not surveyed"
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ridge-1",
+      "siteId": "ridge",
+      "startUtc": "2026-11-14T00:00:00Z",
+      "endUtc": "2026-11-14T04:00:00Z",
+      "coverage": "partial",
+      "sampleStepSeconds": 3600,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ],
+      "samples": [
+        {
+          "utc": "2026-11-14T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 358,
+            "elevationDeg": -1
+          },
+          "earth": {
+            "azimuthDeg": 180,
+            "elevationDeg": 1
+          }
+        },
+        {
+          "utc": "2026-11-14T01:00:00Z",
+          "sun": {
+            "azimuthDeg": 359,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 181,
+            "elevationDeg": 1
+          }
+        },
+        {
+          "utc": "2026-11-14T02:00:00Z",
+          "sun": null,
+          "earth": {
+            "azimuthDeg": 182,
+            "elevationDeg": 1
+          }
+        },
+        {
+          "utc": "2026-11-14T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 359,
+            "elevationDeg": 0
+          },
+          "earth": {
+            "azimuthDeg": 183,
+            "elevationDeg": 1
+          }
+        },
+        {
+          "utc": "2026-11-14T04:00:00Z",
+          "sun": {
+            "azimuthDeg": 358,
+            "elevationDeg": -1
+          },
+          "earth": {
+            "azimuthDeg": 184,
+            "elevationDeg": 1
+          }
+        }
+      ],
+      "intervals": null,
+      "metrics": null,
+      "criteria": [
+        {
+          "minimumHours": 1,
+          "result": "unknown",
+          "reason": "Missing data is unknown, not darkness."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null
+    },
+    {
+      "id": "basin-1",
+      "siteId": "basin",
+      "startUtc": "2026-11-14T00:00:00Z",
+      "endUtc": "2026-11-14T04:00:00Z",
+      "coverage": "partial",
+      "sampleStepSeconds": 3600,
+      "horizonCurve": [
+        {
+          "azimuthDeg": 0,
+          "elevationDeg": 0
+        },
+        {
+          "azimuthDeg": 360,
+          "elevationDeg": 0
+        }
+      ],
+      "samples": [
+        {
+          "utc": "2026-11-14T00:00:00Z",
+          "sun": {
+            "azimuthDeg": 2,
+            "elevationDeg": 0.2
+          },
+          "earth": {
+            "azimuthDeg": 180,
+            "elevationDeg": 1
+          }
+        },
+        {
+          "utc": "2026-11-14T01:00:00Z",
+          "sun": {
+            "azimuthDeg": 1,
+            "elevationDeg": 0.4
+          },
+          "earth": {
+            "azimuthDeg": 181,
+            "elevationDeg": 1
+          }
+        },
+        {
+          "utc": "2026-11-14T03:00:00Z",
+          "sun": {
+            "azimuthDeg": 1,
+            "elevationDeg": 0.8
+          },
+          "earth": {
+            "azimuthDeg": 183,
+            "elevationDeg": 1
+          }
+        },
+        {
+          "utc": "2026-11-14T04:00:00Z",
+          "sun": {
+            "azimuthDeg": 2,
+            "elevationDeg": 1
+          },
+          "earth": {
+            "azimuthDeg": 184,
+            "elevationDeg": 1
+          }
+        }
+      ],
+      "intervals": null,
+      "metrics": null,
+      "criteria": [
+        {
+          "minimumHours": 1,
+          "result": "unknown",
+          "reason": "Missing data is unknown, not darkness."
+        }
+      ],
+      "sourceIds": [],
+      "evidenceUrl": null
+    }
+  ]
+}

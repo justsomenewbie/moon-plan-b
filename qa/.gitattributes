@@ -1,0 +1,7 @@
+# Exact-byte evidence must survive Windows core.autocrlf.
+fixtures/** -text
+evidence/** -text
+*.py text eol=lf
+*.ts text eol=lf
+*.md text eol=lf
+docs/*.md text eol=lf

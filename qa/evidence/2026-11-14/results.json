@@ -1,0 +1,201 @@
+{
+  "generatedAtUtc": "2026-11-14T04:00:08.924331+00:00",
+  "baseHeadAtRun": "4328c85329250d3f2e80fb7ae61ba7b9aa564458",
+  "python": "3.12.12",
+  "node": "v24.22.1",
+  "scope": "QA artifacts plus dependency-free frontend source smoke tests",
+  "releaseApproval": "NOT_GRANTED",
+  "limitations": [
+    "Node host may be below frontend engines; see package.json. Full supported-runtime build not certified.",
+    "Synthetic fixtures do not verify astronomical accuracy.",
+    "Browser resilience, network traces, real-user sessions and human contract acceptance remain pending."
+  ],
+  "inputsSha256": {
+    "contracts/openapi.draft.json": "a48296bf46eb56c1cd7b79524dbd9e2c61638b3f51b4b26212ef8f2acc4b8709",
+    "frontend/lib/api/client.ts": "083029d6aeafd871a05527576c1ec7c1658ec1ad3bbf5cce1643bd3a3947014e",
+    "frontend/lib/api/mock-browser.ts": "66b5c866064a45082e0c0c3a3b54cc5e1ff96510ac1c944c9598dbc7d97b23f6",
+    "frontend/lib/api/mock-handlers.ts": "87ee9cdc04de929866625cfb8c07d182155f635e80a7f984e02cc994fd29d5ea",
+    "frontend/lib/api/schema.d.ts": "d6db27617fd74e2bed1a474238b13bc7f6a835548d034897d8ac1ff05efcacf8",
+    "frontend/lib/dataset.ts": "2527082eb1065645da9999d95a421e6797e097cf16fada2a6759cc5aefd0f6c3",
+    "frontend/lib/i18n.ts": "5487ce651a8d36a3cd75a5c4df5eb40920ddcb22aff5211dbc028dac786ca3d6",
+    "frontend/lib/moon-globe.ts": "482d8cfd175b89f65b91ea1213dc165606bb49048aea0409aa80b80852a4be7f",
+    "frontend/lib/theme.ts": "cb80588a32633f9ab376240aa81aa6cb95040045790738e81f6281407f23be00",
+    "frontend/tests/api.test.ts": "96fda75c22950bc1a1f70d8a5562ae2d292e6aa2074fcff33cff77b5719fd10c",
+    "frontend/tests/dataset.test.ts": "4a6221854c0137af91149ce6d4b89aba787f82a009bcd0ed23d5aaf4f429dd44",
+    "frontend/tests/i18n.test.ts": "93380ca2d9e00d7c25b04912714c824a4c40aa994a0cf23e44f7201b18ef8f01",
+    "frontend/tests/moon-globe.test.ts": "39d6f696c9b8d4760838ca0dbcbb1f370bf813b10fa6bafb70763b82d91d780e",
+    "frontend/tests/observations.test.ts": "72a0dc0409984d651d24fee0ffa1ad37cc9c636c37950386e06fb11b7da30399",
+    "frontend/tests/theme.test.ts": "d6c308e42129d6bafe18f6d9907314e3adf349aeb1c94a19a9fde0e71d8d39ea",
+    "qa/.gitattributes": "1508b17c1603b5656fe22caad2deaf2297338b9e7b1804b1539f4183890c7284",
+    "qa/.gitignore": "08562890a3cf22b965edeb8e0ea1f816e7ce82a816e3ad0269bd43d13c11ba00",
+    "qa/__init__.py": "7d1a643189ed1fb7015b7ff167109697f18f1eaa0f134d1e62106b05686bcb6c",
+    "qa/BUG_LOG.md": "4bdd477f41238ed55380da59b72a2bdbb8ccb07e965047c6fab017692b9cf638",
+    "qa/docs/COMPLIANCE.md": "19f89176cdbc76bd6f72aafa97ad164b419e21868c254059bc177567b3ef6cab",
+    "qa/docs/CONTRACT.md": "eb98dc960173322d32c6f87b51f69862364de5f9fe5a78fe63a9756b11f452f8",
+    "qa/docs/JPL_CHECK.md": "7671b2d37e79d8c856481392d6544030faac8307fc57359214011ab3887ad6e8",
+    "qa/docs/RUNBOOK.md": "204a18f03d2532c4987d2d3228af8b90f5237c8c8e42d2a4712f8319bb72e9df",
+    "qa/docs/UI_RESILIENCE.md": "9ca884ce286e0677fab589573c57021dbfeaa007cc85e57c69c66f0a6f96ecdf",
+    "qa/fixtures/crossing_wrap.json": "9224dbd8ec958aa58ddbd03e0b4f8a9e39f026d719fefdf39b1009a419e21f18",
+    "qa/fixtures/crossing_wrap.manifest.json": "d04b52789ea163aa0cb9120e62617ba48e7dd3fcfdd5e44100ce850c9a541f44",
+    "qa/fixtures/invalid/azimuth_360.json": "464b4c9c55973330c7ab3a85363fdb269c2365eafd095acc91ae68d1adde11c2",
+    "qa/fixtures/invalid/corrupted_schema.json": "b1e88c1195fba9e53bad950259b912bd5543a076e78ac01ed02dc133fe400dd3",
+    "qa/fixtures/invalid/duplicate_utc.json": "82149da80d834b8c3be69af3725e53560fdf8207fc15b2fa1b01fc18a6500900",
+    "qa/fixtures/invalid/missing_timestamp.json": "66bd779121c4d8604c149886eb47512082853f8a843d27c333e571c47270fbba",
+    "qa/fixtures/invalid/timezone_offset.json": "22ae1fba2752d2527c9de5d634daadae724702eadbfa28ee3d8b2eb62c1d8ab0",
+    "qa/fixtures/missing.json": "f84ff67bef6cd9f79b45e0ca51f2a59589a05e095e70bc9201bd77e5c321116f",
+    "qa/fixtures/missing.manifest.json": "6fd36fdb3bd558be3139dbe8d98b98c68815e58c2b48f3058ff50912a24bded8",
+    "qa/fixtures/normal.json": "0f7773320fa3e8b3da60841aa88d02e9d03a34c213cbf0af9e441b724d0b92fb",
+    "qa/fixtures/normal.manifest.json": "34b5d6b90c84f9508c99b37fb1960eac0e55f4c3fb441157a0cacce4193f824b",
+    "qa/fixtures/partial.json": "da3aeafc87838922dcfc4faf1ef6fe6f4cd881b748854860644b0ffa2940929a",
+    "qa/fixtures/partial.manifest.json": "e124d10b0631501ca7c111172d477ef1644762aa24a82a2b2a7ed73fb0197730",
+    "qa/fixtures/raw/crossing_wrap-basin-1-earth.txt": "73dcb65f739182364d4a18ffe10b741625d50a1152a458ea5d10895691d515d6",
+    "qa/fixtures/raw/crossing_wrap-basin-1-sun.txt": "fa53526cab1ea9e0a95164478eca0409ee3c619195f497c8f92f9a154955fb8c",
+    "qa/fixtures/raw/crossing_wrap-ridge-1-earth.txt": "fd57391706dcfc10ceb5ce7c00e10d3959d6a1a08879f8f369ff5b7a053162f3",
+    "qa/fixtures/raw/crossing_wrap-ridge-1-sun.txt": "adc5b8cf0733657fb67bcdd451cabc82bb301025d7b3985ec0b191474adce8fb",
+    "qa/fixtures/raw/normal-basin-1-earth.txt": "73dcb65f739182364d4a18ffe10b741625d50a1152a458ea5d10895691d515d6",
+    "qa/fixtures/raw/normal-basin-1-sun.txt": "d67ea5ed880631d4b24747aadaf7c2500084092c9f7832ea4ef3458b0655df54",
+    "qa/fixtures/raw/normal-ridge-1-earth.txt": "fd57391706dcfc10ceb5ce7c00e10d3959d6a1a08879f8f369ff5b7a053162f3",
+    "qa/fixtures/raw/normal-ridge-1-sun.txt": "4491963e04f9fecb0742eaad72f819c3423356232329d9366a7d45ac04003454",
+    "qa/fixtures/raw/partial-basin-1-earth.txt": "2391c4573cc72a3fd3a9ab2cbd81db96cb7716b7c1e12d2daea50ed969c2877e",
+    "qa/fixtures/raw/partial-basin-1-sun.txt": "34f32d37b0e02c1ebb45675dd99618a4d51b7e45b1837f0b1e7943eb7d82f6b3",
+    "qa/fixtures/raw/partial-ridge-1-earth.txt": "fd57391706dcfc10ceb5ce7c00e10d3959d6a1a08879f8f369ff5b7a053162f3",
+    "qa/fixtures/raw/partial-ridge-1-sun.txt": "f605853ea1239758b27db6dfcd5626fcc1ca6e57a8c39bbf94514e1f1f8532a1",
+    "qa/frontend_integration.test.ts": "fe179a6f8dc8b191c46e8da0e7e0fb5f890c294c95534bbf5177465b7e090746",
+    "qa/generate_fixtures.py": "3fcbf12a5a4dd13c5f082fbb62d2b60585d7fc125b0f55536688a5f60d7e4f33",
+    "qa/README.md": "9156978aca92a23e4d9a30ad8e6e35cb3896f08231ad09a4e65bc1e9fb13ae8f",
+    "qa/run_checks.py": "d237e7a1b67abeaef3dec94d652def6f8a334b49456045efb1a9e851c7d98af6",
+    "qa/science.py": "a38f19623d38d0d3641827cbdf50980a62665b2ac8879314b8ef8cf44e071d9d",
+    "qa/test_edge_cases.py": "2946466dba2e3eb398281519495766acaa675cd79538d2d1c9ff6ab40f946e12",
+    "qa/verify_json_contract.py": "fa592a8d77d05b599dd898991a46aebd78550211e3a2e6bf2452c8165e53567e"
+  },
+  "checks": [
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "qa.generate_fixtures",
+        "--check"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "status": "PASS",
+      "elapsedSeconds": 0.245,
+      "output": "Verified 25 synthetic fixture files.\n"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "qa.test_edge_cases",
+        "-v"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "status": "PASS",
+      "elapsedSeconds": 1.3477,
+      "output": "test_clipping (qa.test_edge_cases.ContractTests.test_clipping) ... ok\ntest_duplicate_equivalent_timestamp_and_off_cadence (qa.test_edge_cases.ContractTests.test_duplicate_equivalent_timestamp_and_off_cadence) ... ok\ntest_duplicate_keys_nonfinite_json_and_size_limit (qa.test_edge_cases.ContractTests.test_duplicate_keys_nonfinite_json_and_size_limit) ... ok\ntest_golden_packages_and_reproducibility (qa.test_edge_cases.ContractTests.test_golden_packages_and_reproducibility) ... ok\ntest_interval_corruption_including_matching_fake_metrics (qa.test_edge_cases.ContractTests.test_interval_corruption_including_matching_fake_metrics) ... ok\ntest_interval_tolerance_never_permits_out_of_bounds_or_overlap (qa.test_edge_cases.ContractTests.test_interval_tolerance_never_permits_out_of_bounds_or_overlap) ... ok\ntest_invalid_fixtures_rejected (qa.test_edge_cases.ContractTests.test_invalid_fixtures_rejected) ... ok\ntest_joint_cannot_start_before_serialized_sun (qa.test_edge_cases.ContractTests.test_joint_cannot_start_before_serialized_sun) ... ok\ntest_schema_evolution_fails_closed (qa.test_edge_cases.ContractTests.test_schema_evolution_fails_closed) ... ok\ntest_schema_rejects_extra_fields_types_and_boundaries (qa.test_edge_cases.ContractTests.test_schema_rejects_extra_fields_types_and_boundaries) ... ok\ntest_unknown_metrics (qa.test_edge_cases.ContractTests.test_unknown_metrics) ... ok\ntest_exact_zero_crossings_plateaus_and_touches (qa.test_edge_cases.ScientificEdges.test_exact_zero_crossings_plateaus_and_touches) ... ok\ntest_half_open_accounting_not_point_visibility (qa.test_edge_cases.ScientificEdges.test_half_open_accounting_not_point_visibility) ... ok\ntest_intersection_and_touching_endpoints (qa.test_edge_cases.ScientificEdges.test_intersection_and_touching_endpoints) ... ok\ntest_missing_and_gap_are_not_bridged (qa.test_edge_cases.ScientificEdges.test_missing_and_gap_are_not_bridged) ... ok\ntest_multisite_uses_absolute_same_utc (qa.test_edge_cases.ScientificEdges.test_multisite_uses_absolute_same_utc) ... ok\ntest_rise_and_set_between_samples (qa.test_edge_cases.ScientificEdges.test_rise_and_set_between_samples) ... ok\ntest_strict_utc_and_equivalent_z_instants (qa.test_edge_cases.ScientificEdges.test_strict_utc_and_equivalent_z_instants) ... ok\ntest_wrap_both_directions (qa.test_edge_cases.ScientificEdges.test_wrap_both_directions) ... ok\ntest_zero_signed_zero_and_unknown (qa.test_edge_cases.ScientificEdges.test_zero_signed_zero_and_unknown) ... ok\ntest_geodetic_source_precision (qa.test_edge_cases.TraceabilityTests.test_geodetic_source_precision) ... ok\ntest_hash_tamper (qa.test_edge_cases.TraceabilityTests.test_hash_tamper) ... ok\ntest_metadata_missing_or_wrong (qa.test_edge_cases.TraceabilityTests.test_metadata_missing_or_wrong) ... ok\ntest_raw_hash_tamper (qa.test_edge_cases.TraceabilityTests.test_raw_hash_tamper) ... ok\ntest_raw_numeric_corruption_even_with_updated_hash (qa.test_edge_cases.TraceabilityTests.test_raw_numeric_corruption_even_with_updated_hash) ... ok\ntest_raw_parser_invalid_headers_and_rows (qa.test_edge_cases.TraceabilityTests.test_raw_parser_invalid_headers_and_rows) ... ok\ntest_raw_traversal_and_absolute_path_rejected (qa.test_edge_cases.TraceabilityTests.test_raw_traversal_and_absolute_path_rejected) ... ok\ntest_raw_whitespace_format (qa.test_edge_cases.TraceabilityTests.test_raw_whitespace_format) ... ok\ntest_synthetic_cannot_pass_release_gate (qa.test_edge_cases.TraceabilityTests.test_synthetic_cannot_pass_release_gate) ... ok\n\n----------------------------------------------------------------------\nRan 29 tests in 1.038s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "qa.verify_json_contract",
+        "qa/fixtures/normal.json",
+        "--manifest",
+        "qa/fixtures/normal.manifest.json"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "status": "PASS",
+      "elapsedSeconds": 0.2417,
+      "output": "{\"status\": \"PASS\", \"datasetId\": \"qa-normal-v1\", \"evidence\": \"synthetic-fixture\", \"rawRequests\": 4, \"scope\": \"artifact consistency; not scientific/release approval\"}\n"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "qa.verify_json_contract",
+        "qa/fixtures/crossing_wrap.json",
+        "--manifest",
+        "qa/fixtures/crossing_wrap.manifest.json"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "status": "PASS",
+      "elapsedSeconds": 0.2393,
+      "output": "{\"status\": \"PASS\", \"datasetId\": \"qa-crossing-wrap-v1\", \"evidence\": \"synthetic-fixture\", \"rawRequests\": 4, \"scope\": \"artifact consistency; not scientific/release approval\"}\n"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "qa.verify_json_contract",
+        "qa/fixtures/partial.json",
+        "--manifest",
+        "qa/fixtures/partial.manifest.json"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "status": "PASS",
+      "elapsedSeconds": 0.2394,
+      "output": "{\"status\": \"PASS\", \"datasetId\": \"qa-partial-v1\", \"evidence\": \"synthetic-fixture\", \"rawRequests\": 4, \"scope\": \"artifact consistency; not scientific/release approval\"}\n"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "qa.verify_json_contract",
+        "qa/fixtures/missing.json",
+        "--manifest",
+        "qa/fixtures/missing.manifest.json"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "status": "PASS",
+      "elapsedSeconds": 0.2195,
+      "output": "{\"status\": \"PASS\", \"datasetId\": \"qa-missing-v1\", \"evidence\": \"synthetic-fixture\", \"rawRequests\": 0, \"scope\": \"artifact consistency; not scientific/release approval\"}\n"
+    },
+    {
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "qa.verify_json_contract",
+        "qa/fixtures/normal.json",
+        "--manifest",
+        "qa/fixtures/normal.manifest.json",
+        "--release"
+      ],
+      "expectedExit": 1,
+      "actualExit": 1,
+      "status": "PASS",
+      "elapsedSeconds": 0.2283,
+      "output": "{\"status\": \"FAIL\", \"error\": \"release gate rejects synthetic fixtures\"}\n"
+    },
+    {
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "--test",
+        "qa/frontend_integration.test.ts",
+        "frontend/tests/dataset.test.ts",
+        "frontend/tests/moon-globe.test.ts",
+        "frontend/tests/i18n.test.ts",
+        "frontend/tests/theme.test.ts"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "status": "PASS",
+      "elapsedSeconds": 0.5695,
+      "output": "\u2714 published windows group both UTC instants, retain duplicate site runs and sort chronologically (8.2502ms)\n\u2714 fixture is explicitly synthetic and exercises complete, partial and missing coverage (5.4239ms)\n\u2714 real-data declarations cannot bypass provenance through enum coercion (4.2208ms)\n\u2714 coverage and assessment enums reject arrays, including otherwise valid text (1.4536ms)\n\u2714 UTC rejects rolled dates, timezone ambiguity and duplicate samples (0.9302ms)\n\u2714 missing, zero and invalid angles stay distinct (5.8285ms)\n\u2714 the supplied horizon matches the supported model and covers all azimuths (3.9205ms)\n\u2714 partial data cannot carry available metrics or definite assessments (3.502ms)\n\u2714 intervals cannot overstate totals or invent joint visibility (3.4769ms)\n\u2714 large ordered interval sets validate with linear timestamp work (139.0763ms)\n\u2714 links and identifiers cannot create unsafe navigation or ambiguous sources (2.5427ms)\n\u2714 different-date and same-UTC comparisons preserve their invariants (1.4795ms)\n\u2714 sharing round-trips exact release and controls; malformed links never silently reset (5.1716ms)\n\u2714 charts break paths on nulls; cursor uses actual shared samples only (2.1016ms)\n\u2714 sky tracks break time gaps and nulls while preserving cadence and north-wrap behavior (1.5354ms)\n\u2714 an empty release remains valid and has no fabricated default selection (0.6525ms)\n\u2714 later-match search uses supplied same-site candidates and never skips unresolved predecessors silently (0.9694ms)\n\u2714 English is the default; only an explicit Vietnamese preference changes it (2.0981ms)\n\u2714 messages translate at display time and preserve supplied values and unknown diagnostics (0.7894ms)\n\u2714 every Vietnamese translation retains the English message parameters (4.9158ms)\n\u2714 globe center samples the correct hemisphere, wraps the longitude seam and clamps at poles (3.1399ms)\n\u2714 visible disk is north-up, east-right and clips pixels outside the sphere (0.5197ms)\n\u2714 automatic appearance follows local wall-clock boundaries without changing UTC data (3.9173ms)\n\u2714 unknown or missing stored preferences return to automatic appearance (0.2924ms)\n\u2714 actual frontend accepts normal and preserves synthetic attribution (6.8459ms)\n\u2714 actual frontend accepts crossing_wrap and preserves synthetic attribution (0.9995ms)\n\u2714 actual frontend accepts partial and preserves synthetic attribution (0.6261ms)\n\u2714 actual frontend accepts missing and preserves synthetic attribution (0.5028ms)\n\u2714 north wrapping breaks both directions in the actual sky path (0.9247ms)\n\u2714 actual charts break nulls/gaps; missing never becomes a zero-valued row (1.2809ms)\n\u2714 same-time site candidates share exact UTC samples and keep zero values (0.923ms)\n\u2714 actual frontend rejects negative-control fixture azimuth_360 (0.9315ms)\n\u2714 actual frontend rejects negative-control fixture duplicate_utc (0.7431ms)\n\u2714 actual frontend rejects negative-control fixture missing_timestamp (0.7116ms)\n\u2714 actual frontend rejects negative-control fixture timezone_offset (0.5102ms)\n\u2714 actual frontend rejects negative-control fixture corrupted_schema (0.4286ms)\n\u2139 tests 36\n\u2139 suites 0\n\u2139 pass 36\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 458.2215\n"
+    }
+  ],
+  "status": "PASS"
+}

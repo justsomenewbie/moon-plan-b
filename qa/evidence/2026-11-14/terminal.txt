@@ -1,0 +1,115 @@
+$ python -B -m qa.generate_fixtures --check
+Verified 25 synthetic fixture files.
+
+Expected exit 0; actual 0; PASS
+
+$ python -B -m unittest qa.test_edge_cases -v
+test_clipping (qa.test_edge_cases.ContractTests.test_clipping) ... ok
+test_duplicate_equivalent_timestamp_and_off_cadence (qa.test_edge_cases.ContractTests.test_duplicate_equivalent_timestamp_and_off_cadence) ... ok
+test_duplicate_keys_nonfinite_json_and_size_limit (qa.test_edge_cases.ContractTests.test_duplicate_keys_nonfinite_json_and_size_limit) ... ok
+test_golden_packages_and_reproducibility (qa.test_edge_cases.ContractTests.test_golden_packages_and_reproducibility) ... ok
+test_interval_corruption_including_matching_fake_metrics (qa.test_edge_cases.ContractTests.test_interval_corruption_including_matching_fake_metrics) ... ok
+test_interval_tolerance_never_permits_out_of_bounds_or_overlap (qa.test_edge_cases.ContractTests.test_interval_tolerance_never_permits_out_of_bounds_or_overlap) ... ok
+test_invalid_fixtures_rejected (qa.test_edge_cases.ContractTests.test_invalid_fixtures_rejected) ... ok
+test_joint_cannot_start_before_serialized_sun (qa.test_edge_cases.ContractTests.test_joint_cannot_start_before_serialized_sun) ... ok
+test_schema_evolution_fails_closed (qa.test_edge_cases.ContractTests.test_schema_evolution_fails_closed) ... ok
+test_schema_rejects_extra_fields_types_and_boundaries (qa.test_edge_cases.ContractTests.test_schema_rejects_extra_fields_types_and_boundaries) ... ok
+test_unknown_metrics (qa.test_edge_cases.ContractTests.test_unknown_metrics) ... ok
+test_exact_zero_crossings_plateaus_and_touches (qa.test_edge_cases.ScientificEdges.test_exact_zero_crossings_plateaus_and_touches) ... ok
+test_half_open_accounting_not_point_visibility (qa.test_edge_cases.ScientificEdges.test_half_open_accounting_not_point_visibility) ... ok
+test_intersection_and_touching_endpoints (qa.test_edge_cases.ScientificEdges.test_intersection_and_touching_endpoints) ... ok
+test_missing_and_gap_are_not_bridged (qa.test_edge_cases.ScientificEdges.test_missing_and_gap_are_not_bridged) ... ok
+test_multisite_uses_absolute_same_utc (qa.test_edge_cases.ScientificEdges.test_multisite_uses_absolute_same_utc) ... ok
+test_rise_and_set_between_samples (qa.test_edge_cases.ScientificEdges.test_rise_and_set_between_samples) ... ok
+test_strict_utc_and_equivalent_z_instants (qa.test_edge_cases.ScientificEdges.test_strict_utc_and_equivalent_z_instants) ... ok
+test_wrap_both_directions (qa.test_edge_cases.ScientificEdges.test_wrap_both_directions) ... ok
+test_zero_signed_zero_and_unknown (qa.test_edge_cases.ScientificEdges.test_zero_signed_zero_and_unknown) ... ok
+test_geodetic_source_precision (qa.test_edge_cases.TraceabilityTests.test_geodetic_source_precision) ... ok
+test_hash_tamper (qa.test_edge_cases.TraceabilityTests.test_hash_tamper) ... ok
+test_metadata_missing_or_wrong (qa.test_edge_cases.TraceabilityTests.test_metadata_missing_or_wrong) ... ok
+test_raw_hash_tamper (qa.test_edge_cases.TraceabilityTests.test_raw_hash_tamper) ... ok
+test_raw_numeric_corruption_even_with_updated_hash (qa.test_edge_cases.TraceabilityTests.test_raw_numeric_corruption_even_with_updated_hash) ... ok
+test_raw_parser_invalid_headers_and_rows (qa.test_edge_cases.TraceabilityTests.test_raw_parser_invalid_headers_and_rows) ... ok
+test_raw_traversal_and_absolute_path_rejected (qa.test_edge_cases.TraceabilityTests.test_raw_traversal_and_absolute_path_rejected) ... ok
+test_raw_whitespace_format (qa.test_edge_cases.TraceabilityTests.test_raw_whitespace_format) ... ok
+test_synthetic_cannot_pass_release_gate (qa.test_edge_cases.TraceabilityTests.test_synthetic_cannot_pass_release_gate) ... ok
+
+----------------------------------------------------------------------
+Ran 29 tests in 1.038s
+
+OK
+
+Expected exit 0; actual 0; PASS
+
+$ python -B -m qa.verify_json_contract qa/fixtures/normal.json --manifest qa/fixtures/normal.manifest.json
+{"status": "PASS", "datasetId": "qa-normal-v1", "evidence": "synthetic-fixture", "rawRequests": 4, "scope": "artifact consistency; not scientific/release approval"}
+
+Expected exit 0; actual 0; PASS
+
+$ python -B -m qa.verify_json_contract qa/fixtures/crossing_wrap.json --manifest qa/fixtures/crossing_wrap.manifest.json
+{"status": "PASS", "datasetId": "qa-crossing-wrap-v1", "evidence": "synthetic-fixture", "rawRequests": 4, "scope": "artifact consistency; not scientific/release approval"}
+
+Expected exit 0; actual 0; PASS
+
+$ python -B -m qa.verify_json_contract qa/fixtures/partial.json --manifest qa/fixtures/partial.manifest.json
+{"status": "PASS", "datasetId": "qa-partial-v1", "evidence": "synthetic-fixture", "rawRequests": 4, "scope": "artifact consistency; not scientific/release approval"}
+
+Expected exit 0; actual 0; PASS
+
+$ python -B -m qa.verify_json_contract qa/fixtures/missing.json --manifest qa/fixtures/missing.manifest.json
+{"status": "PASS", "datasetId": "qa-missing-v1", "evidence": "synthetic-fixture", "rawRequests": 0, "scope": "artifact consistency; not scientific/release approval"}
+
+Expected exit 0; actual 0; PASS
+
+$ python -B -m qa.verify_json_contract qa/fixtures/normal.json --manifest qa/fixtures/normal.manifest.json --release
+{"status": "FAIL", "error": "release gate rejects synthetic fixtures"}
+
+Expected exit 1; actual 1; PASS
+
+$ node --experimental-strip-types --test qa/frontend_integration.test.ts frontend/tests/dataset.test.ts frontend/tests/moon-globe.test.ts frontend/tests/i18n.test.ts frontend/tests/theme.test.ts
+✔ published windows group both UTC instants, retain duplicate site runs and sort chronologically (8.2502ms)
+✔ fixture is explicitly synthetic and exercises complete, partial and missing coverage (5.4239ms)
+✔ real-data declarations cannot bypass provenance through enum coercion (4.2208ms)
+✔ coverage and assessment enums reject arrays, including otherwise valid text (1.4536ms)
+✔ UTC rejects rolled dates, timezone ambiguity and duplicate samples (0.9302ms)
+✔ missing, zero and invalid angles stay distinct (5.8285ms)
+✔ the supplied horizon matches the supported model and covers all azimuths (3.9205ms)
+✔ partial data cannot carry available metrics or definite assessments (3.502ms)
+✔ intervals cannot overstate totals or invent joint visibility (3.4769ms)
+✔ large ordered interval sets validate with linear timestamp work (139.0763ms)
+✔ links and identifiers cannot create unsafe navigation or ambiguous sources (2.5427ms)
+✔ different-date and same-UTC comparisons preserve their invariants (1.4795ms)
+✔ sharing round-trips exact release and controls; malformed links never silently reset (5.1716ms)
+✔ charts break paths on nulls; cursor uses actual shared samples only (2.1016ms)
+✔ sky tracks break time gaps and nulls while preserving cadence and north-wrap behavior (1.5354ms)
+✔ an empty release remains valid and has no fabricated default selection (0.6525ms)
+✔ later-match search uses supplied same-site candidates and never skips unresolved predecessors silently (0.9694ms)
+✔ English is the default; only an explicit Vietnamese preference changes it (2.0981ms)
+✔ messages translate at display time and preserve supplied values and unknown diagnostics (0.7894ms)
+✔ every Vietnamese translation retains the English message parameters (4.9158ms)
+✔ globe center samples the correct hemisphere, wraps the longitude seam and clamps at poles (3.1399ms)
+✔ visible disk is north-up, east-right and clips pixels outside the sphere (0.5197ms)
+✔ automatic appearance follows local wall-clock boundaries without changing UTC data (3.9173ms)
+✔ unknown or missing stored preferences return to automatic appearance (0.2924ms)
+✔ actual frontend accepts normal and preserves synthetic attribution (6.8459ms)
+✔ actual frontend accepts crossing_wrap and preserves synthetic attribution (0.9995ms)
+✔ actual frontend accepts partial and preserves synthetic attribution (0.6261ms)
+✔ actual frontend accepts missing and preserves synthetic attribution (0.5028ms)
+✔ north wrapping breaks both directions in the actual sky path (0.9247ms)
+✔ actual charts break nulls/gaps; missing never becomes a zero-valued row (1.2809ms)
+✔ same-time site candidates share exact UTC samples and keep zero values (0.923ms)
+✔ actual frontend rejects negative-control fixture azimuth_360 (0.9315ms)
+✔ actual frontend rejects negative-control fixture duplicate_utc (0.7431ms)
+✔ actual frontend rejects negative-control fixture missing_timestamp (0.7116ms)
+✔ actual frontend rejects negative-control fixture timezone_offset (0.5102ms)
+✔ actual frontend rejects negative-control fixture corrupted_schema (0.4286ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 458.2215
+
+Expected exit 0; actual 0; PASS

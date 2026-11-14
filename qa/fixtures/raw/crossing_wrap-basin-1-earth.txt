@@ -1,0 +1,14 @@
+SYNTHETIC FIXTURE - NOT A JPL RESPONSE
+Synthetic QA fixture authored with OpenAI Codex assistance; invented angles and locations, not NASA/JPL measurements.
+Target body name: Earth (399)
+Center body name: Moon (301)
+Center geodetic : 45,-89.1,0
+Date__(UT)__HR:MN:SS, , , Azi_(a-app), Elev_(a-app),
+$$SOE
+ 2026-Nov-14 00:00:00, , , 180, 1,
+ 2026-Nov-14 01:00:00, , , 181, 1,
+ 2026-Nov-14 02:00:00, , , 182, 1,
+ 2026-Nov-14 03:00:00, , , 183, 1,
+ 2026-Nov-14 04:00:00, , , 184, 1,
+$$EOE
+SYNTHETIC END
