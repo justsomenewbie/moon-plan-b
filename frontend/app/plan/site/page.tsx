@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { archiveB2Run, rankArchiveB2 } from "../../../lib/archive-b2";
 import { getSavedPlannerRanking, savedPlannerRun } from "../../../lib/saved-planner";
+import { plannerLink } from "../../../lib/planner-source";
 import { lrocSiteUrl } from "../../../lib/globe-sites";
 import { LanguageControl, useLanguage } from "../../language";
 import { SiteFooter, SkyBackground } from "../../site-chrome";
@@ -37,7 +38,7 @@ function SiteReport() {
     planner.set("priority", priority);
     if (row) planner.set("site", row.id);
   }
-  const back = "/plan?" + planner;
+  const back = plannerLink("/plan", planner, query.getAll("run_id"));
   if (!ranking || !site || !row) {
     const message = !valid ? text("This link needs a saved run, a site, two UTC dates and a visibility priority.", "Đường dẫn cần có lần chạy đã lưu, địa điểm, ngày bắt đầu và kết thúc theo UTC cùng tiêu chí xếp hạng.")
       : !ranking ? text("The selected archive has no result for these dates. Choose an available range in the planner.", "Bộ dữ liệu đã chọn không có kết quả cho khoảng ngày này. Hãy chọn khoảng ngày có dữ liệu trong công cụ lập kế hoạch.")

@@ -1,6 +1,6 @@
 # Current handoff — 15 November 2026
 
-Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. The inspector and table link to the selected site’s saved report or hourly live observations. Homepage `Compare` sits beside the quick guide. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers reopen the same model run. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
+Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. The inspector and table link to the selected site’s saved report or hourly live observations. Homepage `Compare` sits beside the quick guide. The [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Live guide answers, saved site reports and date presets [preserve the live run](qa/check_planner_run_links.mjs) on return. See [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
 
 ## Live comparison
 
