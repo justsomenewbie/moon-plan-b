@@ -12,6 +12,10 @@ const browser = await chromium.launch({
 });
 try {
   const page = await browser.newPage();
+  const apiRequests = [];
+  page.on("request", request => {
+    if (new URL(request.url()).pathname.startsWith("/api/")) apiRequests.push(request.url());
+  });
   const saved = page.locator("#observed-week");
   const selector = saved.getByRole("combobox", { name: "Compare saved results" });
   async function printText() {
@@ -60,6 +64,30 @@ try {
   await page.goto(new URL("?saved=im2_athena#saved-model-source", origin).href);
   await source.waitFor({ state: "visible" });
   checkAthena(await printText());
+
+  const disclosure = saved.locator("details:has(#saved-model-source)");
+  for (const locale of ["en", "vi"]) {
+    await page.getByRole("combobox", { name: /^(Language|Ngôn ngữ)$/ }).selectOption(locale);
+    const requestsBeforeReload = apiRequests.length;
+    await page.reload();
+    assert.equal(await page.evaluate(() => performance.getEntriesByType("navigation")[0].type), "reload");
+    await page.locator(`html[lang="${locale}"]`).waitFor();
+    await page.getByRole("button", { name: locale === "en" ? "Print report" : "In báo cáo", exact: true }).waitFor();
+    await source.waitFor({ state: "visible" });
+    assert.ok(await disclosure.evaluate(element => element.open));
+    await disclosure.locator("summary").click();
+    assert.ok(!await source.isVisible());
+    await saved.locator('a[href="#lunar-reference"]').click();
+    assert.ok(!await source.isVisible());
+    await page.goBack();
+    await source.waitFor({ state: "visible" });
+    assert.ok(await disclosure.evaluate(element => element.open));
+    // A real reload fetches the mock workspace dataset once. Opening the source and
+    // traversing same-document history must not request another result.
+    const apiSinceReload = apiRequests.slice(requestsBeforeReload);
+    assert.deepEqual(apiSinceReload.map(url => new URL(url).pathname), ["/api/v1/dataset"]);
+  }
+  await page.getByRole("combobox", { name: "Ngôn ngữ" }).selectOption("en");
 
   await page.goto(new URL("/compare#lunar-reference", origin).href);
   await page.getByRole("button", { name: "Print report", exact: true }).waitFor();

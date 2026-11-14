@@ -10,7 +10,7 @@ Minh’s clearance checkpoint passed 82 frontend tests, route generation, TypeSc
 
 ## Current product, backend and QA state
 
-Features include guided imports, saved links, EN/VI, printing and source inspection. Local sky initially shows one observation; View from switches or overlays both. Athena had two three-hour November proposals and none in December’s control. The date search distinguishes requested and grid times. Pinned imports check run, UTC, site, cadence and observation. Custom jobs retain UTC and distinguish cancellation from shared-job release. Science owns physical validation; data owns Colab. [Backend findings](docs/BACKEND_RECONCILIATION.md).
+Features include imports, saved links, EN/VI, printing and sources. Local sky initially shows one observation; View from switches or overlays both. Athena had two three-hour November proposals and none in December’s control. The date search distinguishes requested and grid times. Pinned imports check run, UTC, site, cadence and observation. Custom jobs preserve UTC, shared releases and definitive cancellation refusals. Science owns physical validation; data owns Colab. [Backend findings](docs/BACKEND_RECONCILIATION.md).
 
 Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
@@ -18,7 +18,7 @@ Saved-week globes offer [dated sunlight](docs/GLOBE_SUNLIGHT.md). Sky markers se
 
 Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched bytewise. Reports link the run and manifest. FE preserves sub-millisecond ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom. Home globe keyboard focus is visible.
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gap navigation at 320px and 200% Chromium zoom. Home globe focus is visible. Reload reopens linked sources.
 
 [Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
 

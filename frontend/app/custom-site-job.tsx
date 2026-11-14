@@ -43,10 +43,15 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const job = status.data;
   const missing = status.error instanceof ApiError && status.error.status === 404;
   const active = job ? job.status === "queued" || job.status === "running" : accepted?.status === "queued" || accepted?.status === "running";
+  const cancelRefused = cancel.error instanceof ApiError && (
+    (cancel.error.status === 403 && cancel.error.code === "JOB_NOT_YOURS") ||
+    (cancel.error.status === 409 && cancel.error.code === "JOB_NOT_CANCELLABLE")
+  );
+  const canCancel = !!accepted && active && !released && !missing && !cancelRefused;
   const busy = create.isPending || cancel.isPending || !!accepted && !released && !missing && (!job || active);
   const canSubmit = !!capability.data?.available && !capability.isError && !busy;
   function cancelRequest() {
-    if (!accepted || !create.variables || released || !active || cancelling.current) return;
+    if (!canCancel || !create.variables || cancelling.current) return;
     cancelling.current = true;
     cancel.mutate(undefined, {
       onError: () => { void status.refetch(); },
@@ -103,7 +108,7 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
         {status.error && <div role="alert"><p>{t(status.error.message)}</p><button type="button" className="button outline" disabled={status.isFetching} onClick={() => void status.refetch()}>{t("Retry job status")}</button></div>}
         {job?.status === "failed" && job.error && <p role="alert">{job.error.code} · {job.error.message}</p>}
         {job?.status === "succeeded" && job.result && !status.error && <button type="button" className="button primary" onClick={() => onResult({ from: create.variables!.start, to: create.variables!.end, resolutionSeconds: 3600 }, job.result!)}>{t("Open job results")}</button>}
-        {active && !missing && <button type="button" className="button outline" disabled={cancel.isPending || (!!cancel.error && status.isFetching)}
+        {canCancel && <button type="button" className="button outline" disabled={cancel.isPending || (!!cancel.error && status.isFetching)}
           onClick={cancelRequest}>{t("Cancel my request")}</button>}
         {cancel.isPending && <p role="status">{t("Cancelling your request…")}</p>}
         {cancel.error && <div role="alert"><p>{t(cancel.error.message)}</p>

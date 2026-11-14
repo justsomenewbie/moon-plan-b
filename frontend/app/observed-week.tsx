@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
 import { formatUtc } from "./observations";
@@ -26,6 +27,18 @@ function weekLabel(week: typeof weeks[number]) {
 export default function ObservedWeek({ selection, onSelect, onPrint, children }: { selection: string; onSelect: (value: string) => void; onPrint: () => void; children: React.ReactNode }) {
   const { t, locale } = useLanguage();
   const selectedWeek = weeks.find(week => week.startUtc === selection);
+  const sourceDetails = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    function revealLinkedSource() {
+      if (window.location.hash === "#saved-model-source" && sourceDetails.current) {
+        sourceDetails.current.open = true;
+      }
+    }
+    revealLinkedSource();
+    window.addEventListener("hashchange", revealLinkedSource);
+    return () => window.removeEventListener("hashchange", revealLinkedSource);
+  }, []);
 
   return <section id="observed-week" className="observed-week saved-comparison" aria-labelledby="observed-week-title" tabIndex={-1}>
     <div>
@@ -63,7 +76,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
           </article>;
         }))}
       </div>
-      <details>
+      <details ref={sourceDetails}>
         <summary>{t("How the team obtained these hours")}</summary>
         <p id="saved-model-source" tabIndex={-1}>{t("Each site has one continuous overlap per week. The total shown is also the longest overlap inside that week. The bars share a scale of 168 hours from the start of each week.")}</p>
         <p>{t("The team sampled once per hour with SPICE and a PGDA terrain horizon for an observer 2 m above the surface. Sun visibility uses the upper limb. Earth visibility uses clearance above the local horizon.")}</p>
