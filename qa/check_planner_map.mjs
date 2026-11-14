@@ -15,7 +15,7 @@ try {
   ]) {
     const params = new URLSearchParams({ mode: "sites", source: "saved-b2", priority: "joint",
       from: "2026-11-" + from, to: "2026-11-" + to });
-    await page.goto(new URL("/plan?" + params, origin).href);
+    await page.goto(new URL("/plan?" + params, origin).href, { waitUntil: "domcontentloaded" });
     const map = page.locator(".plan-site-map");
     await map.waitFor();
     assert.equal(await map.getByRole("button", { name: "3D globe", exact: true }).getAttribute("aria-pressed"), "true");
