@@ -48,6 +48,7 @@ async function exercise(mode) {
         }
         if (req.method() === "DELETE") {
           deletes.push(jobId);
+          if (mode === "offline") return route.abort("internetdisconnected");
           if (mode === "uncertain") return route.abort("connectionreset");
           if (mode === "race") {
             status = "succeeded";
@@ -79,12 +80,22 @@ async function exercise(mode) {
     const firstId = jobId, readsBeforeCancel = reads.length;
     assert.equal(posts, 1);
     assert.deepEqual(deletes, []);
+    if (mode === "offline") {
+      await context.setOffline(true);
+      await page.waitForFunction(() => !navigator.onLine);
+    }
     await cancel.click();
 
     if (mode === "race") {
       await form.getByRole("button", { name: "Open job results" }).waitFor();
       assert(reads.length > readsBeforeCancel);
       assert.equal(await cancel.count(), 0);
+    } else if (mode === "offline") {
+      await form.getByRole("button", { name: "Stop following this job", exact: true }).click();
+      await form.getByRole("status").filter({ hasText: "You stopped following this job." }).waitFor();
+      assert.deepEqual(deletes, [firstId]);
+      await context.setOffline(false);
+      await page.waitForFunction(() => navigator.onLine);
     } else if (mode === "uncertain") {
       const check = form.getByRole("button", { name: "Check job status", exact: true });
       await check.waitFor();
@@ -114,6 +125,6 @@ async function exercise(mode) {
 }
 
 try {
-  for (const mode of ["exclusive", "shared", "race", "uncertain"]) await exercise(mode);
-  console.log("Custom-site cancellation, shared detach, completion race, uncertain receipt and replacement request passed.");
+  for (const mode of ["exclusive", "shared", "race", "uncertain", "offline"]) await exercise(mode);
+  console.log("Custom-site cancellation, shared detach, completion race, uncertain receipt, offline cancellation and replacement request passed.");
 } finally { await browser.close(); }
