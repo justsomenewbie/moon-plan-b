@@ -85,3 +85,51 @@ test("invalid selections and aborts never post; backend error is preserved", asy
   await assert.rejects(compareSites(request), (e: unknown) => e instanceof ApiError && e.status === 409 && e.message === "Run unavailable");
   assert.equal(calls, 1);
 });
+
+test("rejects a reversed exact tie and a dark-gap duration contradicted by complete coverage", async t => {
+  const response = example();
+  t.mock.method(globalThis, "fetch", async () => Response.json(response));
+  response.sites.dark.metrics.longest_dark_h = response.ranking[1].longest_dark_h = 0;
+  await assert.rejects(compareSites(request), (e: unknown) => e instanceof ApiError && e.status === 502);
+  response.sites.dark = structuredClone(response.sites["earth-only"]);
+  response.ranking[1] = { ...response.ranking[0], site_id: "dark", rank: 2 };
+  await assert.rejects(compareSites(request), (e: unknown) => e instanceof ApiError && e.status === 502);
+  response.ranking.reverse().forEach((r, i) => { r.rank = i + 1; });
+  assert.equal((await compareSites(request)).ranking[0].site_id, "dark");
+});
+
+test("checks the joint state over observed portions of a partial range and leaves gaps unknown", async t => {
+  const response = example(), windows = response.sites["earth-only"].windows!;
+  t.mock.method(globalThis, "fetch", async () => Response.json(response));
+  const after = "2026-11-14T01:00:00Z";
+  windows.sun![0] = { ...windows.sun![0], end: after, duration_h: 1 };
+  const joint = windows.both![0];
+  windows.both = [{ ...joint, end: after, duration_h: 1 }, { ...joint, start: after, duration_h: 23, state: true }];
+  assert.equal((await compareSites(request)).coverageBySite["earth-only"], "partial");
+  windows.both[0].state = true;
+  await assert.rejects(compareSites(request), (e: unknown) => e instanceof ApiError && e.status === 502);
+});
+
+test("shorter dark intervals break an exact score tie before site IDs", async t => {
+  const response = example();
+  t.mock.method(globalThis, "fetch", async () => Response.json(response));
+  const stamp = (hour: number) => new Date(Date.parse(start) + hour * 3600000).toISOString().replace(".000Z", "Z");
+  for (const row of response.ranking) {
+    const site = response.sites[row.site_id], shortDark = row.site_id === "earth-only";
+    Object.assign(site.metrics, { pct_sun: 50, pct_earth: 0, pct_both: 0, pct_sun_no_earth: 50,
+      longest_sun_h: shortDark ? 6 : 12, longest_earth_h: 0, longest_dark_h: shortDark ? 6 : 12,
+      longest_dark_truncated: true, longest_sun_truncated: true, longest_earth_truncated: false,
+      n_sun_windows: shortDark ? 2 : 1, n_dark_windows: shortDark ? 2 : 1, n_earth_windows: 0, n_comms_gaps: 1,
+      longest_comms_gap_h: 24, longest_comms_gap_truncated: true });
+    Object.assign(row, site.metrics, { score: 20 });
+    const spans = shortDark ? [0, 6, 12, 18, 24] : [0, 12, 24];
+    site.windows!.sun = spans.slice(1).map((to, i) => ({
+      start: stamp(spans[i]), end: stamp(to), duration_h: to - spans[i], state: i % 2 === 0,
+      truncated_start: false, truncated_end: false, clipped_start: i === 0, clipped_end: to === 24,
+    }));
+    site.windows!.earth![0].state = false;
+  }
+  assert.equal((await compareSites(request)).ranking[0].site_id, "earth-only");
+  response.ranking.reverse().forEach((r, i) => { r.rank = i + 1; });
+  await assert.rejects(compareSites(request), (e: unknown) => e instanceof ApiError && e.status === 502);
+});

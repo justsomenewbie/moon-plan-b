@@ -47,6 +47,10 @@ def main():
                        "frontend/tests/i18n.test.ts", "frontend/tests/theme.test.ts"]))
     files = [p for p in (ROOT / "qa").rglob("*") if p.is_file() and
              not any(part in ("evidence", "__pycache__") for part in p.relative_to(ROOT / "qa").parts)]
+    evidence = ROOT / "qa/evidence"
+    files.append(evidence / "odysseus-athena-hour-gap/control.json")
+    for directory in ("odysseus-hour-gap", "odysseus-athena-hour-gap"):
+        files.extend(evidence / directory / f"{body}-response.json" for body in ("sun", "earth"))
     files += [ROOT / "contracts/openapi.draft.json", *list((ROOT / "frontend/lib").rglob("*.ts")),
               *list((ROOT / "frontend/tests").glob("*.ts"))]
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()

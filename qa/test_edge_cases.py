@@ -251,6 +251,37 @@ class TraceabilityTests(unittest.TestCase):
             with self.assertRaises((ContractError, ValueError)):
                 parse_raw(bad, "10")
 
+    def test_archived_horizons_q4(self):
+        evidence = ROOT / "qa/evidence"
+        control = load(evidence / "odysseus-athena-hour-gap/control.json", decimal=True)
+        sources = {source["id"]: source for source in control["sources"]}
+        for scenario, directory, prefix in zip(control["scenarios"],
+                ("odysseus-hour-gap", "odysseus-athena-hour-gap"), ("jpl", "athena"), strict=True):
+            site = next(site for site in control["sites"] if site["id"] == scenario["siteId"])
+            coordinates = [site["location"][k] for k in ("longitudeEastDeg", "latitudeDeg", "elevationKm")]
+            for body, target in (("sun", "10"), ("earth", "399")):
+                with self.subTest(scenario=scenario["id"], body=body):
+                    raw = (evidence / directory / f"{body}-response.json").read_bytes()
+                    self.assertEqual(sha(raw), sources[f"{prefix}-{body}"]["rawSha256"])
+                    head, rows = parse_raw(raw, target)
+                    check_geodetic(head, coordinates)
+                    self.assertEqual(rows, [(utc(s["utc"]), s[body]["azimuthDeg"], s[body]["elevationDeg"])
+                                            for s in scenario["samples"]])
+
+    def test_horizons_json_rejects_errors_and_ambiguous_responses(self):
+        source = ROOT / "qa/evidence/odysseus-hour-gap/sun-response.json"
+        response = load(source)
+        for bad in ({**response, "error": "No ephemeris"}, {**response, "signature": {}},
+                    {**response, "result": None},
+                    {**response, "result": response["result"].replace("Azimuth_(a-app)", "Azimuth_(r-app)")},
+                    {**response, "result": response["result"].replace("Elevation_(a-app)", "Elevation")},
+                    {**response, "result": response["result"].replace("Elevation_(a-app),", "Elevation_(a-app), Range,")}):
+            with self.assertRaises(ContractError):
+                parse_raw(json.dumps(bad).encode(), "10")
+        duplicate = b'{"result":"discarded",' + source.read_bytes().lstrip()[1:]
+        with self.assertRaisesRegex(ContractError, "duplicate JSON key"):
+            parse_raw(duplicate, "10")
+
     def test_raw_whitespace_format(self):
         raw = b"Target body name: Sun (10)\nCenter body name: Moon (301)\nDate__(UT)__HR:MN:SS Azi____(a-app)___Elev\n$$SOE\n2026-Nov-14 00:00:00 * 359.0 -0.0\n$$EOE\n"
         _, records = parse_raw(raw, "10")

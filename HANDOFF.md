@@ -14,16 +14,16 @@ The frontend supports guided imports, saved links, EN/VI, printing and source in
 
 Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
-Vietnamese mobile QA covered home, comparison, import errors, site selectors, UTC samples and clearance controls.
+Vietnamese mobile QA covered home, comparison, import errors, site selectors, UTC samples, clearance and API status capitalization.
 
-Run B listed 23 sites. Apollo 11 date comparisons reopened after a catalog failure; fractional exclusive ends retain the last sample. Pair ranks, weights and model warnings come from POST /compare. The [contract](docs/FRONTEND_CONTRACT.md#published-route-scope) records confirmed routes, provisional tools and schema checks.
+Run B listed 23 sites. Apollo 11 date comparisons reopened after a catalog failure; fractional exclusive ends retain the last sample. Pair ranks, weights and model warnings come from POST /compare. [Pair checks](frontend/tests/compare-sites.test.ts) validate observed visibility, dark intervals and the order of exact ties. The [contract](docs/FRONTEND_CONTRACT.md#published-route-scope) records confirmed routes, provisional tools and schema checks.
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
 
-[ENV-001](qa/README.md#supported-runtime-retest) passed on macOS arm64.
+[Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The astronaut answers EN/VI questions via local Ollama. EN/VI lower/higher comparisons preserve saved joint visibility: Odysseus 33 h, Athena 139 h, UTC and source. [Runtime](README.md#ask-the-astronaut).
+The EN/VI astronaut uses local Ollama. Lower/higher questions preserve saved joint visibility: Odysseus 33 h, Athena 139 h, UTC and source. [Runtime](README.md#ask-the-astronaut).
 
 ## Pending
 
-Direct backend fractional-end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.
+Direct backend fractional-end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync work remain in named local stashes.

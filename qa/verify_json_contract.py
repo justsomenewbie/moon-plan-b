@@ -35,6 +35,10 @@ def sha(content):
 
 
 def load(path, decimal=False):
+    return parse_json(read_bytes(path), decimal)
+
+
+def parse_json(content, decimal=False):
     def pairs(items):
         result = {}
         for key, value in items:
@@ -44,7 +48,7 @@ def load(path, decimal=False):
     def invalid(value):
         raise ContractError(f"non-finite JSON constant: {value}")
     try:
-        return json.loads(read_bytes(path), object_pairs_hook=pairs,
+        return json.loads(content, object_pairs_hook=pairs,
                           parse_float=Decimal if decimal else float, parse_constant=invalid)
     except (UnicodeError, ValueError, RecursionError) as exc:
         raise ContractError(f"invalid JSON: {exc}") from exc
@@ -197,14 +201,23 @@ def validate_dataset(data):
 
 
 def parse_raw(content, target):
-    """Read Q4 CSV or whitespace observer text; reject unknown/truncated formats."""
+    """Read a Q4 observer table returned as Horizons text or an API JSON response."""
     text = content.decode("utf-8")
+    if text.lstrip().startswith("{"):
+        response = parse_json(text)
+        signature = response.get("signature")
+        require(isinstance(signature, dict) and signature.get("source") == "NASA/JPL Horizons API"
+                and "error" not in response and isinstance(response.get("result"), str),
+                "expected successful Horizons JSON response")
+        text = response["result"]
     require(text.count("$$SOE") == 1 and text.count("$$EOE") == 1, "raw response needs unique SOE/EOE")
     head, rest = text.split("$$SOE")
     rows, _ = rest.split("$$EOE")
     require(re.search(rf"Target body name:.*\({target}\)", head), "raw target mismatch")
     require(re.search(r"Center body name:.*\(301\)", head), "raw center must be Moon (301)")
-    require(re.search(r"^\s*Date_+\(UT\)_+HR:MN:SS[ ,\t]*\bAzi_+\(a-app\)[_,\s]+Elev(?:_+\(a-app\))?\s*,?\s*$",
+    require(re.search(r"^\s*Date_+\(UT\)_+HR:MN:SS[ ,\t]*"
+                      r"(?:Azi_+\(a-app\)[_, \t]+Elev(?:_+\(a-app\))?|"
+                      r"Azimuth_\(a-app\)[ ,\t]+Elevation_\(a-app\))\s*,?\s*$",
                       head, re.MULTILINE | re.ASCII),
             "unsupported raw header: require UT seconds and airless Q4")
     result = []
