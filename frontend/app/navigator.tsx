@@ -2,7 +2,6 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button as AnimatedButton } from "@animate-ui/react/primitives/buttons/button";
 import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
@@ -15,7 +14,7 @@ import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindow
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
 import { Comparison, formatUtc, SampleTable, SiteAssessments, SkyPosition, Sources, Timeline, Windows } from "./observations";
 import QaInspector from "./qa-inspector";
-import ObservedWeek from "./observed-week";
+import ObservedWeek, { savedResultFromUrl } from "./observed-week";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -33,6 +32,7 @@ export default function Navigator() {
   const [retryLoad, setRetryLoad] = useState<{ request: WindowRequest; jobId: string; reset: boolean } | null>(null);
   const [message, setMessage] = useState<Message>("");
   const [shareUrl, setShareUrl] = useState("");
+  const [savedResult, setSavedResult] = useState(() => savedResultFromUrl(new URLSearchParams()));
   const [tick, setTick] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -56,8 +56,20 @@ export default function Navigator() {
 
   function replaceUrl(url: string) {
     if (!url.includes("?") && qaEnabled) url += "?qa=true";
-    window.history.replaceState(null, "", url);
-    lastLocation.current = window.location.pathname + window.location.search;
+    const next = new URL(url, window.location.href);
+    next.searchParams.delete("saved");
+    lastLocation.current = next.pathname + next.search;
+    const current = new URLSearchParams(window.location.search);
+    if (current.has("saved")) next.searchParams.set("saved", savedResultFromUrl(current));
+    window.history.replaceState(null, "", next);
+  }
+
+  function chooseSavedResult(value: string) {
+    const next = new URL(window.location.href);
+    next.searchParams.set("saved", value);
+    next.hash = "observed-week";
+    window.history.pushState(null, "", next);
+    setSavedResult(value);
   }
 
   function acceptDataset(next: Dataset, reset: boolean) {
@@ -91,7 +103,10 @@ export default function Navigator() {
   }
 
   const restoreLocation = useEffectEvent(() => {
-    const location = window.location.pathname + window.location.search;
+    const url = new URL(window.location.href);
+    setSavedResult(savedResultFromUrl(url.searchParams));
+    url.searchParams.delete("saved");
+    const location = url.pathname + url.search;
     if (location === lastLocation.current) return;
     lastLocation.current = location;
     loadGeneration.current++;
@@ -240,7 +255,7 @@ export default function Navigator() {
       </div><MoonGlobe primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
         alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
     </section>
-    <ObservedWeek />
+    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} />
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
@@ -268,7 +283,7 @@ export default function Navigator() {
         <div className="field">{t("Window")}<p className="fixed-value">{durationHours(a)} {t("hours")}{" "}<span className="muted text-sm">{t("from the dataset")}</span></p></div>
         <label className="field">{t("Joint-window criterion")}<select value={selection.h} onChange={(e) => { setSelection({ ...selection, h: Number(e.target.value) }); setShareUrl(""); replaceUrl(window.location.pathname); }}>{data.criteriaHours.map((h) => <option value={h} key={h}>{h} {t("hours")}</option>)}</select></label>
         {selection.mode === "dates" ? <button className="text-button find-match" onClick={findMatch}>{t("Find a later published match")}</button> : null}
-        <div className="control-actions"><AnimatedButton type="button" className="button primary" disabled={!b} onClick={() => void share()}>{t("Share comparison")}</AnimatedButton><button className="button outline" onClick={printReport}>{t("Print report")}</button></div>
+        <div className="control-actions"><button type="button" className="button primary share-comparison" disabled={!b} onClick={() => void share()}>{t("Share comparison")}</button><button className="button outline" onClick={printReport}>{t("Print report")}</button></div>
         {shareUrl ? <label className="field share-field">{t("Selection link")}<input readOnly value={shareUrl} onFocus={(e) => e.target.select()} /></label> : null}
         <p className="muted text-xs mt-5">{t("Only supplied windows are selectable. Requests include a bounded UTC range and desired resolution; the server supplies the observations.")}</p>
         <button className="text-button mt-4" onClick={() => void loadDemo(true, requestWindow, sharedJobId)}>{t("Reload current window")}</button>

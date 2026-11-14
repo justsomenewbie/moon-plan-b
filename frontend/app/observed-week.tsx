@@ -1,9 +1,13 @@
-import { useState } from "react";
 import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
 import { formatUtc } from "./observations";
 
 const { weeks, precisionHours, runId } = snapshot;
+const savedChoices: string[] = [...weeks.map(week => week.startUtc), ...weeks[0].sites.map(site => site.id)];
+export function savedResultFromUrl(params: URLSearchParams) {
+  const [value, duplicate] = params.getAll("saved");
+  return duplicate === undefined && savedChoices.includes(value) ? value : weeks[0].startUtc;
+}
 
 function weekLabel(week: typeof weeks[number]) {
   // The exclusive midnight endpoint belongs to the following week.
@@ -11,22 +15,22 @@ function weekLabel(week: typeof weeks[number]) {
   return `${week.startUtc.slice(0, 10)} → ${lastDay} UTC`;
 }
 
-export default function ObservedWeek() {
+export default function ObservedWeek({ selection, onSelect }: { selection: string; onSelect: (value: string) => void }) {
   const { t, locale } = useLanguage();
-  const [selection, setSelection] = useState(weeks[0].startUtc);
   const selectedWeek = weeks.find(week => week.startUtc === selection);
 
   return <section id="observed-week" className="observed-week" aria-labelledby="observed-week-title" tabIndex={-1}>
     <h2 id="observed-week-title">{t("Odysseus and Athena · Sun and Earth visibility")}</h2>
     <p className="muted">{t("Saved team model results")} · {t("Interval boundaries ±{hours} h", { hours: precisionHours })}</p>
     <label className="field week-selection">{t("Compare saved results")}
-      <select value={selection} onChange={event => setSelection(event.target.value)}>
+      <select value={selection} onChange={event => onSelect(event.target.value)}>
         <optgroup label={t("Two sites in one week")}>{weeks.map(week =>
           <option key={week.startUtc} value={week.startUtc}>{weekLabel(week)}</option>)}</optgroup>
         <optgroup label={t("Two weeks at one site")}>{weeks[0].sites.map(site =>
           <option key={site.id} value={site.id}>{site.name}</option>)}</optgroup>
       </select>
     </label>
+    <a href={`?saved=${encodeURIComponent(selection)}#observed-week`} target="_blank" rel="noreferrer">{t("Open this saved result in a new tab")} ↗</a>
     <div className="week-sites" aria-live="polite">
       {(selectedWeek ? [selectedWeek] : weeks).map(week => week.sites.filter(site => selectedWeek || site.id === selection).map(site => {
         const interval = site.overlap;

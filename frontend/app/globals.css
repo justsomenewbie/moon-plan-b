@@ -27,6 +27,9 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 9px 18px; border: 1px solid var(--text); border-radius: 4px; font-size: .95rem; font-weight: 600; }
 .outline { background: transparent; color: var(--text); }
 .primary { background: var(--sun); border-color: var(--sun); color: var(--button-text); }
+@media (prefers-reduced-motion: no-preference) {
+  .share-comparison:enabled:active { transform: translateY(1px); }
+}
 .primary:hover:not(:disabled) { background: var(--button-hover); color: var(--button-text); }
 .intro { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(250px, .75fr); align-items: center; gap: 36px; padding: 44px 0 36px; border-bottom: 1px solid var(--line); }
 .hero-copy { max-width: 720px; min-width: 0; }

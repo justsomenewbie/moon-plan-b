@@ -61,6 +61,7 @@ export const vietnamese: Record<string, string> = {
   "Earth visible": "Thấy Trái Đất",
   "How the team obtained these hours": "Nhóm tính các khoảng thời gian này như thế nào?",
   "Compare saved results": "So sánh kết quả đã lưu",
+  "Open this saved result in a new tab": "Mở kết quả đang xem trong thẻ mới",
   "Two sites in one week": "Hai địa điểm trong cùng một tuần",
   "Two weeks at one site": "Hai tuần tại cùng một địa điểm",
   "Visible throughout the queried week.": "Thấy cả hai thiên thể suốt tuần được truy vấn.",
