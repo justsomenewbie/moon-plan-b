@@ -42,6 +42,7 @@ export const vietnamese: Record<string, string> = {
   "This run link requires a live backend and a valid model run ID.": "Liên kết này cần kết nối backend và mã lần chạy mô hình hợp lệ.",
   "The returned model run differs from the shared link.": "Lần chạy mô hình nhận được khác với lần chạy trong liên kết chia sẻ.",
   "Team API · terrain horizon model": "API của nhóm · mô hình chân trời địa hình",
+  "The returned duration thresholds differ from the requested thresholds.": "Các ngưỡng thời lượng trả về khác với ngưỡng đã yêu cầu.",
   "The returned sites do not match the requested comparison.": "Các địa điểm nhận được khác với các địa điểm đã yêu cầu.",
   "The server response is missing a requested dataset section.": "Phản hồi từ máy chủ thiếu một phần dữ liệu đã yêu cầu.",
   "Loaded terrain-model results from the team API.": "Đã tải kết quả theo mô hình địa hình từ API của nhóm.",

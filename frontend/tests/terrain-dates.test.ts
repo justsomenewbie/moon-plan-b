@@ -16,15 +16,20 @@ function example(range: typeof request.first, visible: boolean) {
   const duration = (Date.parse(range.to) - Date.parse(range.from)) / 3600000;
   const windows = visible ? [{ start: range.from, end: range.to, clipped_start: true, clipped_end: true, duration_h: duration }] : [];
   const hours = visible ? duration : 0, percent = visible ? 100 : 0;
+  const thresholds = [24, 72, 168];
   return {
     schema_version: "lunarnav-dataset-1", evidence: "computed-ephemeris", dataset_id: "unit-range", attribution: "Unit test",
-    include: ["windows", "metrics"], sources: [],
+    include: ["windows", "metrics", "criteria"], criteria_hours: thresholds, sources: [],
     model: { id: "lunarnav-terrain-horizon-v1", label: "Test model", definition: "Invented for tests", limits: ["Test only"] },
     run: { run_id: "test-run", label: "Test", provider: "test", dem: "test", horizon_method: "test", code_version: "test",
       run_timestamp_utc: range.from, observer_height_m: 2, min_earth_clearance_deg: 0, git_commit: null,
       manifest_sha256: "a".repeat(64), manifest_url: "/api/v1/runs/test-run/files/manifest.json" },
     range: { start: range.from, end: range.to, requested_start: range.from, requested_end: range.to, step_s: 3600, n_samples: duration },
     sites: [{ id: request.siteId, name: "Catalog site", coverage: "complete", coverage_in_range: "complete",
+      criteria: thresholds.map(minimum_hours => ({
+        minimum_hours, metric: "longest_both_h", value_h: hours, value_clipped: visible,
+        result: hours >= minimum_hours ? "meets" : "below", reason: "Invented boundary-exact test case.",
+      })),
       windows: { sun: windows, earth: windows, both: windows }, metrics: {
         duration_h: duration, sun_hours: hours, earth_hours: hours, both_hours: hours,
         longest_sun_h: hours, longest_earth_h: hours, longest_both_h: hours, longest_dark_h: duration - hours,
@@ -48,7 +53,7 @@ test("requests two bounded one-site summaries, pins both when given a run, prese
     const { first, second } = await getTerrainDates({ ...request, runId });
     assert.deepEqual(queries.map(q => Object.fromEntries(q)), [request.first, request.second].map((r, i) => ({
       ...(i === 1 || runId ? { run_id: "test-run" } : {}), site_ids: request.siteId, start: r.from, end: r.to,
-      step_s: "3600", include: "windows,metrics",
+      step_s: "3600", include: "windows,metrics,criteria", criteria_hours: "24,72,168",
     })));
     assert.equal(first.sites[0].metrics?.both_hours, 0);
     assert.equal(second.sites[0].metrics?.both_hours, 72);
@@ -77,6 +82,8 @@ test("preserves partial coverage and rejects a stale site, run, manifest or UTC 
   for (const [replacement, pattern] of [
     [{ ...second, sites: [{ ...second.sites[0], id: "im1_odysseus" }] }, /returned sites/],
     [{ ...second, run: { ...second.run, run_id: "unexpected" } }, /returned model run/],
+    [{ ...second, include: ["windows", "metrics"] }, /requested dataset section/],
+    [{ ...second, criteria_hours: [24], sites: [{ ...second.sites[0], criteria: second.sites[0].criteria.slice(0, 1) }] }, /returned duration thresholds/],
     [{ ...second, run: { ...second.run, manifest_sha256: "b".repeat(64) } }, /source manifests/],
     [{ ...second, range: first.range }, /different requested UTC range/],
     [{ ...second, range: { ...second.range, step_s: 7200, n_samples: 36 } }, /sampling steps/],
