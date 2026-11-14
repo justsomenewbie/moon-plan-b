@@ -62,7 +62,9 @@ export default function Navigator() {
     loadFocus.current = null;
     // Restore focus lost during loading without taking it from another control.
     if (initiator && (document.activeElement === initiator || document.activeElement === document.body)) {
-      document.getElementById(error ? "data-error" : "workspace")?.focus();
+      const target = document.getElementById(error ? "data-error" : "workspace");
+      target?.focus({ preventScroll: true });
+      target?.scrollIntoView({ block: "start", behavior: "instant" });
     }
   }, [loading, error, importCompletion]);
 
@@ -393,7 +395,7 @@ export default function Navigator() {
         {a.coverage !== "complete" || b && b.coverage !== "complete" ? <p className="coverage-notice">{t("Incomplete coverage: unavailable totals are not zero. Gaps are not bridged, and no definite threshold result is inferred.")}</p> : null}
         <Timeline a={a} b={b} mode={selection.mode} offset={offset} clearanceDeg={clearanceDeg} />
         <div className="playback"><button className="button play-button" aria-label={playing ? t("Pause timeline") : t("Play timeline")} disabled={offsets.length < 2 || reducedMotion} onClick={() => { if (tick === offsets.length - 1) selectTick(0); setPlaying((v) => !v); }}><svg viewBox="0 0 20 20" aria-hidden="true">{playing ? <path d="M5 3h3v14H5zm7 0h3v14h-3z" /> : <path d="m6 3 11 7-11 7z" />}</svg></button>
-          <label className="slider-label"><span className="sr-only">{t("Timeline sample")}</span><input aria-label={t("Timeline sample")} aria-valuetext={offsets.length ? t("{hours} hours elapsed. Primary {primary}{alternative}", { hours: offset / 3600000, primary: formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale), alternative: b ? t(". Alternative {time}", { time: formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale) }) : "" }) : t("No shared samples")} type="range" min="0" max={Math.max(0, offsets.length - 1)} step="1" value={Math.min(tick, Math.max(0, offsets.length - 1))} disabled={offsets.length === 0} onChange={(e) => { selectTick(Number(e.target.value)); setPlaying(false); }} /></label><output className="mono">{offsets.length ? `+${(offset / 3600000).toFixed(1)} h` : t("No shared samples")}</output>
+          <label className="slider-label"><span className="sr-only">{t("Timeline sample")}</span><input aria-label={t("Timeline sample")} aria-valuetext={offsets.length ? t(offset === 3600000 ? "1 hour elapsed. Primary {primary}{alternative}" : "{hours} hours elapsed. Primary {primary}{alternative}", { hours: offset / 3600000, primary: formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale), alternative: b ? t(". Alternative {time}", { time: formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale) }) : "" }) : t("No shared samples")} type="range" min="0" max={Math.max(0, offsets.length - 1)} step="1" value={Math.min(tick, Math.max(0, offsets.length - 1))} disabled={offsets.length === 0} onChange={(e) => { selectTick(Number(e.target.value)); setPlaying(false); }} /></label><output className="mono">{offsets.length ? `+${(offset / 3600000).toFixed(1)} h` : t("No shared samples")}</output>
         </div>
         <p className="sample-time">{offsets.length ? <>{t("Primary:")}{" "}{formatUtc(new Date(Date.parse(a.startUtc) + offset).toISOString(), locale)}{b ? <> · {t("Alternative:")}{" "}{formatUtc(new Date(Date.parse(b.startUtc) + offset).toISOString(), locale)}</> : null}</> : t("The pair has no shared sample times. Exact observations are available in the sample table where present.")}</p>
         {reducedMotion ? <p className="muted text-sm">{t("Reduced motion is on. Use the slider to select samples without playback.")}</p> : null}

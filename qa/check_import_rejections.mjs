@@ -34,6 +34,8 @@ try {
   const page = await browser.newPage({ timezoneId: "UTC", reducedMotion: "reduce" });
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
+  // File validation is local and should also run when the producer is unavailable.
+  await page.route("**/api/v1/dataset?*", route => route.fulfill({ status: 404, json: { detail: "Supply the local QA release." } }));
   await page.goto(new URL("/", origin).href);
   assert.equal(await page.locator('input[type="file"]').count(), 0);
   await page.getByRole("link", { name: "Open comparison tool" }).click();
