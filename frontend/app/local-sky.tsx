@@ -14,25 +14,14 @@ const radius = 104;
 const meridians = [0, 30, 60, 90, 120, 150];
 const compass = ["N", "E", "S", "W"] as const;
 const bodies = [["sun", "Sun"], ["earth", "Earth"]] as const;
-const clearancePresets = [
-  { deg: 0, label: "0° Ideal horizon" },
-  { deg: 2, label: "2° Low crater rim" },
-  { deg: 3, label: "3° Antenna minimum" },
-  { deg: 5, label: "5° Polar ridge" },
-] as const;
-const batteryPresets = [
-  { hours: 6, label: "6 h micro-rover" },
-  { hours: 12, label: "12 h standard" },
-  { hours: 24, label: "24 h CubeRover" },
-  { hours: 100, label: "100 h VIPER class" },
-] as const;
-
+const clearancePresets = [0, 2, 3, 5];
+const referenceDurations = [6, 12, 24, 100];
 const opStateLabels: Record<MissionOpState, string> = {
-  "golden": "Golden window (Sun + Earth)",
-  "solar-only": "Solar charging only",
-  "comms-only": "Earth link on battery",
-  "blackout": "Total blackout",
-  "unavailable": "Unavailable",
+  golden: "Sun and Earth above",
+  "solar-only": "Only Sun above",
+  "comms-only": "Only Earth above",
+  blackout: "Neither above",
+  unavailable: "Unavailable",
 };
 
 function point(az: number, el: number, orbit: number) {
@@ -74,10 +63,12 @@ export default function LocalSky({
   clearanceDeg?: number;
   setClearanceDeg?: (deg: number) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const numbers = useMemo(() => new Intl.NumberFormat(locale, { maximumSignificantDigits: 4, useGrouping: false }), [locale]);
+  const [openIntervals, setOpenIntervals] = useState<string | null>(null);
   const [orbit, setOrbit] = useState(0);
   const [internalClearance, setInternalClearance] = useState(0);
-  const [batteryHours, setBatteryHours] = useState(12);
+  const [referenceHours, setReferenceHours] = useState(12);
   const clearanceDeg = clampClearanceDeg(externalClearance ?? internalClearance);
   const updateClearance = (next: number) => {
     const clamped = clampClearanceDeg(next);
@@ -110,12 +101,14 @@ export default function LocalSky({
     if (drag.current?.id === event.pointerId) drag.current = null;
   }
 
+  const summaries = useMemo(() => (b ? [a, b] : [a]).map(scenario =>
+    analyzeScenarioClearance(scenario, clearanceDeg, referenceHours)), [a, b, clearanceDeg, referenceHours]);
   const observations = (b ? [a, b] : [a]).map((scenario, index) => ({
     scenario,
     site: data.sites.find(site => site.id === scenario.siteId)!,
     sample: offset === undefined ? undefined : sampleAt(scenario, offset),
     label: index === 0 ? "A" : "B",
-    summary: analyzeScenarioClearance(scenario, clearanceDeg, batteryHours),
+    summary: summaries[index],
   }));
   const selected = alternative && b ? 1 : 0;
   const { scenario, site, sample } = observations[selected];
@@ -157,7 +150,7 @@ export default function LocalSky({
           const inspect = () => setAlternative(index === 1);
           const belowMask = angles.elevationDeg <= clearanceDeg;
           return <g key={scenario.id + key} data-site={label} className="sky-ray">
-            <line x1="0" y1="0" x2={x} y2={y} stroke="currentColor" strokeWidth="1.5" strokeDasharray={angles.elevationDeg < 0 || (clearanceDeg > 0 && belowMask) ? "3 3" : undefined} />
+            <line x1="0" y1="0" x2={x} y2={y} stroke="currentColor" strokeWidth="1.5" strokeDasharray={belowMask ? "3 3" : undefined} />
             <g transform={`translate(${x} ${y})`} data-sky-body={key} role="button" tabIndex={0}
               aria-label={description} aria-pressed={selected === index} onClick={inspect} onKeyDown={event => {
                 if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspect(); }
@@ -179,7 +172,7 @@ export default function LocalSky({
           const v = sample?.[key];
           return <div key={key}><dt className={key}>{t(name)}</dt>
             <dd>{v ? <>{t(v.elevationDeg < 0 ? "Below horizon" : v.elevationDeg > 0 ? "Above horizon" : "On horizon")}
-              {clearanceDeg > 0 && <> · <span>{t(v.elevationDeg > clearanceDeg ? "Clears mask" : "Blocked by mask")}</span></>}<br/>
+              {clearanceDeg > 0 && <> · <span>{t(v.elevationDeg > clearanceDeg ? "Above threshold" : "At or below threshold")}</span></>}<br/>
               <span>{t("Az")} {v.azimuthDeg}° · {t("El")} {v.elevationDeg}°</span></> : t("Unavailable")}</dd></div>;
         })}</dl>
       </div>
@@ -187,23 +180,20 @@ export default function LocalSky({
     <div className="sky-orbit"><label htmlFor="sky-orbit-input">{t("Rotate sky view")}</label><input id="sky-orbit-input" type="range" min="0" max="360" step="5" value={orbit}
       aria-valuetext={`${orbit}°`} onChange={e => setOrbit(Number(e.target.value))} /><span className="mono" aria-hidden="true">{orbit}°</span></div>
     {b && <p className="muted text-xs">{t("A and B use their own local north and horizon at the same elapsed time. Circle: Sun. Square: Earth. Select a marker or a name for its readings.")}</p>}
-    <p className="muted text-xs">{t("The ring marks the ideal horizon. Dashed rays point below it. The timeline selects the observation. Local terrain is omitted.")}</p>
+    <p className="muted text-xs">{t("The solid ring marks the ideal 0° horizon. Dashed rays indicate a body at or below the selected angle. The sky uses the selected observation and omits local terrain.")}</p>
 
     <div className="mission-studio" aria-labelledby="mission-studio-title">
       <div className="mission-studio-header">
-        <div>
-          <p className="eyebrow">{t("Educational horizon & survival simulator")}</p>
-          <h3 id="mission-studio-title">{t("Horizon Clearance & Mission Survival Studio")}</h3>
-        </div>
+        <h3 id="mission-studio-title">{t("Explore a hypothetical horizon")}</h3>
         <span className="mono clearance-badge">θ_mask = {clearanceDeg.toFixed(1)}°</span>
       </div>
       <p className="muted text-xs">
-        {t("Test how low-angle terrain ridges or antenna clearance margins affect supplied samples. Producer 0° intervals remain unchanged.")}
+        {t("The ribbon estimates when each body’s elevation is strictly above the selected angle. It assumes elevation changes linearly between adjacent valid samples. Hatched spans lack data. The timeline bands show the original intervals supplied with the dataset.")}
       </p>
 
       <div className="clearance-controls">
         <div className="sky-orbit">
-          <label htmlFor="horizon-clearance-input">{t("Horizon clearance mask (θ_mask)")}</label>
+          <label htmlFor="horizon-clearance-input">{t("Hypothetical elevation threshold")}</label>
           <input
             id="horizon-clearance-input"
             type="range"
@@ -217,15 +207,15 @@ export default function LocalSky({
           <span className="mono" aria-hidden="true">{clearanceDeg.toFixed(1)}°</span>
         </div>
         <div className="preset-pills" role="group" aria-label={t("Clearance presets")}>
-          {clearancePresets.map(preset => (
+          {clearancePresets.map(deg => (
             <button
               type="button"
-              key={preset.deg}
+              key={deg}
               className="preset-pill"
-              aria-pressed={clearanceDeg === preset.deg}
-              onClick={() => updateClearance(preset.deg)}
+              aria-pressed={clearanceDeg === deg}
+              onClick={() => updateClearance(deg)}
             >
-              {t(preset.label)}
+              {deg}°{deg === 0 && ` · ${t("Ideal horizon")}`}
             </button>
           ))}
         </div>
@@ -234,19 +224,17 @@ export default function LocalSky({
       <div className="studio-grid">
         <div className="mission-ribbon-card">
           <div className="mission-card-head">
-            <h4>{t("4-State Mission Operations & Battery Survival")}</h4>
+            <h4>{t("Estimated time above threshold")}</h4>
             <label className="battery-picker">
-              <span>{t("Battery limit")}</span>
-              <select value={batteryHours} onChange={e => setBatteryHours(Number(e.target.value))}>
-                {batteryPresets.map(p => <option key={p.hours} value={p.hours}>{t(p.label)}</option>)}
+              <span>{t("Reference duration")}</span>
+              <select value={referenceHours} onChange={e => setReferenceHours(Number(e.target.value))}>
+                {referenceDurations.map(hours => <option key={hours} value={hours}>{hours} h</option>)}
               </select>
             </label>
           </div>
-          <div className="state-legend" aria-hidden="true">
-            <span className="state-dot golden">{t("Golden window (Sun + Earth)")}</span>
-            <span className="state-dot solar-only">{t("Solar charging only")}</span>
-            <span className="state-dot comms-only">{t("Earth link on battery")}</span>
-            <span className="state-dot blackout">{t("Total blackout")}</span>
+          <p className="muted text-xs">{t("Compare the longest span with the Sun at or below the threshold against a duration you choose. Power, battery charge and Earth link performance require separate models.")}</p>
+          <div className="state-legend">
+            {Object.entries(opStateLabels).map(([state, label]) => <span key={state} className={`state-dot ${state}`}>{t(label)}</span>)}
           </div>
           <div className="mission-scenarios">
             {observations.map(({ label, site: sSite, scenario: sc, summary }) => (
@@ -255,13 +243,16 @@ export default function LocalSky({
                   <strong>{label} · {sSite.name}</strong>
                   <span className={`battery-badge ${summary.batteryStatus}`}>
                     {summary.batteryStatus === "safe"
-                      ? t("Within battery limit")
+                      ? t("Within reference duration")
                       : summary.batteryStatus === "risk"
-                        ? t("Battery exhaustion risk")
+                        ? t("Exceeds reference duration")
                         : t("Incomplete coverage")}
                   </span>
                 </div>
-                <div className="mission-ribbon" role="img" aria-label={`${label} ${sSite.name} mission states at ${clearanceDeg}° clearance`}>
+                <div className="mission-ribbon" role="img" aria-label={t("{site} · estimated elevation states at {angle}° · {coverage}", {
+                  site: `${label} · ${sSite.name}`, angle: numbers.format(clearanceDeg),
+                  coverage: t(summary.segments.length === 0 ? "Unavailable" : summary.coverage === "complete" ? "Complete coverage" : "Incomplete coverage"),
+                })}>
                   {summary.segments.length === 0 ? (
                     <span className="ribbon-empty">{t("Unavailable")}</span>
                   ) : (
@@ -270,30 +261,38 @@ export default function LocalSky({
                         key={`${seg.startUtc}-${idx}`}
                         className={`ribbon-seg ${seg.state}`}
                         style={{ left: `${seg.startPct}%`, width: `${seg.widthPct}%` }}
-                        title={`${t(opStateLabels[seg.state])}: ${seg.startUtc} → ${seg.endUtc} (${seg.durationHours} h)`}
+                        title={`${t(opStateLabels[seg.state])}: ${seg.startUtc} → ${seg.endUtc} (${numbers.format(seg.durationHours)} h)`}
                       />
                     ))
                   )}
                 </div>
+                {summary.segments.length > 0 && <details className="mission-intervals" onToggle={event => {
+                  const open = event.currentTarget.open;
+                  setOpenIntervals(current => open ? sc.id : current === sc.id ? null : current);
+                }} open={openIntervals === sc.id}>
+                  <summary>{t("Read estimated intervals in UTC")}</summary>
+                  {openIntervals === sc.id && <ul>{summary.segments.map(seg =>
+                    <li key={seg.startUtc}>{t(opStateLabels[seg.state])} · {seg.startUtc} → {seg.endUtc}</li>)}</ul>}
+                </details>}
                 {summary.coverage === "complete" ? (
                   <dl className="mission-metrics-row">
-                    <div><dt>{t("Golden")}</dt><dd>{summary.goldenHours} h</dd></div>
-                    <div><dt>{t("Solar only")}</dt><dd>{summary.solarOnlyHours} h</dd></div>
-                    <div><dt>{t("Comms on battery")}</dt><dd>{summary.commsOnlyHours} h</dd></div>
-                    <div><dt>{t("Max solar darkness")}</dt><dd>{summary.longestSolarDarknessHours} h / {batteryHours} h</dd></div>
+                    <div><dt>{t(opStateLabels.golden)}</dt><dd>{numbers.format(summary.goldenHours!)} h</dd></div>
+                    <div><dt>{t(opStateLabels["solar-only"])}</dt><dd>{numbers.format(summary.solarOnlyHours!)} h</dd></div>
+                    <div><dt>{t(opStateLabels["comms-only"])}</dt><dd>{numbers.format(summary.commsOnlyHours!)} h</dd></div>
+                    <div><dt>{t("Longest span with Sun at or below threshold / reference")}</dt><dd>{numbers.format(summary.longestSolarDarknessHours!)} h / {referenceHours} h</dd></div>
                   </dl>
                 ) : (
-                  <p className="muted text-xs">{t("Sample-step totals require complete scenario coverage.")}</p>
+                  <p className="muted text-xs">{t("Duration totals require complete coverage.")}</p>
                 )}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="lander-hud-card" aria-label={t("Lander hardware orientation HUD")}>
-          <h4>{t("Lander Hardware Orientation HUD")} · {observations[selected].label}</h4>
+        <div className="lander-hud-card">
+          <h4>{t("Directions at the selected sample")} · {observations[selected].label}</h4>
           <div className="lander-hud-body">
-            <svg viewBox="0 0 180 180" className="lander-hud-svg" role="img" aria-label={t("Top-down lunar lander solar array, Earth dish antenna and surface shadow schematic")}>
+            <svg viewBox="0 0 180 180" className="lander-hud-svg" role="img" aria-label={t("Sun, Earth and ideal shadow bearings viewed from above")}>
               <circle cx="90" cy="90" r="72" className="hud-compass-ring" />
               <circle cx="90" cy="90" r="46" className="hud-inner-ring" strokeDasharray="2 3" />
               <text x="90" y="12" textAnchor="middle" className="sky-bearing">{t("N")}</text>
@@ -327,42 +326,44 @@ export default function LocalSky({
                 </g>
               )}
 
-              <g transform={`translate(90 90) rotate(${hud.sunAzimuthDeg ?? 0})`}>
+              {sunTarget && <g transform={`translate(90 90) rotate(${hud.sunAzimuthDeg})`}>
                 <rect x="-24" y="-3" width="14" height="6" rx="1" className="hud-solar-wing" />
                 <rect x="10" y="-3" width="14" height="6" rx="1" className="hud-solar-wing" />
-              </g>
+              </g>}
 
-              <g transform={`translate(90 90) rotate(${hud.earthAzimuthDeg ?? 0})`}>
+              {earthTarget && <g transform={`translate(90 90) rotate(${hud.earthAzimuthDeg})`}>
                 <path d="M -5 -10 Q 0 -15 5 -10" fill="none" className="hud-dish-arc" strokeWidth="2" />
                 <line x1="0" y1="0" x2="0" y2="-12" className="hud-dish-boom" strokeWidth="1.5" />
-              </g>
+              </g>}
 
               <polygon points="90,82 97,87 95,96 85,96 83,87" className="hud-lander-deck" />
             </svg>
 
             <dl className="hud-readouts">
               <div>
-                <dt>{t("Operational state")}</dt>
+                <dt>{t("Bodies above threshold")}</dt>
                 <dd><strong>{t(opStateLabels[hud.opState])}</strong></dd>
               </div>
               <div>
-                <dt>{t("Solar array tracking (Sun)")}</dt>
+                <dt>{t("Sun direction")}</dt>
                 <dd className="mono">{hud.sunAzimuthDeg !== null ? `${t("Az")} ${hud.sunAzimuthDeg}° · ${t("El")} ${hud.sunElevationDeg}°` : t("Unavailable")}</dd>
               </div>
               <div>
-                <dt>{t("High-gain dish (Earth)")}</dt>
+                <dt>{t("Earth direction")}</dt>
                 <dd className="mono">{hud.earthAzimuthDeg !== null ? `${t("Az")} ${hud.earthAzimuthDeg}° · ${t("El")} ${hud.earthElevationDeg}°` : t("Unavailable")}</dd>
               </div>
               <div>
-                <dt>{t("Array–dish separation (ΔAz)")}</dt>
+                <dt>{t("Azimuth separation (ΔAz)")}</dt>
                 <dd className="mono">{hud.azimuthSeparationDeg !== null ? `${hud.azimuthSeparationDeg}°` : t("Unavailable")}</dd>
               </div>
               <div>
-                <dt>{t("Surface shadow vector")}</dt>
+                <dt>{t("Shadow of a vertical object on level ground")}</dt>
                 <dd className="mono">
                   {hud.shadowAzimuthDeg !== null && hud.shadowLengthFactor !== null
-                    ? `${t("Az")} ${hud.shadowAzimuthDeg}° · ${hud.shadowLengthFactor}× ${t("height")}`
-                    : t("Sun at or below 0° (no direct shadow)")}
+                    ? `${t("Az")} ${hud.shadowAzimuthDeg}° · ${numbers.format(hud.shadowLengthFactor)}× ${t("object height")}`
+                    : t(hud.sunElevationDeg === null ? "Unavailable"
+                      : hud.sunElevationDeg === 90 ? "Overhead Sun · zero shadow length"
+                      : "Sun at or below the ideal horizon")}
                 </dd>
               </div>
             </dl>

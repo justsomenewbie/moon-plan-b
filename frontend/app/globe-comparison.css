@@ -66,7 +66,6 @@
   gap: 8px;
   margin-bottom: 6px;
 }
-.mission-studio-header .eyebrow { margin-bottom: 2px; }
 .clearance-badge {
   padding: 4px 8px;
   border: 1px solid var(--sun);
@@ -186,17 +185,19 @@
   font-weight: 600;
   border: 1px solid var(--line);
 }
-.battery-badge.safe { color: var(--positive); border-color: var(--positive); }
-.battery-badge.risk { color: var(--error-line); border-color: var(--error-line); background: var(--error-bg); }
 .battery-badge.unknown { color: var(--muted); }
 .mission-ribbon {
   position: relative;
-  height: 12px;
+  min-height: 16px;
   border-radius: 3px;
-  background: var(--below-horizon);
   border: 1px solid var(--line);
   overflow: hidden;
 }
+.mission-ribbon, .state-dot.unavailable::before {
+  background: repeating-linear-gradient(135deg, var(--surface) 0 3px, var(--line) 3px 4px);
+}
+.mission-intervals { font-size: .78rem; overflow-wrap: anywhere; }
+.mission-intervals summary { cursor: pointer; }
 .ribbon-seg {
   position: absolute;
   top: 0;
@@ -205,7 +206,11 @@
 .ribbon-empty {
   display: block;
   font-size: .68rem;
-  line-height: 10px;
+  line-height: 14px;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 0 .4em;
+  background: var(--surface);
   text-align: center;
   color: var(--muted);
 }

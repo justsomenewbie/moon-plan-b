@@ -1,5 +1,5 @@
 // Educational sample-level clearance, 4-state mission operations and lander orientation helpers.
-// Keeps producer-supplied 0° intervals untouched and never fabricates values across missing/partial gaps.
+// The what-if model linearly interpolates elevations only between adjacent valid observations.
 import type { Sample, Scenario } from "./dataset";
 
 export type MissionOpState = "golden" | "solar-only" | "comms-only" | "blackout" | "unavailable";
@@ -49,15 +49,14 @@ export function shortestAzimuthDelta(azA: number, azB: number): number {
   return Number((diff > 180 ? 360 - diff : diff).toFixed(1));
 }
 
+function clearanceState(sun: number, earth: number, mask: number): Exclude<MissionOpState, "unavailable"> {
+  if (sun > mask) return earth > mask ? "golden" : "solar-only";
+  return earth > mask ? "comms-only" : "blackout";
+}
+
 export function evaluateSampleClearance(sample: Sample | undefined, clearanceDeg = 0): MissionOpState {
-  if (!sample || !sample.sun || !sample.earth) return "unavailable";
-  const mask = clampClearanceDeg(clearanceDeg);
-  const sunClear = sample.sun.elevationDeg > mask;
-  const earthClear = sample.earth.elevationDeg > mask;
-  if (sunClear && earthClear) return "golden";
-  if (sunClear) return "solar-only";
-  if (earthClear) return "comms-only";
-  return "blackout";
+  if (!sample?.sun || !sample.earth) return "unavailable";
+  return clearanceState(sample.sun.elevationDeg, sample.earth.elevationDeg, clampClearanceDeg(clearanceDeg));
 }
 
 export function computeLanderHud(sample: Sample | undefined, clearanceDeg = 0): LanderHudMetrics {
@@ -67,10 +66,10 @@ export function computeLanderHud(sample: Sample | undefined, clearanceDeg = 0): 
   const sunClearsMask = sun !== null && sun.elevationDeg > mask;
   const earthClearsMask = earth !== null && earth.elevationDeg > mask;
   const azimuthSeparationDeg = sun && earth ? shortestAzimuthDelta(sun.azimuthDeg, earth.azimuthDeg) : null;
-  const shadowAzimuthDeg = sun && sun.elevationDeg > 0 ? Number(((sun.azimuthDeg + 180) % 360).toFixed(1)) : null;
-  const shadowLengthFactor = sun && sun.elevationDeg > 0
-    ? Number(Math.min(25, 1 / Math.tan(Math.max(1, sun.elevationDeg) * Math.PI / 180)).toFixed(1))
-    : null;
+  const shadowAzimuthDeg = sun && sun.elevationDeg > 0 && sun.elevationDeg < 90
+    ? Number((sun.azimuthDeg + 180).toFixed(1)) % 360 : null;
+  const shadowLengthFactor = !sun || sun.elevationDeg <= 0 ? null
+    : sun.elevationDeg === 90 ? 0 : 1 / Math.tan(sun.elevationDeg * Math.PI / 180);
   return {
     sunAzimuthDeg: sun ? sun.azimuthDeg : null,
     sunElevationDeg: sun ? sun.elevationDeg : null,
@@ -93,120 +92,77 @@ export function analyzeScenarioClearance(
   const mask = clampClearanceDeg(clearanceDeg);
   const windowStart = Date.parse(scenario.startUtc);
   const windowEnd = Date.parse(scenario.endUtc);
-  const totalSpanMs = Math.max(1, windowEnd - windowStart);
-  const maxStepMs = scenario.sampleStepSeconds * 1000;
-
-  if (scenario.coverage !== "complete" || scenario.samples.length < 2) {
-    const partialSegments: MissionSegment[] = [];
-    for (let i = 0; i < scenario.samples.length - 1; i++) {
-      const current = scenario.samples[i];
-      const next = scenario.samples[i + 1];
-      const t0 = Date.parse(current.utc);
-      const t1 = Date.parse(next.utc);
-      if (t1 - t0 > maxStepMs) continue;
-      const state = evaluateSampleClearance(current, mask);
-      partialSegments.push({
-        state,
-        startUtc: current.utc,
-        endUtc: next.utc,
-        durationHours: (t1 - t0) / 3600000,
-        startPct: ((t0 - windowStart) / totalSpanMs) * 100,
-        widthPct: ((t1 - t0) / totalSpanMs) * 100,
-      });
-    }
-    return {
-      clearanceDeg: mask,
-      coverage: scenario.coverage,
-      goldenHours: null,
-      solarOnlyHours: null,
-      commsOnlyHours: null,
-      blackoutHours: null,
-      longestGoldenStreakHours: null,
-      longestSolarDarknessHours: null,
-      batteryStatus: "unknown",
-      segments: partialSegments,
-    };
-  }
-
-  let goldenHours = 0;
-  let solarOnlyHours = 0;
-  let commsOnlyHours = 0;
-  let blackoutHours = 0;
-  let currentGoldenStreak = 0;
-  let longestGoldenStreakHours = 0;
-  let currentDarknessStreak = 0;
-  let longestSolarDarknessHours = 0;
+  const span = windowEnd - windowStart;
+  const maxStep = scenario.sampleStepSeconds * 1000;
+  const samples = scenario.samples;
+  let complete = scenario.coverage === "complete" && samples.length >= 2
+    && Date.parse(samples[0].utc) === windowStart && Date.parse(samples[samples.length - 1].utc) === windowEnd;
   const segments: MissionSegment[] = [];
+  const totals = { golden: 0, "solar-only": 0, "comms-only": 0, blackout: 0 };
+  let longestGolden = 0, longestDark = 0, currentDark = 0;
 
-  for (let i = 0; i < scenario.samples.length - 1; i++) {
-    const current = scenario.samples[i];
-    const next = scenario.samples[i + 1];
-    const t0 = Date.parse(current.utc);
-    const t1 = Date.parse(next.utc);
-    const stepHours = (t1 - t0) / 3600000;
-    // Evaluate midpoint or endpoint visibility across the sample step:
-    // A step is clear when both endpoints or midpoint are above the clearance threshold,
-    // or using midpoint elevation between consecutive samples for smooth threshold response.
-    const sunMid = current.sun && next.sun ? (current.sun.elevationDeg + next.sun.elevationDeg) / 2 : null;
-    const earthMid = current.earth && next.earth ? (current.earth.elevationDeg + next.earth.elevationDeg) / 2 : null;
-    const sunClear = sunMid !== null && sunMid > mask;
-    const earthClear = earthMid !== null && earthMid > mask;
-    const state: MissionOpState = sunMid === null || earthMid === null
-      ? "unavailable"
-      : sunClear && earthClear
-        ? "golden"
-        : sunClear
-          ? "solar-only"
-          : earthClear
-            ? "comms-only"
-            : "blackout";
-
-    if (state === "golden") {
-      goldenHours += stepHours;
-      currentGoldenStreak += stepHours;
-      longestGoldenStreakHours = Math.max(longestGoldenStreakHours, currentGoldenStreak);
-    } else {
-      currentGoldenStreak = 0;
+  for (let i = 1; i < samples.length; i++) {
+    const a = samples[i - 1], b = samples[i];
+    const start = Date.parse(a.utc), end = Date.parse(b.utc);
+    const step = end - start;
+    if (!(start >= windowStart && end <= windowEnd && step > 0 && step <= maxStep)
+        || !a.sun || !b.sun || !a.earth || !b.earth) {
+      complete = false;
+      currentDark = 0;
+      continue;
     }
-
-    if (state === "solar-only") solarOnlyHours += stepHours;
-    if (state === "comms-only") commsOnlyHours += stepHours;
-    if (state === "blackout") blackoutHours += stepHours;
-
-    if (!sunClear) {
-      currentDarknessStreak += stepHours;
-      longestSolarDarknessHours = Math.max(longestSolarDarknessHours, currentDarknessStreak);
-    } else {
-      currentDarknessStreak = 0;
+    const sun = a.sun.elevationDeg, earth = a.earth.elevationDeg;
+    const sunChange = b.sun.elevationDeg - sun, earthChange = b.earth.elevationDeg - earth;
+    if (![sun, b.sun.elevationDeg, earth, b.earth.elevationDeg].every(value => Number.isFinite(value) && Math.abs(value) <= 90)) {
+      complete = false;
+      currentDark = 0;
+      continue;
     }
+    const cuts = [0, 1];
+    for (const [elevation, change] of [[sun, sunChange], [earth, earthChange]]) {
+      if (change === 0) continue;
+      const crossing = (mask - elevation) / change;
+      if (crossing > 0 && crossing < 1) cuts.push(crossing);
+    }
+    cuts.sort((x, y) => x - y);
+    for (let j = 1; j < cuts.length; j++) {
+      const from = start + Math.round(step * cuts[j - 1]);
+      const to = start + Math.round(step * cuts[j]);
+      if (to <= from) continue;
+      // Between consecutive threshold crossings neither body's strict comparison changes.
+      const mid = (cuts[j - 1] + cuts[j]) / 2;
+      const state = clearanceState(sun + mid * sunChange, earth + mid * earthChange, mask);
+      totals[state] += to - from;
+      currentDark = state === "comms-only" || state === "blackout" ? currentDark + to - from : 0;
+      longestDark = Math.max(longestDark, currentDark);
 
-    const prev = segments.at(-1);
-    if (prev && prev.state === state && prev.endUtc === current.utc) {
-      prev.endUtc = next.utc;
-      prev.durationHours = Number((prev.durationHours + stepHours).toFixed(2));
-      prev.widthPct = ((Date.parse(next.utc) - Date.parse(prev.startUtc)) / totalSpanMs) * 100;
-    } else {
-      segments.push({
-        state,
-        startUtc: current.utc,
-        endUtc: next.utc,
-        durationHours: Number(stepHours.toFixed(2)),
-        startPct: ((t0 - windowStart) / totalSpanMs) * 100,
-        widthPct: ((t1 - t0) / totalSpanMs) * 100,
-      });
+      const startUtc = new Date(from).toISOString(), endUtc = new Date(to).toISOString();
+      const previous = segments.at(-1);
+      // A touch at a shared sample breaks a strictly-above streak, even when its duration is zero.
+      const joins = cuts[j - 1] === 0 && clearanceState(sun, earth, mask) === state;
+      if (previous && previous.state === state && previous.endUtc === startUtc && joins) {
+        previous.endUtc = endUtc;
+        const duration = to - Date.parse(previous.startUtc);
+        previous.durationHours = duration / 3_600_000;
+        previous.widthPct = duration / span * 100;
+      } else {
+        segments.push({ state, startUtc, endUtc, durationHours: (to - from) / 3_600_000,
+          startPct: (from - windowStart) / span * 100, widthPct: (to - from) / span * 100 });
+      }
+      if (state === "golden") longestGolden = Math.max(longestGolden, segments[segments.length - 1].durationHours);
     }
   }
-
+  const hours = (milliseconds: number) => complete ? milliseconds / 3_600_000 : null;
   return {
     clearanceDeg: mask,
-    coverage: scenario.coverage,
-    goldenHours: Number(goldenHours.toFixed(1)),
-    solarOnlyHours: Number(solarOnlyHours.toFixed(1)),
-    commsOnlyHours: Number(commsOnlyHours.toFixed(1)),
-    blackoutHours: Number(blackoutHours.toFixed(1)),
-    longestGoldenStreakHours: Number(longestGoldenStreakHours.toFixed(1)),
-    longestSolarDarknessHours: Number(longestSolarDarknessHours.toFixed(1)),
-    batteryStatus: longestSolarDarknessHours <= batteryLimitHours ? "safe" : "risk",
+    coverage: !complete && scenario.coverage === "complete" ? "partial" : scenario.coverage,
+    goldenHours: hours(totals.golden),
+    solarOnlyHours: hours(totals["solar-only"]),
+    commsOnlyHours: hours(totals["comms-only"]),
+    blackoutHours: hours(totals.blackout),
+    longestGoldenStreakHours: complete ? longestGolden : null,
+    longestSolarDarknessHours: hours(longestDark),
+    batteryStatus: !complete ? "unknown" : longestDark <= batteryLimitHours * 3_600_000 ? "safe" : "risk",
     segments,
   };
 }
