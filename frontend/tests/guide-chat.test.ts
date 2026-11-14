@@ -32,8 +32,11 @@ test("validates bounds, dates, missing hours and provenance independently of mod
   const saved = answerGuide(parseGuideRequest(input), { topic: "mostHours", rows: [], measure: "bothHours" });
   assert.match(saved.answer, /Most hours .*Athena · IM-2.*139 h/);
   assert.ok(saved.answer.includes(row.source));
-  const fewest = answerGuide(parseGuideRequest(input), { topic: "fewestHours", rows: [], measure: "sunHours" });
+  const fewest = answerGuide(parseGuideRequest({ ...input, question: "Which has fewer hours?" }), { topic: "fewestHours", rows: [], measure: "sunHours" });
   assert.match(fewest.answer, /Fewest hours .*Odysseus · IM-1.*33 h/);
+  const viFewest = answerGuide(parseGuideRequest({ ...input, locale: "vi", question: "Địa điểm nào có ít giờ nhìn thấy đồng thời nhất?" }),
+    { topic: "mostHours", rows: [], measure: "bothHours" });
+  assert.match(viFewest.answer, /Thời lượng nhỏ nhất .*Odysseus · IM-1.*33 h/);
 });
 
 test("only local enum plans and in-range indices can produce actions", () => {

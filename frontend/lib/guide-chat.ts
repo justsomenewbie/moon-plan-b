@@ -163,7 +163,17 @@ const fixed = {
 
 export function answerGuide(input: GuideRequest, plan: Plan): GuideReply {
   const copy = fixed[input.locale];
-  const { topic, measure } = plan;
+  let { topic } = plan;
+  const { measure } = plan;
+  // The small model can reverse a superlative when Vietnamese words separate "ít" from "nhất".
+  if (topic === "mostHours" || topic === "fewestHours") {
+    const q = input.question.normalize("NFC").toLowerCase();
+    const minimum = /\b(fewest|least|shortest|minimum|fewer)\b|(?:ít|ngắn|thấp)(?:\s.{0,100})?\snhất/u.test(q);
+    const maximum = /\b(most|longest|maximum|more)\b|(?:nhiều|dài|cao)(?:\s.{0,100})?\snhất/u.test(q);
+    if (minimum && maximum) topic = "hours";
+    else if (minimum) topic = "fewestHours";
+    else if (maximum) topic = "mostHours";
+  }
   if (topic !== "hours" && topic !== "mostHours" && topic !== "fewestHours" && topic !== "source") {
     const action = topic === "compareSites" || topic === "compareDates" ? topic
       : topic === "compare" || topic === "import" ? "workspace"
