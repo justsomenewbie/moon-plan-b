@@ -213,11 +213,20 @@ export function laterMatch(d: Dataset, a: Scenario, h: number): { candidate?: Sc
   }
   return { unresolvedBefore };
 }
-export function readSelection(params: URLSearchParams, d: Dataset): Selection | null {
+export function sharedDatasetVersion(params: URLSearchParams): string | null {
   const keys = ["v", "mode", "a", "b", "duration", "h"];
-  if (!params.has("sample") && !keys.some((k) => params.has(k))) return initialSelection(d);
-  requireValue(keys.every((k) => params.getAll(k).length === 1) && params.getAll("sample").length <= 1, "The shared selection is incomplete or contains duplicate fields.");
-  requireValue(params.get("v") === d.datasetId, "This link needs a different dataset version. Import that exact release before reopening it.");
+  if (!params.has("sample") && !keys.some(key => params.has(key))) return null;
+  requireValue(keys.every(key => params.getAll(key).length === 1 && params.get(key) !== "") && params.getAll("sample").length <= 1,
+    "The shared selection is incomplete or contains duplicate fields.");
+  requireValue(!["run_id", "site_id", "view_site", "at"].some(key => params.has(key)),
+    "This link mixes an imported comparison with a live observation.");
+  return params.get("v");
+}
+
+export function readSelection(params: URLSearchParams, d: Dataset): Selection | null {
+  const version = sharedDatasetVersion(params);
+  if (version === null) return initialSelection(d);
+  requireValue(version === d.datasetId, "This link needs a different dataset version. Import that exact release before reopening it.");
   const mode = params.get("mode");
   requireValue(mode === "dates" || mode === "sites", "The comparison mode in this link is invalid.");
   const a = d.scenarios.find((s) => s.id === params.get("a"));
