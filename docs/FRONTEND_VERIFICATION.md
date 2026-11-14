@@ -274,6 +274,12 @@ The guide’s current-time question opens above the chat when the selected sourc
 
 On the Vietnamese homepage at 375 × 667 CSS pixels, the first of the three suggested questions previously started at y = 992. **Xem câu hỏi gợi ý** appears below the greeting and brings the questions into view. Keyboard focus moves to the first question. Each answer opens within the guide. The [browser check](../qa/check_astronaut_guide.mjs) covers the shortcut on the comparison page and at both 320 × 568 and 375 × 667 on the homepage. It checks that the UTC and both site readings remain visible when the guide first opens.
 
+### Homepage feedback still under review
+
+The November 15 review compared the team's homepage sketch with the public site at 375 and 1280 CSS pixels. The hero globe rotates until the visitor takes control. Below it are the introduction, illustrated instructions, six team members and resources, in the sketched order. The [navigation change](https://github.com/justsomenewbie/moon-plan-b/commit/0ae9d854d50d8d30a8a2ab22c304b85e6d2fb823) moved Compare into the hero. The red feedback on the overall layout and the daylight clouds still awaits member review.
+
+The separate homepage-only suggestion refers to the LRO, JPL and Moon Trek cards. The feedback document shows it as highlighted, while the [restored layout](https://github.com/justsomenewbie/moon-plan-b/commit/b6b76a2d5226022843dbede9890811bbe2c8576d) displays those cards on both Home and Compare. Their final placement is open. [First-time user sessions](../qa/docs/RUNBOOK.md#three-user-usability-log--not-run) are pending.
+
 ## Custom-coordinate job lifecycle
 
 A Chromium check on the live-configured frontend used intercepted producer-format responses for capability recovery, HTTP 202, queued/running/failed/cancelled jobs, indeterminate progress, the HTTP 200 cache hit and status retry. It checked that the same cached job ID needed a fresh status read. After a simulated POST timeout, explicitly retrying the same request preserved its original coordinates and UTCs even after the form was edited. Opening the result sent a GET for the accepted run and site, and its link pinned both. The Vietnamese form fit a 320 px viewport. These failure branches were simulated locally.
@@ -388,6 +394,8 @@ The planner's optional sunlight layer colors rings at catalog sites by the produ
 The UTC lookup displays optional horizontal and Sun-facing illumination factors from the producer as percentages of full unobstructed Sun-facing exposure. At Athena on 16 November 2026 at 12:00 UTC, B2 returned 0.062524 and 1 (6.25% and 100%), alongside 1392.948 W/m² of modeled Sun-facing irradiance. The factors describe incoming light. The producer supplies no electrical output or received radio strength. In the same result, direction arrows use the native model sample’s azimuth measured clockwise from local north. Their text gives the nearest 16-point compass direction and the angle; the exact supplied angles remain below. At that Athena sample the Sun’s azimuth is 67.183128° (east-northeast). An omitted orientation factor has a missing-data label; a returned zero displays 0%. English and Vietnamese browser checks cover both cases. [Producer definitions](../lunar-navigator/docs/OUTPUT_SPEC.md).
 
 ### Planner globe and flat map
+
+In the illustrated site search, the table places the chosen ranking measure next to each site's name. A 320 px visitor can read Vikram's 162 joint hours for November 14–21 without scrolling sideways. The other measures and any fixed-duration UTC windows remain in the same row. The back link in a saved site report focuses the results heading after it renders and restores the selected site. [Homepage example check](../qa/check_home_navigation.mjs) · [Saved report return check](../qa/check_planner_longest_joint.mjs)
 
 The ranking map opens on a rotatable globe, centered on the selected site. The adjacent **Flat map** button switches to the full-surface map and retains the site, its readings, report link and table rows. The gold diamond identifies each positive leader for the selected criterion; blue circles identify other sites. Verified coordinates only are mapped. The inspection list includes sites on the hidden hemisphere. Surface imagery and the linked LROC view are visual references.
 

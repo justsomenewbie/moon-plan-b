@@ -69,7 +69,7 @@ function SiteReport() {
     ...(longest && uninterrupted !== undefined ? [[t("Longest joint window"), uninterrupted] as const] : []),
   ] as const;
   return <>
-    <a href={back}>{text("Back to these site results", "Quay lại kết quả tìm địa điểm")}</a>
+    <a href={back + "#site-results"}>{text("Back to these site results", "Quay lại kết quả tìm địa điểm")}</a>
     <h1 id="site-title" tabIndex={-1}>{site.name}</h1>
     <section className="space-y-3" aria-labelledby="site-visibility">
       <h2 id="site-visibility">{t("Visibility hours in the selected window")}</h2>

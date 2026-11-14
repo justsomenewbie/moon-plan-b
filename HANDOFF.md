@@ -16,7 +16,7 @@ Comparison globes expand from 1×, support location-centered zoom and retain the
 
 The [Data catalog](docs/BACKEND_RECONCILIATION.md#live-run-directory-and-earth-visibility) opens live A2 and B2. Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup distinguishes Earth-centre clearance and visible disc area. Retained responses passed EN/VI replay. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Reference cards remain on both pages. [Daylight cloud exposure and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. [Homepage feedback](docs/FRONTEND_VERIFICATION.md#homepage-feedback-still-under-review) · [Mobile rankings and report return](docs/FRONTEND_VERIFICATION.md#planner-globe-and-flat-map) · [Daylight clouds](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [JPL replay](qa/docs/JPL_CHECK.md#november-b2-overlap-using-jpl-directions) matches both November windows using B2 terrain.
 

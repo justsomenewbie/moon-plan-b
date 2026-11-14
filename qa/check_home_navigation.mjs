@@ -61,7 +61,12 @@ try {
     assert.equal(await page.locator(".plan-results tbody tr").count(), 23);
     const table = page.locator(".plan-results table");
     const joint = (await table.locator("thead th").allTextContents()).indexOf("Both visible (h)");
-    assert.ok(joint >= 0);
+    assert.equal(joint, 1);
+    assert.ok(await table.locator("thead th").nth(joint).evaluate(el => {
+      const frame = el.closest(".table-scroll").getBoundingClientRect();
+      const column = el.getBoundingClientRect();
+      return column.left >= frame.left && column.right <= frame.right + 1;
+    }), "The ranking column should be visible before scrolling the table");
     const first = table.locator("tbody tr").first();
     assert.match(await first.locator("th").innerText(), /Vikram/);
     assert.equal(await first.locator("th,td").nth(joint).innerText(), "162");

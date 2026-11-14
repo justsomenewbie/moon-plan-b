@@ -26,6 +26,7 @@ import { usesSmoothSphere } from "../../lib/site-horizon";
 import "./plan.css";
 
 const criteria = { joint: "Sun and Earth together", sun: "Sunlight", earth: "Earth visibility" } as const;
+const hourLabels = ["Sun visible", "Earth visible", "Both visible", "Longest joint window"] as const;
 const DAY = 86400000;
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const midnight = (date: string) => date + "T00:00:00Z";
@@ -103,6 +104,13 @@ function catalogInputError(run: PlannerRun, from: string, to: string, duration: 
   return "";
 }
 
+function focusLinkedResults(heading: HTMLHeadingElement | null) {
+  if (heading && window.location.hash === "#site-results") {
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: "start" });
+  }
+}
+
 function CatalogSearch({ run, first, last, priority, source, initialSite, runIds, initialDuration, initialLongest }: { initialDuration: string; initialLongest: boolean; run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource; initialSite: string | null; runIds: string[] }) {
   const { t, locale } = useLanguage();
   const legacyError = locale === "vi" ? "Bản lưu B chỉ có các khoảng liên tục cho Odysseus và Athena trong khoảng ngày đã lưu." : "Run B retains continuous windows only for Odysseus and Athena within its saved dates.";
@@ -127,6 +135,8 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
   const pairRange = savedPlannerWindows.pair;
   const presets = savedPlannerWindows.catalog.filter(range => !duration || Date.parse(range.to) - Date.parse(range.from) === Number(duration) * 3600000);
   const showLongest = (source !== "saved" || longest) && result?.missionHours === undefined;
+  const rankedColumn = longest ? 3 : column;
+  const hourColumns = [rankedColumn, ...[0, 1, 2, 3].filter(i => i !== rankedColumn && (i !== 3 || showLongest))];
   function detailHref(siteId: string) {
     if (!result) return undefined;
     const mission = result.rows.find(row => row.id === siteId)?.missionWindow;
@@ -202,7 +212,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
     </a></p>}
     {source === "saved" && !longest && presets.length > 0 && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{presets.map(w => <a key={w.from} href={plannerLink("/plan", {mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric,...(duration ? { missionHours: duration } : {})}, runIds)}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
     {result && <section aria-label={t("Site search results")} className="plan-results">
-      <h3>{t("Site search results")}</h3>
+      <h3 id="site-results" tabIndex={-1} ref={focusLinkedResults}>{t("Site search results")}</h3>
       <p><TimeRange start={result.from} end={result.to} /> · {label}</p>
       {result.missionHours && <p>{t("Each site is ranked by hours of {priority} in its best {hours}-hour mission. The table shows the earliest window when scores tie.", { priority: t(criteria[metric]), hours: result.missionHours })}</p>}
       <p><strong>{result.scope === "pair" ? t("Saved observations: Odysseus and Athena only.") : result.scope === "catalog" ? t("Saved ranking: all 23 sites.") : t("Live catalog: {count} sites.", {count: run.sites.length})}</strong></p>
@@ -213,13 +223,19 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
         {flatLeaders.length > 0 && <span className="block">{t("Local terrain shadows are omitted for {sites}.", { sites: flatLeaders.map(r => r.name).join(" · ") })}</span>}</p>
       <SiteMap startUtc={result.from} endUtc={result.to} stepSeconds={run.stepSeconds} evaluatedHours={result.missionHours ?? (Date.parse(result.to) - Date.parse(result.from)) / 3600000} sites={result.rows} leaders={result.leaders} column={longest ? "longest" : column} criterion={label} initialSite={initialSite} detailHref={detailHref} />
       <div className="table-scroll"><table><caption>{t(result.missionHours ? "Visibility hours in each site’s best mission window" : "Visibility hours in the selected window")}</caption>
-        <thead><tr><th scope="col">{t("Site")}</th>{result.missionHours && <th scope="col">{t("Earliest best mission window (UTC, end exclusive)")}</th>}{["Sun visible","Earth visible","Both visible",...(showLongest ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
+        <thead><tr><th scope="col">{t("Site")}</th>
+          {hourColumns.map(i => <th key={i} scope="col">{t(hourLabels[i])} (h)</th>)}
+          {result.missionHours && <th scope="col">{t("Earliest best mission window (UTC, end exclusive)")}</th>}
+        </tr></thead>
         <tbody>{result.rows.map(row => {
           const href = detailHref(row.id);
+          const hours = row.hours;
           return <tr key={row.id}><th scope="row">{href ? <a href={href}>{row.name}</a> : row.name}
             {row.smoothSphere && <small className="block">{t("Smooth-sphere horizon")}</small>}</th>
+            {hours ? hourColumns.map(i => <td key={i}>{i === 3 ? row.longest : hours[i]}</td>)
+              : <td colSpan={hourColumns.length}>{t("Coverage")} · {t(row.coverage ?? "Incomplete coverage")}</td>}
             {row.missionWindow && <td><TimeRange start={row.missionWindow.start} end={row.missionWindow.end} /></td>}
-            {row.hours ? <>{row.hours.map((h,i) => <td key={i}>{h}</td>)}{showLongest && <td>{row.longest}</td>}</> : <td colSpan={4}>{t("Coverage")} · {t(row.coverage ?? "Incomplete coverage")}</td>}</tr>;
+          </tr>;
         })}</tbody></table></div>
       <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code>{run.runId}</code></p>
     </section>}

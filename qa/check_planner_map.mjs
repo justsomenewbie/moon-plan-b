@@ -156,7 +156,7 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     const table = page.locator(".plan-results table");
     assert.deepEqual(await table.getByRole("columnheader").allTextContents(), [
-      "Site", "Sun visible (h)", "Earth visible (h)", "Both visible (h)", "Longest joint window (h)",
+      "Site", "Both visible (h)", "Sun visible (h)", "Earth visible (h)", "Longest joint window (h)",
     ]);
     assert.equal(await table.locator("tbody tr").count(), catalog.sites.length);
     const labelled = table.getByRole("rowheader").filter({hasText: "Smooth-sphere horizon"});

@@ -18,7 +18,8 @@ try {
   const malapert = rows.filter({ hasText: "Malapert Massif" });
   assert.match(await rows.first().innerText(), /Odysseus/);
   assert.equal(await rows.count(), 23);
-  assert.deepEqual((await malapert.locator("td").allTextContents()).slice(2), ["114", "76"]);
+  assert.equal(await malapert.locator("td").first().innerText(), "76");
+  assert.equal(await malapert.locator("td").last().innerText(), "114");
   assert.equal(await ranking.inputValue(), "longest");
   assert.match(await map.innerText(), /Longest joint window · 92 h/);
   await map.locator("select").selectOption("a3_malapert_massif");
@@ -31,6 +32,11 @@ try {
   const query = new URL(await back.getAttribute("href"), origin).searchParams;
   for (const [key, value] of Object.entries({ ...dates, order: "longest", priority: "joint", run_id: run, site: "a3_malapert_massif" })) assert.equal(query.get(key), value);
   await back.click();
+  await page.waitForFunction(() => document.activeElement.id === "site-results");
+  assert.ok(await page.locator("#site-results").evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= innerHeight;
+  }));
   assert.match(await rows.first().innerText(), /Odysseus/);
   assert.equal(await map.locator("select").inputValue(), "a3_malapert_massif");
 
@@ -60,6 +66,21 @@ try {
   assert.equal(await rows.count(), 0);
   await page.locator(".language-switch select").first().selectOption("vi");
   await page.getByText(/Bản lưu B chỉ có các khoảng liên tục/).waitFor();
+
+  await page.setViewportSize({ width: 320, height: 568 });
+  for (const [priority, label, expected] of [
+    ["sun", "Thấy Mặt Trời", 370], ["earth", "Thấy Trái Đất", 573],
+    ["joint", "Đồng thời nhìn thấy", 357], ["longest", "Khoảng đồng thời dài nhất", 324],
+  ]) {
+    const query = new URLSearchParams({ mode: "sites", source: "saved-b2", from: "2026-12-29", to: "2027-01-28",
+      priority: priority === "longest" ? "joint" : priority });
+    if (priority === "longest") query.set("order", "longest");
+    await page.goto(origin + "/plan?" + query);
+    const header = page.locator(".plan-results thead th").nth(1);
+    assert.equal(await header.innerText(), label + " (h)");
+    assert.equal(await rows.filter({ hasText: "Athena" }).locator("td").first().innerText(), String(expected));
+    assert.ok(await header.evaluate(el => el.getBoundingClientRect().right <= el.closest(".table-scroll").getBoundingClientRect().right + 1));
+  }
 
   // Optional: exercise the same frontend build with genuine, bounded producer GETs.
   // A second argument supplies an anonymous public relay if the local server has no configured key.
