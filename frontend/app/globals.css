@@ -41,9 +41,9 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
   .intro h1 + .lead { margin-block-start: 1rem; }
 }
 .comparison-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin: 32px 0 20px; }
-.import-dialog { position: fixed; inset: 0; margin: auto; width: min(34rem, calc(100% - 32px)); max-height: 85dvh; overflow: auto; padding: clamp(18px, 4vw, 32px); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
+.import-dialog, .site-pin-picker { position: fixed; inset: 0; margin: auto; width: min(34rem, calc(100% - 32px)); max-height: 85dvh; overflow: auto; padding: clamp(18px, 4vw, 32px); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); }
 .import-dialog h2 { font-size: 1.4rem; }
-.import-dialog::backdrop { background: rgb(9 13 21 / 65%); }
+.import-dialog::backdrop, .site-pin-picker::backdrop { background: rgb(9 13 21 / 65%); }
 .import-dialog p, .import-dialog ol { margin: 12px 0; }
 .import-dialog ol { list-style: decimal; padding-left: 1.4em; }
 .import-dialog ul { list-style: disc; padding-left: 1.2em; }

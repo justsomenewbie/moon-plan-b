@@ -61,6 +61,20 @@ try {
     assert.equal(await inspect.inputValue(), plateau.id);
     assert.equal(await pin(plateau.id).getAttribute("aria-pressed"), "true");
     assert.equal(await chooser.count(), 0);
+    if (mobile) {
+      const rect = await pin(plateau.id).boundingBox();
+      assert(rect);
+      const x = rect.x + rect.width / 2, y = rect.y + rect.height / 2;
+      const view = globe.locator(".globe-center"), before = await view.textContent();
+      const touch = await page.context().newCDPSession(page);
+      await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+      await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + 32, y: y - 8 }] });
+      await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      assert.notEqual(await view.textContent(), before);
+      assert.equal(await chooser.count(), 0);
+      assert.equal(await inspect.inputValue(), plateau.id);
+      await touch.detach();
+    }
     await page.keyboard.press("Escape");
     await expanded.waitFor({ state: "hidden" });
     assert.equal(await globe.locator(".globe-expand:focus").count(), 1);

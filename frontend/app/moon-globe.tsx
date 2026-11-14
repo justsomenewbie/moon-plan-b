@@ -5,6 +5,7 @@ import { comparisonLocation, diskPosition, missionSites, pairCenter } from "../l
 import type { GlobeSite, MapPoint, PairLocation } from "../lib/globe-sites";
 import type { Dataset } from "../lib/dataset";
 import { useLanguage } from "./language";
+import { SitePinPicker, sitesAtPointer } from "./site-pin-picker";
 import saved from "../lib/odysseus-athena-weeks.json";
 import sunlight from "../lib/horizons-weekly-sunlight.json";
 import "./globe-comparison.css";
@@ -87,13 +88,14 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
   const viewer = useRef<HTMLDialogElement>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
   const [expanded, setExpanded] = useState(false);
+  const [overlap, setOverlap] = useState<string[]>([]);
   const [rasterSize, setRasterSize] = useState(384);
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<{ context: CanvasRenderingContext2D; texture: ImageData; frame: ImageData } | null>(null);
   const touches = useRef(new Map<number, { x: number; y: number }>());
   const pinGesture = useRef(false);
   const pinch = useRef<{ distance: number; zoom: number; anchor: MapPoint | null; center: MapPoint } | null>(null);
-  const drag = useRef<{ id: number; x: number; y: number; scale: number; center: typeof origin } | null>(null);
+  const drag = useRef<{ id: number; x: number; y: number; scale: number; center: typeof origin; onPin: boolean } | null>(null);
 
   useEffect(() => {
     const mission = missionSites.find(item => item.id === savedResult);
@@ -107,7 +109,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     } else if (mission) {
       setChosen({ key: mission.name, identity: mission }); setCenter(mission); setRotating(false);
     } else { setChosen(null); setCenter(origin); }
-    setZoom(1); setAnnounced(null); setSunUtc("");
+    setZoom(1); setAnnounced(null); setSunUtc(""); setOverlap([]);
   }, [savedResult, pairSites, terrainSiteId]);
 
   const orbitSite = orbit?.site;
@@ -268,8 +270,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
       pinch.current = { distance, zoom, center, anchor: home ? null : globePointAt(center, zoom, position) };
       return;
     }
-    if (onPin) return;
-    drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scale: 150 / (zoom * event.currentTarget.getBoundingClientRect().width), center };
+    drag.current = { onPin, id: event.pointerId, x: event.clientX, y: event.clientY, scale: 150 / (zoom * event.currentTarget.getBoundingClientRect().width), center };
   }
   function moveDrag(event: PointerEvent<HTMLDivElement>) {
     if (touches.current.has(event.pointerId)) {
@@ -284,15 +285,19 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     }
     const start = drag.current;
     if (!start || start.id !== event.pointerId) return;
-    setCenter(globeCenter(start.center.longitude - (event.clientX - start.x) * start.scale,
-      start.center.latitude + (event.clientY - start.y) * start.scale));
+    const dx = event.clientX - start.x, dy = event.clientY - start.y;
+    if (start.onPin && !pinGesture.current) {
+      if (Math.hypot(dx, dy) <= 4) return;
+      pinGesture.current = true;
+    }
+    setCenter(globeCenter(start.center.longitude - dx * start.scale, start.center.latitude + dy * start.scale));
   }
   function endDrag(event: PointerEvent<HTMLDivElement>) {
     if (touches.current.delete(event.pointerId)) pinch.current = null;
     const start = drag.current;
     if (start?.id !== event.pointerId) return;
     drag.current = null;
-    if (!home && event.type === "pointerup" && Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 4) {
+    if (!home && !start.onPin && event.type === "pointerup" && Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 4) {
       const location = globePointAt(start.center, zoom, diskCoordinates(event.clientX, event.clientY));
       if (location) selectCenter(location);
     }
@@ -325,6 +330,11 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     if (item && "point" in item.location) selectCenter(item.location.point);
   }
 
+  function inspectPin(item: Target) {
+    if (orbit && item.missionId) orbit.onSite(item.missionId);
+    locate(item);
+  }
+
   const frame = <div className={terrainView ? "lunar-frame w-full" : "lunar-frame"}
       onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag}>
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
@@ -344,8 +354,12 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
             aria-pressed={orbit ? orbit.site.id === item.missionId : target?.key === item.key}
             onClick={event => {
               if (event.detail && pinGesture.current) return;
-              if (orbit && item.missionId) orbit.onSite(item.missionId);
-              locate(item);
+              const hits = sitesAtPointer(event);
+              if (hits.length > 1) {
+                setRotating(false);
+                event.currentTarget.focus({ preventScroll: true });
+                setOverlap(hits);
+              } else inspectPin(item);
             }}>{orbit ? item.name.split(" · ")[0] : plannerLeaders ? null : index + 1}</button>
         </span>;
       })}
@@ -401,6 +415,10 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
           {closeUpButton}
           <p id={zoomHelpId + "-expanded"}>{t("Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.")}</p>
         </div>
+        {overlap.length > 1 && <SitePinPicker sites={pins.filter(pin => overlap.includes(pin.key)).map(pin => ({
+          id: pin.key, name: pin.name, select: () => inspectPin(pin),
+        }))}
+          onClose={() => setOverlap([])} />}
       </dialog>
       {ready && <button ref={expandButton} type="button" className="button outline globe-expand" aria-haspopup="dialog" onClick={expandGlobe}>{t("Expand globe")}</button>}
     </div>}

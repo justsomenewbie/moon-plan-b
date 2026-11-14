@@ -6,6 +6,7 @@ import { plannerSunAt, plannerSunSource, sunBearing } from "../../lib/planner-su
 import { EarthSightTimes } from "../terrain-site-result";
 import type { EarthWindow } from "../../lib/earth-windows";
 import { useLanguage } from "../language";
+import { SitePinPicker, sitesAtPointer } from "../site-pin-picker";
 
 const MoonGlobe = dynamic(() => import("../moon-globe"));
 
@@ -91,6 +92,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   const sun = useMemo(() => plannerSunAt(startUtc), [startUtc]);
   const [sunlight, setSunlight] = useState(false);
   const [selectedId, setSelectedId] = useState(initialSite);
+  const [overlap, setOverlap] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
   const [view, setView] = useState<"globe" | "flat" | "surface">("globe");
   const [customPoint, setCustomPoint] = useState<MapPoint | null>(null);
@@ -172,7 +174,11 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
               const leader = isLeader(site);
               return <g key={site.id} className="plan-map-point" data-site={site.id} transform={`translate(${x} ${y}) scale(${1 / zoom})`}
                 role="button" aria-label={t("Inspect {site}", {site: site.name})} aria-pressed={site.id === selected.id}
-                onClick={() => select(site)} tabIndex={-1} onKeyDown={event => {
+                onClick={event => {
+                  const hits = sitesAtPointer(event);
+                  if (hits.length > 1) { event.currentTarget.focus({ preventScroll: true }); setOverlap(hits); }
+                  else select(site);
+                }} tabIndex={-1} onKeyDown={event => {
                   if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(site); }
                 }}>
                 <title>{site.name}</title>
@@ -184,6 +190,10 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
             })}
             {point && <circle cx={focus.x} cy={focus.y} r={12 / zoom} fill="none" stroke="white" strokeWidth="1.5" vectorEffect="non-scaling-stroke" pointerEvents="none" />}
           </svg>}
+        {view === "flat" && overlap.length > 1 && <SitePinPicker sites={mapped.filter(site => overlap.includes(site.id)).map(site => ({
+          id: site.id, name: site.name, select: () => select(site),
+        }))}
+          onClose={() => setOverlap([])} />}
         {view === "flat" && !imageFailed && mapped.length > 0 && <p>{t("Tap the map for a close-up, or choose a site and open Surface close-up.")}</p>}
         {mapped.length < sites.length && <p>{t("Verified map positions: {mapped} of {count}.", {mapped: mapped.length, count: sites.length})}</p>}
         {view !== "surface" && <div className="map-legend"><span><b aria-hidden="true">◆</b> {t("Top for this window")}</span><span><b aria-hidden="true">●</b> {t("Other sites")}</span></div>}

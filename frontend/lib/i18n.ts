@@ -655,6 +655,7 @@ export const vietnamese: Record<string, string> = {
   "Close expanded view": "Trở về trang so sánh",
   "Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.": "Chạm vào vị trí muốn xem để đưa vào giữa. Kéo để xoay, cuộn chuột hoặc dùng hai ngón tay để thu phóng ngay tại đó.",
   "Zoom out": "Thu nhỏ",
+  "Choose a site at this point": "Chọn địa điểm tại vị trí này",
   "Inspect {site}": "Xem {site}",
   "Week of {date} UTC": "Tuần bắt đầu ngày {date} UTC",
   "The marker shows the approximate site location.": "Dấu đánh số cho biết vị trí gần đúng của địa điểm.",
