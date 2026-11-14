@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { findAltDates, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates";
+import { findAltDates, landingDelayHours, landingGridBounds, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 import { TimeRange } from "./terrain-site-result";
@@ -36,7 +36,7 @@ function utcInput(value: FormDataEntryValue | null) {
 function candidateLink(candidate: AltDatesResponse["candidates"][number], search: AltDatesResponse) {
   // Current pinned single-site viewer accepts hourly runs over at most 366 days.
   if (search.step_s !== 3600 || search.mission_duration_h > 366 * 24) return null;
-  return "/?" + new URLSearchParams({
+  return "/compare?" + new URLSearchParams({
     from: candidate.landing_utc, to: candidate.mission_end_utc, resolutionSeconds: String(search.step_s),
     run_id: search.run_id, site_id: search.site_id, view_site: search.site_id,
   }) + "#terrain-observations";
@@ -48,7 +48,12 @@ export default function AlternativeDates({ result, site }: { result: TerrainSumm
   const stepHours = range.step_s / 3600;
   const duration = Math.min(range.n_samples, Math.max(1, Math.floor(24 / stepHours))) * stepHours;
   const latest = new Date(Date.parse(range.end) - duration * 3600000).toISOString().slice(0, 19);
-  const [search, setSearch] = useState<AltDatesResponse>();
+  const [completed, setCompleted] = useState<{ request: AltDatesRequest; search: AltDatesResponse }>();
+  const search = completed?.search;
+  const request = completed?.request;
+  const grid = request && landingGridBounds(request.earliest, request.latest, range.step_s, range.start);
+  const showGrid = request && grid && grid.first <= grid.last
+    && (grid.first !== Date.parse(request.earliest) || grid.last !== Date.parse(request.latest));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const active = useRef<AbortController | null>(null);
@@ -56,7 +61,7 @@ export default function AlternativeDates({ result, site }: { result: TerrainSumm
 
   function clearSearch() {
     active.current?.abort();
-    setSearch(undefined);
+    setCompleted(undefined);
     setPending(false);
     setError("");
   }
@@ -82,7 +87,7 @@ export default function AlternativeDates({ result, site }: { result: TerrainSumm
     setPending(true);
     try {
       const response = await findAltDates(payload, range.step_s, controller.signal, range.start);
-      if (!controller.signal.aborted) setSearch(response);
+      if (!controller.signal.aborted) setCompleted({ request: payload, search: response });
     } catch (cause) {
       if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "The request could not be completed. Retry or check the connection.");
     } finally {
@@ -110,11 +115,12 @@ export default function AlternativeDates({ result, site }: { result: TerrainSumm
     </form>
     {pending && <p role="status">{t("Searching landing dates…")}</p>}
     {error && <p role="alert">{t(error)}</p>}
-    {search && <section aria-label={t("Landing search results")}>
+    {search && request && <section aria-label={t("Landing search results")}>
       <p role="status">{t("{feasible} of {evaluated} landing times meet the constraints. Showing {count}.", {
         feasible: search.n_feasible, evaluated: search.n_evaluated, count: search.candidates.length,
       })}</p>
-      <p className="muted text-sm">{t("Landing search window")} · <TimeRange start={search.earliest_utc} end={search.latest_utc} /><br />
+      <p className="muted text-sm">{t("Requested landing window (inclusive)")} · <TimeRange start={request.earliest} end={request.latest} /><br />
+        {showGrid && <>{t("First and last landing times on the model grid")} · <TimeRange start={new Date(grid.first).toISOString().replace(".000Z", "Z")} end={new Date(grid.last).toISOString().replace(".000Z", "Z")} /><br /></>}
         {t("Mission duration (h)")} · {search.mission_duration_h} · {t("Boundary precision")} ±{search.precision_h} h<br />
         {t("Run ID")} · <code className="break-all">{search.run_id}</code></p>
       <p className="muted text-sm">{t(objectives[search.constraints.objective])} · {t("Minimum joint visibility (%)")} {search.constraints.min_both_pct} · {t("Require sunlight at landing")} {t(search.constraints.require_sun_at_landing ? "Yes" : "No")} · {t("Require Earth visibility at landing")} {t(search.constraints.require_earth_at_landing ? "Yes" : "No")} · {t("Minimum spacing between proposals (h)")} {search.constraints.min_separation_h}</p>
@@ -123,7 +129,7 @@ export default function AlternativeDates({ result, site }: { result: TerrainSumm
           const link = candidateLink(candidate, search);
           return <li key={candidate.rank} value={candidate.rank} className="break-inside-avoid">
             <TimeRange start={candidate.landing_utc} end={candidate.mission_end_utc} />
-            <p className="muted text-sm">{t("{hours} h after the earliest landing time", { hours: candidate.slip_h })}</p>
+            <p className="muted text-sm">{t("{hours} h after the earliest landing time", { hours: Number(landingDelayHours(candidate.landing_utc, request.earliest).toFixed(6)) })}</p>
             <p>{t("Sun visible")} {candidate.sun_pct}% · {t("Earth visible")} {candidate.earth_pct}% · {t("Both visible")} {candidate.both_pct}%</p>
             {link && <a className="print:hidden" href={link} target="_blank" rel="noreferrer">{t("Inspect this mission window")}</a>}
           </li>;

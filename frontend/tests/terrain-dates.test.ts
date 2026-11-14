@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiError } from "../lib/api/client.ts";
-import { getTerrainDates, validateTerrainDates } from "../lib/api/terrain-dates.ts";
+import { getTerrainDateSites, getTerrainDates, validateTerrainDates } from "../lib/api/terrain-dates.ts";
 
 import { readTerrainDateLink, terrainDatesHref } from "../lib/terrain-date-link.ts";
 
@@ -37,6 +37,45 @@ function example(range: typeof request.first, visible: boolean) {
       } }],
   };
 }
+
+test("loads the selected run catalog and rejects duplicate sites, invalid IDs or a different run", async t => {
+  const site = { id: "apollo11", name: "Apollo 11", dem_source: "none:outside-pgda-coverage", horizon_method: "flat" };
+  let reply: unknown = { run_id: "test-run", sites: [site] };
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    const url = new URL(req.url);
+    assert.equal(req.method, "GET");
+    assert.equal(url.pathname, "/api/v1/sites");
+    assert.equal(url.searchParams.get("run_id"), "test-run");
+    assert.equal(url.searchParams.get("format"), "json");
+    return Response.json(reply);
+  });
+  assert.deepEqual(await getTerrainDateSites("test-run"), [{ id: site.id, name: site.name, demSource: site.dem_source, horizonMethod: site.horizon_method }]);
+  for (reply of [
+    { run_id: "different", sites: [site] }, { run_id: "test-run", sites: [site, site] }, { run_id: "test-run", sites: [{ ...site, dem_source: null }] },
+    { run_id: "test-run", sites: [{ ...site, id: "a,b" }] }, { run_id: "test-run", sites: [{ ...site, name: " " }] },
+  ]) await assert.rejects(getTerrainDateSites("test-run"), (e: unknown) => e instanceof ApiError && e.status === 502);
+});
+
+test("compares both windows for a non-default site and preserves its exact ID in the shared URL", async t => {
+  const sites: string[] = [];
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    const query = new URL(req.url).searchParams;
+    const id = query.get("site_ids")!;
+    sites.push(id);
+    assert.equal(query.get("run_id"), "test-run");
+    const second = query.get("start") === request.second.from;
+    const response = example(second ? request.second : request.first, second);
+    response.sites[0].id = id;
+    return Response.json(response);
+  });
+  for (const siteId of ["a3_haworth", "custom:-89.4500:222.6900"]) {
+    const pinned = { ...request, runId: "test-run", siteId };
+    const restored = readTerrainDateLink(new URL(terrainDatesHref(pinned), "https://example.org").searchParams);
+    const { first, second } = await getTerrainDates(restored);
+    assert.deepEqual([first.sites[0].id, second.sites[0].id], [siteId, siteId]);
+    assert.deepEqual(sites.splice(0), [siteId, siteId]);
+  }
+});
 
 test("requests two bounded one-site summaries, pins both when given a run, preserves zeros and clipping", async t => {
   const queries: URLSearchParams[] = [];
@@ -104,7 +143,9 @@ test("preserves partial coverage and rejects a stale site, run, manifest or UTC 
 test("rejects unsuitable date pairs and stops before the next GET on error or cancellation", async t => {
   assert.throws(() => validateTerrainDates({ ...request, second: request.first }), /equal duration/);
   assert.throws(() => validateTerrainDates({ ...request, second: { ...request.second, to: "2026-12-22T00:00:00Z" } }), /equal duration/);
-  assert.throws(() => validateTerrainDates({ ...request, siteId: "unknown" }), /Odysseus or Athena/);
+  for (const siteId of ["", "im1_odysseus,im2_athena", "custom/invalid", "x".repeat(65)]) {
+    assert.throws(() => validateTerrainDates({ ...request, siteId }), /valid site ID/);
+  }
   assert.throws(() => validateTerrainDates({ ...request, runId: "" }), /valid model run ID/);
   const controller = new AbortController();
   let calls = 0;

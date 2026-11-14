@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateTerrainWindow, validateWindow } from "../lib/api/client";
+import { defaultTerrainSites, defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateTerrainWindow, validateWindow } from "../lib/api/client";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainResult from "./terrain-result";
@@ -47,6 +47,7 @@ export default function Navigator() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [qaEnabled, setQaEnabled] = useState(false);
   const importDialog = useRef<HTMLDialogElement>(null);
+  const recoverPinnedImport = useRef(false);
   const loadGeneration = useRef(0);
   const loadFocus = useRef<Element | null>(null);
   const lastLocation = useRef<string | null>(null);
@@ -116,7 +117,7 @@ export default function Navigator() {
   }
 
   function acceptTerrain(next: TerrainSummary, reset: boolean, request?: WindowRequest, target?: TerrainTarget) {
-    const { siteIndex, sample } = !reset && request ? readTerrainObservation(new URLSearchParams(window.location.search), next) : { siteIndex: 0, sample: 0 };
+    const { siteIndex, sample } = !reset ? readTerrainObservation(new URLSearchParams(window.location.search), next) : { siteIndex: 0, sample: 0 };
     let url: URL | undefined;
     if (request) {
       url = new URL(window.location.pathname, window.location.origin);
@@ -258,12 +259,25 @@ export default function Navigator() {
     try {
       if (file.size > MAX_FILE_BYTES) throw new Error("Choose a JSON dataset of 5 MiB or less.");
       const input = JSON.parse(await file.text());
-      const next = input?.schema_version === "lunarnav-dataset-1" ? parseTerrainSummary(input) : validateDataset(input);
+      const pin = recoverPinnedImport.current && retryLoad?.target && !retryLoad.reset ? retryLoad : null;
+      if (pin && input?.schema_version !== "lunarnav-dataset-1") throw new Error("Choose a terrain export for the shared model run.");
+      const next = input?.schema_version === "lunarnav-dataset-1" ? parseTerrainSummary(input, pin?.request) : validateDataset(input);
       if (generation === loadGeneration.current) {
         if ("schema_version" in next) {
           const params = new URLSearchParams(window.location.search);
           if (!selection && sharedDatasetVersion(params) !== null) throw new Error(needsRelease);
-          acceptTerrain(next, true);
+          if (pin?.target) {
+            if (next.run.run_id !== pin.target.run_id) throw new Error("The returned model run differs from the shared link.");
+            if (next.sites.map(site => site.id).join(",") !== (pin.target.site_id ?? defaultTerrainSites))
+              throw new Error("The returned sites do not match the requested comparison.");
+            // A series may retain transitions between its regular samples. The range step is the native grid.
+            const spacing = Math.max(1, Math.floor(pin.request.resolutionSeconds / next.range.step_s)) * next.range.step_s;
+            if (next.sites.some(site => site.coverage_in_range !== "missing" && site.series?.step_s !== spacing))
+              throw new Error("The export does not contain the observation series at the shared sampling step.");
+          }
+          // Local recovery restores the pinned observation without offering live actions.
+          acceptTerrain(next, !pin);
+          if (pin) setRequestWindow(pin.request);
           setRetryLoad(null);
         } else {
           setRetryLoad(null); setSharedJobId("");
@@ -358,7 +372,7 @@ export default function Navigator() {
     <SiteHeader comparisonHref={comparisonHref} showSources={Boolean((data || terrain) && !loading)} />
     <div className="comparison-toolbar">
       <h1 className="comparison-heading">{t("Comparison tool")}</h1>
-      <button className="button outline" type="button" aria-haspopup="dialog" aria-controls="import-dialog" disabled={loading} onClick={() => importDialog.current?.showModal()}>{t("Import data")}</button>
+      <button className="button outline" type="button" aria-haspopup="dialog" aria-controls="import-dialog" disabled={loading} onClick={() => { recoverPinnedImport.current = false; importDialog.current?.showModal(); }}>{t("Import data")}</button>
     </div>
     <ImportDialog ref={importDialog} onImport={importFile} />
     <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")}>
@@ -372,10 +386,10 @@ export default function Navigator() {
     </div>
     <ApiControls request={requestWindow} loading={loading} onTerrainResult={(request, target) => void loadDemo(true, request, "", target)} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
-    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(locale === "vi" && error.syntax ? "JSON syntax error. Check the file before trying again." : error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target, true)}>{t("Retry API request")}</button> : null}{isMock ? <button className="button outline" onClick={() => void loadDemo(true, defaultWindow)}>{t("Reset to demonstration")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => importDialog.current?.showModal()}>{t("Import the correct dataset")}</button></div></div> : null}
+    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(locale === "vi" && error.syntax ? "JSON syntax error. Check the file before trying again." : error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target, true)}>{t("Retry API request")}</button> : null}{isMock ? <button className="button outline" onClick={() => void loadDemo(true, defaultWindow)}>{t("Reset to demonstration")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => { recoverPinnedImport.current = true; importDialog.current?.showModal(); }}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
-    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult result={terrain} catalogWindow={terrainView.link && terrain.sites.length === 2 ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
+    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
       <aside className="controls" aria-label={t("Comparison controls")}>
         <div className="mode-switch" role="group" aria-label={t("Comparison mode")}>{(["dates", "sites"] as const).map((mode) => <button key={mode} aria-pressed={selection.mode === mode} onClick={() => choose(a, mode)}>{mode === "dates" ? t("Compare dates") : t("Compare sites")}</button>)}</div>
         {selection.mode === "sites" && siteWindow ? <>

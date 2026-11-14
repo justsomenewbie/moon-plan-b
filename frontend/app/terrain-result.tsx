@@ -3,10 +3,11 @@ import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
 import { SiteResult, TimeRange } from "./terrain-site-result";
 import TerrainDates from "./terrain-dates";
+import TerrainPair from "./terrain-pair";
 import AlternativeDates from "./alternative-dates";
 
-export default function TerrainResult({ result, view, onSelect, onPrint, catalogWindow }: {
-  catalogWindow?: { from: string; to: string };
+export default function TerrainResult({ result, view, onSelect, onPrint, liveWindow }: {
+  liveWindow?: { from: string; to: string };
   result: TerrainSummary; view: { siteIndex: number; sample: number; link: string };
   onSelect: (siteIndex: number, sample: number) => void; onPrint: () => void;
 }) {
@@ -28,7 +29,8 @@ export default function TerrainResult({ result, view, onSelect, onPrint, catalog
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
 
-    {catalogWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={catalogWindow} />}
+    {liveWindow && <TerrainPair key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}
+    {liveWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={liveWindow} />}
 
     {result.sites.length > 0 && <TerrainObservations result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
 

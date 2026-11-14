@@ -92,12 +92,26 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   if (!response.ok) throw apiError(error, response.status);
   return withinRequestedWindow(validateDataset(data), request);
 }
+export const defaultTerrainSites = "im1_odysseus,im2_athena";
 export type TerrainTarget = { run_id: string; site_id?: string };
 const terrainCriteriaHours = [24, 72, 168];
+
+function producerExclusiveEnd(end: string) {
+  const fraction = /\.(\d{1,9})Z$/.exec(end);
+  const seconds = fraction ? end.slice(0, fraction.index) + "Z" : end;
+  const milliseconds = utcMillis(seconds, "End UTC");
+  if (!fraction || !/[1-9]/.test(fraction[1])) return end;
+  // The producer discards fractions before snapping up to its integer-second grid.
+  // Sending the next whole second preserves the requested exclusive grid boundary.
+  const next = new Date(milliseconds + 1000);
+  if (next.getUTCFullYear() > 9999) throw new ApiError("End UTC exceeds the supported four-digit year.", 422);
+  return next.toISOString().replace(".000Z", "Z");
+}
+
 export async function getTerrainAggregate(request: WindowRequest, siteIds: string, runId: string | undefined, withObservations: boolean, signal?: AbortSignal) {
   const sections = withObservations ? ["horizon", "series", "windows", "metrics", "criteria"] : ["windows", "metrics", "criteria"];
   const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
-    run_id: runId, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
+    run_id: runId, site_ids: siteIds, start: request.from, end: producerExclusiveEnd(request.to), step_s: request.resolutionSeconds,
     ...(withObservations ? { horizon_step_deg: 0.5, max_points: 10000 } : {}),
     include: sections.join(","), criteria_hours: terrainCriteriaHours.join(","),
   } } }).catch(error => {
@@ -119,7 +133,7 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
   if (target?.site_id) validateCustomWindow(request);
   else validateTerrainWindow(request);
-  return getTerrainAggregate(request, target?.site_id ?? "im1_odysseus,im2_athena", target?.run_id, true, signal);
+  return getTerrainAggregate(request, target?.site_id ?? defaultTerrainSites, target?.run_id, true, signal);
 }
 export function validateJobRequest(request: JobRequest) {
   validateWindow(request);

@@ -115,13 +115,13 @@
           {
             "schema": {
               "type": "number",
-              "exclusiveMinimum": 0,
+              "minimum": 0,
               "maximum": 1000000
             },
             "in": "query",
             "name": "night_load_w",
             "required": false,
-            "description": "Reference load while the Sun is hidden, W (include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival."
+            "description": "Reference load while the Sun is hidden, W, >= 0 (as POST /mission/survival night_load_w; include=survival_hint): survival_hint.required_battery_wh = the battery this load needs to bridge the longest dark period of the range (null when omitted). Ignored without survival_hint. For a real panel and day load use POST /mission/survival."
           }
         ],
         "responses": {
@@ -633,6 +633,235 @@
           },
           "504": {
             "description": "Python timed out (PYTHON_TIMEOUT)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sites": {
+      "get": {
+        "operationId": "listSites",
+        "summary": "Site catalog of a run (list + map markers)",
+        "tags": [
+          "sites"
+        ],
+        "description": "Sorted by rank (default weights, = summary.csv). format=geojson returns application/geo+json with Point features and Artemis III region Polygons.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "example": "pf_21c3f3f6dc56b1e1",
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "description": "Run to read; default = the run flagged is_default (GET /api/v1/runs)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,32}$"
+            },
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "description": "Filter by catalog group: south_pole | reference | apollo | far_side (custom sites have group \"\")"
+          },
+          {
+            "schema": {
+              "default": "json",
+              "type": "string",
+              "enum": [
+                "json",
+                "geojson"
+              ]
+            },
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "description": "json -> application/json SitesResponse; geojson -> application/geo+json FeatureCollection (points + Artemis III region polygons)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sites of the run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitesResponse"
+                }
+              },
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitesGeoJson"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified: the ETag sent in If-None-Match is current (empty body)"
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/compare": {
+      "post": {
+        "operationId": "compareSites",
+        "summary": "Compare 2-4 sites over a date range",
+        "tags": [
+          "analysis"
+        ],
+        "description": "Full run -> metrics verbatim from the precompute (same numbers as Python); sub-range -> recomputed exactly like lunarnav.windows.compute_metrics. ranking ranks only the compared sites (rank 1..N among them).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported media type (UNSUPPORTED_MEDIA_TYPE): send Content-Type: application/json",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2327,7 +2556,7 @@
             "anyOf": [
               {
                 "type": "number",
-                "exclusiveMinimum": 0
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -2748,7 +2977,7 @@
             "anyOf": [
               {
                 "type": "number",
-                "exclusiveMinimum": 0
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -4325,6 +4554,1548 @@
             "mode": "quick"
           }
         ]
+      },
+      "SitesResponse": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Sample step of the run, seconds",
+            "examples": [
+              3600
+            ]
+          },
+          "precision_h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "= step_s / 3600. Every boundary and \"hours until\" value is accurate to +- this many hours.",
+            "examples": [
+              1
+            ]
+          },
+          "sites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteListItem"
+            }
+          }
+        },
+        "required": [
+          "run_id",
+          "step_s",
+          "precision_h",
+          "sites"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "run_id": "pf_21c3f3f6dc56b1e1",
+            "step_s": 3600,
+            "precision_h": 1,
+            "sites": [
+              {
+                "id": "ref_connecting_ridge_c1",
+                "name": "Shackleton-de Gerlache connecting ridge, point C1",
+                "group": "reference",
+                "origin": "catalog",
+                "lat_deg": -89.4505,
+                "lon_deg": 222.84,
+                "map": {
+                  "projection": "south_polar_stereographic_R1737.4km",
+                  "x_km": -11.33,
+                  "y_km": -12.218
+                },
+                "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+                "horizon_method": "raymarch",
+                "rank": 1,
+                "score": 71.162037,
+                "pct_sun": 98.564815,
+                "pct_earth": 53.611111,
+                "pct_both": 52.175926,
+                "longest_dark_h": 26,
+                "longest_comms_gap_h": 326
+              },
+              {
+                "id": "ref_shackleton_rim",
+                "name": "Shackleton crater rim, point S",
+                "group": "reference",
+                "origin": "catalog",
+                "lat_deg": -89.7849,
+                "lon_deg": 203.97,
+                "map": {
+                  "projection": "south_polar_stereographic_R1737.4km",
+                  "x_km": -2.65,
+                  "y_km": -5.96
+                },
+                "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+                "horizon_method": "raymarch",
+                "rank": 2,
+                "score": 70.185186,
+                "pct_sun": 97.268519,
+                "pct_earth": 52.268519,
+                "pct_both": 51.990741,
+                "longest_dark_h": 29,
+                "longest_comms_gap_h": 334
+              }
+            ]
+          }
+        ]
+      },
+      "SiteListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string",
+            "description": "Catalog group (\"\" for custom sites)"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "catalog",
+              "custom"
+            ],
+            "description": "catalog = lunarnav/catalog/sites.json; custom = user coordinates (POST /jobs)"
+          },
+          "lat_deg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Planetocentric latitude, deg [-90, 90]"
+          },
+          "lon_deg": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 360,
+            "description": "EAST longitude, deg [0, 360)"
+          },
+          "map": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MapPoint"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dem_source": {
+            "type": "string",
+            "description": "DEM used for the horizon; `none:outside-<dem>-coverage` = smooth-sphere horizon (show a warning)"
+          },
+          "horizon_method": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Rank in this run with the default weights"
+          },
+          "score": {
+            "type": "number"
+          },
+          "pct_sun": {
+            "type": "number"
+          },
+          "pct_earth": {
+            "type": "number"
+          },
+          "pct_both": {
+            "type": "number"
+          },
+          "longest_dark_h": {
+            "type": "number"
+          },
+          "longest_comms_gap_h": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "group",
+          "origin",
+          "lat_deg",
+          "lon_deg",
+          "map",
+          "dem_source",
+          "horizon_method",
+          "rank",
+          "score",
+          "pct_sun",
+          "pct_earth",
+          "pct_both",
+          "longest_dark_h",
+          "longest_comms_gap_h"
+        ],
+        "additionalProperties": false
+      },
+      "MapPoint": {
+        "type": "object",
+        "properties": {
+          "projection": {
+            "type": "string",
+            "const": "south_polar_stereographic_R1737.4km"
+          },
+          "x_km": {
+            "type": "number"
+          },
+          "y_km": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "projection",
+          "x_km",
+          "y_km"
+        ],
+        "additionalProperties": false,
+        "description": "Position on the LOLA south polar stereographic map (sphere R = 1737.4 km); null for sites north of 60 S"
+      },
+      "SitesGeoJson": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "FeatureCollection"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteFeature"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "run_id",
+          "features"
+        ],
+        "additionalProperties": false,
+        "description": "GeoJSON FeatureCollection in lunar coordinates (planetocentric lat, EAST lon, MOON_ME)",
+        "examples": [
+          {
+            "type": "FeatureCollection",
+            "run_id": "pf_21c3f3f6dc56b1e1",
+            "features": [
+              {
+                "type": "Feature",
+                "id": "a3_haworth",
+                "geometry": {
+                  "type": "Point",
+                  "coordinates": [
+                    336.328186,
+                    -86.752966
+                  ]
+                },
+                "properties": {
+                  "kind": "site",
+                  "site_id": "a3_haworth",
+                  "name": "Artemis III region: Haworth",
+                  "group": "south_pole",
+                  "origin": "catalog",
+                  "rank": 5,
+                  "score": 23.662037,
+                  "pct_sun": 32.87037,
+                  "pct_earth": 35.046296,
+                  "pct_both": 0,
+                  "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]"
+                }
+              },
+              {
+                "type": "Feature",
+                "id": "a3_haworth#region",
+                "geometry": {
+                  "type": "Polygon",
+                  "coordinates": [
+                    [
+                      [
+                        325.018154,
+                        -87.393534
+                      ],
+                      [
+                        347.638218,
+                        -87.393534
+                      ],
+                      [
+                        347.638218,
+                        -86.112398
+                      ],
+                      [
+                        325.018154,
+                        -86.112398
+                      ],
+                      [
+                        325.018154,
+                        -87.393534
+                      ]
+                    ]
+                  ]
+                },
+                "properties": {
+                  "kind": "region",
+                  "site_id": "a3_haworth",
+                  "name": "Artemis III region: Haworth",
+                  "group": "south_pole",
+                  "origin": "catalog",
+                  "rank": 5,
+                  "score": 23.662037,
+                  "pct_sun": 32.87037,
+                  "pct_earth": 35.046296,
+                  "pct_both": 0,
+                  "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "SiteFeature": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Feature"
+          },
+          "id": {
+            "type": "string",
+            "description": "site id (Point) or `<site id>#region` (Polygon)"
+          },
+          "geometry": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Point"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Polygon"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      }
+                    },
+                    "description": "Closed rings of [lon_east_deg, lat_deg]"
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "site",
+                  "region"
+                ]
+              },
+              "site_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+                "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+                "examples": [
+                  "ref_connecting_ridge_c1"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "group": {
+                "type": "string"
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "catalog",
+                  "custom"
+                ],
+                "description": "catalog = lunarnav/catalog/sites.json; custom = user coordinates (POST /jobs)"
+              },
+              "rank": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "score": {
+                "type": "number"
+              },
+              "pct_sun": {
+                "type": "number"
+              },
+              "pct_earth": {
+                "type": "number"
+              },
+              "pct_both": {
+                "type": "number"
+              },
+              "dem_source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "site_id",
+              "name",
+              "group",
+              "origin",
+              "rank",
+              "score",
+              "pct_sun",
+              "pct_earth",
+              "pct_both",
+              "dem_source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "geometry",
+          "properties"
+        ],
+        "additionalProperties": false
+      },
+      "ClippedWindow": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "First sample of the window",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "EXCLUSIVE end (first sample of the next window, or range end)",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "duration_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "state": {
+            "type": "boolean",
+            "description": "true = visible (Sun lit / Earth in view / both); false = dark / comms gap"
+          },
+          "truncated_start": {
+            "type": "boolean",
+            "description": "Window starts at the RUN start - its true start is earlier or unknown"
+          },
+          "truncated_end": {
+            "type": "boolean",
+            "description": "Window runs to the RUN end"
+          },
+          "clipped_start": {
+            "type": "boolean",
+            "description": "start was clipped to the QUERY start (differs from truncated_* = run boundary)"
+          },
+          "clipped_end": {
+            "type": "boolean",
+            "description": "end was clipped to the QUERY end"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "duration_h",
+          "state",
+          "truncated_start",
+          "truncated_end",
+          "clipped_start",
+          "clipped_end"
+        ],
+        "additionalProperties": false,
+        "description": "A window intersected with the query range [start, end)",
+        "examples": [
+          {
+            "start": "2026-01-01T00:00:00Z",
+            "end": "2026-03-29T00:00:00Z",
+            "duration_h": 2088,
+            "state": true,
+            "truncated_start": true,
+            "truncated_end": false,
+            "clipped_start": false,
+            "clipped_end": false
+          }
+        ]
+      },
+      "CompareRequest": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "description": "Default: the default run",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "site_ids": {
+            "minItems": 2,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+              "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+              "examples": [
+                "ref_connecting_ridge_c1"
+              ]
+            },
+            "description": "2-4 distinct site ids"
+          },
+          "start": {
+            "description": "Default: run start",
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+          },
+          "end": {
+            "description": "EXCLUSIVE end; default: run end",
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+          },
+          "weights": {
+            "description": "Default 0.4 pct_sun + 0.3 pct_earth + 0.3 pct_both",
+            "$ref": "#/components/schemas/RankWeightsInput"
+          },
+          "include": {
+            "type": "object",
+            "properties": {
+              "windows": {
+                "description": "Window kinds to embed per site",
+                "minItems": 1,
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WindowKindInput"
+                }
+              },
+              "series": {
+                "description": "Embed a downsampled series per site",
+                "type": "object",
+                "properties": {
+                  "fields": {
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SeriesField"
+                    }
+                  },
+                  "max_points": {
+                    "default": 1500,
+                    "type": "integer",
+                    "minimum": 2,
+                    "maximum": 5000
+                  },
+                  "agg": {
+                    "default": "sample",
+                    "type": "string",
+                    "enum": [
+                      "sample",
+                      "minmax"
+                    ],
+                    "description": "Downsampling when the range has more samples than max_points (bins of bin_s = ceil(n / max_points) * step_s, aligned on start; the last bin may be partial). sample: value of the first sample of each bin. minmax: {min,max} per bin for numbers (elevation extremes are preserved, e.g. draw a band between min and max); booleans -> fraction of true samples in the bin (0..1, same value in min and max; 0 < value < 1 <=> the bin contains a transition). In both modes the exact transitions are listed in `events`. With bin_s = step_s, agg=sample returns the stored values unchanged."
+                  }
+                },
+                "required": [
+                  "fields"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "site_ids"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "site_ids": [
+              "ref_connecting_ridge_c1",
+              "a3_haworth",
+              "apollo11"
+            ],
+            "start": "2026-01-01T00:00:00Z",
+            "end": "2026-04-01T00:00:00Z",
+            "weights": {
+              "pct_sun": 0.4,
+              "pct_earth": 0.3,
+              "pct_both": 0.3
+            },
+            "include": {
+              "windows": [
+                "sun"
+              ]
+            }
+          }
+        ]
+      },
+      "CompareResponse": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Sample step of the run, seconds",
+            "examples": [
+              3600
+            ]
+          },
+          "precision_h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "= step_s / 3600. Every boundary and \"hours until\" value is accurate to +- this many hours.",
+            "examples": [
+              1
+            ]
+          },
+          "range": {
+            "$ref": "#/components/schemas/TimeRange"
+          },
+          "weights": {
+            "$ref": "#/components/schemas/RankWeights"
+          },
+          "ranking": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankingRow"
+            }
+          },
+          "sites": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CompareSite"
+            },
+            "description": "site id -> details (same ids as site_ids)"
+          }
+        },
+        "required": [
+          "run_id",
+          "step_s",
+          "precision_h",
+          "range",
+          "weights",
+          "ranking",
+          "sites"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "run_id": "pf_21c3f3f6dc56b1e1",
+            "step_s": 3600,
+            "precision_h": 1,
+            "range": {
+              "start": "2026-01-01T00:00:00Z",
+              "end": "2026-04-01T00:00:00Z",
+              "step_s": 3600,
+              "n_samples": 2160
+            },
+            "weights": {
+              "pct_sun": 0.4,
+              "pct_earth": 0.3,
+              "pct_both": 0.3
+            },
+            "ranking": [
+              {
+                "rank": 1,
+                "site_id": "ref_connecting_ridge_c1",
+                "name": "Shackleton-de Gerlache connecting ridge, point C1",
+                "group": "reference",
+                "score": 71.162037,
+                "pct_sun": 98.564815,
+                "pct_earth": 53.611111,
+                "pct_both": 52.175926,
+                "pct_sun_no_earth": 46.388889,
+                "longest_dark_h": 26,
+                "longest_dark_truncated": false,
+                "longest_comms_gap_h": 326,
+                "longest_comms_gap_truncated": false,
+                "mean_power_tracking": 0.971631,
+                "reasons": [
+                  "Sun visible 98.6% of the time",
+                  "Earth in view 53.6%",
+                  "Sun and Earth together 52.2%",
+                  "longest night only 26 h",
+                  "longest comms gap 326 h"
+                ]
+              },
+              {
+                "rank": 2,
+                "site_id": "apollo11",
+                "name": "Apollo 11 LM Eagle (Tranquility Base)",
+                "group": "apollo",
+                "score": 65.680555,
+                "pct_sun": 50.972222,
+                "pct_earth": 100,
+                "pct_both": 50.972222,
+                "pct_sun_no_earth": 0,
+                "longest_dark_h": 354,
+                "longest_dark_truncated": false,
+                "longest_comms_gap_h": 0,
+                "longest_comms_gap_truncated": false,
+                "mean_power_tracking": 0.508127,
+                "reasons": [
+                  "Sun visible 51.0% of the time",
+                  "Earth in view 100.0%",
+                  "Sun and Earth together 51.0%",
+                  "longest night 354 h"
+                ]
+              }
+            ],
+            "sites": {
+              "ref_connecting_ridge_c1": {
+                "metrics": {
+                  "duration_h": 2160,
+                  "longest_comms_gap_h": 326,
+                  "longest_comms_gap_truncated": false,
+                  "longest_dark_h": 26,
+                  "longest_dark_truncated": false,
+                  "longest_earth_h": 334,
+                  "longest_earth_truncated": false,
+                  "longest_sun_h": 2088,
+                  "longest_sun_truncated": true,
+                  "mean_power_horizontal": 0.009032,
+                  "mean_power_tracking": 0.971631,
+                  "mean_sun_el_lit_deg": 0.340818,
+                  "n_comms_gaps": 4,
+                  "n_dark_windows": 2,
+                  "n_earth_windows": 4,
+                  "n_sun_windows": 3,
+                  "pct_both": 52.175926,
+                  "pct_earth": 53.611111,
+                  "pct_sun": 98.564815,
+                  "pct_sun_no_earth": 46.388889
+                },
+                "warnings": [],
+                "windows": {
+                  "sun": [
+                    {
+                      "start": "2026-01-01T00:00:00Z",
+                      "end": "2026-03-29T00:00:00Z",
+                      "duration_h": 2088,
+                      "state": true,
+                      "truncated_start": true,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-03-29T00:00:00Z",
+                      "end": "2026-03-30T02:00:00Z",
+                      "duration_h": 26,
+                      "state": false,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-03-30T02:00:00Z",
+                      "end": "2026-03-30T05:00:00Z",
+                      "duration_h": 3,
+                      "state": true,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-03-30T05:00:00Z",
+                      "end": "2026-03-30T10:00:00Z",
+                      "duration_h": 5,
+                      "state": false,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-03-30T10:00:00Z",
+                      "end": "2026-04-01T00:00:00Z",
+                      "duration_h": 38,
+                      "state": true,
+                      "truncated_start": false,
+                      "truncated_end": true,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    }
+                  ]
+                }
+              },
+              "apollo11": {
+                "metrics": {
+                  "duration_h": 2160,
+                  "longest_comms_gap_h": 0,
+                  "longest_comms_gap_truncated": false,
+                  "longest_dark_h": 354,
+                  "longest_dark_truncated": false,
+                  "longest_earth_h": 2160,
+                  "longest_earth_truncated": true,
+                  "longest_sun_h": 357,
+                  "longest_sun_truncated": false,
+                  "mean_power_horizontal": 0.328234,
+                  "mean_power_tracking": 0.508127,
+                  "mean_sun_el_lit_deg": 45.906382,
+                  "n_comms_gaps": 0,
+                  "n_dark_windows": 3,
+                  "n_earth_windows": 1,
+                  "n_sun_windows": 4,
+                  "pct_both": 50.972222,
+                  "pct_earth": 100,
+                  "pct_sun": 50.972222,
+                  "pct_sun_no_earth": 0
+                },
+                "warnings": [
+                  "smooth-sphere horizon (dem_source none:outside-pgda-coverage)",
+                  "flat horizon: terrain shadowing not modelled"
+                ],
+                "windows": {
+                  "sun": [
+                    {
+                      "start": "2026-01-01T00:00:00Z",
+                      "end": "2026-01-09T05:00:00Z",
+                      "duration_h": 197,
+                      "state": true,
+                      "truncated_start": true,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-01-09T05:00:00Z",
+                      "end": "2026-01-23T23:00:00Z",
+                      "duration_h": 354,
+                      "state": false,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-01-23T23:00:00Z",
+                      "end": "2026-02-07T20:00:00Z",
+                      "duration_h": 357,
+                      "state": true,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-02-07T20:00:00Z",
+                      "end": "2026-02-22T13:00:00Z",
+                      "duration_h": 353,
+                      "state": false,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-02-22T13:00:00Z",
+                      "end": "2026-03-09T10:00:00Z",
+                      "duration_h": 357,
+                      "state": true,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-03-09T10:00:00Z",
+                      "end": "2026-03-24T02:00:00Z",
+                      "duration_h": 352,
+                      "state": false,
+                      "truncated_start": false,
+                      "truncated_end": false,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    },
+                    {
+                      "start": "2026-03-24T02:00:00Z",
+                      "end": "2026-04-01T00:00:00Z",
+                      "duration_h": 190,
+                      "state": true,
+                      "truncated_start": false,
+                      "truncated_end": true,
+                      "clipped_start": false,
+                      "clipped_end": false
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CompareSite": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "$ref": "#/components/schemas/Metrics"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/WindowsByKind"
+          },
+          "series": {
+            "$ref": "#/components/schemas/SeriesBlock"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "metrics",
+          "warnings"
+        ],
+        "additionalProperties": false
+      },
+      "Metrics": {
+        "type": "object",
+        "properties": {
+          "duration_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Length of the evaluated range, h"
+          },
+          "pct_sun": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "% of time the Sun is visible (upper limb above terrain)"
+          },
+          "pct_earth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "% of time the Earth is visible (direct-to-Earth comms)"
+          },
+          "pct_both": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "% of time with Sun AND Earth"
+          },
+          "pct_sun_no_earth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "% of time with Sun but no Earth"
+          },
+          "longest_dark_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Longest continuous dark period, h"
+          },
+          "longest_dark_truncated": {
+            "type": "boolean",
+            "description": "true -> touches the range boundary: value is a lower bound"
+          },
+          "longest_comms_gap_h": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Longest continuous period without Earth, h"
+          },
+          "longest_comms_gap_truncated": {
+            "type": "boolean"
+          },
+          "longest_sun_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "longest_sun_truncated": {
+            "type": "boolean"
+          },
+          "longest_earth_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "longest_earth_truncated": {
+            "type": "boolean"
+          },
+          "n_sun_windows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "n_dark_windows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "n_earth_windows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "n_comms_gaps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "mean_sun_el_lit_deg": {
+            "description": "Mean Sun elevation over lit samples; null if never lit",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "mean_power_horizontal": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Mean relative power of a flat-lying panel (0..1)"
+          },
+          "mean_power_tracking": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Mean relative power of a Sun-tracking panel (0..1)"
+          }
+        },
+        "required": [
+          "duration_h",
+          "pct_sun",
+          "pct_earth",
+          "pct_both",
+          "pct_sun_no_earth",
+          "longest_dark_h",
+          "longest_dark_truncated",
+          "longest_comms_gap_h",
+          "longest_comms_gap_truncated",
+          "longest_sun_h",
+          "longest_sun_truncated",
+          "longest_earth_h",
+          "longest_earth_truncated",
+          "n_sun_windows",
+          "n_dark_windows",
+          "n_earth_windows",
+          "n_comms_gaps",
+          "mean_sun_el_lit_deg",
+          "mean_power_horizontal",
+          "mean_power_tracking"
+        ],
+        "additionalProperties": false,
+        "description": "Time-weighted metrics over a range (docs/OUTPUT_SPEC.md section 3.6)",
+        "examples": [
+          {
+            "duration_h": 2160,
+            "pct_sun": 98.564815,
+            "pct_earth": 53.611111,
+            "pct_both": 52.175926,
+            "pct_sun_no_earth": 46.388889,
+            "longest_dark_h": 26,
+            "longest_dark_truncated": false,
+            "longest_comms_gap_h": 326,
+            "longest_comms_gap_truncated": false,
+            "longest_sun_h": 2088,
+            "longest_sun_truncated": true,
+            "longest_earth_h": 334,
+            "longest_earth_truncated": false,
+            "n_sun_windows": 3,
+            "n_dark_windows": 2,
+            "n_earth_windows": 4,
+            "n_comms_gaps": 4,
+            "mean_sun_el_lit_deg": 0.340818,
+            "mean_power_horizontal": 0.009032,
+            "mean_power_tracking": 0.971631
+          }
+        ]
+      },
+      "RankWeights": {
+        "type": "object",
+        "properties": {
+          "pct_sun": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pct_earth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pct_both": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pct_sun_no_earth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": false,
+        "description": "score = sum(weight[k] * metric[k]) (0..100 when weights sum to 1). Missing keys = 0; at least one weight must be > 0. Default 0.4 pct_sun + 0.3 pct_earth + 0.3 pct_both.",
+        "examples": [
+          {
+            "pct_sun": 0.4,
+            "pct_earth": 0.3,
+            "pct_both": 0.3
+          }
+        ]
+      },
+      "RankWeightsInput": {
+        "type": "object",
+        "properties": {
+          "pct_sun": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pct_earth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pct_both": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pct_sun_no_earth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": false,
+        "description": "score = sum(weight[k] * metric[k]) (0..100 when weights sum to 1). Missing keys = 0; at least one weight must be > 0. Default 0.4 pct_sun + 0.3 pct_earth + 0.3 pct_both.",
+        "examples": [
+          {
+            "pct_sun": 0.4,
+            "pct_earth": 0.3,
+            "pct_both": 0.3
+          }
+        ]
+      },
+      "RankingRow": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "1 = best. Ties -> shorter longest_dark_h, then site_id"
+          },
+          "site_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "pct_sun": {
+            "type": "number"
+          },
+          "pct_earth": {
+            "type": "number"
+          },
+          "pct_both": {
+            "type": "number"
+          },
+          "pct_sun_no_earth": {
+            "type": "number"
+          },
+          "longest_dark_h": {
+            "type": "number"
+          },
+          "longest_dark_truncated": {
+            "type": "boolean"
+          },
+          "longest_comms_gap_h": {
+            "type": "number"
+          },
+          "longest_comms_gap_truncated": {
+            "type": "boolean"
+          },
+          "mean_power_tracking": {
+            "type": "number"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Short human-readable reasons for this rank (for UI tooltips)"
+          }
+        },
+        "required": [
+          "rank",
+          "site_id",
+          "name",
+          "group",
+          "score",
+          "pct_sun",
+          "pct_earth",
+          "pct_both",
+          "pct_sun_no_earth",
+          "longest_dark_h",
+          "longest_dark_truncated",
+          "longest_comms_gap_h",
+          "longest_comms_gap_truncated",
+          "mean_power_tracking",
+          "reasons"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "rank": 1,
+            "site_id": "ref_connecting_ridge_c1",
+            "name": "Shackleton-de Gerlache connecting ridge, point C1",
+            "group": "reference",
+            "score": 71.162037,
+            "pct_sun": 98.564815,
+            "pct_earth": 53.611111,
+            "pct_both": 52.175926,
+            "pct_sun_no_earth": 46.388889,
+            "longest_dark_h": 26,
+            "longest_dark_truncated": false,
+            "longest_comms_gap_h": 326,
+            "longest_comms_gap_truncated": false,
+            "mean_power_tracking": 0.971631,
+            "reasons": [
+              "Sun visible 98.6% of the time",
+              "longest night only 26 h",
+              "Earth in view 53.6%"
+            ]
+          }
+        ]
+      },
+      "SeriesBlock": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Sample step of the run, seconds",
+            "examples": [
+              3600
+            ]
+          },
+          "bin_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Spacing of returned points, s (multiple of step_s)"
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Points per field"
+          },
+          "agg": {
+            "type": "string",
+            "enum": [
+              "sample",
+              "minmax"
+            ],
+            "description": "Downsampling when the range has more samples than max_points (bins of bin_s = ceil(n / max_points) * step_s, aligned on start; the last bin may be partial). sample: value of the first sample of each bin. minmax: {min,max} per bin for numbers (elevation extremes are preserved, e.g. draw a band between min and max); booleans -> fraction of true samples in the bin (0..1, same value in min and max; 0 < value < 1 <=> the bin contains a transition). In both modes the exact transitions are listed in `events`. With bin_s = step_s, agg=sample returns the stored values unchanged."
+          },
+          "fields": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/SeriesMinMax"
+                }
+              ],
+              "description": "agg=sample: array of values (number | boolean | null); agg=minmax: {min:[...], max:[...]}"
+            },
+            "description": "field name -> values (same length n)"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "step_s",
+          "bin_s",
+          "n",
+          "agg",
+          "fields"
+        ],
+        "additionalProperties": false
+      },
+      "SeriesField": {
+        "type": "string",
+        "enum": [
+          "sun_az_deg",
+          "sun_el_deg",
+          "sun_dist_km",
+          "sun_semidiam_deg",
+          "horizon_el_sun_deg",
+          "sun_clearance_deg",
+          "sun_fraction",
+          "sun_visible",
+          "power_horizontal",
+          "power_tracking",
+          "irradiance_tracking_wm2",
+          "earth_az_deg",
+          "earth_el_deg",
+          "earth_dist_km",
+          "earth_semidiam_deg",
+          "horizon_el_earth_deg",
+          "earth_clearance_deg",
+          "earth_fraction",
+          "earth_visible",
+          "both_visible",
+          "hours_until_sunset",
+          "hours_until_sunrise",
+          "hours_until_earthset",
+          "hours_until_earthrise"
+        ],
+        "description": "A visibility.csv column name"
+      },
+      "SeriesMinMax": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "array",
+            "items": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "max": {
+            "type": "array",
+            "items": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ],
+        "additionalProperties": false
+      },
+      "TimeRange": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Snapped start actually used",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "end": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "Snapped EXCLUSIVE end actually used",
+            "examples": [
+              "2026-01-01T00:00:00Z"
+            ]
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Sample step of the run, seconds",
+            "examples": [
+              3600
+            ]
+          },
+          "n_samples": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "step_s",
+          "n_samples"
+        ],
+        "additionalProperties": false
+      },
+      "WindowKindInput": {
+        "type": "string",
+        "enum": [
+          "sun",
+          "earth",
+          "both"
+        ],
+        "description": "sun: Sun visible (true) / dark (false); earth: Earth visible = DTE link (true) / comms gap (false); both: sun AND earth"
+      },
+      "WindowsByKind": {
+        "type": "object",
+        "properties": {
+          "sun": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClippedWindow"
+            }
+          },
+          "earth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClippedWindow"
+            }
+          },
+          "both": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClippedWindow"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Only the requested kinds are present"
       }
     }
   }

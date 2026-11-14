@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findAltDates, type AltDatesRequest } from "../lib/api/alt-dates.ts";
+import { findAltDates, landingDelayHours, landingGridBounds, type AltDatesRequest } from "../lib/api/alt-dates.ts";
 import { ApiError } from "../lib/api/client.ts";
 
 const request: AltDatesRequest = {
@@ -132,4 +132,51 @@ test("joint visibility respects both marginal percentages even without a minimum
   await assert.rejects(findAltDates(search, 3600, undefined, grid), (error: unknown) => error instanceof ApiError && error.status === 502);
   Object.assign(candidate, { sun_pct: 66.666667, earth_pct: 66.666667, both_pct: 33.333333 });
   await findAltDates(search, 3600, undefined, grid);
+});
+
+
+test("accepts older exact and newer inward grid bounds while retaining delays from the requested start", async t => {
+  const results = example();
+  t.mock.method(globalThis, "fetch", async () => Response.json(results));
+  const { first, last } = landingGridBounds(request.earliest, request.latest, 3600, grid);
+  assert.deepEqual([first, last], [Date.parse("2026-11-15T04:00:00Z"), Date.parse("2026-11-15T06:00:00Z")]);
+  const exact = await findAltDates(request, 3600, undefined, grid);
+  assert.deepEqual(exact.candidates.map(c => c.slip_h), [1.5, 2.5]);
+  Object.assign(results, { earliest_utc: "2026-11-15T04:00:00Z", latest_utc: "2026-11-15T06:00:00Z" });
+  for (const candidate of results.candidates) candidate.slip_h -= 0.5;
+  const snapped = await findAltDates(request, 3600, undefined, grid);
+  assert.deepEqual(snapped.candidates.map(c => c.slip_h), [1, 2]);
+  assert.deepEqual(snapped.candidates.map(c => landingDelayHours(c.landing_utc, request.earliest)), [1.5, 2.5]);
+  results.candidates[0].slip_h = 1.5;
+  await assert.rejects(findAltDates(request, 3600, undefined, grid), /invalid proposed landing window/);
+});
+
+test("checks both ends of the inward grid pair against the supplied model origin", async t => {
+  const first = "2026-11-15T04:00:00Z", last = "2026-11-15T06:00:00Z";
+  const results = { ...example(), candidates: [], n_feasible: 0, n_evaluated: 3 };
+  t.mock.method(globalThis, "fetch", async () => Response.json(results));
+  for (const [earliest_utc, latest_utc] of [
+    [grid, last], [first, "2026-11-15T07:00:00Z"], [request.earliest, last], [first, request.latest],
+    ["2026-11-15T05:00:00Z", last], [first, "2026-11-15T05:00:00Z"], [last, first],
+  ]) {
+    Object.assign(results, { earliest_utc, latest_utc });
+    await assert.rejects(findAltDates(request, 3600, undefined, grid), /differs from the request/);
+  }
+  Object.assign(results, { earliest_utc: first, latest_utc: last });
+  await assert.rejects(findAltDates(request, 3600), /differs from the request/);
+  await assert.rejects(findAltDates(request, 3600, undefined, "2026-11-15T00:15:00Z"), /differs from the request/);
+  Object.assign(results, { earliest_utc: "2026-11-15T04:15:00Z", latest_utc: "2026-11-15T06:15:00Z" });
+  await findAltDates(request, 3600, undefined, "2026-11-15T00:15:00Z");
+});
+
+test("preserves the producer's 422 when the requested interval contains no grid point", async t => {
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    calls++;
+    return Response.json({ detail: "No landing time on the model grid" }, { status: 422 });
+  });
+  const noGrid = { ...request, latest: "2026-11-15T03:45:00Z" };
+  await assert.rejects(findAltDates(noGrid, 3600, undefined, grid), (e: unknown) =>
+    e instanceof ApiError && e.status === 422 && /No landing time/.test(e.message));
+  assert.equal(calls, 1);
 });

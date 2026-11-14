@@ -20,17 +20,25 @@ At 15:15–15:16 Hanoi a fresh request to the same instance returned the identic
 
 At 15:37 Hanoi the team service returned `422 Series point limit exceeded` for the bare aggregate and `422 Range outside run` for January 2032. The bounded November 14–21 request returned 200. All 336 site-hours and the joint interval boundaries agreed with the per-site windows: Odysseus had 33 joint hours and Athena had 139. The OpenAPI document then had 29 paths (SHA-256 `b3ef4109b7686fd676333f8eb0f4d327ddf4618931a89854a1d3c53b9ef954c6`).
 
+A run B query for November 19 from 14:00 UTC with the requested exclusive end `15:00:00.500Z` returned a single hour when sent directly to the aggregate. The documented snap-up rule includes the 15:00 sample. Sending `15:00:01Z` returned both hours. On the producer’s integer-second grid, the frontend rounds a fractional exclusive end up to the next second for transport and validates the returned grid against the original request. For these two sites this recovered one joint hour at Odysseus and two at Athena.
+
 ### Alternative landing dates
 
 On the same run, an Athena search on November 15 from 03:00 through 06:00 UTC requested a three-hour mission with 100% simultaneous Sun and Earth visibility, both visible at landing, earliest-first ranking, one-hour spacing and at most two proposals. Four starts were evaluated. The two feasible starts were 05:00 and 06:00 UTC, and each pinned aggregate confirmed the three-hour overlap. The same search on December 1 from 00:00 through 02:00 UTC evaluated three starts and found none.
 
 A separate request used the UTC bounds `2026-11-15T05:00:00.500Z` and `2026-11-15T06:00:00.750Z`. The published schema permits fractional seconds. Both a cache hit and a miss returned 05:00:00Z as a candidate, half a second before the requested earliest start. The frontend currently accepts whole-second bounds.
 
+At 16:02 Hanoi a fresh fractional search evaluated only the 06:00 start. The earlier out-of-bounds candidate was gone. The service now reports the first and last grid starts and measures `slip_h` from the first grid start. This also affects whole-second off-grid inputs: a search from 03:30 to 06:15 returned grid bounds of 04:00 and 06:00. The producer reported delays of one and two hours for 05:00 and 06:00. The delays from the supplied 03:30 lower bound are one and a half and two and a half hours.
+
 ### Default run and provisional engineering routes
 
 The initial live aggregate omits `run_id`. On November 14 it selected `B_spice_pgda_bruteforce_2026_2030`. A bounded Athena read on November 15 from 05:00 to 08:00 UTC returned three hourly samples. Searches and shared links carry the returned run ID.
 
 For an Odysseus trial, both `GET /api/v1/sites/{site_id}/pointing` and `POST /api/v1/mission/survival` returned 200 through the same-origin production frontend proxy. Response hashes matched direct backend reads. The pointing response distinguishes the requested instant from its hourly sample. The survival response records the test battery capacity, loads, panel and state of charge. These routes are provisional. The frontend uses neither trial output for site ranking.
+
+### Ranking two sites in one window
+
+Run B, November 14 at 00:00 through November 15 at 00:00 UTC: the 24 hourly samples yielded 0% Sun, 100% Earth and 0% joint visibility for Apollo 11, and 0% for all three at Haworth. The weights were 0.4 Sun, 0.3 Earth and 0.3 joint. The comparison ranked Apollo 11 first (30 points) and Haworth second (0 points) within this pair. The same-window catalog ranking placed them 10th and 17th of 23. Apollo 11 lies outside PGDA map coverage, so the producer used a smooth-sphere horizon there. Haworth has a terrain horizon. The ranking describes visibility in this model and UTC window.
 
 ### Two dates at one site
 
