@@ -12,6 +12,34 @@ For a bounded read-only check, the default run reported SPICE, PGDA terrain, bru
 
 Unlike the draft, the service uses snake_case, east longitude in [0, 360), terrain-aware upper-limb sunlight and Earth clearance. Preserve the producer’s `precision_h`, UTC bounds and clipped versus run-truncated flags in the eventual aggregate. The existing ideal-horizon importer cannot represent these semantics. The next integration input is the versioned aggregate response and its example.
 
+## Reproduce the Odysseus and Athena week
+
+Use the team API with run `B_spice_pgda_bruteforce_2026_2030`. The candidate site IDs are `im1_odysseus` and `im2_athena`. The start is inclusive at `2026-11-14T00:00:00Z` and the end exclusive at `2026-11-21T00:00:00Z`. Each site returned 168 hourly samples. The windows endpoint reports boundary precision of ±1 hour. The table gives the hours and limits within the queried week.
+
+| Candidate site | Sun visible | Earth visible | Both visible (also the longest overlap in the week) | Joint interval, UTC |
+| --- | ---: | ---: | ---: | --- |
+| Odysseus · IM-1 | 33 h | 168 h | 33 h | Nov 19 15:00 to Nov 21 00:00 |
+| Athena · IM-2 | 139 h | 168 h | 139 h | Nov 15 05:00 to Nov 21 00:00 |
+
+For each site, make these GET requests relative to the team service. Substitute the IDs and UTC values above for the placeholders.
+
+```text
+/api/v1/sites/{site_id}?run_id={run}
+/api/v1/sites/{site_id}/series?run_id={run}&start={start}&end={end}&fields=sun_visible,earth_visible,both_visible&max_points=200&agg=sample
+/api/v1/sites/{site_id}/windows?run_id={run}&start={start}&end={end}&kinds=sun,earth,both
+```
+
+Compare the two input flags with the joint flag at every hour. Check that each returned Sun, Earth and joint interval list tiles the full range, then expand each interval back to the hourly grid. Both positive joint intervals have `clipped_end=true`. Their reported end is the query limit. Source responses were read at 05:52 UTC on November 14. The SHA-256 values below identify the original response bodies.
+
+| Site | Response | SHA-256 |
+| --- | --- | --- |
+| im1_odysseus | detail | `073691186cb0b73e7f423dc4a05e3c2719ed4eda4d3e6d3ac3328d753240348d` |
+| im1_odysseus | series | `8d55b5a2521f3c97f9957df9d75adda260ac2523201668583e6b997144152135` |
+| im1_odysseus | windows | `427cc1877efee079d5e07c18d4796002048d0a1679b24cfec3a8f90a834c9c29` |
+| im2_athena | detail | `ce0908ad5f4828599151b89b047b00594c2d903b31769659ef54e2bfeb86a753` |
+| im2_athena | series | `d014688972332d022f9870c0eb7fe5ae837a1167c0e1d5317bbcc75d7fe0e264` |
+| im2_athena | windows | `9daa9553fa01ade944506bf67fd115f5799f62931d89095f9d535bd445367f28` |
+
 ## Colab precompute and the first science comparison
 
 The team supplied a precompute notebook on 14 November. Its full-run settings select 23 catalog sites, hourly UTC samples from 2026-01-01 inclusive to 2031-01-01 exclusive, and an observer 2 m above ground. A uses JPL Horizons, a Moon Trek elevation model and ray marching. B uses NAIF SPICE, a PGDA elevation model and a brute-force horizon calculation. These are configured methods and dates. The shared copy saved the settings and a failed Google Drive mount. Its precompute, validation and archive cells contain no saved results.
