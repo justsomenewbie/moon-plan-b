@@ -96,7 +96,9 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
       {error && <p role="alert">{t(error)}</p>}
       {completed && <>
         {stale && <p className="data-notice" role="status">{t("Showing the previous comparison. Submit the edited dates to update the results.")}</p>}
-        <p className="muted text-sm">{t("Run ID")} · <code className="break-all">{completed.first.run.run_id}</code></p>
+        <p className="muted text-sm">{t("Model")} · {completed.first.model.label}<br />
+          {t("Run ID")} · <code className="break-all">{completed.first.run.run_id}</code></p>
+        <p className="muted text-sm">{completed.first.attribution}</p>
         <div className="week-sites">{(["first", "second"] as const).map(key => {
           const response = completed[key], request = completed.request[key];
           const adjusted = Date.parse(request.from) !== Date.parse(response.range.requested_start) || Date.parse(request.to) !== Date.parse(response.range.requested_end);
@@ -105,6 +107,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
             <p className="text-sm">{t("Requested UTC range")} · <TimeRange start={request.from} end={request.to} /></p>
             {adjusted && <p className="muted text-sm">{t("Requested UTC range on the model grid")} · <TimeRange start={response.range.requested_start} end={response.range.requested_end} /></p>}
             <p className="muted text-sm">{t("Evaluated UTC range")} · <TimeRange start={response.range.start} end={response.range.end} /></p>
+            <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: response.range.n_samples, step: response.range.step_s })}</p>
             <SiteResult site={response.sites[0]} />
           </section>;
         })}</div>

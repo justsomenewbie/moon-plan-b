@@ -1,7 +1,6 @@
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
-
 import { SiteResult, TimeRange } from "./terrain-site-result";
 import TerrainDates from "./terrain-dates";
 
