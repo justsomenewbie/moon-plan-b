@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { ExtraField } from "../lib/planner-source";
 import { findAltDates, landingDelayHours, landingGridBounds, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
@@ -34,22 +35,24 @@ function utcInput(value: FormDataEntryValue | null) {
 }
 
 function candidateLink(candidate: AltDatesResponse["candidates"][number], search: AltDatesResponse) {
-  // Current pinned single-site viewer accepts hourly runs over at most 366 days.
-  if (search.step_s !== 3600 || search.mission_duration_h > 366 * 24) return null;
+  const long = search.mission_duration_h > 366 * 24;
+  if (search.step_s !== 3600 || (long && (search.run_id.startsWith("job_") || search.site_id.startsWith("custom:")))) return null;
   return "/compare?" + new URLSearchParams({
     from: candidate.landing_utc, to: candidate.mission_end_utc, resolutionSeconds: String(search.step_s),
     run_id: search.run_id, site_id: search.site_id, view_site: search.site_id,
-  }) + "#terrain-observations";
+  }) + (long ? "#workspace" : "#terrain-observations");
 }
 
 type SearchSite = { id: string; name: string };
 export type LandingSearchProps = {
   runId: string; sites: readonly SearchSite[]; initialSiteId?: string;
   stepSeconds: number; from: string; to: string; coverageStart?: string; coverageEnd?: string;
-  initialMissionHours?: number; initialObjective?: "both" | "sun" | "earth"; planner?: boolean;
+  initialMissionHours?: number; initialObjective?: "both" | "sun" | "earth" | "earliest" | "balanced"; planner?: boolean;
+  initialEarliest?: string; initialLatest?: string; initialExtras?: Partial<Record<ExtraField, string>>;
+  initialSunAtLanding?: boolean; initialEarthAtLanding?: boolean;
 };
 
-export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, to, coverageStart, coverageEnd, initialMissionHours, initialObjective, planner }: LandingSearchProps) {
+export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, to, coverageStart, coverageEnd, initialMissionHours, initialObjective, initialEarliest, initialLatest, initialExtras, initialSunAtLanding, initialEarthAtLanding, planner }: LandingSearchProps) {
   const { t } = useLanguage();
   const stepHours = stepSeconds / 3600;
   const defaultHours = Math.min((Date.parse(to) - Date.parse(from)) / 3600000, Math.max(1, Math.floor(24 / stepHours)) * stepHours);
@@ -133,24 +136,24 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
           <option value="">{t("Choose a site")}</option>
           {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
         </select></label>}
-      <label className="field">{t("Earliest landing (UTC, inclusive)")}<input name="earliest" type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={from.slice(0, 19)} required /></label>
-      <label className="field">{t("Latest landing (UTC, inclusive)")}<input name="latest" type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={latest} required /></label>
+      <label className="field">{t("Earliest landing (UTC, inclusive)")}<input name="earliest" type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={initialEarliest ?? from.slice(0, 19)} required /></label>
+      <label className="field">{t("Latest landing (UTC, inclusive)")}<input name="latest" type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={initialLatest ?? latest} required /></label>
       <label className="field">{t("Mission duration (h)")}<input name="missionHours" type="number" min={stepHours} step="any" defaultValue={duration} required /></label>
-      <label className="field">{t("Minimum joint visibility (%)")}<input name="minBothPct" type="number" min="0" max="100" step="any" defaultValue="0" required /></label>
-      <label className="field">{t("Minimum spacing between proposals (h)")}<input name="separationHours" type="number" min="0" step="any" defaultValue="12" required /></label>
-      <label className="field">{t("Maximum proposals")}<input name="maxResults" type="number" min="1" max="50" step="1" defaultValue="5" required /></label>
+      <label className="field">{t("Minimum joint visibility (%)")}<input name="minBothPct" type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minBothPct ?? "0"} required /></label>
+      <label className="field">{t("Minimum spacing between proposals (h)")}<input name="separationHours" type="number" min="0" step="any" defaultValue={initialExtras?.separationHours ?? "12"} required /></label>
+      <label className="field">{t("Maximum proposals")}<input name="maxResults" type="number" min="1" max="50" step="1" defaultValue={initialExtras?.maxResults ?? "5"} required /></label>
       <label className="field">{t("Order proposals by")}<select name="objective" defaultValue={initialObjective ?? (planner ? "both" : "earliest")}>
         {Object.entries(objectives).filter(([key]) => !planner || key !== "energy").map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
       </select></label>
-      <label className="flex items-center gap-2"><input name="sunAtLanding" type="checkbox" defaultChecked={!planner} />{t("Require sunlight at landing")}</label>
-      <label className="flex items-center gap-2"><input name="earthAtLanding" type="checkbox" />{t("Require Earth visibility at landing")}</label>
+      <label className="flex items-center gap-2"><input name="sunAtLanding" type="checkbox" defaultChecked={initialSunAtLanding ?? !planner} />{t("Require sunlight at landing")}</label>
+      <label className="flex items-center gap-2"><input name="earthAtLanding" type="checkbox" defaultChecked={initialEarthAtLanding} />{t("Require Earth visibility at landing")}</label>
       {planner && <details className="basis-full">
         <summary>{t("Additional visibility requirements")}</summary>
         <div className="request-fields my-4">
-          <label className="field">{t("Minimum sunlight (%)")}<input name="minSunPct" type="number" min="0" max="100" step="any" defaultValue="0" /></label>
-          <label className="field">{t("Minimum Earth visibility (%)")}<input name="minEarthPct" type="number" min="0" max="100" step="any" defaultValue="0" /></label>
-          <label className="field">{t("Maximum dark gap (h)")}<input name="maxDarkGap" type="number" min="0" step="any" /></label>
-          <label className="field">{t("Maximum Earth visibility gap (h)")}<input name="maxEarthGap" type="number" min="0" step="any" /></label>
+          <label className="field">{t("Minimum sunlight (%)")}<input name="minSunPct" type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minSunPct ?? "0"} /></label>
+          <label className="field">{t("Minimum Earth visibility (%)")}<input name="minEarthPct" type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minEarthPct ?? "0"} /></label>
+          <label className="field">{t("Maximum dark gap (h)")}<input name="maxDarkGap" defaultValue={initialExtras?.maxDarkGap} type="number" min="0" step="any" /></label>
+          <label className="field">{t("Maximum Earth visibility gap (h)")}<input name="maxEarthGap" defaultValue={initialExtras?.maxEarthGap} type="number" min="0" step="any" /></label>
         </div>
       </details>}
       <p className="basis-full muted text-sm">{t("Use whole {step} s steps for the mission duration.", { step: stepSeconds })}</p>

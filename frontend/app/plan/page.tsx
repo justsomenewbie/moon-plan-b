@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { hasLiveOptions, landingClock, liveExtras, plannerFormState, type PlannerSource } from "../../lib/planner-source";
 import { useQuery } from "@tanstack/react-query";
 import { isMock } from "../../lib/api/client";
 import { getPlannerRanking, getPlannerRun, type PlannerRun, type PlannerPriority } from "../../lib/api/planner";
@@ -21,7 +22,6 @@ const DAY = 86400000;
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const midnight = (date: string) => date + "T00:00:00Z";
 const planLink = (params: Record<string, string>) => "/plan?" + new URLSearchParams(params);
-type PlannerSource = "live" | "saved" | "saved-b2";
 type SearchResult = {
   from: string; to: string; scope: "live" | "catalog" | "pair";
   rows: { id: string; name: string; hours: number[] | null; longest?: number; coverage?: string }[];
@@ -91,8 +91,8 @@ function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun
       <div className="table-scroll"><table><caption>{t("Visibility hours in the selected window")}</caption>
         <thead><tr><th scope="col">{t("Site")}</th>{["Sun visible","Earth visible","Both visible",...(result.scope === "live" ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
         <tbody>{result.rows.map(row => {
-          const href = "/compare?" + new URLSearchParams({run_id:run.runId,site_id:row.id,view_site:row.id,from:result.from,to:result.to,resolutionSeconds:"3600"}) + "#terrain-observations";
-          return <tr key={row.id}><th scope="row">{result.scope === "live" && run.stepSeconds === 3600 && Date.parse(result.to)-Date.parse(result.from) <= 366*DAY ? <a href={href}>{row.name}</a> : row.name}</th>
+          const href = "/compare?" + new URLSearchParams({run_id:run.runId,site_id:row.id,view_site:row.id,from:result.from,to:result.to,resolutionSeconds:"3600"}) + (Date.parse(result.to) - Date.parse(result.from) > 366 * DAY ? "#workspace" : "#terrain-observations");
+          return <tr key={row.id}><th scope="row">{result.scope === "live" && run.stepSeconds === 3600 ? <a href={href}>{row.name}</a> : row.name}</th>
             {row.hours ? <>{row.hours.map((h,i) => <td key={i}>{h}</td>)}{result.scope === "live" && <td>{row.longest}</td>}</> : <td colSpan={4}>{t("Coverage")} · {t(row.coverage ?? "Incomplete coverage")}</td>}</tr>;
         })}</tbody></table></div>
       <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code>{run.runId}</code></p>
@@ -103,6 +103,8 @@ function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun
 function Planner({ seed }: { seed: URLSearchParams }) {
   const { t } = useLanguage();
   const [mode, setMode] = useState(seed.get("mode") === "dates" ? "dates" : "sites");
+  const [edited, setEdited] = useState<{mode: string; params: URLSearchParams} | null>(null);
+  const formArea = useRef<HTMLDivElement>(null);
   const requestedSource = seed.get("source");
   const forced = requestedSource === "saved" || requestedSource === "saved-b2";
   const catalog = useQuery({ queryKey: ["mission-planner-run"], queryFn: ({signal}) => getPlannerRun(signal), enabled: !isMock && !forced, retry:false });
@@ -120,13 +122,18 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   const priority = sort === "sun" || sort === "earth" ? sort : "joint";
   const hours = Number(seed.get("missionHours"));
   const mission = Number.isSafeInteger(hours) && hours > 0 && hours <= (Date.parse(run.end)-Date.parse(run.start))/3600000 ? hours : undefined;
+  const loading = !isMock && !forced && catalog.isPending;
+  useLayoutEffect(() => {
+    const form = formArea.current?.querySelector("form");
+    if (form) setEdited({ mode, params: plannerFormState(seed, mode, source, new FormData(form)) });
+  }, [seed, mode, source, loading]);
   function sourceLink(next: PlannerSource) {
-    const params = new URLSearchParams(seed);
+    const params = new URLSearchParams(edited?.mode === mode ? edited.params : seed);
     if (next === "live") params.delete("source"); else params.set("source", next);
     params.set("mode", mode);
     return "/plan?" + params;
   }
-  if (!isMock && !forced && catalog.isPending) return <p role="status">{t("Connecting to the team API…")} <a href={sourceLink("saved-b2")}>{t("Use saved data now")}</a></p>;
+  if (loading) return <p role="status">{t("Connecting to the team API…")} <a href={sourceLink("saved-b2")}>{t("Use saved data now")}</a></p>;
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
     <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · <a href={source === "saved" ? "/data#bundled-data" : source === "saved-b2" ? "/data#run-b2" : "/data"}>{t("Browse data and all original files")}</a></p>
@@ -137,13 +144,22 @@ function Planner({ seed }: { seed: URLSearchParams }) {
       {forced && !isMock && <a href={sourceLink("live")}>{t("Check live data")}</a>}
     </div>
     <div className="mode-switch print:hidden" role="group" aria-label={t("Choose how to search")}>
-      <button type="button" aria-pressed={mode === "sites"} onClick={() => setMode("sites")}>{t("I have dates")}</button>
-      <button type="button" aria-pressed={mode === "dates"} onClick={() => setMode("dates")}>{t("I have a site")}</button>
+      <button type="button" aria-pressed={mode === "sites"} onClick={() => { if (mode !== "sites") { setEdited(null); setMode("sites"); } }}>{t("I have dates")}</button>
+      <button type="button" aria-pressed={mode === "dates"} onClick={() => { if (mode !== "dates") { setEdited(null); setMode("dates"); } }}>{t("I have a site")}</button>
     </div>
+    <div ref={formArea} onChange={e => {
+      const input = e.target;
+      if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
+        if (input.form) setEdited({ mode, params: plannerFormState(seed, mode, source, new FormData(input.form)) });
+      }
+    }}>
     {mode === "sites" ? <CatalogSearch key={source} run={run} first={first} last={last} priority={priority} source={source} /> :
-      source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} /> :
+      source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
-        coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialObjective={priority === "joint" ? "both" : priority} />}
+        coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialEarliest={landingClock(seed, "earliest")} initialLatest={landingClock(seed, "latest")}
+        initialExtras={liveExtras(seed)} initialSunAtLanding={seed.get("sunAtLanding") === "1"} initialEarthAtLanding={seed.get("earthAtLanding") === "1"}
+        initialObjective={seed.get("liveObjective") === "earliest" ? "earliest" : seed.get("liveObjective") === "balanced" ? "balanced" : priority === "joint" ? "both" : priority} />}
+    </div>
     <AstronautGuide planningArchive={source === "live" ? undefined : source} savedResult={savedResultFromUrl(new URLSearchParams())} terrain={null} comparisonPath="/compare" />
   </>;
 }
