@@ -36,6 +36,10 @@ At the user's request, the Share comparison button uses `@animate-ui/react` 2.4.
 
 The separately installed official skill is pinned to [upstream commit 22a9236](https://github.com/imskyleen/animate-ui/tree/22a9236ae107328f8564edb7e3299375da3247af/skills/animate-ui), with its NOTICE and root licence retained locally. It is not copied into this public repository. Codex selected and integrated the existing press-feedback primitive; no framework-wide codemod or generated image was used.
 
+## Interface languages — 14 November 2026
+
+Codex also implemented the user-requested English-default/Vietnamese-secondary interface, authored the Vietnamese UI translations and added localization checks. Independent AI review checked terminology and state preservation; no human translation certification is claimed. Scientific/source text and exact data values remain original. No translation service or new dependency was added.
+
 ### Notice recovery check — 14 November 2026
 
 Ten installed package entries lack package-root license/notice files. The notice file now retains five upstream repository license texts covering six of those entries: `@next/env` and `@next/swc-darwin-arm64` 16.4.6, `@redocly/openapi-core` 1.34.24, `@tailwindcss/oxide-wasm32-wasi` 4.3.5, `@napi-rs/wasm-runtime` 1.2.2 and `change-case` 5.4.4. Each supplement records its exact source commit, Git blob hash and package-version association. Registry `gitHead` identifies three sources; Next.js and Tailwind use resolved official version tags. These are upstream supplements, not files found in the npm installation. Original retained notices are unchanged.

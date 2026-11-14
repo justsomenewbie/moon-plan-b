@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as dataset from "../lib/dataset.ts";
 import type { Dataset, Scenario } from "../lib/dataset.ts";
+import { translate } from "../lib/i18n.ts";
+import type { Locale, Message, MessageValues } from "../lib/i18n.ts";
 
 const require = createRequire(import.meta.url);
 const ts = require("typescript") as typeof import("typescript");
@@ -14,7 +16,8 @@ const output = ts.transpileModule(readFileSync(new URL("../app/observations.tsx"
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const compiled = { exports: {} as typeof import("../app/observations") };
-new Function("require", "exports", output)((id: string) => id === "../lib/dataset" ? dataset : require(id), compiled.exports);
+let locale: Locale = "en";
+new Function("require", "exports", output)((id: string) => id === "../lib/dataset" ? dataset : id === "./language" ? { useLanguage: () => ({ locale, t: (message: Message, values?: MessageValues) => translate(locale, message, values) }) } : require(id), compiled.exports);
 const fixture = () => JSON.parse(readFileSync(new URL("../public/data/demo.json", import.meta.url), "utf8")) as Dataset;
 const windows = (a: Scenario, b?: Scenario) => renderToStaticMarkup(createElement(compiled.exports.Windows, { a, b }));
 
@@ -51,4 +54,27 @@ test("sample scroll regions are keyboard focusable and named by unique table cap
     assert.ok(html.includes(`tabindex="0" role="region" aria-labelledby="sample-caption-${i}"`));
     assert.equal(html.match(new RegExp(`id="sample-caption-${i}"`, "g"))?.length, 1);
   }
+});
+
+test("Vietnamese observations retain exact UTC boundaries, values and original producer evidence", () => {
+  locale = "vi";
+  try {
+    const data = fixture(), [a, b] = data.scenarios;
+    const intervals = windows(a, b);
+    assert.ok(intervals.includes("Xem khoảng thời gian trên chân trời"));
+    assert.ok(intervals.includes("Mặt Trời và Trái Đất đồng thời"));
+    for (const interval of a.intervals!.sun) assert.ok(intervals.includes(`${interval.startUtc} → ${interval.endUtc}`));
+    const table = renderToStaticMarkup(createElement(compiled.exports.SampleTable, { a, b }));
+    assert.ok(table.includes("Góc cao Mặt Trời"));
+    assert.ok(table.includes(a.samples[0].utc));
+    assert.ok(table.includes(`${a.samples[0].sun!.elevationDeg}°`));
+    const comparison = renderToStaticMarkup(createElement(compiled.exports.Comparison, { a, b, h: data.criteriaHours[0] }));
+    assert.ok(comparison.includes("Giải thích gốc của bên cung cấp"));
+    assert.ok(comparison.includes(a.criteria[0].reason));
+    const sources = renderToStaticMarkup(createElement(compiled.exports.Sources, { data, a, b }));
+    assert.ok(sources.includes(data.attribution));
+    assert.ok(sources.includes(data.model.definition));
+    assert.ok(compiled.exports.formatUtc("2026-11-14T00:00:00Z", "vi").includes("00:00"));
+    assert.ok(compiled.exports.formatUtc("2026-11-14T00:00:00Z", "vi").endsWith(" UTC"));
+  } finally { locale = "en"; }
 });

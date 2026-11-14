@@ -1,6 +1,6 @@
 # Current handoff — 14 November 2026
 
-**Animate UI installed and checked; comparison data remains synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
+**English-default/Vietnamese interface implemented and checked; data remains synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
 
 ## Current decisions
 
@@ -12,16 +12,18 @@ AI planning assistance remains a proposed backend capability, with server-side k
 
 Auto/Light/Dark appearance works. Auto follows the local clock (07:00–18:59 light), with saved manual override; scientific times stay UTC. The hero uses a credited NASA LRO photographic mosaic, not AI-generated imagery. Reference resources are separate from comparison-value provenance.
 
-At Sơn's request, Animate UI 2.4.3/Motion 14.14.0 now supply Share comparison's press feedback. Its reviewed official skill is installed locally and automatically routed by AGENTS/local visual guidance. Five packages were added; previous lock entries are unchanged. Notices retain MIT + Commons Clause and the Motion licences. No API or fixture changed.
+Animate UI 2.4.3/Motion 14.14.0 supply Share comparison's press feedback. The reviewed official skill is installed locally and automatically routed. MIT + Commons Clause/Motion notices are retained; npm/OSV found no known vulnerabilities.
 
-**24 tests, final production build and TypeScript pass.** Independent review reran tests/checks. npm/OSV found no known vulnerabilities. In-app pointer/keyboard intermediate frames, focus, sharing, repeated presses, reduced motion and disabled state were checked; logs were empty. Earlier theme/320px/print, history/request/job/import checks remain recorded. See [verification](docs/FRONTEND_VERIFICATION.md). Owned tab/media overrides were cleared.
+Sơn requested English as default and Vietnamese as secondary. The saved Language choice translates UI/accessibility text while preserving comparisons, jobs, UTC values and original producer evidence. Documentation/submission materials stay English. No localization dependency, API or fixture change.
+
+**28 tests, final production build and TypeScript pass.** Independent review reran tests/checks. In-app checks cover language persistence, keyboard switching, state/URL preservation, an in-flight job, tables, errors/import recovery, both-language print CSS and 320px layout. Logs were empty; owned tab/overrides cleared and preview restored to English. Earlier motion/theme/history/request/job/import checks remain in [verification](docs/FRONTEND_VERIFICATION.md).
 
 Native Safari resumed in a separate QA window and loaded six observation windows and passed keyboard criterion change. Upload, exact CSS width, console and final window closure remain unconfirmed. User tabs were not navigated or edited. In-app checks are not Safari evidence.
 
-External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `animate-ui-browser-checks.json`, `visual-browser-checks.json` and `native-safari-resume.json`. Theme hydration may briefly show dark; Auto may lag one minute. An in-flight press return may finish when reduced motion is enabled. Real science/backend, full release licensing and spoken screen-reader checks remain open.
+External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `language-browser-checks.json`, `animate-ui-browser-checks.json` and `native-safari-resume.json`. Saved language applies after English hydration; theme may briefly show dark and Auto may lag one minute. In-flight press return may finish after reduced motion is enabled. Real science/backend, full release licensing and spoken screen-reader checks remain open.
 
 ## Ownership and publication
 
-Root is the sole editor; agents reviewed read-only. Prior verified review head: `c1af6a85739129bb49cbedb45875d6a48264d861`. External publication receipt records this task's encompassing commit/readback. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission. Product cloud SHA is unestablished. Preparation unchanged; no preparation sync required. Release edit ownership after publication verification.
+Root is the sole editor; agents reviewed read-only. Prior verified review head: `ebb9610f836e9d6ddef1842998be860b63fe5c97`. External publication receipt records this task's encompassing commit/readback. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission. Product cloud SHA is unestablished. Preparation unchanged; no preparation sync required. Release edit ownership after publication verification.
 
-Next action under two minutes: open the local preview and press Share comparison; inspect Chung's exported OpenAPI and sourced example when supplied.
+Next action under two minutes: open the local preview and switch Language to Tiếng Việt; inspect Chung's OpenAPI and sourced example when supplied.

@@ -25,11 +25,13 @@ The editable UTC range and desired step feed both **Load windows** and the job f
 
 Browser Back/Forward restores the comparison encoded in a shared URL, including its date range. A bare URL opens the default request and comparison. An imported release can be reused while it remains loaded; a link alone cannot recover a missing local file.
 
+**Language** defaults to English; choose **Tiếng Việt** for the Vietnamese interface. The choice is saved locally when browser storage is available. Switching keeps the comparison, timeline sample, edited request and running job intact. Exact UTC values, units and supplied scientific/source text are preserved. Original OpenAPI documentation remains English. **Appearance** offers automatic local-time light/dark mode and saved manual overrides.
+
 The app opens a conspicuously labeled synthetic fixture. Switch between **Compare dates** and **Compare sites**, select an available window, and move the sample slider. `Find a later published match` searches only supplied assessments; it never treats unresolved earlier candidates as a confirmed first match. Missing observations remain missing. `Import data` validates a local JSON file up to 5 MiB; the file is not uploaded. API response reads are capped at 5 MiB and 15 seconds. A selection link contains IDs/settings/request range, not the imported dataset. Real job links also identify the completed job and depend on backend retention/access. A loopback link works only on the same computer.
 
 Read the [draft frontend contract](docs/FRONTEND_CONTRACT.md), [method and limits](docs/METHOD.md), [credits](docs/CREDITS.md) and [verification record](docs/FRONTEND_VERIFICATION.md). The data producer must review the contract before real-data integration. Next.js runtime hosting versus static export is still an integration decision; this task does not select a hosting provider.
 
-Start with [AGENTS.md](AGENTS.md) and [HANDOFF.md](HANDOFF.md). All team-authored product and submission materials must be in English.
+Start with [AGENTS.md](AGENTS.md) and [HANDOFF.md](HANDOFF.md). English remains the default interface and the language of team-authored documentation and submission materials; Vietnamese is an optional secondary interface.
 
 ## Collaboration
 
@@ -47,4 +49,4 @@ Reviewed preparation source: [exact checkpoint](https://github.com/justsomenewbi
 
 Codex assisted repository setup, frontend code, validation/tests, synthetic test fixtures and documentation. Built-in Image Gen produced an internal UI design reference; its raster output is not an app asset. The proposal also has prior AI-assisted history; preserve and disclose it truthfully. The current guide's restriction on SI supplying the solution idea remains unresolved for that history. No eligibility declaration has been made.
 
-Product licensing must be selected and checked against submission terms and third-party compatibility before release; public visibility alone is not a reuse licence. Dependency permissions and actual AI contributions are recorded in [credits](docs/CREDITS.md). No NASA imagery, lunar terrain asset, external font or music is included.
+Product licensing must be selected and checked against submission terms and third-party compatibility before release; public visibility alone is not a reuse licence. Dependency permissions and actual AI contributions are recorded in [credits](docs/CREDITS.md). The app includes a credited NASA LRO photographic mosaic as a reference image. No lunar terrain asset, external font or music is included.
