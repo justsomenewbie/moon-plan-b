@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, getTerrainAggregate, getTerrainWindow } from "../lib/api/client.ts";
+import { ApiError, getTerrainAggregate, getTerrainWindow, validateTerrainTargetWindow } from "../lib/api/client.ts";
 import { guideObservation } from "../lib/guide-observation.ts";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary.ts";
 
@@ -92,6 +92,35 @@ test("requires the requested sections on a live response and accepts a covered r
   assert.equal(result.sites[0].horizon, null);
   assert.deepEqual(result.sites[0].criteria, []);
   assert.equal(result.sites[0].series, null);
+});
+
+test("reads one run-pinned full aggregate for two sites in source order and bounds it as a catalog comparison", async t => {
+  const d = example(), site = d.sites[0];
+  const sites = [site.id, "second"];
+  const missing = { ...site, coverage: "missing", coverage_in_range: "missing", windows: { sun: [], earth: [], both: [] }, metrics: null, criteria: [] };
+  const sections = ["horizon", "series", "windows", "metrics", "criteria"];
+  const reply = { ...d, include: sections, criteria_hours: [24, 72, 168], sites: sites.map(id => ({ ...missing, id })) };
+  const target = { run_id: d.run.run_id, site_ids: sites.join(",") };
+  const request = { from: stamp(0).replace(":00:00", ":10:00"), to: d.range.end, resolutionSeconds: 7200 };
+  const calls: Request[] = [];
+  t.mock.method(globalThis, "fetch", async (req: Request) => { calls.push(req); return Response.json(reply); });
+  const result = await getTerrainWindow(request, undefined, target);
+  assert.deepEqual(result.sites.map(s => s.id), sites);
+  assert.equal(calls.length, 1);
+  const url = new URL(calls[0].url);
+  assert.equal(calls[0].method, "GET"); assert.equal(url.pathname, "/api/v1/dataset");
+  for (const [k,v] of Object.entries({ run_id: target.run_id, site_ids: target.site_ids, start: request.from, end: request.to,
+    include: sections.join(","), step_s: String(request.resolutionSeconds) })) assert.equal(url.searchParams.get(k), v);
+
+  const year = { from: "2026-01-01T00:00:00Z", to: "2027-01-02T00:00:00Z", resolutionSeconds: 3600 };
+  assert.equal(validateTerrainTargetWindow(year, target), year);
+  await assert.rejects(getTerrainWindow({ ...year, to: "2027-01-02T01:00:00Z" }, undefined, target), /366 days/);
+  await assert.rejects(getTerrainWindow(year, undefined, { run_id: target.run_id }), /31 days/);
+  await assert.rejects(getTerrainWindow({ ...request, to: "2026-03-01T00:00:00Z" }, undefined, target), /31 days/);
+  await assert.rejects(getTerrainWindow(request, undefined, { run_id: target.run_id, site_ids: "one,one" }));
+  assert.equal(calls.length, 1);
+  reply.sites.reverse();
+  await assert.rejects(getTerrainWindow(request, undefined, target), /returned sites/i);
 });
 
 test("accepts snapped client input and run clamping, rejects wrong request, reversed range and sample count", () => {

@@ -4,6 +4,7 @@ import type { components, paths } from "./schema";
 import type { paths as ProducerPaths } from "./producer";
 import { parseTerrainSummary } from "./terrain-summary.ts";
 import { utcMillis, validateDataset } from "../dataset.ts";
+import { terrainSiteIds, type TerrainTarget } from "../terrain-target.ts";
 import type { Dataset } from "../dataset.ts";
 
 export const isMock = (process.env.NEXT_PUBLIC_API_BASE_URL || "mock") === "mock";
@@ -106,8 +107,7 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   if (!response.ok) throw apiError(error, response.status);
   return withinRequestedWindow(validateDataset(data), request);
 }
-export const defaultTerrainSites = "im1_odysseus,im2_athena";
-export type TerrainTarget = { run_id: string; site_id?: string };
+export { defaultTerrainSites, type TerrainTarget } from "../terrain-target.ts";
 const terrainCriteriaHours = [24, 72, 168];
 
 function producerExclusiveEnd(end: string) {
@@ -143,10 +143,15 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
   return result;
 }
 
+export function validateTerrainTargetWindow(request: WindowRequest, target?: TerrainTarget) {
+  terrainSiteIds(target);
+  // An explicit pair may come from a year-long hourly custom-site workspace.
+  return target?.site_id || (target?.site_ids && request.resolutionSeconds === 3600)
+    ? validateCustomWindow(request) : validateTerrainWindow(request);
+}
 export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
-  if (target?.site_id) validateCustomWindow(request);
-  else validateTerrainWindow(request);
-  return getTerrainAggregate(request, target?.site_id ?? defaultTerrainSites, target?.run_id, true, signal);
+  validateTerrainTargetWindow(request, target);
+  return getTerrainAggregate(request, terrainSiteIds(target), target?.run_id, true, signal);
 }
 export function validateJobRequest(request: JobRequest) {
   validateWindow(request);
