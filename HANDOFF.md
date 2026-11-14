@@ -1,6 +1,6 @@
 # Current handoff — 14 November 2026
 
-**Date-first site comparison works in English and Vietnamese using the loaded release. The included release is synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
+**The lunar reference globe and date-first comparison work in English and Vietnamese. Comparison data is synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
 
 ## Current decisions
 
@@ -10,22 +10,20 @@ AI planning assistance remains a proposed backend capability, with server-side k
 
 ## Current result and evidence
 
-Auto/Light/Dark appearance works. Auto follows the local clock (07:00–18:59 light), with saved manual override; scientific times stay UTC. The hero uses a credited NASA LRO photographic mosaic, not AI-generated imagery. Reference resources are separate from comparison-value provenance.
+The hero opens with a credited NASA LRO photograph. **Rotate the Moon** loads the 457,942-byte NASA CGI Moon Kit color map on demand. Drag, direction buttons and reset change the view center. The reference globe has fixed shading. It requires no WebGL or new package. NASA credits and reuse terms are in [credits](docs/CREDITS.md).
 
-Animate UI 2.4.3/Motion 14.14.0 supply Share comparison's press feedback. The reviewed official skill is installed locally and automatically routed. MIT + Commons Clause/Motion notices are retained; npm/OSV found no known vulnerabilities.
+Auto/Light/Dark follows local time or a saved manual choice. English is the default with a saved Vietnamese option. Animate UI supplies Share comparison’s press feedback.
 
-English is the default. A saved Vietnamese choice translates controls while preserving original producer text, UTC times and active jobs. Prior bilingual date reports were verified across ten Letter pages.
+**Compare sites** lists the producer’s assessments, reasons and source IDs for a published UTC window and selected threshold. Prior browser checks covered all three demo thresholds, swaps, partial coverage, absent sites, shared links and the 320px Vietnamese layout. Prior bilingual date reports were reviewed across ten Letter pages.
 
-**Compare sites** now starts with the published UTC window. The selected joint-visibility threshold displays every matching scenario’s assessment, exact bounds, original explanation and supplied sources. Rows distinguish partial coverage from an absent site. Repeated runs retain their IDs. Changing windows preserves the selected sites when available.
-
-**30 tests and the production build including TypeScript passed.** In-app checks verified all three demo thresholds, site swaps, partial/absent results, shared-link restoration, English desktop and a 320px Vietnamese layout. Logs were clear. Details are in [verification](docs/FRONTEND_VERIFICATION.md).
+**32 tests and the production build including TypeScript passed.** Globe checks covered orientation, seam, poles, keyboard and drag input, a 320px Vietnamese layout, reduced motion and a failed image load followed by successful retry. The photograph and comparisons stayed available during the error. The accessibility status reflected keyboard rotation. See [verification](docs/FRONTEND_VERIFICATION.md).
 
 Native Safari in a separate QA window loaded six observation windows and successfully imported the local synthetic fixture. Earlier keyboard criterion change passed. Language switching, exact CSS width, console and final window closure remain unconfirmed. No user-tab navigation/edit was issued. In-app checks are not Safari evidence.
 
-External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `site-finder-final.json`, `language-report-verification.json` and `native-safari-import-followup.json`. Saved language applies after English hydration; theme may briefly show dark and Auto may lag one minute. In-flight press return may finish after reduced motion is enabled. Real science/backend, full release licensing and spoken screen-reader checks remain open.
+External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `globe-recovery.json`, `globe-browser-first.json` and `site-finder-final.json`. Saved language applies after English hydration; theme may briefly show dark and Auto may lag one minute. In-flight press return may finish after reduced motion is enabled. Real science/backend, full release licensing and spoken screen-reader checks remain open.
 
 ## Ownership and publication
 
-Root is the sole editor; agents reviewed read-only. Verified previous review head: `1f64ce8f74950ef9078bf0b2135726b9ef6f8e75`. External publication receipt records the new commit and remote readback. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission. Product cloud SHA is unestablished. Preparation unchanged; no preparation sync required. Release edit ownership after publication verification.
+Root is the sole editor; agents reviewed read-only. Verified previous review head: `d8684ec5f3affdfb64503e313bf37763457d04f3`. External publication receipt records the new commit and remote readback. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission. Product cloud SHA is unestablished. Preparation unchanged; no preparation sync required. Release edit ownership after publication verification.
 
-Next action under two minutes: open **Compare sites** and choose the published November 16 window to inspect the partial and absent states.
+Next action under two minutes: open the preview, select **Rotate the Moon**, then press the east arrow to inspect the surface.

@@ -7,6 +7,7 @@ import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../li
 import type { WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
 import ThemeControl from "./theme-control";
+import MoonGlobe from "./moon-globe";
 import { LanguageControl, useLanguage } from "./language";
 import type { Message } from "../lib/i18n";
 import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindows, readSelection, selectionParams, validateDataset } from "../lib/dataset";
@@ -205,7 +206,7 @@ export default function Navigator() {
       <div className="hero-actions"><a className="button primary" href="#workspace">{t("Explore the comparison")}{" "}<span aria-hidden="true">&nbsp;↗</span></a><a className="button outline" href="#resources">{t("Explore lunar resources")}</a></div>
       <p className="muted text-sm hero-meta">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Backend API · draft compatibility requires producer review")} · <a href="/api-docs">{t("API explorer")}</a></p>
       <p className="data-notice">{!data ? isMock ? t("No scientific dataset connected. Use the demonstration or import a release.") : t("Waiting for a valid API dataset. You can also import a release.") : data.evidence === "synthetic-fixture" ? t("Demonstration data — fictional sites and values. Not for mission planning.") : t("Supplied data — scientific validity has not been independently verified. Not for mission planning.")}</p>
-      </div><figure className="lunar-figure"><div className="lunar-frame"><img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" /></div><figcaption><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</figcaption></figure>
+      </div><MoonGlobe />
     </section>
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
@@ -254,7 +255,7 @@ export default function Navigator() {
     </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>{t("No observation windows in this dataset")}</h2><p>{isMock ? t("Import a release containing scenarios, or explore the clearly labeled demonstration.") : t("Request another UTC range above, or import a release containing scenarios.")}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? t("Explore demonstration") : t("Load default date range")}</button></main> : null}
     {data && !loading ? <Sources data={data} a={a} b={b} /> : null}
     <section id="resources" className="reference-resources" aria-labelledby="resources-heading"><p className="eyebrow">{t("Beyond the comparison")}</p><h2 id="resources-heading">{t("Explore the Moon through its sources.")}</h2><p className="muted">{t("Reference material for learning and cross-checks. These links do not supply the synthetic comparison values.")}</p><div className="resource-links">
-      <a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer"><strong>{t("The Moon, frame by frame ↗")}</strong><span>{t("See the source and credits for the LRO photographic mosaic above.")}</span></a>
+      <a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer"><strong>{t("The Moon, frame by frame ↗")}</strong><span>{t("See the source and credits for the LRO photographic mosaic.")}</span></a>
       <a href="https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table" target="_blank" rel="noreferrer"><strong>{t("Understand the observations ↗")}</strong><span>{t("Read the JPL Horizons observer-table documentation and coordinate conventions.")}</span></a>
       <a href="https://trek.nasa.gov/moon/" target="_blank" rel="noreferrer"><strong>{t("Explore lunar terrain ↗")}</strong><span>{t("Open NASA Moon Trek in a separate tab to explore its lunar map.")}</span></a>
     </div></section>
