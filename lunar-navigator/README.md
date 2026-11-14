@@ -2,8 +2,7 @@
 
 **Team Moon Plan B · NASA Space Apps Challenge 2026**
 
-Ranks lunar south-pole landing sites by how long they see the **Sun** (power) and the **Earth** (radio link),
-using the real terrain horizon of each site and NASA data.
+Ranks lunar landing sites by how long they can see the **Sun** and the **Earth**. In [run B2](../frontend/public/data/run-b2/catalog.json), 18 sites use a terrain horizon and five use a smooth-sphere horizon outside elevation-map coverage. Visibility alone cannot predict electrical power or radio performance.
 
 | | |
 |---|---|
@@ -29,7 +28,7 @@ flowchart LR
   D --> E[Web app<br/>Next.js]
 ```
 
-1. `lunarnav` computes Sun/Earth positions and each site's terrain horizon, then visibility hour by hour.
+1. `lunarnav` computes Sun/Earth positions and hourly visibility using the horizon model recorded for each site.
 2. The results are checked (`lunarnav check`) and imported into the API.
 3. The web app (`frontend/` in the team repo) reads them through the API.
 
