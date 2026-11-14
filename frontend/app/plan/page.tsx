@@ -152,7 +152,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
     }}>
       <label className="field">{t("Start date (UTC)")}<input name="from" {...fieldAttributes("start")} type="date" required min={run.start.slice(0,10)} max={day(Date.parse(run.end) - DAY)} defaultValue={first} /></label>
       <label className="field">{t("End date (UTC, exclusive)")}<input name="to" {...fieldAttributes("end")} type="date" required min={day(Date.parse(run.start) + DAY)} max={run.end.slice(0,10)} defaultValue={last} /></label>
-      <label className="field">{t("Mission duration in hours (optional)")}<input name="missionHours" type="number" min="1" step="1" value={duration} onChange={e => setDuration(e.target.value)} aria-describedby="catalog-duration-help" />
+      <label className="field"><span id="catalog-duration-label">{t("Mission duration in hours (optional)")}</span><input aria-labelledby="catalog-duration-label" name="missionHours" type="number" min="1" step="1" value={duration} onChange={e => setDuration(e.target.value)} aria-describedby="catalog-duration-help" />
         <small id="catalog-duration-help">{t("Leave empty to rank the entire date range.")}</small></label>
       <label className="field">{t("Rank sites by")}<select name="priority" value={metric} onChange={e => setMetric(e.target.value as PlannerPriority)}>
         {Object.entries(criteria).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}

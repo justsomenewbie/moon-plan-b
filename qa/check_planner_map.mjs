@@ -39,6 +39,8 @@ try {
         return route.fulfill({contentType: "image/png", body: Buffer.from(
           "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jtwAAAABJRU5ErkJggg==", "base64")});
       });
+      const duration = page.getByRole("spinbutton", {name: "Mission duration in hours (optional)", exact: true});
+      assert.equal(await duration.getAttribute("aria-describedby"), "catalog-duration-help");
       const fields = page.locator(".catalog-fields :is(input,select)");
       for (const width of [375, 1100]) {
         await page.setViewportSize({width, height: 810});
