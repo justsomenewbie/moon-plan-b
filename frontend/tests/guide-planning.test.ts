@@ -181,6 +181,14 @@ test("the astronaut ranks fixed visits within the week, retains duration in its 
     const parsed = planningIntent("Where should I go for a " + phrase + " mission from 2026-11-14 to 2026-11-21?")!;
     assert.equal(parsed.missionHours, ({ "six-hour":6, "6-hour":6, "two-day":48, "1,5 ngày":36, "sáu tiếng":6, "một tuần":168, "6–12 hours":0, "1 day and 4 hours":0 } as Record<string, number>)[phrase]);
   }
+  for (const [locale, phrase] of [["en", "one or two days"], ["vi", "một hoặc hai ngày"], ["en", "between one and two days"], ["vi", "một đến hai ngày"]] as const) {
+    const question = plans[locale].replace(locale === "en" ? "a 24-hour mission" : "24 giờ", phrase);
+    const intent = planningIntent(question)!;
+    assert.equal(intent.missionHours, 0, phrase);
+    const result = await answerPlanning(intent, locale, signal, api, "saved-b2");
+    assert.match(result.answer, locale === "en" ? /How many hours should the mission last/ : /Bạn muốn nhiệm vụ kéo dài bao nhiêu giờ/);
+    assert.equal(new URL(result.href, "https://example.org").searchParams.has("missionHours"), false);
+  }
   const invalid = await answerPlanning({ ...q, missionHours: 169 }, "vi", signal, api, "saved-b2");
   assert.match(invalid.answer, /số giờ nguyên/);
 });

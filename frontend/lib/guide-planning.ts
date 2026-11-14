@@ -39,6 +39,9 @@ const numberWords: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three
 const amount = "[−-]?\\d+(?:[.,]\\d+)?|" + Object.keys(numberWords).join("|");
 const durationPattern = new RegExp("(?<![\\p{L}\\d.,])(" + amount + ")\\s*[- ]?\\s*(hours?|hrs?|h|days?|weeks?|giờ|tiếng|ngày|tuần)(?![\\p{L}\\d])", "gu");
 
+const durationRangePrefix = new RegExp("(?<![\\p{L}\\d])(?:" + amount + ")\\s+(?:to|or|hoặc|đến|tới)$"
+  + "|(?:between|giữa)\\s+(?:" + amount + ")\\s+(?:and|và)$", "u");
+
 export function planningIntent(question: string, previous?: PlanningIntent): PlanningIntent | null {
   const q = question.trim().toLowerCase().normalize("NFC");
   const dates = calendarDays(q);
@@ -77,7 +80,7 @@ export function planningIntent(question: string, previous?: PlanningIntent): Pla
     const multiplier = /^(week|tuần)/.test(unit) ? 168 : /^(day|ngày)/.test(unit) ? 24 : 1;
     // A range or compound duration needs clarification before the planner can score visits.
     const before = q.slice(0, duration.index).trimEnd();
-    const ambiguous = durations.length > 1 || /(?:[\d\p{L}]\s*[-–—]$|\d\s+(?:to|hoặc|đến|tới|or)$|(?:twenty|thirty|forty|fifty|mươi|mười)$)/u.test(before);
+    const ambiguous = durations.length > 1 || durationRangePrefix.test(before) || /(?:[\d\p{L}]\s*[-–—]$|(?:twenty|thirty|forty|fifty|mươi|mười)$)/u.test(before);
     missionHours = ambiguous ? 0 : count * multiplier;
   }
   return { mode, from, to, dateProblem, missionHours, priority: sun || earth ? (sun && earth ? "joint" : sun ? "sun" : "earth") : followup ? previous.priority : "joint",
