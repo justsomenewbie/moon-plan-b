@@ -36,7 +36,7 @@ const messages = {
     questions: [
       ["Làm sao so sánh địa điểm hoặc thời gian?", "Trong phần kết quả đã lưu, chọn một tuần để so sánh Odysseus với Athena. Chọn một địa điểm để so sánh hai tuần tại đó. Mỗi thanh biểu thị khoảng thời gian mà theo mô hình, cả Mặt Trời và Trái Đất đều ở phía trên đường chân trời tại địa điểm đó."],
       ["Tôi xem được tình hình hiện tại không?", "Hãy xem khoảng thời gian UTC ghi trên kết quả. Các tuần đã lưu cho biết điều kiện theo mô hình trong những ngày đó. Hướng dẫn này không có dữ liệu trực tiếp."],
-      ["Nhìn thấy Trái Đất có bảo đảm liên lạc vô tuyến không?", "Việc nhìn thấy Trái Đất cho biết Trái Đất nằm trong tầm nhìn. Cường độ tín hiệu còn phụ thuộc vào thiết bị vô tuyến và điều kiện đường truyền. Công cụ so sánh không ước tính cường độ tín hiệu."],
+      ["Nhìn thấy Trái Đất có bảo đảm liên lạc vô tuyến không?", "Ngay cả khi nhìn thấy Trái Đất từ điểm hạ cánh, cường độ tín hiệu vẫn phụ thuộc vào thiết bị vô tuyến và điều kiện đường truyền. Công cụ so sánh không ước tính cường độ tín hiệu."],
     ],
     saved: "Đến phần so sánh kết quả đã lưu",
     resultQuestion: "Trong kết quả đã chọn, cả Mặt Trời và Trái Đất cùng xuất hiện trong bao lâu?",

@@ -13,7 +13,7 @@ test("messages translate at display time and preserve supplied values and unknow
   assert.equal(translate("vi", message), "Đã tải 0 khoảng thời gian quan trắc.");
   for (const text of ["2026-11-14T06:00:15.125Z", "Original producer explanation: <data>", "toString", "constructor"]) assert.equal(translate("vi", text), text);
   assert.equal(translate("vi", "{constructor}", {}), "{constructor}");
-  assert.equal(translate("vi", "Import rejected: {reason} The previous dataset has not changed.", { reason: "$& <raw diagnostic>" }), "Không thể nhập: $& <raw diagnostic> Bộ dữ liệu trước đó không thay đổi.");
+  assert.equal(translate("vi", "Import rejected: {reason} The previous dataset has not changed.", { reason: "$& <raw diagnostic>" }), "Chưa nhập được tệp. Dữ liệu trước đó được giữ nguyên. Lý do: $& <raw diagnostic>");
 });
 
 test("every Vietnamese translation retains the English message parameters", () => {
