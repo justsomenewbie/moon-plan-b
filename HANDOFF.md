@@ -8,7 +8,7 @@ The home page explains the comparison, links to the tool and lunar resources, an
 
 The combined revision passed 39 frontend tests, eight offline QA gates, TypeScript and the production build. Chromium verified all four saved comparisons, EN/VI and 320px layout. [Verification](docs/FRONTEND_VERIFICATION.md).
 
-The [timeline regression](frontend/tests/observations.test.ts) uses the hourly partial QA fixture. Both Basin traces break at the omitted 02:00 UTC row and show no marker there. Ridge retains its supplied 0° Sun marker at 01:00 and its Earth marker when Sun is unavailable at 02:00. All 39 frontend tests, 12 QA integration tests and TypeScript passed on Node 24.22.3.
+The [synthetic regression](frontend/tests/observations.test.ts) preserves genuine 0° markers. In [Odysseus browser QA](qa/evidence/odysseus-hour-gap/README.md), Chromium displayed five JPL Horizons hourly samples. Removing 02:00 UTC from a copy left four markers per body and split both traces from 01:00 to 03:00. Two runs agreed. The archive includes both original responses, the import pair and screenshots.
 
 ## Backend integration
 
@@ -18,6 +18,4 @@ Chung’s OpenAPI 1.0.0 documents real per-site responses. The planned aggregate
 
 Recheck the member’s living IDEA document at each frontend integration. The corner astronaut, suggested questions and data-backed answers remain proposals. Globe zoom and the new multi-site marker suggestion are queued for review. Terrain close-ups and overlays need appropriate source data; Earth visibility alone does not establish radio strength. Contact and sponsor details need confirmation. Animate UI’s submission-license decision stays open; its Share control is retained. Release licensing, science sign-off, the network trace, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md).
 
-The timeline test was prepared on `codex/horizons-hour-gap` from verified GitHub main `d1689f70ad7ad5b80471952fe9da644e18c3a084`. Frontend QA owns the test. To repeat the visual check, import `qa/fixtures/partial.json` and inspect 02:00 UTC in the site comparison.
-
-Root integrated the two-week comparison on `codex/frontend-kickoff` above verified main `db0c6dc`.
+Frontend QA prepared the browser evidence on `codex/odysseus-horizons-browser` from verified GitHub main `cb50af2803193499e095c11fa066ee7893451c2f`. Import the linked gap copy to inspect the 02:00 UTC break.
