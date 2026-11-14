@@ -1,7 +1,10 @@
 // The source links live outside the form; serialize its current entries for ordinary links,
 // keyboard activation and opening in a new tab.
 export type PlannerSource = "live" | "saved" | "saved-b2";
-const extraDefaults = { minBothPct: "0", minSunPct: "0", minEarthPct: "0", maxDarkGap: "", maxEarthGap: "", separationHours: "12", maxResults: "5" } as const;
+const extraDefaults = {
+  minBothPct: "0", minSunPct: "0", minEarthPct: "0", minContinuousSun: "0", minContinuousEarth: "0",
+  minSunElevation: "", maxDarkGap: "", maxEarthGap: "", separationHours: "12", maxResults: "5",
+} as const;
 export type ExtraField = keyof typeof extraDefaults;
 const hour = 3600000;
 const day = 24 * hour;
@@ -11,8 +14,10 @@ export function liveExtras(seed: URLSearchParams) {
   const extras: Partial<Record<ExtraField, string>> = {};
   for (const [key, fallback] of Object.entries(extraDefaults)) {
     const raw = seed.get(key);
-    if (!raw || raw.length > 16 || !/^\d+(\.\d+)?$/.test(raw)) continue;
-    if (fallback === "" || Number(raw) !== Number(fallback)) extras[key as ExtraField] = raw;
+    if (!raw || raw.length > 16 || !/^-?(?:\d+|\d*\.\d+)(?:e[+-]?\d+)?$/i.test(raw)) continue;
+    const value = Number(raw);
+    if (!Number.isFinite(value) || (key === "minSunElevation" ? value < -90 || value > 90 : value < 0)) continue;
+    if (fallback === "" || value !== Number(fallback)) extras[key as ExtraField] = raw;
   }
   return extras;
 }

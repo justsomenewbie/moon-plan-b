@@ -128,6 +128,7 @@ export const vietnamese: Record<string, string> = {
   "Minimum sunlight": "Tỷ lệ có ánh sáng Mặt Trời tối thiểu",
   "Minimum Earth visibility": "Tỷ lệ nhìn thấy Trái Đất tối thiểu",
   "Require Earth visibility at landing": "Yêu cầu nhìn thấy Trái Đất lúc hạ cánh",
+  "Continuous visibility starts at landing and can extend beyond the mission end.": "Thời gian quan sát liên tục tính từ lúc hạ cánh và có thể kéo dài sau khi nhiệm vụ kết thúc.",
   "Minimum continuous sunlight": "Thời lượng có nắng liên tục tối thiểu",
   "Minimum continuous Earth visibility": "Thời lượng liên tục nhìn thấy Trái Đất tối thiểu",
   "Maximum dark gap": "Khoảng tối liên tục dài nhất cho phép",

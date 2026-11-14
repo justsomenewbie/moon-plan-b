@@ -133,9 +133,9 @@ export async function findAltDates(request: AltDatesRequest, stepSeconds: number
         || (c.max_dark_gap_h !== null && candidate.longest_dark_h > c.max_dark_gap_h + METRIC_TOLERANCE)
         || (c.max_comms_gap_h !== null && candidate.longest_comms_gap_h > c.max_comms_gap_h + METRIC_TOLERANCE)
         || (c.min_sun_el_at_landing_deg !== null && candidate.sun_el_at_landing_deg + METRIC_TOLERANCE < c.min_sun_el_at_landing_deg)
-        // A lower bound alone cannot disprove a required continuous duration.
-        || (!candidate.continuous_sun_lower_bound && candidate.continuous_sun_h + METRIC_TOLERANCE < c.min_continuous_sun_h)
-        || (!candidate.continuous_earth_lower_bound && candidate.continuous_earth_h + METRIC_TOLERANCE < c.min_continuous_earth_h)
+        // The producer requires the observed span to meet the threshold, even when the run ends mid-span.
+        || candidate.continuous_sun_h + METRIC_TOLERANCE < c.min_continuous_sun_h
+        || candidate.continuous_earth_h + METRIC_TOLERANCE < c.min_continuous_earth_h
         || ![candidate.sun_at_landing, candidate.earth_at_landing, candidate.continuous_sun_lower_bound,
           candidate.continuous_earth_lower_bound].every(flag => typeof flag === "boolean")
         || !Number.isFinite(candidate.mean_power_horizontal) || !Number.isFinite(candidate.mean_power_tracking))

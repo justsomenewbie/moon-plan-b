@@ -119,6 +119,9 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
       earliest: utcInput(inputs.get("earliest")), latest: utcInput(inputs.get("latest")),
       mission_h: Number(inputs.get("missionHours")), max_results: Number(inputs.get("maxResults")),
       constraints: { min_sun_pct: Number(inputs.get("minSunPct")), min_earth_pct: Number(inputs.get("minEarthPct")),
+        min_continuous_sun_h: Number(inputs.get("minContinuousSun")),
+        min_continuous_earth_h: Number(inputs.get("minContinuousEarth")),
+        min_sun_el_at_landing_deg: inputs.get("minSunElevation") ? Number(inputs.get("minSunElevation")) : null,
         max_dark_gap_h: inputs.get("maxDarkGap") ? Number(inputs.get("maxDarkGap")) : null,
         max_comms_gap_h: inputs.get("maxEarthGap") ? Number(inputs.get("maxEarthGap")) : null,
         min_both_pct: Number(inputs.get("minBothPct")), require_sun_at_landing: inputs.has("sunAtLanding"), require_earth_at_landing: inputs.has("earthAtLanding"),
@@ -172,15 +175,19 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
       </select></label>
       <label className="flex items-center gap-2"><input name="sunAtLanding" {...fieldAttributes("constraints.require_sun_at_landing")} type="checkbox" defaultChecked={initialSunAtLanding ?? !planner} />{t("Require sunlight at landing")}</label>
       <label className="flex items-center gap-2"><input name="earthAtLanding" {...fieldAttributes("constraints.require_earth_at_landing")} type="checkbox" defaultChecked={initialEarthAtLanding} />{t("Require Earth visibility at landing")}</label>
-      {planner && <details className="basis-full">
+      <details className="basis-full">
         <summary>{t("Additional visibility requirements")}</summary>
         <div className="request-fields my-4">
           <label className="field">{t("Minimum sunlight (%)")}<input name="minSunPct" {...fieldAttributes("constraints.min_sun_pct")} type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minSunPct ?? "0"} /></label>
           <label className="field">{t("Minimum Earth visibility (%)")}<input name="minEarthPct" {...fieldAttributes("constraints.min_earth_pct")} type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minEarthPct ?? "0"} /></label>
+          <label className="field">{t("Minimum continuous sunlight")} (h)<input name="minContinuousSun" {...fieldAttributes("constraints.min_continuous_sun_h")} type="number" min="0" step="any" defaultValue={initialExtras?.minContinuousSun ?? "0"} /></label>
+          <label className="field">{t("Minimum continuous Earth visibility")} (h)<input name="minContinuousEarth" {...fieldAttributes("constraints.min_continuous_earth_h")} type="number" min="0" step="any" defaultValue={initialExtras?.minContinuousEarth ?? "0"} /></label>
+          <p className="basis-full muted text-sm">{t("Continuous visibility starts at landing and can extend beyond the mission end.")}</p>
+          <label className="field">{t("Minimum Sun elevation at landing")} (°)<input name="minSunElevation" {...fieldAttributes("constraints.min_sun_el_at_landing_deg")} type="number" min="-90" max="90" step="any" defaultValue={initialExtras?.minSunElevation} /></label>
           <label className="field">{t("Maximum dark gap (h)")}<input name="maxDarkGap" {...fieldAttributes("constraints.max_dark_gap_h")} defaultValue={initialExtras?.maxDarkGap} type="number" min="0" step="any" /></label>
           <label className="field">{t("Maximum Earth visibility gap (h)")}<input name="maxEarthGap" {...fieldAttributes("constraints.max_comms_gap_h")} defaultValue={initialExtras?.maxEarthGap} type="number" min="0" step="any" /></label>
         </div>
-      </details>}
+      </details>
       <p className="basis-full muted text-sm">{t("Use whole {step} s steps for the mission duration.", { step: stepSeconds })}</p>
       <button className="button outline" type="submit" disabled={pending || wait > 0}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Search landing dates")}</button>
     </form>
@@ -198,10 +205,15 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
         {t("Mission duration (h)")} · {search.mission_duration_h} · {t("Boundary precision")} ±{search.precision_h} h<br />
         {t("Run ID")} · <code className="break-all">{search.run_id}</code></p>
       <p className="muted text-sm">{t(objectives[search.constraints.objective])} · {t("Minimum joint visibility (%)")} {search.constraints.min_both_pct} · {t("Require sunlight at landing")} {t(search.constraints.require_sun_at_landing ? "Yes" : "No")} · {t("Require Earth visibility at landing")} {t(search.constraints.require_earth_at_landing ? "Yes" : "No")} · {t("Minimum spacing between proposals (h)")} {search.constraints.min_separation_h}</p>
-      {(search.constraints.min_sun_pct > 0 || search.constraints.min_earth_pct > 0 || search.constraints.max_dark_gap_h !== null || search.constraints.max_comms_gap_h !== null) &&
+      {(search.constraints.min_sun_pct > 0 || search.constraints.min_earth_pct > 0 || search.constraints.min_continuous_sun_h > 0 ||
+        search.constraints.min_continuous_earth_h > 0 || search.constraints.min_sun_el_at_landing_deg !== null ||
+        search.constraints.max_dark_gap_h !== null || search.constraints.max_comms_gap_h !== null) &&
         <ul className="muted text-sm">
           {search.constraints.min_sun_pct > 0 && <li>{t("Minimum sunlight (%)")} · {search.constraints.min_sun_pct}</li>}
           {search.constraints.min_earth_pct > 0 && <li>{t("Minimum Earth visibility (%)")} · {search.constraints.min_earth_pct}</li>}
+          {search.constraints.min_continuous_sun_h > 0 && <li>{t("Minimum continuous sunlight")} · {search.constraints.min_continuous_sun_h} h</li>}
+          {search.constraints.min_continuous_earth_h > 0 && <li>{t("Minimum continuous Earth visibility")} · {search.constraints.min_continuous_earth_h} h</li>}
+          {search.constraints.min_sun_el_at_landing_deg !== null && <li>{t("Minimum Sun elevation at landing")} · {search.constraints.min_sun_el_at_landing_deg}°</li>}
           {search.constraints.max_dark_gap_h !== null && <li>{t("Maximum dark gap (h)")} · {search.constraints.max_dark_gap_h}</li>}
           {search.constraints.max_comms_gap_h !== null && <li>{t("Maximum Earth visibility gap (h)")} · {search.constraints.max_comms_gap_h}</li>}
         </ul>}

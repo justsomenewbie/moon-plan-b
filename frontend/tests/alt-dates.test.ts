@@ -108,6 +108,8 @@ test("rejects candidates that contradict an enabled landing constraint", async t
     { min: "Sun at landing", fields: { sun_at_landing: false } },
     { min: "Earth at landing", fields: { earth_at_landing: false } },
     { min: "continuous Sun", fields: { continuous_sun_h: 24 } },
+    { min: "clipped Sun", fields: { continuous_sun_h: 24, continuous_sun_lower_bound: true } },
+    { min: "clipped Earth", fields: { continuous_earth_h: 24, continuous_earth_lower_bound: true } },
     { min: "continuous Earth", fields: { continuous_earth_h: 24, continuous_earth_lower_bound: false } },
     { min: "dark gap", fields: { longest_dark_h: 2 } },
     { min: "communications gap", fields: { longest_comms_gap_h: 2 } },
@@ -116,8 +118,8 @@ test("rejects candidates that contradict an enabled landing constraint", async t
     response.candidates[0] = { ...candidate, ...change.fields };
     await assert.rejects(findAltDates(search, 3600, undefined, grid), (e: unknown) => e instanceof ApiError && e.status === 502, change.min);
   }
-  // A clipped continuous duration is a lower bound, not an upper bound.
-  response.candidates[0] = { ...candidate, continuous_earth_h: 24, continuous_earth_lower_bound: true };
+  // A clipped span still qualifies when the observed duration reaches the threshold.
+  response.candidates[0] = { ...candidate, continuous_earth_h: 48, continuous_earth_lower_bound: true };
   await findAltDates(search, 3600, undefined, grid);
 });
 
