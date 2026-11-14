@@ -643,6 +643,123 @@
           }
         }
       }
+    },
+    "/api/v1/sites": {
+      "get": {
+        "operationId": "listSites",
+        "summary": "Site catalog of a run (list + map markers)",
+        "tags": [
+          "sites"
+        ],
+        "description": "Sorted by rank (default weights, = summary.csv). format=geojson returns application/geo+json with Point features and Artemis III region Polygons.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "example": "pf_21c3f3f6dc56b1e1",
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "description": "Run to read; default = the run flagged is_default (GET /api/v1/runs)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]{1,32}$"
+            },
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "description": "Filter by catalog group: south_pole | reference | apollo | far_side (custom sites have group \"\")"
+          },
+          {
+            "schema": {
+              "default": "json",
+              "type": "string",
+              "enum": [
+                "json",
+                "geojson"
+              ]
+            },
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "description": "json -> application/json SitesResponse; geojson -> application/geo+json FeatureCollection (points + Artemis III region polygons)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sites of the run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitesResponse"
+                }
+              },
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitesGeoJson"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified: the ETag sent in If-None-Match is current (empty body)"
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4325,6 +4442,480 @@
             "mode": "quick"
           }
         ]
+      },
+      "SitesResponse": {
+        "type": "object",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+            "description": "Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs",
+            "examples": [
+              "pf_21c3f3f6dc56b1e1"
+            ]
+          },
+          "step_s": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Sample step of the run, seconds",
+            "examples": [
+              3600
+            ]
+          },
+          "precision_h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "= step_s / 3600. Every boundary and \"hours until\" value is accurate to +- this many hours.",
+            "examples": [
+              1
+            ]
+          },
+          "sites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteListItem"
+            }
+          }
+        },
+        "required": [
+          "run_id",
+          "step_s",
+          "precision_h",
+          "sites"
+        ],
+        "additionalProperties": false,
+        "examples": [
+          {
+            "run_id": "pf_21c3f3f6dc56b1e1",
+            "step_s": 3600,
+            "precision_h": 1,
+            "sites": [
+              {
+                "id": "ref_connecting_ridge_c1",
+                "name": "Shackleton-de Gerlache connecting ridge, point C1",
+                "group": "reference",
+                "origin": "catalog",
+                "lat_deg": -89.4505,
+                "lon_deg": 222.84,
+                "map": {
+                  "projection": "south_polar_stereographic_R1737.4km",
+                  "x_km": -11.33,
+                  "y_km": -12.218
+                },
+                "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+                "horizon_method": "raymarch",
+                "rank": 1,
+                "score": 71.162037,
+                "pct_sun": 98.564815,
+                "pct_earth": 53.611111,
+                "pct_both": 52.175926,
+                "longest_dark_h": 26,
+                "longest_comms_gap_h": 326
+              },
+              {
+                "id": "ref_shackleton_rim",
+                "name": "Shackleton crater rim, point S",
+                "group": "reference",
+                "origin": "catalog",
+                "lat_deg": -89.7849,
+                "lon_deg": 203.97,
+                "map": {
+                  "projection": "south_polar_stereographic_R1737.4km",
+                  "x_km": -2.65,
+                  "y_km": -5.96
+                },
+                "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+                "horizon_method": "raymarch",
+                "rank": 2,
+                "score": 70.185186,
+                "pct_sun": 97.268519,
+                "pct_earth": 52.268519,
+                "pct_both": 51.990741,
+                "longest_dark_h": 29,
+                "longest_comms_gap_h": 334
+              }
+            ]
+          }
+        ]
+      },
+      "SiteListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+            "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+            "examples": [
+              "ref_connecting_ridge_c1"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string",
+            "description": "Catalog group (\"\" for custom sites)"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "catalog",
+              "custom"
+            ],
+            "description": "catalog = lunarnav/catalog/sites.json; custom = user coordinates (POST /jobs)"
+          },
+          "lat_deg": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Planetocentric latitude, deg [-90, 90]"
+          },
+          "lon_deg": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 360,
+            "description": "EAST longitude, deg [0, 360)"
+          },
+          "map": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MapPoint"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dem_source": {
+            "type": "string",
+            "description": "DEM used for the horizon; `none:outside-<dem>-coverage` = smooth-sphere horizon (show a warning)"
+          },
+          "horizon_method": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Rank in this run with the default weights"
+          },
+          "score": {
+            "type": "number"
+          },
+          "pct_sun": {
+            "type": "number"
+          },
+          "pct_earth": {
+            "type": "number"
+          },
+          "pct_both": {
+            "type": "number"
+          },
+          "longest_dark_h": {
+            "type": "number"
+          },
+          "longest_comms_gap_h": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "group",
+          "origin",
+          "lat_deg",
+          "lon_deg",
+          "map",
+          "dem_source",
+          "horizon_method",
+          "rank",
+          "score",
+          "pct_sun",
+          "pct_earth",
+          "pct_both",
+          "longest_dark_h",
+          "longest_comms_gap_h"
+        ],
+        "additionalProperties": false
+      },
+      "MapPoint": {
+        "type": "object",
+        "properties": {
+          "projection": {
+            "type": "string",
+            "const": "south_polar_stereographic_R1737.4km"
+          },
+          "x_km": {
+            "type": "number"
+          },
+          "y_km": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "projection",
+          "x_km",
+          "y_km"
+        ],
+        "additionalProperties": false,
+        "description": "Position on the LOLA south polar stereographic map (sphere R = 1737.4 km); null for sites north of 60 S"
+      },
+      "SitesGeoJson": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "FeatureCollection"
+          },
+          "run_id": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SiteFeature"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "run_id",
+          "features"
+        ],
+        "additionalProperties": false,
+        "description": "GeoJSON FeatureCollection in lunar coordinates (planetocentric lat, EAST lon, MOON_ME)",
+        "examples": [
+          {
+            "type": "FeatureCollection",
+            "run_id": "pf_21c3f3f6dc56b1e1",
+            "features": [
+              {
+                "type": "Feature",
+                "id": "a3_haworth",
+                "geometry": {
+                  "type": "Point",
+                  "coordinates": [
+                    336.328186,
+                    -86.752966
+                  ]
+                },
+                "properties": {
+                  "kind": "site",
+                  "site_id": "a3_haworth",
+                  "name": "Artemis III region: Haworth",
+                  "group": "south_pole",
+                  "origin": "catalog",
+                  "rank": 5,
+                  "score": 23.662037,
+                  "pct_sun": 32.87037,
+                  "pct_earth": 35.046296,
+                  "pct_both": 0,
+                  "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]"
+                }
+              },
+              {
+                "type": "Feature",
+                "id": "a3_haworth#region",
+                "geometry": {
+                  "type": "Polygon",
+                  "coordinates": [
+                    [
+                      [
+                        325.018154,
+                        -87.393534
+                      ],
+                      [
+                        347.638218,
+                        -87.393534
+                      ],
+                      [
+                        347.638218,
+                        -86.112398
+                      ],
+                      [
+                        325.018154,
+                        -86.112398
+                      ],
+                      [
+                        325.018154,
+                        -87.393534
+                      ]
+                    ]
+                  ]
+                },
+                "properties": {
+                  "kind": "region",
+                  "site_id": "a3_haworth",
+                  "name": "Artemis III region: Haworth",
+                  "group": "south_pole",
+                  "origin": "catalog",
+                  "rank": 5,
+                  "score": 23.662037,
+                  "pct_sun": 32.87037,
+                  "pct_earth": 35.046296,
+                  "pct_both": 0,
+                  "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "SiteFeature": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Feature"
+          },
+          "id": {
+            "type": "string",
+            "description": "site id (Point) or `<site id>#region` (Polygon)"
+          },
+          "geometry": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Point"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Polygon"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      }
+                    },
+                    "description": "Closed rings of [lon_east_deg, lat_deg]"
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "site",
+                  "region"
+                ]
+              },
+              "site_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+                "description": "Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains \":\" -> always encodeURIComponent() it in paths.",
+                "examples": [
+                  "ref_connecting_ridge_c1"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "group": {
+                "type": "string"
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "catalog",
+                  "custom"
+                ],
+                "description": "catalog = lunarnav/catalog/sites.json; custom = user coordinates (POST /jobs)"
+              },
+              "rank": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "score": {
+                "type": "number"
+              },
+              "pct_sun": {
+                "type": "number"
+              },
+              "pct_earth": {
+                "type": "number"
+              },
+              "pct_both": {
+                "type": "number"
+              },
+              "dem_source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "site_id",
+              "name",
+              "group",
+              "origin",
+              "rank",
+              "score",
+              "pct_sun",
+              "pct_earth",
+              "pct_both",
+              "dem_source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "geometry",
+          "properties"
+        ],
+        "additionalProperties": false
       }
     }
   }

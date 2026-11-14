@@ -101,6 +101,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Site catalog of a run (list + map markers)
+         * @description Sorted by rank (default weights, = summary.csv). format=geojson returns application/geo+json with Point features and Artemis III region Polygons.
+         */
+        get: operations["listSites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1456,6 +1476,242 @@ export interface components {
              */
             mode: "quick" | "full";
         };
+        /**
+         * @example {
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "step_s": 3600,
+         *       "precision_h": 1,
+         *       "sites": [
+         *         {
+         *           "id": "ref_connecting_ridge_c1",
+         *           "name": "Shackleton-de Gerlache connecting ridge, point C1",
+         *           "group": "reference",
+         *           "origin": "catalog",
+         *           "lat_deg": -89.4505,
+         *           "lon_deg": 222.84,
+         *           "map": {
+         *             "projection": "south_polar_stereographic_R1737.4km",
+         *             "x_km": -11.33,
+         *             "y_km": -12.218
+         *           },
+         *           "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+         *           "horizon_method": "raymarch",
+         *           "rank": 1,
+         *           "score": 71.162037,
+         *           "pct_sun": 98.564815,
+         *           "pct_earth": 53.611111,
+         *           "pct_both": 52.175926,
+         *           "longest_dark_h": 26,
+         *           "longest_comms_gap_h": 326
+         *         },
+         *         {
+         *           "id": "ref_shackleton_rim",
+         *           "name": "Shackleton crater rim, point S",
+         *           "group": "reference",
+         *           "origin": "catalog",
+         *           "lat_deg": -89.7849,
+         *           "lon_deg": 203.97,
+         *           "map": {
+         *             "projection": "south_polar_stereographic_R1737.4km",
+         *             "x_km": -2.65,
+         *             "y_km": -5.96
+         *           },
+         *           "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+         *           "horizon_method": "raymarch",
+         *           "rank": 2,
+         *           "score": 70.185186,
+         *           "pct_sun": 97.268519,
+         *           "pct_earth": 52.268519,
+         *           "pct_both": 51.990741,
+         *           "longest_dark_h": 29,
+         *           "longest_comms_gap_h": 334
+         *         }
+         *       ]
+         *     }
+         */
+        SitesResponse: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            /**
+             * @description = step_s / 3600. Every boundary and "hours until" value is accurate to +- this many hours.
+             * @example 1
+             */
+            precision_h: number;
+            sites: components["schemas"]["SiteListItem"][];
+        };
+        SiteListItem: {
+            /**
+             * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+             * @example ref_connecting_ridge_c1
+             */
+            id: string;
+            name: string;
+            /** @description Catalog group ("" for custom sites) */
+            group: string;
+            /**
+             * @description catalog = lunarnav/catalog/sites.json; custom = user coordinates (POST /jobs)
+             * @enum {string}
+             */
+            origin: "catalog" | "custom";
+            /** @description Planetocentric latitude, deg [-90, 90] */
+            lat_deg: number;
+            /** @description EAST longitude, deg [0, 360) */
+            lon_deg: number;
+            map: components["schemas"]["MapPoint"] | null;
+            /** @description DEM used for the horizon; `none:outside-<dem>-coverage` = smooth-sphere horizon (show a warning) */
+            dem_source: string;
+            horizon_method: string;
+            /** @description Rank in this run with the default weights */
+            rank: number;
+            score: number;
+            pct_sun: number;
+            pct_earth: number;
+            pct_both: number;
+            longest_dark_h: number;
+            longest_comms_gap_h: number;
+        };
+        /** @description Position on the LOLA south polar stereographic map (sphere R = 1737.4 km); null for sites north of 60 S */
+        MapPoint: {
+            /** @constant */
+            projection: "south_polar_stereographic_R1737.4km";
+            x_km: number;
+            y_km: number;
+        };
+        /**
+         * @description GeoJSON FeatureCollection in lunar coordinates (planetocentric lat, EAST lon, MOON_ME)
+         * @example {
+         *       "type": "FeatureCollection",
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "features": [
+         *         {
+         *           "type": "Feature",
+         *           "id": "a3_haworth",
+         *           "geometry": {
+         *             "type": "Point",
+         *             "coordinates": [
+         *               336.328186,
+         *               -86.752966
+         *             ]
+         *           },
+         *           "properties": {
+         *             "kind": "site",
+         *             "site_id": "a3_haworth",
+         *             "name": "Artemis III region: Haworth",
+         *             "group": "south_pole",
+         *             "origin": "catalog",
+         *             "rank": 5,
+         *             "score": 23.662037,
+         *             "pct_sun": 32.87037,
+         *             "pct_earth": 35.046296,
+         *             "pct_both": 0,
+         *             "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]"
+         *           }
+         *         },
+         *         {
+         *           "type": "Feature",
+         *           "id": "a3_haworth#region",
+         *           "geometry": {
+         *             "type": "Polygon",
+         *             "coordinates": [
+         *               [
+         *                 [
+         *                   325.018154,
+         *                   -87.393534
+         *                 ],
+         *                 [
+         *                   347.638218,
+         *                   -87.393534
+         *                 ],
+         *                 [
+         *                   347.638218,
+         *                   -86.112398
+         *                 ],
+         *                 [
+         *                   325.018154,
+         *                   -86.112398
+         *                 ],
+         *                 [
+         *                   325.018154,
+         *                   -87.393534
+         *                 ]
+         *               ]
+         *             ]
+         *           },
+         *           "properties": {
+         *             "kind": "region",
+         *             "site_id": "a3_haworth",
+         *             "name": "Artemis III region: Haworth",
+         *             "group": "south_pole",
+         *             "origin": "catalog",
+         *             "rank": 5,
+         *             "score": 23.662037,
+         *             "pct_sun": 32.87037,
+         *             "pct_earth": 35.046296,
+         *             "pct_both": 0,
+         *             "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]"
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        SitesGeoJson: {
+            /** @constant */
+            type: "FeatureCollection";
+            run_id: string;
+            features: components["schemas"]["SiteFeature"][];
+        };
+        SiteFeature: {
+            /** @constant */
+            type: "Feature";
+            /** @description site id (Point) or `<site id>#region` (Polygon) */
+            id: string;
+            geometry: {
+                /** @constant */
+                type: "Point";
+                coordinates: [
+                    number,
+                    number
+                ];
+            } | {
+                /** @constant */
+                type: "Polygon";
+                /** @description Closed rings of [lon_east_deg, lat_deg] */
+                coordinates: [
+                    number,
+                    number
+                ][][];
+            };
+            properties: {
+                /** @enum {string} */
+                kind: "site" | "region";
+                /**
+                 * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+                 * @example ref_connecting_ridge_c1
+                 */
+                site_id: string;
+                name: string;
+                group: string;
+                /**
+                 * @description catalog = lunarnav/catalog/sites.json; custom = user coordinates (POST /jobs)
+                 * @enum {string}
+                 */
+                origin: "catalog" | "custom";
+                rank: number;
+                score: number;
+                pct_sun: number;
+                pct_earth: number;
+                pct_both: number;
+                dem_source: string;
+            };
+        };
     };
     responses: never;
     parameters: never;
@@ -1938,6 +2194,89 @@ export interface operations {
             };
             /** @description Python timed out (PYTHON_TIMEOUT) */
             504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listSites: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Run to read; default = the run flagged is_default (GET /api/v1/runs)
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id?: string;
+                /** @description Filter by catalog group: south_pole | reference | apollo | far_side (custom sites have group "") */
+                group?: string;
+                /** @description json -> application/json SitesResponse; geojson -> application/geo+json FeatureCollection (points + Artemis III region polygons) */
+                format?: "json" | "geojson";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sites of the run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SitesResponse"];
+                    "application/geo+json": components["schemas"]["SitesGeoJson"];
+                };
+            };
+            /** @description Not Modified: the ETag sent in If-None-Match is current (empty body) */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

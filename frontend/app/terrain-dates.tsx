@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { getTerrainDates, type TerrainDateRequest } from "../lib/api/terrain-dates";
+import { useQuery } from "@tanstack/react-query";
+import { getTerrainDateSites, getTerrainDates, type TerrainDateRequest } from "../lib/api/terrain-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
-import { missionSites } from "../lib/globe-sites";
 import { terrainDatesHref } from "../lib/terrain-date-link";
 import { useLanguage } from "./language";
 import { SiteResult, TimeRange } from "./terrain-site-result";
@@ -23,11 +23,22 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
   const { t } = useLanguage();
   const base = initialRequest?.first ?? baseWindow ?? { from: result!.range.requested_start, to: result!.range.requested_end };
   const [inputs, setInputs] = useState(() => ({
-    site: initialRequest?.siteId ?? missionSites[0].id,
+    site: initialRequest?.siteId ?? result!.sites[0].id,
     from: base.from.slice(0, -1), to: base.to.slice(0, -1),
     other: (initialRequest?.second.from ?? base.to).slice(0, -1),
   }));
   const [completed, setCompleted] = useState<{ request: TerrainDateRequest; first: TerrainSummary; second: TerrainSummary }>();
+  const runId = initialRequest?.runId ?? result?.run.run_id;
+  const [opened, setOpened] = useState(Boolean(initialRequest));
+  const catalog = useQuery({
+    queryKey: ["terrain-date-sites", runId],
+    queryFn: ({ signal }) => getTerrainDateSites(runId!, signal),
+    enabled: opened && Boolean(runId),
+  });
+  const available = catalog.data ?? result?.sites ?? [];
+  const sites = available.some(site => site.id === inputs.site) ? available : [
+    { id: inputs.site, name: completed?.first.sites.find(site => site.id === inputs.site)?.name ?? inputs.site }, ...available,
+  ];
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const active = useRef<AbortController | null>(null);
@@ -71,13 +82,13 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
   }, [initialRequest]);
 
   return <section id="terrain-dates" aria-label={t("Compare dates")} tabIndex={-1}>
-    <details className="details-section" open={initialRequest ? true : undefined}>
+    <details className="details-section" open={initialRequest ? true : undefined} onToggle={event => setOpened(event.currentTarget.open)}>
       <summary>{t("Compare dates")}</summary>
       <form className="request-fields my-4 print:hidden" onSubmit={event => {
         event.preventDefault();
         if (!otherEnd) { setError("Choose valid UTC bounds for both windows."); return; }
         void compare({
-          siteId: inputs.site, runId: initialRequest?.runId ?? result?.run.run_id,
+          siteId: inputs.site, runId,
           first: { from: shiftUtc(from, 0), to: shiftUtc(to, 0) },
           second: { from: shiftUtc(other, 0), to: otherEnd },
         });
@@ -87,10 +98,14 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
         <label className="field">{t("Second start (UTC)")}<input name="secondStart" type="datetime-local" step="any" required value={inputs.other} onChange={e => edit("other", e.target.value)} /></label>
         <label className="field">{t("Second end (UTC, exclusive)")}<input name="secondEnd" type="datetime-local" step="any" readOnly value={otherEnd.slice(0, -1)} /></label>
         <label className="field">{t("Site")}<select name="dateSite" value={inputs.site} onChange={e => edit("site", e.target.value)}>
-          {missionSites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
+          {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
         </select></label>
         <button className="button outline" disabled={pending}>{t("Compare these dates")}</button>
       </form>
+      {catalog.isFetching && <p role="status">{t("Loading sites for this run…")}</p>}
+      {catalog.isError && <p role="status">{t("The full site list is unavailable. You can still compare the selected site.")}{" "}
+        <button type="button" className="button outline" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button>
+      </p>}
       {Number.isFinite(span) && span > 0 && <p className="muted text-sm print:hidden">{t("Duration")} · {span / 3600000} h</p>}
       {pending && <p role="status">{t("Loading dataset…")}</p>}
       {error && <p role="alert">{t(error)}</p>}

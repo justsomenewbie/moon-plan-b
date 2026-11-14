@@ -36,7 +36,7 @@ function utcInput(value: FormDataEntryValue | null) {
 function candidateLink(candidate: AltDatesResponse["candidates"][number], search: AltDatesResponse) {
   // Current pinned single-site viewer accepts hourly runs over at most 366 days.
   if (search.step_s !== 3600 || search.mission_duration_h > 366 * 24) return null;
-  return "/?" + new URLSearchParams({
+  return "/compare?" + new URLSearchParams({
     from: candidate.landing_utc, to: candidate.mission_end_utc, resolutionSeconds: String(search.step_s),
     run_id: search.run_id, site_id: search.site_id, view_site: search.site_id,
   }) + "#terrain-observations";

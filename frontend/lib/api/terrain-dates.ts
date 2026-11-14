@@ -1,4 +1,4 @@
-import { ApiError, getTerrainAggregate, validateTerrainWindow } from "./client.ts";
+import { ApiError, apiError, getTerrainAggregate, producer, validateTerrainWindow } from "./client.ts";
 
 type DateRange = { from: string; to: string };
 export type TerrainDateRequest = {
@@ -8,9 +8,28 @@ export type TerrainDateRequest = {
   runId?: string;
 };
 
+const siteIdPattern = /^[A-Za-z0-9_.:-]{1,64}$/;
+
+export async function getTerrainDateSites(runId: string, signal?: AbortSignal) {
+  const { data, error, response } = await producer.GET("/api/v1/sites", {
+    params: { query: { run_id: runId, format: "json" } }, signal,
+  });
+  if (!response.ok) throw apiError(error, response.status);
+  if (!data || !("sites" in data) || data.run_id !== runId || !Array.isArray(data.sites))
+    throw new ApiError("The site list does not match the selected model run.", 502);
+  const ids = new Set<string>();
+  return data.sites.map(site => {
+    if (!site || typeof site.id !== "string" || !siteIdPattern.test(site.id) || ids.has(site.id)
+        || typeof site.name !== "string" || !site.name.trim())
+      throw new ApiError("The model returned an invalid site list.", 502);
+    ids.add(site.id);
+    return { id: site.id, name: site.name };
+  });
+}
+
 export function validateTerrainDates(request: TerrainDateRequest) {
-  if (!["im1_odysseus", "im2_athena"].includes(request.siteId))
-    throw new ApiError("Choose Odysseus or Athena for the date comparison.", 422);
+  if (!siteIdPattern.test(request.siteId))
+    throw new ApiError("Choose a valid site ID for the date comparison.", 422);
   if (request.runId !== undefined && !/^[A-Za-z0-9_.-]{1,64}$/.test(request.runId))
     throw new ApiError("This run link requires a live backend and a valid model run ID.", 422);
 
