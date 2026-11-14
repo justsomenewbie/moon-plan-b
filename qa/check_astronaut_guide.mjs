@@ -48,6 +48,7 @@ try {
     assert.equal(await answer.count(), 1);
     assert.ok((await answer.textContent()).includes(expected));
   }
+  await questions.nth(1).focus();
   await page.keyboard.press("Escape");
   await panel.waitFor({ state: "hidden" });
   assert.ok(await launcher.evaluate(button => button === document.activeElement));
@@ -116,7 +117,9 @@ try {
   await panel.getByRole("combobox", { name: "Chọn dữ liệu để hỏi" }).selectOption("saved");
   await panel.getByText("Odysseus · IM-1 · Không thấy đồng thời Mặt Trời và Trái Đất").waitFor();
   await checkGreeting("vi");
+  await viLauncher.focus();
   await page.keyboard.press("Escape");
+  await panel.waitFor({ state: "hidden" });
   await page.clock.setFixedTime(new Date("2026-11-28T00:00:00Z"));
   await viLauncher.click();
   await panel.getByText("Hỏi phi hành gia", { exact: true }).waitFor();

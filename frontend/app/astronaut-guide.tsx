@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { type KeyboardEvent, useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
 import { guideObservation, nextGuideUpdate, selectedModelSample } from "../lib/guide-observation";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
@@ -130,8 +130,18 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
     compareSites: savedMode(rows[0]?.week.startUtc ?? snapshot.weeks[0].startUtc),
     compareDates: savedMode(rows[0]?.site.id ?? snapshot.weeks[0].sites[0].id),
   };
+  function dismissOnEscape(event: KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Escape" || event.defaultPrevented || event.nativeEvent.isComposing) return;
+    if (!(event.target instanceof Element) || !event.target.closest("button, summary, a")) return;
+    const panel = document.getElementById(id);
+    if (panel?.matches(":popover-open")) {
+      event.preventDefault();
+      panel.hidePopover();
+    }
+  }
   return <>
-    <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
+    <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}
+      onKeyDown={dismissOnEscape}>
       {imageMode === "text" ? <span className={styles.helpLabel}>{copy.help}</span> : <picture>
         {imageMode === "motion" && <source media="screen and (prefers-reduced-motion: no-preference) and (forced-colors: none)"
           srcSet="/images/guide-visor-wave.webp" />}
@@ -143,7 +153,7 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
           }} />
       </picture>}
     </button>
-    <aside id={id} popover="auto" onToggle={event => {
+    <aside id={id} popover="auto" onKeyDown={dismissOnEscape} onToggle={event => {
       const opening = event.newState === "open";
       if (opening) event.currentTarget.scrollTop = 0;
       setOpen(opening);
