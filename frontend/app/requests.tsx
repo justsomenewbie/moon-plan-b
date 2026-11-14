@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiError, createJob, getJob, isMock, jobPollInterval, validateCustomWindow, validateTerrainTargetWindow, windowFromInputs } from "../lib/api/client";
+import { apiError, createJob, getJob, isMock, isPublicTeamApi, jobPollInterval, validateCustomWindow, validateTerrainTargetWindow, windowFromInputs } from "../lib/api/client";
 import { terrainUtcNanos } from "../lib/api/terrain-summary";
 import type { TerrainTarget, WindowRequest } from "../lib/api/client";
 import type { Dataset } from "../lib/dataset";
@@ -48,7 +48,7 @@ export function ApiControls({ request, target, loading, onLoad, onResult, onTerr
       <label className="field">{t(isMock ? "Desired step · seconds" : "Track sampling step · seconds")}<input name="resolution" type="number" min={isMock ? 60 : 3600} max={isMock ? 86400 : 2678400} step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>
       <button className="button outline" disabled={loading}>{t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}
-  </details>{isMock ? <JobForm readRequest={readRequest} onResult={onResult} /> : <CustomSiteJob readRequest={() => windowFromInputs(inputs.from, inputs.to, "3600", validateCustomWindow)} onResult={onTerrainResult} />}</>;
+  </details>{isPublicTeamApi ? <p className="muted">{t("Creating, tracking and cancelling custom-site jobs are unavailable on this public frontend.")}</p> : isMock ? <JobForm readRequest={readRequest} onResult={onResult} /> : <CustomSiteJob readRequest={() => windowFromInputs(inputs.from, inputs.to, "3600", validateCustomWindow)} onResult={onTerrainResult} />}</>;
 }
 
 function JobForm({ readRequest, onResult }: { readRequest: () => WindowRequest; onResult: ResultHandler }) {

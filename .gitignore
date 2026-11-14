@@ -6,6 +6,7 @@ out/
 .env*
 !.env.example
 frontend/public/api/v1/openapi.json
+frontend/public/api-contract/lunarnav.json
 frontend/public/swagger/
 frontend/public/mockServiceWorker.js
 !frontend/.env.example

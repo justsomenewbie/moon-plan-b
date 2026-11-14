@@ -8,6 +8,7 @@ import { terrainSiteIds, type TerrainTarget } from "../terrain-target.ts";
 import type { Dataset } from "../dataset.ts";
 
 export const isMock = (process.env.NEXT_PUBLIC_API_BASE_URL || "mock") === "mock";
+export const isPublicTeamApi = process.env.NEXT_PUBLIC_LUNARNAV_PROXY === "1";
 let mockReady: Promise<void> | undefined;
 export function ensureMock(): Promise<void> {
   if (!isMock || typeof window === "undefined") return Promise.resolve();
