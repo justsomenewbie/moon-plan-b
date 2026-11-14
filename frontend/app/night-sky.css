@@ -26,8 +26,10 @@
     overflow: hidden;
   }
   .sky-clouds { display: block; }
-  :root[data-theme="light"] .sky-clouds { mix-blend-mode: luminosity; }
-  :root[data-theme="light"] .sky-clouds span { opacity: .74; }
+  :root[data-theme="light"] .sky-clouds span {
+    filter: contrast(.75) brightness(1.25);
+    opacity: .66;
+  }
   .sky-clouds span {
     position: absolute;
     width: clamp(155px, 24vw, 370px);
