@@ -12,7 +12,7 @@ AI planning assistance remains a proposed backend capability, with server-side k
 
 The hero opens with a credited NASA LRO photograph. **Rotate the Moon** loads the 457,942-byte NASA CGI Moon Kit color map on demand. Drag, direction buttons and reset change the view center. Its bilingual caption identifies fixed-light reference imagery and excludes terrain and Sun/Earth visibility calculations. NASA credits and reuse terms are in [credits](docs/CREDITS.md).
 
-Auto/Light/Dark follows local time or a saved manual choice. English is the default with a saved Vietnamese option. Animate UI supplies Share comparison’s press feedback.
+Auto/Light/Dark follows local time or a saved manual choice. English is the default with a saved Vietnamese option. Animate UI supplies Share comparison’s press feedback. Its redistribution restriction conflicts with the published judging terms. The team’s release decision remains open. See [credits](docs/CREDITS.md).
 
 **Compare sites** lists the producer’s assessments, reasons and source IDs for a published UTC window and selected threshold. Prior browser checks covered all three demo thresholds, swaps, partial coverage, absent sites, shared links and the 320px Vietnamese layout. Prior bilingual date reports were reviewed across ten Letter pages.
 
@@ -24,6 +24,6 @@ External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/f
 
 ## Ownership and publication
 
-Root edited; agents reviewed. Verified globe review head `dc6e179a9d2d277b9b7530dd73d5f08af1ff878e`. Subsequent publication receipts are held outside the repository. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission. Product cloud SHA is unestablished. Preparation unchanged; no preparation sync required.
+Root edited; agents reviewed. The frontend was fast-forwarded to `main` and verified against GitHub at `4328c85329250d3f2e80fb7ae61ba7b9aa564458`. Main and review branch matched at that checkpoint. No deployment or submission. Product cloud SHA is unestablished.
 
 Next input from Chung and Trang is one versioned site-pair export for a shared UTC window, with raw source responses and processing evidence for every joint interval.

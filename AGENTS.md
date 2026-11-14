@@ -2,7 +2,9 @@
 
 ## Scope and source
 
-Repository: `justsomenewbie/moon-plan-b`, public, base branch `main`. This is the single shared product repository for frontend, backend/data scripts, tests and English product documentation. Keep private evidence, historical chats and unrelated practice outside it. Preparation sync permissions apply to the preparation repository, not automatic product publication, deployment, purchases or access changes.
+Repository: `justsomenewbie/moon-plan-b`, public, base branch `main`. This is the single shared product repository for frontend, backend/data scripts, tests and English product documentation. Keep private evidence, historical chats and unrelated practice outside it. The preparation sync has separate destinations and permissions.
+
+After each major product change, push the verified work to GitHub `main`, including all other finished product changes since the previous push. Preserve teammates’ commits, use a normal fast-forward push, and verify the remote commit and file tree. Deployment and submission require their own authorization.
 
 Before work, read HANDOFF, inspect actual time/runtime, `git status --short --branch` and the full existing diff. Preserve other work. Implementation began after the event start; use HANDOFF for the current checkout state. A task needs a goal, allowed files, inputs/outputs, acceptance examples and exact checks.
 
