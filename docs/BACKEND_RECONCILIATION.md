@@ -6,6 +6,13 @@ The public producer at `https://api.lunavigator.com/api/v1` selected `B2_spice_p
 
 A production check compared all 336 hourly rows for Odysseus and Athena with the joint windows for [2026-11-14, 2026-11-21) UTC. Joint visibility began November 19 at 01:00 for Odysseus (47 h) and November 15 at 05:00 for Athena (139 h), continuing to the window end. The older B result for Odysseus was 33 h. For November 14 alone the 23 ranking rows agreed with the aggregate and Chandrayaan-3 Vikram led at 18 of 24 h. The separate end-rounding and series-point-limit error checks passed. The browser verified both planning directions through the authenticated proxy. The public preview exposes catalog observations and planning queries. Custom-coordinate jobs remain available through the team interface.
 
+On the public web frontend, a browser opened both weekly site reports without signing in and verified the B2 run ID, the two overlap intervals, and both start-time proposals. The public source-file browser opens the current B2 catalog and raw files. The historical B catalog and its evidence remain accessible as local downloads.
+
+The original CSV endpoints returned different data for Odysseus on November 18 at 00:00–03:00 UTC and November 19 at 00:00–04:00 UTC, but suggested the same filename for each export type in both periods. A browser configured for unattended downloads overwrote the first files. The public FE now includes the site, run and both UTC bounds in the download name. Four browser downloads produced four distinct names and matched the respective original files byte for byte. The producer can add the bounds to its own attachment names for direct API users.
+
+A [bounded JPL comparison](../qa/docs/JPL_CHECK.md#b2-body-center-directions) now also covers two sites, two targets and five hourly samples.
+
+
 
 Status on 14 November 2026: the team has selected the backend contract and a single aggregate GET for frontend integration. The live aggregate is available, with a scoped [producer contract](../contracts/openapi.dataset.json) for the frontend. The user supplied Chung's `WEB_BACKEND_PLAN.md` and confirmed that it may grow as more resources are discovered. It is a snapshot, not a feature ceiling or evidence of a deployed service. Its first paragraph says implementation has not started; its response numbers are illustrative. Source SHA-256: `d9062845466b1d093640026cf5b547965197a958e55f5dd0c34a3b9501e615c9`. The original internal document is not redistributed here.
 
