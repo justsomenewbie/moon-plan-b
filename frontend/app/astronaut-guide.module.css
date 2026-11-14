@@ -9,57 +9,20 @@
 
 .launcher {
   z-index: 5;
-  width: 3rem;
-  height: 3rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
+  width: 60px;
+  height: 70px;
+  padding: 0;
+  border: 0;
+  border-radius: .5rem;
+  background: transparent;
 }
 .astronaut {
-  position: relative;
-  width: 32px;
-  height: 34px;
-  color: #273745;
-  transform-origin: 50% 88%;
-}
-.astronaut::before {
-  content: "";
-  position: absolute;
-  inset: 21px 3px 0;
-  border: 1.5px solid currentColor;
-  border-radius: 9px 9px 5px 5px;
-  background: linear-gradient(to right, #ebeff2 32%, #e6ab54 32% 45%, #ebeff2 45%);
-}
-.helmet {
-  position: absolute;
-  inset: 1px 1px 8px;
-  display: grid;
-  place-items: center;
-  border: 1.5px solid currentColor;
-  border-radius: 45%;
-  background: #eef1f1;
-  box-shadow: inset 0 -3px #bdcbd2;
-}
-.helmet::before {
-  content: "";
-  position: absolute;
-  inset: 5px 3px 4px;
-  border-radius: 42%;
-  background: #273745;
-}
-.eyes {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  width: 13px;
-  height: 5px;
-  margin-top: 2px;
-}
-.eyes::before, .eyes::after {
-  content: "";
-  width: 3px;
-  border-radius: 2px;
-  background: #f9d991;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: url("/images/eva-rest.webp") left center / 100% 100% no-repeat;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px #17233380);
 }
 
 .panel {
@@ -93,24 +56,24 @@
 .jump { display: inline-block; color: var(--earth); text-decoration: underline; }
 
 @media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .astronaut { animation: sway 12s ease-in-out infinite; }
-  .eyes { animation: blink 7s ease-in-out infinite; }
-  :global(body:has(#pause-sky-drift:checked)) .astronaut,
-  :global(body:has(#pause-sky-drift:checked)) .eyes,
-  .launcher:has(+ .panel:popover-open) :is(.astronaut, .eyes) { animation: none; }
-  @keyframes sway {
-    0%, 60%, 76%, 100% { transform: rotate(0); }
-    66% { transform: rotate(-7deg); }
-    71% { transform: rotate(4deg); }
+  .launcher:not(:has(+ .panel:popover-open)) .astronaut {
+    background-image: url("/images/eva-wave-strip.webp");
+    background-size: 3400% 100%;
+    animation: wave 9s infinite;
   }
-  @keyframes blink {
-    0%, 53%, 56%, 100% { transform: scaleY(1); }
-    54.5% { transform: scaleY(.16); }
+  :global(body:has(#pause-sky-drift:checked)) .launcher .astronaut {
+    animation: none;
+    background-position: left center;
+  }
+  /* The first 2.27 seconds play the 34 rendered poses. The last pose is the resting figure. */
+  @keyframes wave {
+    0% { background-position: 0% center; animation-timing-function: steps(33, end); }
+    25.2%, 100% { background-position: 100% center; }
   }
 }
 @media (forced-colors: active) {
-  .helmet::before { background: CanvasText; forced-color-adjust: none; }
-  .eyes::before, .eyes::after { background: Canvas; forced-color-adjust: none; }
+  .launcher { border: 1px solid ButtonText; background: ButtonFace; }
+  .astronaut { forced-color-adjust: none; }
 }
 
 @media print {

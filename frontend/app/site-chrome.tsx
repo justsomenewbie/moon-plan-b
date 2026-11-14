@@ -5,7 +5,7 @@ import ThemeControl from "./theme-control";
 export function SkyBackground() {
   return <>
     <div className="sky-clouds" aria-hidden="true">{[0, 1, 2, 3].map(i => <span key={i} />)}</div>
-    <div className="night-stars" aria-hidden="true">{[0, 1, 2, 3].map(i => <i key={i} />)}</div>
+    <div className="night-stars" aria-hidden="true">{[0, 1, 2, 3].map(i => <i key={i} />)}{[0, 1, 2].map(i => <span key={i} />)}</div>
   </>;
 }
 
@@ -16,6 +16,7 @@ export function SiteHeader({ comparisonHref, showSources = false }: {
   const { t } = useLanguage();
   return <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
       <nav aria-label={t("Main")}>
+        {!comparisonHref && <a href="#about">{t("About the project")}</a>}
         <a href={comparisonHref ?? "/compare"} className={comparisonHref ? "active-link" : undefined} aria-current={comparisonHref ? "page" : undefined}>{t("Compare")}</a>
         <a href="#resources">{t("Lunar resources")}</a>
         {showSources && <a href="#sources">{t("Sources & method")}</a>}
@@ -37,6 +38,16 @@ export function LunarResources() {
 export function SiteFooter() {
   const { t } = useLanguage();
   return <footer className="app-footer"><p>{t("Visibility alone does not measure solar power or radio signal strength.")}</p><p>{t("Frontend draft · AI-assisted implementation ·")}{" "}<a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">{t("Project repository")}</a> · <a href="https://github.com/justsomenewbie/moon-plan-b/issues" target="_blank" rel="noreferrer">{t("Project feedback")}</a></p>
+      <div className="footer-directory" id="contact">
+        <section><h2>{t("University and school")}</h2>
+          <a href="https://sae.uet.vnu.edu.vn/">{t("School of Aerospace Engineering")}</a>
+          <a href="https://uet.vnu.edu.vn/">{t("VNU University of Engineering and Technology")}</a>
+        </section>
+        <section><h2>{t("Contact the Moon Plan B team")}</h2>
+          <a href="mailto:nguyennhuson317@gmail.com">nguyennhuson317@gmail.com</a>
+          <a href="tel:+84855008666">+84 855 008 666</a>
+        </section>
+      </div>
       <div className="sky-appearance"><a className="night-credit" href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noreferrer">{t("Star map")} · NASA/Goddard SVS · ESA/Gaia/DPAC</a>
         <label><input type="checkbox" id="pause-sky-drift" />{t("Pause sky and astronaut motion")}</label>
       </div>

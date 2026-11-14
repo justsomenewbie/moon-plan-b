@@ -17,12 +17,12 @@ try {
     .filter(animation => animation instanceof CSSAnimation)
     .map(animation => animation.effect.getTiming().duration).sort((a, b) => a - b));
   await page.emulateMedia({ reducedMotion: "no-preference", forcedColors: "none" });
-  assert.deepEqual(await animations(), [7000, 12000]);
+  assert.deepEqual(await animations(), [9000]);
   const motionPause = page.getByRole("checkbox", { name: "Pause sky and astronaut motion" });
   await motionPause.check();
   assert.deepEqual(await animations(), []);
   await motionPause.uncheck();
-  assert.deepEqual(await animations(), [7000, 12000]);
+  assert.deepEqual(await animations(), [9000]);
   await launcher.focus();
   await page.keyboard.press("Enter");
   await panel.waitFor({ state: "visible" });

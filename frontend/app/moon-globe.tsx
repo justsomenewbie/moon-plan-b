@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import type { PointerEvent } from "react";
+import type { KeyboardEvent, PointerEvent } from "react";
 import { drawGlobe, globeCenter } from "../lib/moon-globe";
 import { comparisonLocation, diskPosition, missionSites } from "../lib/globe-sites";
 import type { GlobeSite, MapPoint } from "../lib/globe-sites";
@@ -9,12 +9,17 @@ import saved from "../lib/odysseus-athena-weeks.json";
 import "./globe-comparison.css";
 
 const origin = { longitude: 15, latitude: -58 };
+const directions = [
+  ["ArrowLeft", "←", "Look west", -30, 0], ["ArrowRight", "→", "Look east", 30, 0],
+  ["ArrowUp", "↑", "Look north", 0, 30], ["ArrowDown", "↓", "Look south", 0, -30],
+] as const;
 function coordinates(c: MapPoint, rounded = true) {
   const magnitude = (value: number) => rounded ? Math.abs(value).toFixed(0) : Math.abs(value);
   return `${magnitude(c.latitude)}°${c.latitude < 0 ? "S" : "N"} · ${magnitude(c.longitude)}°${c.longitude < 0 ? "W" : "E"}`;
 }
 
 type GlobeProps = {
+  home?: boolean;
   primary?: GlobeSite;
   alternative?: GlobeSite;
   evidence?: Dataset["evidence"];
@@ -31,7 +36,7 @@ type Target = {
   missionId?: string;
 };
 
-export default function MoonGlobe({ primary, alternative, evidence, savedResult, showSky }: GlobeProps) {
+export default function MoonGlobe({ home = false, primary, alternative, evidence, savedResult, showSky }: GlobeProps) {
   const { t } = useLanguage();
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
@@ -175,6 +180,15 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
     setCenter(next); setAnnounced(next);
   }
 
+  function turnWithKeyboard(event: KeyboardEvent<HTMLCanvasElement>) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const direction = directions.find(([key]) => key === event.key);
+    if (!direction) return;
+    const [, , , dx, dy] = direction;
+    event.preventDefault();
+    selectCenter(globeCenter(center.longitude + dx, center.latitude + dy));
+  }
+
   function locate(item: Target | undefined) {
     setRotating(false);
     setChosen(item ? { key: item.key, identity: item.identity } : null);
@@ -185,9 +199,11 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
     <div className="lunar-frame">
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
+        tabIndex={home ? 0 : undefined} onKeyDown={home ? turnWithKeyboard : undefined}
+        aria-describedby={home ? "home-globe-instructions" : undefined}
         onPointerDown={startDrag} onPointerMove={moveDrag}
         onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} />}
-      {ready && pins.map((item, index) => {
+      {ready && !home && pins.map((item, index) => {
         if (!("point" in item.location)) return null;
         const position = diskPosition(item.location.point, center, zoom);
         if (!position) return null;
@@ -203,8 +219,8 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
         setCenter(point ?? origin); setZoom(1); setAnnounced(null); setReady(false); setFailed(false); setEnabled(!enabled);
       }}>{t(failed ? "Retry globe" : enabled ? "Return to photograph" : "Rotate the Moon")}</button>
       {ready && <div className="globe-controls" role="group" aria-label={t("Rotate the lunar globe")}>
-        {!reducedMotion && <button type="button" onClick={() => setRotating(active => !active)}>{t(rotating ? "Pause rotation" : "Resume rotation")}</button>}
-        {([["←", "Look west", -30, 0], ["→", "Look east", 30, 0], ["↑", "Look north", 0, 30], ["↓", "Look south", 0, -30]] as const).map(([icon, label, dx, dy]) =>
+        {!home && !reducedMotion && <button type="button" onClick={() => setRotating(active => !active)}>{t(rotating ? "Pause rotation" : "Resume rotation")}</button>}
+        {!home && directions.map(([, icon, label, dx, dy]) =>
           <button type="button" key={label} aria-label={t(label)} title={t(label)} onClick={() => selectCenter(globeCenter(center.longitude + dx, center.latitude + dy))}>{icon}</button>)}
         <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => { setRotating(false); setZoom(zoom / 2); }}>−</button>
         <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => { setRotating(false); setZoom(zoom * 2); }}>+</button>
@@ -213,7 +229,9 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)} · {zoom}×</p>}
       <p role="status">{failed ? t("Globe unavailable. The photograph is shown. Try again to reload the map.") : enabled && !ready ? t("Loading lunar surface map…") :
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>
-      {ready ? <><a href="https://svs.gsfc.nasa.gov/4720/" target="_blank" rel="noreferrer">{t("LRO surface map")} · NASA’s Scientific Visualization Studio</a><br />{t("Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</> :
+      {ready ? <><a href="https://svs.gsfc.nasa.gov/4720/" target="_blank" rel="noreferrer">{t("LRO surface map")} · NASA’s Scientific Visualization Studio</a><br /><span id={home ? "home-globe-instructions" : undefined}>{t(home
+          ? "Drag to turn the globe, or focus it and use the arrow keys. Return to the photograph for a still image. Lighting is fixed. This globe does not model terrain or calculate Sun/Earth visibility."
+          : "Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</span></> :
         <><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</>}
       <div className="globe-locator">
         <div className="site-pin-key" role="group" aria-label={t("Locate a site")}>
@@ -233,7 +251,7 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
         {target && <div className="globe-place">
           {"reason" in target.location ? <p>{t(target.location.reason)}</p> : <p>{t("Reported location")} · {target.location.point.latitude}° {t("latitude")} · {target.location.point.longitude}° {t("east longitude")}</p>}
           {point && ready && <><button type="button" className="button outline" onClick={() => selectCenter(point)}>{t("Center on site")}</button>
-            <p>{t(marker ? "The marker shows the approximate site location." : "This location is outside the current view.")}</p></>}
+            {!home && <p>{t(marker ? "The marker shows the approximate site location." : "This location is outside the current view.")}</p>}</>}
           {target.missionId && <div className="site-week-readings">
             <strong>{t("Saved team model results")}</strong>
             {displayedWeeks.map(week => {
