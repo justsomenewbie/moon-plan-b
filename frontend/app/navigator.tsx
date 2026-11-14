@@ -166,7 +166,7 @@ export default function Navigator() {
     const params = new URLSearchParams(window.location.search);
     setQaEnabled(params.get("qa") === "true");
     const hasObservation = params.has("view_site") || params.has("at");
-    if (hasObservation) setTerrain(null);
+    setTerrain(null);
     try {
       if (hasObservation && !params.get("run_id")) throw new Error("The shared observation needs a pinned model run.");
       for (const key of ["from", "to", "resolutionSeconds", "job", "run_id", "site_id", "view_site", "at"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
