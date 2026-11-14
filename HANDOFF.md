@@ -22,7 +22,7 @@ Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sit
 
 [Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The EN/VI astronaut opens pair/date controls, reads the displayed pair and supports pausing its blink and tilt. Saved joint visibility: Odysseus 33 h, Athena 139 h, with UTC and source. [Local Ollama](README.md#ask-the-astronaut).
+The EN/VI astronaut opens pair/date controls, reads the displayed pair and waves a rigged arm with a motion pause. Saved joint visibility: Odysseus 33 h, Athena 139 h, with UTC and source. [Local Ollama](README.md#ask-the-astronaut).
 
 ## Pending
 
