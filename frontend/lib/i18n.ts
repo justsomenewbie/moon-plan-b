@@ -326,6 +326,7 @@ export const vietnamese: Record<string, string> = {
   "Play timeline": "Phát dòng thời gian",
   "Timeline sample": "Mẫu trên dòng thời gian",
   "No shared samples": "Không có mẫu chung",
+  "1 hour elapsed. Primary {primary}{alternative}": "Đã qua 1 giờ. Chính {primary}{alternative}",
   "{hours} hours elapsed. Primary {primary}{alternative}": "Đã qua {hours} giờ. Chính {primary}{alternative}",
   ". Alternative {time}": ". Đối chiếu {time}",
   "The pair has no shared sample times. Exact observations are available in the sample table where present.": "Hai khoảng không có thời điểm lấy mẫu chung. Xem các giá trị quan trắc có sẵn trong bảng mẫu.",

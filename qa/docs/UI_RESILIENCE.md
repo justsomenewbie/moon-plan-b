@@ -12,8 +12,16 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | UI-06 | Switch English/Vietnamese and share/reopen selection | Same UTC `Z`, source identity, degrees/km and dataset version; English default retained | [PASS in Chromium](#ui-06-sharing-a-sample) |
 | UI-07 | Block globe texture, simulate image decode failure and unavailable Canvas 2D context separately | Fallback/retry or explicit error; numeric tables and SVG charts still usable, selection retained | [PASS in Chromium](#ui-07-browser-retest) |
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
-| UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
+| UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | [PASS in Chromium](#ui-09-keyboard-and-zoom); speech pending |
 | UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | [PASS in Chromium](#ui-10-invalid-workspace-links) |
+
+## UI-09 keyboard and zoom
+
+At 09:12 UTC on 14 November 2026, Playwright Chromium 158.0.8127.18 ran the [keyboard test](../check_keyboard_comparison.mjs) on the [production build](https://github.com/justsomenewbie/moon-plan-b/commit/5552b52228079df7f6c21b9e5865aed88d198608), route `/compare`, at 320 × 720 CSS pixels with reduced motion. A controlled 404 then a successful synthetic terrain response tested Retry with the same request URL. Tab and Enter followed the skip link to the alert, activated Retry and brought the result heading into view. On the previous build, focus moved to the tall results container but the heading was over 3,000 CSS pixels above the viewport at 320 × 700. Six additional replays with three fragment settings confirmed the heading remained visible. Moving focus to another control during the request preserved that focus.
+
+Keyboard input opened the import dialog and file chooser. The [archived Horizons copy](../evidence/odysseus-athena-hour-gap/gap.json), SHA-256 `7acb4779b02e8c743f9f04d5c69da5b51e33a31eb2f6b525d2d1a87851a0579b`, supplied the observations. With Athena primary, both labels stepped 01:00 → 03:00 → 01:00 UTC and the English slider used “1 hour elapsed.” Playback was disabled under reduced motion. Both exact-sample tables remained keyboard-scrollable locally, with four Athena rows and five Odysseus rows.
+
+A separate run of the same flow used actual Chromium tab zoom at 200% in a disposable profile. The outer window remained 640 pixels, the layout viewport narrowed to 320 CSS pixels, the device pixel ratio doubled and pinch scale remained 1. The page had no horizontal overflow. The focus indicators remained visible. Speech from a screen reader has not been tested. OpenAI Codex assisted the fixes and browser checks.
 
 ## UI-10 invalid workspace links
 

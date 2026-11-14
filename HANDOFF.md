@@ -18,6 +18,8 @@ Vietnamese labels and instructions now distinguish sites, UTC samples and appare
 
 Run B listed 23 sites. Apollo 11 date comparisons reopened after a catalog failure; fractional exclusive ends retain the last sample. Pair ranks, weights and model warnings come from POST /compare. The [contract](docs/FRONTEND_CONTRACT.md#published-route-scope) records confirmed routes, provisional tools and schema checks.
 
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
+
 ## Pending
 
 Direct backend fractional-end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Historical backend-QA and pre-sync WIP remain in named local stashes and were not included in this product merge.
