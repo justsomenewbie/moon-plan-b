@@ -216,8 +216,15 @@ export default function Navigator() {
   function guideMode(mode: Mode) {
     if (loading) return undefined;
     if (terrain) {
-      if (mode === "sites") return terrain.sites.length >= 2 ? "#workspace" : undefined;
-      return terrain.sites.length === 2 && terrainView.link ? "#terrain-dates" : undefined;
+      if (!terrainView.link || !terrain.sites.length) return undefined;
+      return () => {
+        const id = mode === "sites" ? "terrain-pair" : "terrain-dates";
+        const panel = document.getElementById(id);
+        const details = panel instanceof HTMLDetailsElement ? panel : panel?.querySelector("details");
+        if (!details) return;
+        details.open = true;
+        details.querySelector("summary")?.focus();
+      };
     }
     if (!a || !data || !selection || !alternatives(data, a, mode).length) return undefined;
     return () => { choose(a, mode); document.getElementById("workspace")?.focus(); };
