@@ -1,10 +1,10 @@
 # Current handoff — 15 November 2026
 
-Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. The inspector and table link to the selected site’s saved report or hourly live observations. The original homepage and quick guide return; the [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Integration combines the site-detail work from `8196406` and landing advice from `e2972c1`. Previous verified main: `1a1b3e2`. Review: [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
+Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. The inspector and table link to the selected site’s saved report or hourly live observations. The original homepage and quick guide return; the [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Integration combines the site-detail work from `8196406` and landing advice from `e2972c1`. Review: [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
 
 ## Live comparison
 
-The comparison results link to the current run’s lunar globe and local 3D sky. Observations share the selected site and UTC across the globe, tracks, timeline, sky, polar plot and exact-sample table. The 0°/2°/5° controls, ribbon and direction diagrams use the returned angles. Terrain visibility uses the producer flags. Missing directions stay unavailable. [Live regression](qa/check_terrain_sky.mjs), [clearance QA](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram). Last verified main before integration: `b6b76a2`. Owner: comparison integration.
+The comparison results link to the current run’s lunar globe and local 3D sky. Observations share the selected site and UTC across the globe, tracks, timeline, sky, polar plot and exact-sample table. The 0°/2°/5° controls, ribbon and direction diagrams use the returned angles. Terrain visibility uses the producer flags. Missing directions stay unavailable. [Live regression](qa/check_terrain_sky.mjs), [clearance QA](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram). Owner: comparison integration.
 
 ## Current product, backend and QA state
 
@@ -22,10 +22,10 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 [Astronaut guide configuration](frontend/README.md#ask-the-astronaut).
 
-**Plan and data** — B2 covers 23 sites and 43,824 hourly samples each. Long catalog links include downloadable visibility summaries. Switching sources retains the requested dates, site and priority. The explorer lists 13 relay operations. All 17 upstream operations match production. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The map highlights leaders and ties.
+**Plan and data** — B2 covers 23 sites and 43,824 hourly samples each. Saved B2 reports include original coordinate sources and EN/VI notes for all 23 sites. Switching sources retains the requested dates, site and priority. The explorer lists 13 relay operations. All 17 upstream operations match production. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The map highlights leaders and ties.
 
 Planner results flag five smooth-sphere sites and withhold zero-visibility recommendations. Live landing searches support continuous sunlight, continuous Earth visibility and minimum solar elevation. [Checks and open dataset limit hint](docs/BACKEND_RECONCILIATION.md#planner-and-dataset-checks-november-15-2026).
 
 ## Pending
 
-Release licensing, science sign-off, three usability sessions and screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Stashes retain backend-QA and pre-sync work. Next: open `/compare#local-sky` and switch between Odysseus and Athena.
+Release licensing, science sign-off, three usability sessions and screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Stashes retain backend-QA and pre-sync work. [Shared B2 sky](docs/FRONTEND_VERIFICATION.md#shared-local-sky-on-the-public-b2-planner) passed at 04:00 and 05:00 UTC for both sites.
