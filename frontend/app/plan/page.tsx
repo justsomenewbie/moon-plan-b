@@ -52,37 +52,11 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
   const wait = useRetryCountdown(error);
   const { prefix, fieldAttributes } = useProblemFields(error);
   const [metric, setMetric] = useState(priority);
-  const [selectedId, setSelectedId] = useState(initialSite);
-  const [focusRequest, setFocusRequest] = useState(0);
-  function selectSite(id: string) {
-    setSelectedId(id);
-    setFocusRequest(value => value + 1);
-  }
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
-  function clear() {
-    active.current?.abort();
-    setPending(false);
-    if (!wait) setError("");
-    setResult(null);
-    setSelectedId(null);
-  }
+  function clear() { active.current?.abort(); setPending(false); if (!wait) setError(""); setResult(null); }
   const best = result?.rows.filter(r => result.leaders.includes(r.id)) ?? [];
   const column = { sun: 0, earth: 1, joint: 2 }[metric];
-  const selected = result?.rows.find(site => site.id === selectedId) ??
-    best.find(site => (site.hours?.[column] ?? 0) > 0) ?? result?.rows[0];
-  let detailsHref = "";
-  if (result && selected) {
-    if (source === "live" && run.stepSeconds === 3600) {
-      const span = Date.parse(result.to) - Date.parse(result.from);
-      const params = new URLSearchParams({run_id: run.runId, site_id: selected.id, view_site: selected.id,
-        from: result.from, to: result.to, resolutionSeconds: String(run.stepSeconds)});
-      detailsHref = "/compare?" + params + (span > 366 * DAY ? "#workspace" : "#terrain-observations");
-    } else {
-      detailsHref = "/plan/site?" + new URLSearchParams({ source, site: selected.id, from: result.from.slice(0,10),
-        to: result.to.slice(0,10), priority: metric, ...(source === "live" ? { run: run.runId, step: String(run.stepSeconds) } : {}) });
-    }
-  }
   return <section aria-labelledby="catalog-question">
     <h2 id="catalog-question">{t("Which site fits my dates?")}</h2>
     <form className="request-fields print:hidden" onChange={clear} onSubmit={async e => {
@@ -128,19 +102,21 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
       <p className="data-notice">{!best.length ? t("No site has enough coverage for a recommendation.") : best.some(r => (r.hours?.[column] ?? 0) > 0)
         ? t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
         : t("No evaluated site meets this visibility priority for any hour in this window.")}</p>
-      {selected && <div className="plan-map-workspace">
-        <div className="plan-rank-list" role="region" aria-label={t("Visibility hours in the selected window")} tabIndex={0}>
-          <table><caption>{t("Visibility hours in the selected window")}</caption>
-            <thead><tr><th scope="col">{t("Site")}</th><th scope="col">{t(criteria[metric])} (h)</th></tr></thead>
-            <tbody>{result.rows.map(row => <tr key={row.id} data-selected={row.id === selected.id}>
-              <th scope="row"><button type="button" aria-pressed={row.id === selected.id}
-                onClick={() => selectSite(row.id)}>{row.name}</button></th>
-              <td>{row.hours?.[column] ?? t("Incomplete coverage")}</td>
-            </tr>)}</tbody>
-          </table>
-        </div>
-        <SiteMap sites={result.rows} leaders={result.leaders} column={column} selected={selected} focusRequest={focusRequest} onSelect={selectSite} detailsHref={detailsHref} />
-      </div>}
+      <SiteMap sites={result.rows} leaders={result.leaders} column={column} criterion={t(criteria[metric])} initialSite={initialSite} />
+      <div className="table-scroll"><table><caption>{t("Visibility hours in the selected window")}</caption>
+        <thead><tr><th scope="col">{t("Site")}</th>{["Sun visible","Earth visible","Both visible",...(result.scope === "live" ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
+        <tbody>{result.rows.map(row => {
+          let href: string | undefined;
+          if (source !== "live") {
+            href = "/plan/site?" + new URLSearchParams({ source, site: row.id, from: result.from.slice(0, 10), to: result.to.slice(0, 10), priority: metric });
+          } else if (run.stepSeconds === 3600) {
+            const longWindow = Date.parse(result.to) - Date.parse(result.from) > 366 * DAY;
+            const params = new URLSearchParams({ run_id: run.runId, site_id: row.id, view_site: row.id, from: result.from, to: result.to, resolutionSeconds: String(run.stepSeconds) });
+            href = "/compare?" + params + (longWindow ? "#workspace" : "#terrain-observations");
+          }
+          return <tr key={row.id}><th scope="row">{href ? <a href={href}>{row.name}</a> : row.name}</th>
+            {row.hours ? <>{row.hours.map((h,i) => <td key={i}>{h}</td>)}{result.scope === "live" && <td>{row.longest}</td>}</> : <td colSpan={4}>{t("Coverage")} · {t(row.coverage ?? "Incomplete coverage")}</td>}</tr>;
+        })}</tbody></table></div>
       <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code>{run.runId}</code></p>
     </section>}
   </section>;

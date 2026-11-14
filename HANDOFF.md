@@ -1,6 +1,6 @@
 # Current handoff — 15 November 2026
 
-The [orbit walkthrough](qa/check_orbit.mjs) opens Athena/Odysseus in B2 (139/47 h, then 168/168 h). Switch to the dated terrain horizon offline. Run B retains its 33 h Odysseus example. UTC lookup now distinguishes next events, bounds and missing data. Next: run the uncoached usability task.
+Sơn selected the flat map from `c8419fb` as the visual baseline. The map sits above the full ranking table, with the site inspector on its right on desktop. Site names open the saved report or hourly live observations. The original homepage and quick guide return; the [orbit presentation](qa/check_orbit.mjs) remains available at `/orbit`. Integration combines the site-detail work from `8196406` and landing advice from `e2972c1`. Previous verified main: `1a1b3e2`. Review: [planner](qa/check_planner_map.mjs) and [home](qa/check_home_navigation.mjs).
 
 ## Mission Survival & Horizon Clearance Studio
 
@@ -12,17 +12,17 @@ The HUD and plots label the simulated clearance. Solar visibility is not power; 
 
 Imports, saved links, EN/VI, printing and sources work. View from switches or overlays both local skies. Athena had two three-hour November proposals and none in December’s control. Date search distinguishes requested and grid times. Pinned imports validate run, site, UTC, cadence and observation. Instant lookups reject conflicting retained visibility. Custom jobs preserve UTC, shared releases and definitive cancellation refusals. Science owns physical validation; data owns Colab. [Backend findings](docs/BACKEND_RECONCILIATION.md).
 
-Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
+[UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
-Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body readings. Mobile QA covers contacts, imports, selection, UTC, clearance and API.
+Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body readings.
 
 Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup labels optional solar-disc fraction and Sun-facing irradiance. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Homepage links to the illustrated bilingual planner guide and comparison. Reference cards appear on home. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Reference cards appear on the homepage and comparison page. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The astronaut guide refreshes at sample boundaries and respects reduced motion. [Guide configuration](frontend/README.md#ask-the-astronaut).
+[Astronaut guide configuration](frontend/README.md#ask-the-astronaut).
 
 **Plan and data** — B2 covers 23 sites and 43,824 hourly samples each. Long catalog links include downloadable visibility summaries. Switching sources retains the requested dates, site and priority. The explorer lists 13 relay operations. All 17 upstream operations match production. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The map highlights leaders and ties.
 
@@ -30,4 +30,4 @@ The [original CSV URLs passed](docs/BACKEND_RECONCILIATION.md). Planner forms re
 
 ## Pending
 
-Release licensing, science sign-off, three usability sessions and screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Stashes retain backend-QA and pre-sync work.
+Release licensing, science sign-off, three usability sessions and screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Stashes retain backend-QA and pre-sync work. Next: open the saved B2 November 14–21 ranking.

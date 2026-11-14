@@ -12,7 +12,7 @@ const weeks = [["2026-11-14", "2026-11-21"], ["2026-11-21", "2026-11-28"]] as co
 const results = weeks.map(([from, to]) => rankArchiveB2({ from, to, priority: "joint" }));
 const sites = [missionSites[1], missionSites[0]];
 
-export default function OrbitScene({ standalone = false }: { standalone?: boolean }) {
+export default function OrbitScene() {
   const { t } = useLanguage();
   const [site, setSite] = useState(sites[0]);
   const [week, setWeek] = useState(0);
@@ -29,7 +29,7 @@ export default function OrbitScene({ standalone = false }: { standalone?: boolea
     from: from + "T00:00:00Z", to: to + "T00:00:00Z", resolutionSeconds: "3600" }) + "#terrain-observations";
   const inspect = (id: string) => { const next = sites.find(item => item.id === id); if (next) setSite(next); };
   return <section className="orbit-page" aria-labelledby="orbit-title">
-    {standalone && <div className="orbit-bar"><a href="/" className="orbit-brand">Moon Plan B</a><span>{t(surface ? "At the landing site" : "Orbit view")}</span><LanguageControl /></div>}
+    <div className="orbit-bar"><a href="/" className="orbit-brand">Moon Plan B</a><span>{t(surface ? "At the landing site" : "Orbit view")}</span><LanguageControl /></div>
     <div className="orbit-layout">
       <header className="orbit-heading"><p className="orbit-kicker">{t("Lunar south pole")}</p>
         <h1 id="orbit-title" tabIndex={-1}>{t("Where can we see both the Sun and Earth?")}</h1></header>
@@ -63,7 +63,6 @@ export default function OrbitScene({ standalone = false }: { standalone?: boolea
       <p><a href={observation}>{t("Inspect this site and week with the live API")} →</a></p>
       <p>{t("Source run")}: <code>{archiveB2Run.runId}</code></p>
       <a href="/compare?saved=2026-11-14T00%3A00%3A00Z#observed-week">{t("Earlier example · run B")}</a>
-      {!standalone && <p><a href="/orbit">{t("Open presentation view")}</a>{" · "}<a href="#home-guide">{t("How to use Moon Plan B")}</a></p>}
     </details>
   </section>;
 }

@@ -10,7 +10,7 @@ try {
     const errors = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.route("**/api/**", route => route.abort());
-    await page.goto(origin);
+    await page.goto(new URL("/orbit", origin).href);
     await page.locator("#orbit-title").waitFor();
     const value = page.locator(".orbit-value");
     await page.getByRole("button", {name:"Inspect Athena · IM-2",exact:true}).waitFor();
@@ -29,10 +29,7 @@ try {
     await page.locator(".orbit-weeks button").nth(1).press("Enter");
     assert.equal(await value.textContent(), "168 / 168 h");
     assert.match(await page.locator(".orbit-other").innerText(), /same visibility/);
-    const menu = page.locator(".home-menu");
-    if (await menu.isVisible()) await menu.click();
     await page.getByLabel("Language", { exact:true }).selectOption("vi");
-    if (await menu.isVisible()) await menu.click();
     assert.match(await page.locator(".orbit-other").innerText(), /cùng số giờ/);
     await page.getByRole("button", {name:"Xem bầu trời tại điểm đáp"}).click();
     assert.match(await sky.innerText(), /Odysseus.*2026-11-21/);

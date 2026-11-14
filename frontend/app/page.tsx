@@ -5,13 +5,14 @@ import { useLanguage } from "./language";
 import { SiteFooter, SiteHeader, SkyBackground, LunarResources } from "./site-chrome";
 import { savedResultFromUrl } from "./observed-week";
 import AstronautGuide from "./astronaut-guide";
-import OrbitScene from "./orbit/orbit-scene";
+import MoonGlobe from "./moon-globe";
 
 const savedResult = savedResultFromUrl(new URLSearchParams());
+const exampleHref = "/compare?saved=2026-11-14T00%3A00%3A00Z#observed-week";
 const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
 
 export default function Home() {
-  const { locale, t } = useLanguage();
+  const { t } = useLanguage();
   useEffect(() => {
     function restoreComparisonLink() {
       const { search, hash } = window.location;
@@ -26,10 +27,21 @@ export default function Home() {
   }, []);
   return <div className="app-shell">
     <SkyBackground />
-    <a className="skip-link" href="#orbit-title">{t("Skip to content")}</a>
+    <a className="skip-link" href="#home-title">{t("Skip to content")}</a>
     <SiteHeader />
     <main>
-      <OrbitScene />
+      <section className="intro" aria-labelledby="home-title">
+        <div className="hero-copy">
+          <p className="eyebrow">{t("Lunar observation explorer")}</p>
+          <h1 id="home-title" tabIndex={-1}>{t("Find a clearer window")}</h1>
+          <p className="lead">{t("Near the lunar south pole, the Sun stays low. Compare landing sites and dates to see how many hours both the Sun and Earth are in view.")}</p>
+          <div className="hero-actions">
+            <a className="button primary" href={exampleHref}>{t("Compare Athena and Odysseus")}</a>
+            <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
+          </div>
+        </div>
+        <MoonGlobe home savedResult={savedResult} />
+      </section>
       <section className="home-about" id="about" tabIndex={-1} aria-labelledby="home-about-title">
         <div>
           <h2 id="home-about-title">{t("How a crater changes the view")}</h2>
@@ -58,25 +70,18 @@ export default function Home() {
         </figure>
       </section>
       <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
-        <h2 id="home-guide-title">{t("Find a site in three steps")}</h2>
-        <p>{t("Follow the saved B2 example for November 14–21, 2026 (UTC).")}</p>
-        <a className="button outline" href="/plan?mode=sites&source=saved-b2&from=2026-11-14&to=2026-11-21&priority=joint">{t("Open this planner example")}</a>
-        <ol className="guide-steps">
-          {[
-            ["Choose your dates", "In the planner, open “I have dates”. Set the start to November 14 and the end to November 21. The end date is excluded."],
-            ["Choose what to compare", "Under “Rank sites by”, select “Sun and Earth together”, then press “Find sites”. This counts the hours when both are visible from each site."],
-            ["Read the map and table", "Select a name in the table to find its dot on the globe. Gold diamonds mark the top sites. Select a dot to see its hours, then open “Site details”. In this example, Vikram leads with 162 h."],
-          ].map(([title, instruction], i) => <li key={title}>
-            <h3><span aria-hidden="true">{i + 1}</span> {t(title)}</h3>
-            <p>{t(instruction)}</p>
-            <img src={`/images/guide/plan-step-${i + 1}-${locale}.webp`} width={640} height={(locale === "vi" ? [594, 340, 776] : [510, 340, 718])[i]} alt="" loading="lazy" />
-          </li>)}
+        <h2 id="home-guide-title">{t("Quick guide")}</h2>
+        <ol>
+          <li>{t("Open the example below. It compares two landing sites over the same week.")}</li>
+          <li>{t("Compare the hours in bold. More hours means a longer time with both the Sun and Earth in view.")}</li>
+          <li>{t("To try a different comparison, choose another week or select a site to compare its two weeks.")}</li>
         </ol>
+        <a href={exampleHref}>{t("Try the saved example")}</a>
         <div className="home-guide-links">
           <a href="/plan?mode=sites">{t("Find sites for my dates")}</a>
           <a href="/plan?mode=dates">{t("Find dates for my site")}</a>
-          <a href="/compare">{t("Open comparison tool")}</a>
-          <a href="/data">{t("Data catalog")}</a>
+          <a href="/compare">{t("Open comparison tool")}</a><a href="/data">{t("Data catalog")}</a>
+          <a href="/orbit">{t("Orbit view")}</a>
         </div>
       </section>
       <section id="team" className="home-team" tabIndex={-1} aria-labelledby="team-title">

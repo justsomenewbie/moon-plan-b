@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findAltDates, landingDelayHours, landingGridBounds, type AltDatesRequest } from "../lib/api/alt-dates.ts";
+import { findAltDates, landingDelayHours, landingGridBounds, noVisibilityForObjective, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates.ts";
 import { ApiError } from "../lib/api/client.ts";
 
 const request: AltDatesRequest = {
@@ -191,4 +191,20 @@ test("preserves the producer's 422 when the requested interval contains no grid 
   await assert.rejects(findAltDates(noGrid, 3600, undefined, grid), (e: unknown) =>
     e instanceof ApiError && e.status === 422 && /No landing time/.test(e.message));
   assert.equal(calls, 1);
+});
+
+test("separates zero visibility from producer feasibility and leaves other priorities intact", () => {
+  const base = example();
+  const candidate = { ...base.candidates[0], score: 0, sun_pct: 0, both_pct: 0, earth_pct: 100 };
+  function result(objective: AltDatesResponse["constraints"]["objective"], rows = [candidate]) {
+    return { constraints: { ...base.constraints, objective }, candidates: rows };
+  }
+  assert.equal(noVisibilityForObjective(result("both")), true);
+  assert.equal(noVisibilityForObjective(result("sun")), true);
+  assert.equal(noVisibilityForObjective(result("earth")), false);
+  for (const objective of ["earliest", "balanced", "energy"] as const)
+    assert.equal(noVisibilityForObjective(result(objective)), false);
+  assert.equal(noVisibilityForObjective(result("both", [])), false);
+  assert.equal(noVisibilityForObjective(result("earth", [{ ...candidate, earth_pct: 0 }])), true);
+  assert.equal(noVisibilityForObjective(result("both", [{ ...candidate, both_pct: 0.0001 }, candidate])), false);
 });

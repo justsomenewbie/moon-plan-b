@@ -16,8 +16,7 @@
 
 .plan-site-map { margin: 1rem 0; padding: clamp(.75rem, 2vw, 1.25rem); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
 .plan-site-map h4 { margin-bottom: .75rem; font-size: 1.15rem; font-weight: 700; }
-.plan-map-layout { display: grid; gap: .75rem; }
-.plan-globe { max-width: 25rem; margin: auto; }
+.plan-map-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 1.25rem; }
 .plan-map-surface { display: block; width: 100%; aspect-ratio: 2; border-radius: 4px; background: #1a1e25; }
 .plan-map-point { cursor: pointer; }
 .map-leader { fill: #ffce50; stroke: #191911; stroke-width: 2; }
@@ -30,22 +29,4 @@
 .plan-map-inspector select { width: 100%; min-width: 0; }
 .plan-map-zoom button { min-height: 44px; min-width: 44px; border: 1px solid var(--line); border-radius: 5px; }
 .plan-map-zoom button:disabled { opacity: .45; }
-.plan-map-workspace { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: clamp(.75rem, 3vw, 2rem); margin-top: 1rem; align-items: start; }
-.plan-map-workspace .plan-site-map { margin: 0; }
-.plan-rank-list { max-height: 39rem; overflow: auto; scrollbar-gutter: stable; }
-.plan-rank-list table { min-width: 0; font-size: .93rem; }
-.plan-rank-list thead { position: sticky; top: 0; z-index: 1; background: var(--surface); }
-.plan-rank-list th:first-child { width: 72%; }
-.plan-rank-list th, .plan-rank-list td { padding: .3rem .55rem; }
-.plan-rank-list button { display: block; width: 100%; min-height: 44px; text-align: left; font-weight: 500; }
-.plan-rank-list tr[data-selected="true"] { background: var(--surface); box-shadow: inset 3px 0 var(--sun); }
-.plan-rank-list [aria-pressed="true"] { color: var(--sun); font-weight: 700; }
-.plan-site-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .4rem; margin: .5rem 0; }
-.plan-site-metrics dt { font-size: .84rem; color: var(--muted); }
-.plan-site-metrics dd { font-weight: 650; }
-.plan-site-details { justify-self: start; }
-@media (max-width: 700px) {
-  .plan-map-workspace { grid-template-columns: minmax(0, 1fr); }
-  .plan-rank-list { max-height: 13rem; }
-}
-@media print { .plan-rank-list { max-height: none; overflow: visible; } }
+@media (max-width: 700px) { .plan-map-layout { grid-template-columns: minmax(0, 1fr); gap: .75rem; } }

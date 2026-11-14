@@ -9,6 +9,14 @@ export type AltDatesRequest = Omit<RequestBody, "constraints" | "max_results" | 
   & { run_id: string; constraints?: Partial<Constraints>; max_results?: number };
 export type AltDatesResponse = Schema["AltDatesResponse"];
 
+// Zero visibility is a valid result when the minimum percentages are zero.
+export function noVisibilityForObjective(search: Pick<AltDatesResponse, "constraints" | "candidates">) {
+  const { objective } = search.constraints;
+  if (objective !== "sun" && objective !== "earth" && objective !== "both") return false;
+  const field = { sun: "sun_pct", earth: "earth_pct", both: "both_pct" } as const;
+  return search.candidates.length > 0 && search.candidates.every(candidate => candidate[field[objective]] === 0);
+}
+
 const defaults: Constraints = {
   min_sun_pct: 0, min_earth_pct: 0, min_both_pct: 0, objective: "balanced", min_separation_h: 12,
   require_sun_at_landing: true, require_earth_at_landing: false, min_continuous_sun_h: 0, min_continuous_earth_h: 0,
