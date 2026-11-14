@@ -54,6 +54,7 @@ On 14 November 2026 at 08:31 UTC, Playwright opened a pinned Athena result at 02
 | Injected fault | Requests before the error alert | Observed behavior |
 | --- | --- | --- |
 | HTTP 404 with a problem detail | 1 | Showed the server's detail immediately. |
+| HTTP 429 with a five-second `Retry-After` | 1 | The retry button and the editable UTC window form stayed disabled. Rejecting an invalid local JSON preserved the deadline. Expiry enabled one manual retry with the original run, sites and UTC bounds. |
 | HTTP 500 with a problem detail | 3 | Showed the detail after two automatic retries. |
 | Browser switched offline during the first request, dataset connections aborted | 3 | Showed the connection error and enabled local file import while the browser was still offline. Rejecting an invalid local file preserved the pinned retry. |
 | HTTP 200 with an incomplete JSON object | 3 | Displayed an actionable error in English and Vietnamese. |
