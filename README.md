@@ -74,6 +74,8 @@ Ví dụ CLI (sites ngoài vùng DEM cực, như Apollo, cần `--dem-fallback f
 ```bash
 lunarnav precompute --sites ref_connecting_ridge_c1,apollo11 --start 2026-01-01 --end 2026-02-01 --step-min 60 \
     --provider horizons --dem pgda --horizon-method raymarch --dem-fallback flat --out output/demo
+# --near-exclusion-m auto (mặc định): raymarch bỏ địa hình < 250 m khi DEM mịn nhất <= 5 m (Moon Trek 5 m),
+# không bỏ gì với DEM 20-30 m; số mét = ép giá trị, 0 = tắt (docs/VALIDATION_TERRAIN.md §7)
 lunarnav check output/demo                     # 0 violations = đúng định dạng và vật lý
 lunarnav validate --no-terrain                 # validation ephemeris A/B/C (~5-12 s)
 python -m lunarnav.validate_terrain --quick    # validation địa hình (đọc block PGDA, vài phút)
@@ -116,8 +118,8 @@ bằng notebook [`notebooks/lunar_navigator_colab.ipynb`](notebooks/lunar_naviga
 |---|---|---|
 | DEM primary | **NASA Moon Trek** LOLA polar DEMs (`LRO_LOLA_DEM_SPole875_5mp_v04_EQ`, `..._SPole75_30mp_...`, `..._SPole45_100mp_...`) | file 1-2 GB, chỉ tải trên Colab; lưới địa lý `_EQ`, Int16 = nửa mét (half-metres) |
 | DEM cross-check | **NASA GSFC PGDA** product 90 (Barker et al. 2023), dải khoảng cách: 20/30/60 m tới 15 km, 120 m tới 60 km, 240 m xa hơn | đọc từng block COG, cache trên đĩa |
-| Horizon 1 | `raymarch`: tia great-circle, nội suy bilinear | nhanh (150 km / 25 m trong ~1.7 s) |
-| Horizon 2 | `bruteforce`: mọi ô DEM, az/el chính xác bằng vector 3-D | độc lập với raymarch |
+| Horizon 1 | `raymarch`: tia great-circle, nội suy bilinear | nhanh (150 km / 25 m trong ~1.7 s); DEM ≤ 5 m: bỏ địa hình < 250 m (`--near-exclusion-m auto`); file Trek 30 m `_EQ` gần site: mẫu đầu tiên cách ≥ 1 hàng `_EQ` (86.7 m) |
+| Horizon 2 | `bruteforce`: mọi ô DEM, az/el chính xác bằng vector 3-D | độc lập với raymarch; ô gần mast (< 40 px) chỉ trải độ cao tâm theo nửa giữa của ô (tối đa 6°), cộng một sàn bilinear cho từng góc phần tư để không hở phương vị (`docs/VALIDATION_TERRAIN.md` §7) |
 | Horizon 3 | `flat`: mặt cầu nhẵn, độ hạ chân trời (dip) giải tích | dùng cho sites ngoài vùng DEM cực (`--dem-fallback flat`) |
 | Tham chiếu | Bản đồ chiếu sáng trung bình và bóng tối vĩnh cửu của NASA PGDA (product 69, Mazarico et al.) | dùng để kiểm chứng % chiếu sáng |
 

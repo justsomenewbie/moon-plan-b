@@ -73,7 +73,7 @@ from the `files` of each `sites.json` record rather than building them from the 
 | `code_version` | str | `lunarnav.__version__` |
 | `git_commit` | str/null | 40-hex commit of the code checkout, null if not a git checkout with commits |
 | `run_timestamp_utc` | str | run time, **passed in** by the caller (CLI: now, or `--run-timestamp`) |
-| `parameters` | object | `start_utc`, `end_utc` (exclusive), `step_minutes`, `step_s`, `n_samples`, `provider`, `dem`, `horizon_method`, `observer_height_m`, `min_earth_clearance_deg`, `rank_weights`, `site_ids`, `provider_config` (plain-valued provider attributes, e.g. SPICE `lunar_set`, `frame`, `abcorr`), plus CLI extras (`horizon_radius_km`, `az_step_deg`, `dem_res_m`, `dem_label`, `dem_path`, `dem_fallback`) |
+| `parameters` | object | `start_utc`, `end_utc` (exclusive), `step_minutes`, `step_s`, `n_samples`, `provider`, `dem`, `horizon_method`, `observer_height_m`, `min_earth_clearance_deg`, `rank_weights`, `site_ids`, `provider_config` (plain-valued provider attributes, e.g. SPICE `lunar_set`, `frame`, `abcorr`), plus CLI extras (`horizon_radius_km`, `az_step_deg`, `dem_res_m`, `dem_label`, `dem_path`, `dem_fallback`), plus the horizon rules of `make_horizon_fn` (present whenever the horizon spec is a `make_horizon_fn` callable, so they are in the fingerprint and a rule change makes `--resume` recompute): `near_exclusion_m` (`"auto"` = raymarch ignores terrain < 250 m when the finest DEM is ≤ 5 m, nothing on coarser DEMs; or metres; CLI `--near-exclusion-m`), `eq_row_min_distance` (bool: first raymarch sample ≥ one pixel of the Moon Trek 30 m `*_EQ` near-field file at the site latitude, 86.7 m; the 5 m and 100 m `_EQ` products are not affected), `bruteforce_footprint` (brute-force footprint model, `"central-half-cap6-floor-40px-v3"`; former `"whole-cell-v1"`; see `docs/VALIDATION_TERRAIN.md` §7) |
 | `params_fingerprint` | str | 16-hex hash of the parameters except `site_ids`, plus `code_version` and `git_commit` (used by `--resume`, which also requires identical site inputs: id, name, lat/lon, origin, group, input height) |
 | `data_sources` | list | `{name, url, sha256, ...}` for the ephemeris service / kernels and DEM products used (deduplicated, sorted) |
 | `conventions` | object | human-readable statement of §1 |
@@ -95,6 +95,16 @@ DEM), `surface_height_m` (used), `observer_height_m` (mast), `observer_height_ab
 | `covered_radius_km` | km | radius up to which terrain was actually searched in that direction (DEM edge / nodata shorten it); flat mask: distance to the geometric horizon **[checked: ≥ 0]** |
 
 Horizon elevation at an arbitrary azimuth = periodic linear interpolation (`HorizonMask.at`).
+
+The per-site near-field rule actually applied is not written to the files; it is in the in-memory
+`HorizonMask.meta` returned by `make_horizon_fn` (raymarch: `near_exclusion_request` (as given),
+`near_exclusion_m` (applied, m), `min_distance_m`, `first_sample_m` (first ray sample, m),
+`eq_row_min_distance_m` (one pixel of the Trek 30 m `_EQ` file, m, or null); brute force:
+`near_exclusion_m` = 0, `footprint_fraction`, `footprint_extent`, `footprint_near_px`,
+`footprint_floor`, `footprint_max_deg`, `footprint_model`, `n_footprint_cells_central`,
+`n_footprint_cells_floor`; PGDA bands: `near_exclusion_m` and, for raymarch, `first_sample_m`).
+`"auto"` is decided from the DEM's own finest data resolution (finest NestedDem level, first PGDA
+band), never from `--dem-res-m`; an unknown resolution never gets the 250 m exclusion.
 
 ### 3.4 `sites/<id>/ephemeris_<provider>.csv.gz`
 `time_utc, sun_az_deg, sun_el_deg, sun_dist_km, earth_az_deg, earth_el_deg, earth_dist_km` — raw

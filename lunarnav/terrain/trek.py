@@ -543,6 +543,18 @@ class TrekDem:
             self._pole_cache[row] = float(np.nanmean(z)) if np.any(np.isfinite(z)) else float("nan")
         return self._pole_cache[row]
 
+    def pixel_ground_size_m(self, lat_deg: float) -> tuple[float, float]:
+        """Ground size (m) of one pixel of this geographic grid at ``lat_deg``: (row spacing along
+        the meridian = R*dlat, column spacing along the parallel = R*cos(lat)*dlon).
+
+        Near the poles the row spacing is the coarse, RADIAL one (86.7 m for the 30 m ``_EQ``
+        product, 35.7 m for the 5 m one): the file is undersampled radially compared with its
+        nominal resolution (docs/VALIDATION_TERRAIN.md §7).
+        """
+        row = math.radians(self.dy) * config.MOON_RADIUS_M
+        col = math.radians(self.dx) * config.MOON_RADIUS_M * abs(math.cos(math.radians(lat_deg)))
+        return row, col
+
     # -- DemSource API -------------------------------------------------------------------------
     def height_at(self, lat_deg: np.ndarray | float, lon_deg: np.ndarray | float) -> np.ndarray:
         """Bilinear terrain height (m above 1737.4 km sphere); NaN outside coverage/nodata."""

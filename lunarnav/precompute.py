@@ -35,7 +35,7 @@ from typing import Callable, Iterable, Mapping, Sequence
 
 import numpy as np
 
-from . import __version__
+from . import __version__, config
 from .analysis import AnalysisOptions, SiteAnalysis, analyse_site, make_times, rank_sites, resolve_mask
 from .config import (
     DEFAULT_AZ_STEP_DEG,
@@ -483,6 +483,42 @@ def dem_coverage_problems(sites: Iterable[Site], dem: str, radius_km: float = DE
     return probs
 
 
+def _near_field_source(src):
+    """The DemSource used next to the site: the finest level of a NestedDem, else ``src``."""
+    levels = getattr(src, "levels", None)
+    return levels[0][0] if levels else src
+
+
+def eq_row_min_distance_m(src, lat_deg: float) -> float | None:
+    """Minimum raymarch distance (m) for a near-field Moon Trek geographic (``*_EQ``) 30 m file: one
+    pixel of the file at the site's latitude, max(row, column) ground spacing from its geotransform
+    (86.65 m for LRO_LOLA_DEM_SPole75_30mp_v04_EQ).  None for any other DEM, including the other
+    ``_EQ`` products (nominal resolution not in ``config.EQ_ROW_MIN_DISTANCE_NOMINAL_MPP``: the 5 m
+    file is covered by the 250 m auto exclusion, and on the 100 m file one row (155.7 m) changes
+    % sun by <= 0.03 pp, docs/VALIDATION_TERRAIN.md §7.1).
+
+    Why (docs/VALIDATION_TERRAIN.md §7): the ``_EQ`` grids are radially undersampled; bilinear
+    interpolation between two rows ~87 m apart next to the mast turns one row into a false peak
+    (a3_nobile_rim_1: 23.1 deg on Trek 30 m vs 16.9 deg on PGDA 20 m).
+    """
+    near = _near_field_source(src)
+    fn = getattr(near, "pixel_ground_size_m", None)
+    nominal = getattr(getattr(near, "product", None), "nominal_mpp", None)
+    if fn is None or nominal is None:
+        return None
+    if not any(abs(float(nominal) - v) < 1e-6 for v in config.EQ_ROW_MIN_DISTANCE_NOMINAL_MPP):
+        return None
+    return float(max(fn(lat_deg)))
+
+
+def _auto_exclusion_resolution_m(src) -> float:
+    """Finest DATA resolution (m) used to resolve ``near_exclusion_m="auto"``: the DEM's own pixel
+    (``_dem_resolution_m``), never the ``resolution_m`` step override; ``inf`` when unknown, so an
+    unknown DEM never gets the 250 m exclusion silently."""
+    r = _dem_resolution_m(src)
+    return float(r) if r is not None and r > 0 else math.inf
+
+
 def make_horizon_fn(
     dem: str = "none",
     method: str = "raymarch",
@@ -493,6 +529,8 @@ def make_horizon_fn(
     dem_label: str | None = None,
     dem_path: str | None = None,
     dem_fallback: str = "error",
+    near_exclusion_m: float | str | None = "auto",
+    eq_row_min_distance: bool = True,
 ) -> Callable[[Site], HorizonMask]:
     """Callable(site) -> HorizonMask. dem='none' or method='flat' -> smooth-sphere horizon.
 
@@ -508,16 +546,40 @@ def make_horizon_fn(
     and the reason in ``meta['dem_fallback']`` (explicit, never silent).
     The DEM name (and url / sha256 attributes when the DemSource has them) is recorded in
     ``mask.meta['data_sources']`` for the manifest.
+
+    Near-field rules of 'raymarch' (docs/VALIDATION_TERRAIN.md §7), recorded in ``mask.meta``
+    (``near_exclusion_m``, ``min_distance_m``, ``first_sample_m``, ``eq_row_min_distance_m``):
+      * ``near_exclusion_m``: terrain closer than this is ignored; ``"auto"`` (default) = 250 m when
+        the finest DEM DATA resolution is <= 5 m (Moon Trek 5 m), nothing on coarser DEMs - decided
+        from the DEM itself (finest NestedDem level / first PGDA band), not from ``resolution_m``,
+        and never applied when that resolution is unknown; a number
+        forces that distance, 0 / None disables it.  Raymarch only: with 'bruteforce' "auto" applies
+        nothing and an explicit distance > 0 is an error.
+      * ``eq_row_min_distance``: when the near-field DEM is the Moon Trek geographic 30 m ``*_EQ`` file,
+        the first ray sample is at least one pixel of that file at the site's latitude
+        (:func:`eq_row_min_distance_m`: 86.7 m for the 30 m product) instead of 0.5 * resolution.
+    The returned callable has ``horizon_parameters`` (dict) for the manifest / resume fingerprint.
     """
     if dem_fallback not in ("error", "flat"):
         raise ValueError(f"dem_fallback must be 'error' or 'flat', got {dem_fallback!r}")
+    from .horizon import BRUTEFORCE_FOOTPRINT_MODEL, resolve_near_exclusion_m  # lazy: other module
+
+    if isinstance(near_exclusion_m, str) and near_exclusion_m.strip().lower() == "auto":
+        near_exclusion_m = "auto"
+    elif near_exclusion_m is not None:
+        near_exclusion_m = resolve_near_exclusion_m(near_exclusion_m, 1.0)  # validates; number -> float
+    params = {"near_exclusion_m": near_exclusion_m, "eq_row_min_distance": bool(eq_row_min_distance),
+              "bruteforce_footprint": BRUTEFORCE_FOOTPRINT_MODEL}
     if dem == "none" or method == "flat":
         def flat(site: Site) -> HorizonMask:
             return flat_horizon_mask(site.id, observer_height_m, site.height_m or 0.0, az_step_deg)
 
+        flat.horizon_parameters = params
         return flat
     if method not in ("raymarch", "bruteforce"):
         raise ValueError(f"unknown horizon method {method!r}")
+    if method == "bruteforce" and isinstance(near_exclusion_m, float) and near_exclusion_m > 0:
+        raise ValueError("near_exclusion_m applies to the raymarch method only (use 'auto' or 0 with bruteforce)")
 
     def terrain(site: Site) -> HorizonMask:
         from . import horizon as hz  # lazy: owned by another module
@@ -536,15 +598,23 @@ def make_horizon_fn(
             return m
         kw = dict(observer_height_m=observer_height_m, az_step_deg=az_step_deg, max_radius_km=radius_km,
                   dem_source=f"{dem}:{getattr(src, 'name', type(src).__name__)}")
+        rules = {"near_exclusion_request": near_exclusion_m, "eq_row_min_distance_m": None}
         if bands is not None:
-            from .validate_terrain import banded_mask
+            from .validate_terrain import _dem_res, banded_mask, pgda_dem
 
-            mask = banded_mask(site, bands, method, observer_height_m, az_step_deg)
+            excl = 0.0
+            near_dem = pgda_dem(bands[0].product)
+            if method == "raymarch":
+                excl = hz.resolve_near_exclusion_m(near_exclusion_m, _auto_exclusion_resolution_m(near_dem))
+                rules["first_sample_m"] = max(excl, 0.5 * _dem_res(near_dem))
+            mask = banded_mask(site, bands, method, observer_height_m, az_step_deg, near_exclusion_m=excl)
             mask.dem_source = kw["dem_source"]
             mask.radius_km = float(radius_km)
+            rules["near_exclusion_m"] = excl
         elif method == "bruteforce":
             mask = hz.compute_horizon(src.patch(site.lat_deg, site.lon_deg, radius_km * 1000.0), site,
                                       method="bruteforce", **kw)
+            rules["near_exclusion_m"] = 0.0
         else:
             res = resolution_m or _dem_resolution_m(src)
             if res is None:
@@ -555,14 +625,24 @@ def make_horizon_fn(
                 lat, lon = proj.xy_to_latlon(x_m, y_m)
                 return np.asarray(src.height_at(lat, lon), dtype=float)
 
-            mask = hz.compute_horizon(height_fn, site, method="raymarch", projection=proj, resolution_m=res, **kw)
+            eq_row = eq_row_min_distance_m(src, site.lat_deg) if eq_row_min_distance else None
+            rules["eq_row_min_distance_m"] = eq_row
+            min_d = eq_row if eq_row is not None and eq_row > 0.5 * res else None
+            # 'auto' is resolved from the DEM's own finest resolution, not from the step override
+            excl = hz.resolve_near_exclusion_m(near_exclusion_m, _auto_exclusion_resolution_m(src))
+            mask = hz.compute_horizon(height_fn, site, method="raymarch", projection=proj, resolution_m=res,
+                                      min_distance_m=min_d, near_exclusion_m=excl, **kw)
+            mask.meta = dict(mask.meta, near_exclusion_request=near_exclusion_m)
         rec = {"name": f"DEM {dem}: {getattr(src, 'name', type(src).__name__)}",
                "url": getattr(src, "url", None) or KNOWN_SOURCES[dem]["url"],
                "sha256": getattr(src, "sha256", None)}
         mask.meta = dict(mask.meta)
+        for k, v in rules.items():
+            mask.meta.setdefault(k, v)
         mask.meta["data_sources"] = list(mask.meta.get("data_sources", [])) + [rec]
         return mask
 
+    terrain.horizon_parameters = params
     return terrain
 
 
@@ -877,6 +957,11 @@ def run_precompute(
     }
     if extra_parameters:
         params.update({k: v for k, v in extra_parameters.items() if k not in params})
+    # horizon rules of make_horizon_fn (near_exclusion_m, eq_row_min_distance, bruteforce_footprint):
+    # in the manifest and therefore in the resume fingerprint, so a rule change recomputes the sites
+    hp = getattr(horizon_fn, "horizon_parameters", None)
+    if isinstance(hp, Mapping):
+        params.update({k: v for k, v in hp.items() if k not in params})
     commit = git_commit()
     # fingerprint: every parameter except the site list, plus the code identity, so that a resumed
     # run never mixes files written by different code (a code fix forces recomputation)

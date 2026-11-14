@@ -233,7 +233,9 @@ def test_flat_sphere_equals_geometric_dip(mast):
     for fn in (horizon_raymarch, horizon_bruteforce):
         m = fn(patch, site, mast, max_radius_km=11.0)
         # 0.01 deg is the spec; the only error is the discrete sampling around the tangent
-        # point where d(el)/ds = 0 (second order): expected < 1e-4 deg.
+        # point where d(el)/ds = 0 (second order): expected < 1e-4 deg.  This also holds for the
+        # default brute-force footprint (docs/VALIDATION_TERRAIN.md §7): its quadrant floor covers
+        # the azimuths between lattice columns that the central half alone left open (0.0035 deg).
         assert np.max(np.abs(m.el_deg - dip)) < 0.01
         assert np.max(np.abs(m.el_deg - dip)) < 1e-4
         assert m.surface_height_m == 0.0 and m.observer_height_m == mast
@@ -378,16 +380,27 @@ def test_raymarch_vs_bruteforce_fractal_terrain(seed, lat, lon):
 
 
 def test_near_field_block_model_is_upper_envelope():
-    """Including the near field, brute force (block cells) is >= raymarch (bilinear) on average,
-    and both converge when the near field is excluded: documents the discretisation regime."""
+    """Including the near field, the whole-cell brute-force footprint (flat-topped blocks,
+    ``footprint_extent=1.0``) is >= raymarch (bilinear) on average and an upper envelope in 95 % of
+    the bins: the conservative near-field bias that made brute force 0.5-3.4 pp darker at Artemis
+    rim sites.  The default footprint (central half within 40 px, capped at 6 deg, plus a bilinear
+    quadrant floor; docs/VALIDATION_TERRAIN.md §7) removes most of it: the mean bias is near zero
+    (measured +0.009 deg = bf marginally lower, vs -0.215), the spread much smaller (p95 0.28 vs
+    1.46 deg) and no bin lies more than 1 deg below the converged raymarch (measured 0.52)."""
     patch = fractal_patch(-89.2, 120.0, 2)
     site = Site("nf", "nf", -89.2, 120.0)
     a = horizon_raymarch(patch, site, 2.0, max_radius_km=18.0)
-    b = horizon_bruteforce(patch, site, 2.0, max_radius_km=18.0)
+    b = horizon_bruteforce(patch, site, 2.0, max_radius_km=18.0, footprint_extent=1.0)
     st = compare_masks(a, b)
     assert st["mean_deg"] < 0.0  # raymarch - bruteforce < 0: block model is higher
     # oversampled raymarch exceeds the block value only by sub-bin/bilinear effects (<0.1 deg)
     assert np.percentile(a.el_deg - b.el_deg, 95) < 0.1
+    a15 = horizon_raymarch(patch, site, 2.0, max_radius_km=18.0, oversample=15)
+    c = horizon_bruteforce(patch, site, 2.0, max_radius_km=18.0)  # default footprint
+    old, new = a15.el_deg - b.el_deg, a15.el_deg - c.el_deg
+    assert abs(np.mean(new)) < 0.05 and abs(np.mean(new)) < 0.2 * abs(np.mean(old))  # +0.009 vs -0.215
+    assert np.percentile(np.abs(new), 95) < 0.5 < np.percentile(np.abs(old), 95)  # 0.28 vs 1.46 deg
+    assert np.max(new) < 1.0  # no blind azimuth wedge (measured 0.52 deg)
 
 
 # ---------------------------------------------------------------------------------------------

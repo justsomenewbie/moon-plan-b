@@ -20,10 +20,14 @@ inside the azimuth BIN ``[az_i - step/2, az_i + step/2)`` (a conservative, "bloc
 
 * :func:`horizon_raymarch` - marches ``oversample`` great-circle rays per bin (bilinear DEM
   sampling, distance step ~ pixel size growing linearly with distance) and keeps the maximum.
+  ``near_exclusion_m="auto"`` ignores terrain closer than 250 m on DEMs of <= 5 m.
 * :func:`horizon_bruteforce` - converts EVERY DEM cell to 3-D, computes its exact azimuth/elevation
   and takes the per-bin maximum; a cell whose footprint spans several bins contributes to all of them
   (footprint from the azimuths of its 4 corners).  Completely separate code path (inverse projection,
-  full vector arithmetic, no interpolation, no rays).
+  full vector arithmetic, no interpolation, no rays).  Within 40 px of the mast the centre elevation
+  covers only the cell's central half (``footprint_extent=0.5``, at most 6 deg wide), and each cell
+  quadrant adds a bilinear lower bound over its own azimuths so no direction is left uncovered, see
+  :func:`horizon_bruteforce`.
 * :func:`horizon_flat` - smooth sphere: ``el = -acos((R+h)/(R+h+mast))`` (:func:`geometric_dip_deg`).
 
 Both terrain algorithms report the radius actually covered per azimuth in ``meta`` (patch edges and
@@ -62,8 +66,10 @@ __all__ = [
     "horizon_distance_m",
     "sample_patch_bilinear",
     "rasterize_height_function",
+    "resolve_near_exclusion_m",
     "horizon_raymarch",
     "horizon_bruteforce",
+    "BRUTEFORCE_FOOTPRINT_MODEL",
     "horizon_flat",
     "compute_horizon",
     "compare_masks",
@@ -382,6 +388,32 @@ def ray_distances_m(max_radius_m: float, step0_m: float, growth_m: float, s0_m: 
     return np.append(s, max_radius_m)
 
 
+def resolve_near_exclusion_m(near_exclusion_m: float | str | None, resolution_m: float) -> float:
+    """Near-field exclusion distance (m) actually applied by :func:`horizon_raymarch`.
+
+    ``None`` / ``0`` -> 0 (nothing excluded); a number >= 0 -> that distance; ``"auto"`` ->
+    ``config.NEAR_EXCLUSION_AUTO_M`` (250 m) when the finest DEM resolution is <= ``config.
+    NEAR_EXCLUSION_AUTO_MAX_RES_M`` (5 m), else 0.  Rationale (docs/VALIDATION_TERRAIN.md §7): the
+    Moon Trek LOLA v04 5 m DEM has 4-7 m knobs 12-60 m from rim sites that a 2 m mast cannot see
+    over (false horizons up to 19 deg); 20-30 m DEMs smooth them, and there the 250 m cut would
+    delete real horizon terrain.
+    """
+    if near_exclusion_m is None:
+        return 0.0
+    if isinstance(near_exclusion_m, str):
+        if near_exclusion_m.strip().lower() == "auto":
+            ok = resolution_m <= config.NEAR_EXCLUSION_AUTO_MAX_RES_M * (1 + 1e-9)
+            return float(config.NEAR_EXCLUSION_AUTO_M) if ok else 0.0
+        try:
+            near_exclusion_m = float(near_exclusion_m)
+        except ValueError:
+            raise ValueError(f"near_exclusion_m must be 'auto' or a distance in m, got {near_exclusion_m!r}")
+    v = float(near_exclusion_m)
+    if not (math.isfinite(v) and v >= 0):
+        raise ValueError(f"near_exclusion_m must be >= 0, got {near_exclusion_m!r}")
+    return v
+
+
 def horizon_raymarch(terrain: Terrain, site: Site,
                      observer_height_m: float = config.DEFAULT_OBSERVER_HEIGHT_M,
                      az_step_deg: float = config.DEFAULT_AZ_STEP_DEG,
@@ -392,6 +424,7 @@ def horizon_raymarch(terrain: Terrain, site: Site,
                      step_factor: float = 0.5,
                      step_growth_km: float = 20.0,
                      min_distance_m: float | None = None,
+                     near_exclusion_m: float | str | None = None,
                      chunk_rays: int = 128,
                      dem_source: str | None = None) -> HorizonMask:
     """Horizon mask by marching great-circle rays from the site (exact 3-D elevation angles).
@@ -407,6 +440,9 @@ def horizon_raymarch(terrain: Terrain, site: Site,
     oversample : rays per azimuth bin, spread uniformly inside the bin; the bin value is their max.
     step_factor, step_growth_km : along-ray step ds = step_factor*res*(1 + s/growth) (m).
     min_distance_m : first sample distance (default 0.5*res; terrain closer is ignored).
+    near_exclusion_m : additionally ignore terrain closer than this (m); ``"auto"`` = 250 m on
+        DEMs of <= 5 m, nothing otherwise (:func:`resolve_near_exclusion_m`).  The first sample is
+        ``max(min_distance_m or 0.5*res, near exclusion)``; both are recorded in ``meta``.
 
     Each terrain sample on the ray at arc angle theta has elevation
     ``atan2((R+h) cos(theta) - (R+h_s+mast), (R+h) sin(theta))`` - exact, includes curvature.
@@ -430,8 +466,9 @@ def horizon_raymarch(terrain: Terrain, site: Site,
     nbin = az.size
     E, N, U = enu_basis(site.lat_deg, site.lon_deg)
     smax = max_radius_km * 1000.0
-    s = ray_distances_m(smax, step_factor * res, step_growth_km * 1000.0,
-                        min_distance_m if min_distance_m is not None else 0.5 * res)
+    near_excl = resolve_near_exclusion_m(near_exclusion_m, res)
+    min_dist = float(min_distance_m) if min_distance_m is not None else 0.5 * res
+    s = ray_distances_m(smax, step_factor * res, step_growth_km * 1000.0, max(min_dist, near_excl))
     theta = s / R_M
     ct, st = np.cos(theta), np.sin(theta)
     half2 = 2.0 * np.sin(theta / 2.0) ** 2  # 1 - cos(theta), cancellation-free
@@ -496,6 +533,10 @@ def horizon_raymarch(terrain: Terrain, site: Site,
             "step_factor": step_factor,
             "step_growth_km": step_growth_km,
             "first_sample_m": float(s[0]),
+            "min_distance_m": min_dist,
+            "near_exclusion_m": near_excl,
+            "near_exclusion_request": (near_exclusion_m if isinstance(near_exclusion_m, (str, type(None)))
+                                       else float(near_exclusion_m)),
             "projection": proj.to_proj4(),
             "runtime_s": time.perf_counter() - t_start,
         })
@@ -517,12 +558,83 @@ def _az_el_from_observer(P: np.ndarray, O: np.ndarray, E: np.ndarray, N: np.ndar
     return az, el, hor
 
 
+#: Name of the brute-force footprint model (recorded in the manifest parameters, so that a change
+#: of the model changes the resume fingerprint).  "central-half-cap6-floor-40px-v3": within 40 px of
+#: the mast a wide cell's centre elevation is spread over the azimuths of its central half, at most
+#: 6 deg wide (+-3 deg around the centre azimuth), and each of its 4 quadrants additionally
+#: contributes the LOWEST value the bilinear surface takes in that quadrant (a floor, so that every
+#: azimuth through the cell is covered); farther away the centre elevation covers the whole cell
+#: (docs/VALIDATION_TERRAIN.md §7).  Former models: "whole-cell-v1" (whole cell everywhere,
+#: ``footprint_extent=1.0``), "central-half-40px-v2" (central half without cap and floor,
+#: ``footprint_floor=False, footprint_max_deg=None``: it left blind azimuth wedges along the grid axes).
+BRUTEFORCE_FOOTPRINT_MODEL = "central-half-cap6-floor-40px-v3"
+
+
+def _spread(elmax: np.ndarray, az: np.ndarray, rel: np.ndarray, el: np.ndarray, w: float,
+            nbin: int) -> None:
+    """elmax[bin] = max(elmax[bin], el) for every bin overlapped by [az + min(rel), az + max(rel)]."""
+    lo = az + np.minimum(rel.min(axis=0), 0.0)
+    hi = az + np.maximum(rel.max(axis=0), 0.0)
+    blo = np.floor((lo + 0.5 * w) / w).astype(np.int64)
+    bhi = np.floor((hi + 0.5 * w) / w).astype(np.int64)
+    nspan = np.minimum(bhi - blo, nbin - 1) + 1
+    start = np.repeat(blo, nspan)
+    offs = np.arange(int(nspan.sum())) - np.repeat(np.cumsum(nspan) - nspan, nspan)
+    np.maximum.at(elmax, (start + offs) % nbin, np.repeat(el, nspan))
+
+
+_QUADRANTS = ((-1, -1), (-1, 1), (1, -1), (1, 1))  # (sign of x offset, sign of y offset)
+
+
+def _footprint_model_name(extent: float, near_px: float, floor: bool, max_deg: float | None) -> str:
+    if extent >= 1.0:
+        return "whole-cell-v1"
+    cap = None if max_deg is None else float(max_deg)
+    key = (float(extent), float(near_px), bool(floor), cap)
+    if key == (0.5, 40.0, True, 6.0):
+        return BRUTEFORCE_FOOTPRINT_MODEL
+    if key == (0.5, 40.0, False, None):
+        return "central-half-40px-v2"
+    return (f"extent-{extent:g}-within-{near_px:g}px" + ("" if cap is None else f"-cap{cap:g}")
+            + ("-floor" if floor else ""))
+
+
+def _quadrant_floors(zall: np.ndarray, r0: int, r1: int, c0: int, c1: int, ny: int, nx: int) -> np.ndarray:
+    """(4, r1-r0, c1-c0): lowest bilinear value in each quadrant of the cells [r0:r1, c0:c1].
+
+    Quadrant order :data:`_QUADRANTS` (sign of the x / y offset from the cell centre; x_m and y_m are
+    increasing, so +x is column c+1 and +y row r+1).  In the quadrant towards neighbours x, y and
+    xy the bilinear surface is bilinear between the centre z_c, the edge midpoints (z_c+z_x)/2,
+    (z_c+z_y)/2 and the corner (z_c+z_x+z_y+z_xy)/4, so its minimum is the lowest of the four.
+    Missing (NaN / outside the patch) neighbours are taken as z_c.
+    """
+    ra, rb, ca, cb = max(r0 - 1, 0), min(r1 + 1, ny), max(c0 - 1, 0), min(c1 + 1, nx)
+    zp = np.full((r1 - r0 + 2, c1 - c0 + 2), np.nan)
+    zp[ra - (r0 - 1):rb - (r0 - 1), ca - (c0 - 1):cb - (c0 - 1)] = np.asarray(zall[ra:rb, ca:cb], dtype=float)
+    zc = zp[1:-1, 1:-1]
+    out = np.empty((4,) + zc.shape)
+
+    def nb(dr: int, dc: int) -> np.ndarray:
+        v = zp[1 + dr:zp.shape[0] - 1 + dr, 1 + dc:zp.shape[1] - 1 + dc]
+        return np.where(np.isfinite(v), v, zc)
+
+    for q, (sx, sy) in enumerate(_QUADRANTS):
+        zx, zy, zxy = nb(0, sx), nb(sy, 0), nb(sy, sx)
+        out[q] = np.minimum(np.minimum(zc, 0.5 * (zc + zx)),
+                            np.minimum(0.5 * (zc + zy), 0.25 * (zc + zx + zy + zxy)))
+    return out
+
+
 def horizon_bruteforce(patch: DemPatch, site: Site,
                        observer_height_m: float = config.DEFAULT_OBSERVER_HEIGHT_M,
                        az_step_deg: float = config.DEFAULT_AZ_STEP_DEG,
                        max_radius_km: float = config.DEFAULT_HORIZON_RADIUS_KM, *,
                        projection: PolarStereographic | None = None,
                        footprint_fraction: float = 0.25,
+                       footprint_extent: float = 0.5,
+                       footprint_near_px: float = 40.0,
+                       footprint_floor: bool = True,
+                       footprint_max_deg: float | None = 6.0,
                        min_distance_m: float = 0.0,
                        row_chunk: int = 256,
                        dem_source: str | None = None) -> HorizonMask:
@@ -530,8 +642,30 @@ def horizon_bruteforce(patch: DemPatch, site: Site,
 
     Every valid (finite) cell within ``max_radius_km`` (arc distance) is converted with the INVERSE
     projection to ``(R + z) u``; az/el are taken from the observer's ENU frame.  Cells whose
-    estimated angular width exceeds ``footprint_fraction * az_step`` get their footprint from the
-    azimuths of their 4 corners and contribute their (centre) elevation to every bin it overlaps.
+    estimated angular width exceeds ``footprint_fraction * az_step`` also contribute their centre
+    elevation to every bin overlapped by their azimuth FOOTPRINT, taken from the azimuths of 4 corners:
+      * cells closer than ``footprint_near_px`` pixels (ground distance, default 40 px = 800 m on a
+        20 m DEM): the corners of the cell's CENTRAL part of side ``footprint_extent`` x pixel
+        (default 0.5: the central half, where the centre sample carries more than half (>= 0.56)
+        of the bilinear weight), clipped to ``footprint_max_deg`` (default 6 deg, i.e. +-3 deg
+        around the centre azimuth: a 30 m cell 40 m from the mast would otherwise spread its centre
+        elevation over ~20 deg of a slope it only reaches at its centre; im1_odysseus -1.5 pp
+        without the cap, -0.15 pp with it).  With ``footprint_floor`` (default) each of the cell's 4 quadrants
+        (centre - edge midpoints - corner) also contributes, over its own azimuth range, the
+        elevation of the LOWEST value the bilinear surface of the 3x3 neighbourhood takes in it
+        (``min(z_c, (z_c+z_x)/2, (z_c+z_y)/2, (z_c+z_x+z_y+z_xy)/4)``, missing neighbours = z_c),
+        placed at the cell centre.  This floor does not exceed the surface raymarch samples there,
+        and it closes the azimuth gaps the central halves leave between neighbouring cells (without
+        it, terrain within ~30 px is invisible in wedges along the grid axes and diagonals);
+      * farther cells: the whole cell (flat-topped block), as before.
+    Why (docs/VALIDATION_TERRAIN.md §7): near the mast one 20 m cell spans up to 60 deg of azimuth,
+    and spreading its centre elevation over the whole cell made brute force conservative against
+    the converged (15 rays / bin) raymarch by 0.5-3.4 pp of sunlight at Artemis rim sites (Mons
+    Mouton -3.1, Cabeus B -3.4 pp), while no spreading at all overshoots (+10.9 pp at Mons Mouton).
+    ``footprint_extent=1.0`` restores the former whole-cell model; ``footprint_floor=False,
+    footprint_max_deg=None`` the gap-leaving central-half model "central-half-40px-v2".  Beyond 40 px the whole-cell footprint
+    keeps the documented far-field agreement (p95 < 0.1 deg).  The algorithm stays independent of
+    raymarch: no rays, no sampling along a ray, every cell centre exact.
     The cell containing the site is skipped (it is the ground under the observer), as are cells
     closer than ``min_distance_m`` (arc distance), to mirror raymarch's ``min_distance_m``.
     Memory is bounded by processing ``row_chunk`` rows at a time.
@@ -562,11 +696,18 @@ def horizon_bruteforce(patch: DemPatch, site: Site,
     count = np.zeros(nbin, dtype=np.int64)
     n_cells = 0
     n_footprint = 0
+    n_near = 0
+    n_floor = 0
     width_lim_rad = math.radians(footprint_fraction * w)
     half_diag = 0.5 * math.hypot(dx, dy)
+    if not (0.0 <= footprint_extent <= 1.0):
+        raise ValueError(f"footprint_extent must be in [0, 1], got {footprint_extent}")
+    hx, hy = 0.5 * footprint_extent * dx, 0.5 * footprint_extent * dy  # footprint corner offsets
     if cols.size and rows.size:
         c0, c1 = int(cols[0]), int(cols[-1]) + 1
         xc = x[c0:c1]
+        use_floor = bool(footprint_floor) and footprint_extent < 1.0
+        ny_all, nx_all = patch.z_m.shape
         for r0 in range(int(rows[0]), int(rows[-1]) + 1, row_chunk):
             r1 = min(r0 + row_chunk, int(rows[-1]) + 1)
             z = np.asarray(patch.z_m[r0:r1, c0:c1], dtype=float)
@@ -575,6 +716,7 @@ def horizon_bruteforce(patch: DemPatch, site: Site,
             ok = np.isfinite(z) & ~own
             if not ok.any():
                 continue
+            qfloor = _quadrant_floors(patch.z_m, r0, r1, c0, c1, ny_all, nx_all)[:, ok] if use_floor else None
             X, Y, z = X[ok], Y[ok], z[ok]
             u = proj.inverse_unit(X, Y)
             cosd = u @ U
@@ -582,10 +724,14 @@ def horizon_bruteforce(patch: DemPatch, site: Site,
             if not inr.any():
                 continue
             X, Y, z, u, cosd = X[inr], Y[inr], z[inr], u[inr], cosd[inr]
+            if use_floor:
+                qfloor = qfloor[:, inr]
             arc = R_M * np.arctan2(np.linalg.norm(np.cross(u, U), axis=-1), cosd)
             if min_distance_m > 0:
                 far = arc >= min_distance_m
                 X, Y, z, u, arc = X[far], Y[far], z[far], u[far], arc[far]
+                if use_floor:
+                    qfloor = qfloor[:, far]
                 if not arc.size:
                     continue
             P = (R_M + z)[:, None] * u
@@ -595,27 +741,46 @@ def horizon_bruteforce(patch: DemPatch, site: Site,
             np.maximum.at(eff, b, arc)
             np.add.at(count, b, 1)
             n_cells += az.size
-            # wide cells: spread over all bins overlapped by the footprint (corner azimuths)
+            # wide cells: spread their centre elevation over every bin overlapped by their footprint
+            # = azimuth range of the corners of the cell's central part (side footprint_extent x
+            # pixel) for cells closer than footprint_near_px pixels, of the whole cell farther away
             k = proj.scale_factor(unit_to_latlon(u)[0])
             wide = (2.0 * half_diag / k) / np.maximum(hor, 1e-9) > width_lim_rad
             if wide.any():
                 Xw, Yw, zw, azw, elw = X[wide], Y[wide], z[wide], az[wide], el[wide]
+                near = hor[wide] < footprint_near_px * min(dx, dy) / k[wide]
+                ox = np.where(near, hx, 0.5 * dx)
+                oy = np.where(near, hy, 0.5 * dy)
                 rel = []
                 for sx, sy in ((-1, -1), (-1, 1), (1, -1), (1, 1)):
-                    uc = proj.inverse_unit(Xw + sx * 0.5 * dx, Yw + sy * 0.5 * dy)
+                    uc = proj.inverse_unit(Xw + sx * ox, Yw + sy * oy)
                     azc, _, _ = _az_el_from_observer((R_M + zw)[:, None] * uc, O, E, N, U)
                     rel.append((azc - azw + 180.0) % 360.0 - 180.0)
                 rel = np.stack(rel)
-                lo = azw + np.minimum(rel.min(axis=0), 0.0)
-                hi = azw + np.maximum(rel.max(axis=0), 0.0)
-                blo = np.floor((lo + 0.5 * w) / w).astype(np.int64)
-                bhi = np.floor((hi + 0.5 * w) / w).astype(np.int64)
-                nspan = np.minimum(bhi - blo, nbin - 1) + 1
-                start = np.repeat(blo, nspan)
-                offs = np.arange(int(nspan.sum())) - np.repeat(np.cumsum(nspan) - nspan, nspan)
-                bins = (start + offs) % nbin
-                np.maximum.at(elmax, bins, np.repeat(elw, nspan))
+                if footprint_max_deg is not None and footprint_extent < 1.0:
+                    c = 0.5 * float(footprint_max_deg)
+                    rel = np.where(near[None, :], np.clip(rel, -c, c), rel)
+                _spread(elmax, azw, rel, elw, w, nbin)
+                n_near += int(near.sum())
                 n_footprint += int(wide.sum())
+                if use_floor and near.any():
+                    # quadrant floors of the near cells: lowest bilinear value of each quadrant,
+                    # spread over the quadrant's azimuth range (centre, 2 edge midpoints, corner)
+                    sel = np.nonzero(wide)[0][near]
+                    Xn, Yn, zn, azn, un = X[sel], Y[sel], z[sel], az[sel], u[sel]
+
+                    def rel_az(px, py):
+                        uc = proj.inverse_unit(px, py)
+                        a, _, _ = _az_el_from_observer((R_M + zn)[:, None] * uc, O, E, N, U)
+                        return (a - azn + 180.0) % 360.0 - 180.0
+
+                    ex = {sx: rel_az(Xn + sx * 0.5 * dx, Yn) for sx in (-1, 1)}
+                    ey = {sy: rel_az(Xn, Yn + sy * 0.5 * dy) for sy in (-1, 1)}
+                    for q, (sx, sy) in enumerate(_QUADRANTS):
+                        _, elq, _ = _az_el_from_observer((R_M + qfloor[q, sel])[:, None] * un, O, E, N, U)
+                        relq = np.stack([ex[sx], ey[sy], rel_az(Xn + sx * 0.5 * dx, Yn + sy * 0.5 * dy)])
+                        _spread(elmax, azn, relq, elq, w, nbin)
+                    n_floor += int(sel.size)
     missing = ~np.isfinite(elmax)
     dip = geometric_dip_deg(observer_height_m, hs)
     el_out = np.where(missing, dip, elmax)
@@ -636,9 +801,19 @@ def horizon_bruteforce(patch: DemPatch, site: Site,
             "n_cells": n_cells,
             "n_cells_per_bin": count,
             "n_footprint_cells": n_footprint,
+            "n_footprint_cells_central": n_near,
+            "n_footprint_cells_floor": n_floor,
             "missing_bins": missing,
             "resolution_m": float(dx),
             "min_distance_m": float(min_distance_m),
+            "footprint_fraction": float(footprint_fraction),
+            "footprint_extent": float(footprint_extent),
+            "footprint_near_px": float(footprint_near_px),
+            "footprint_floor": bool(footprint_floor and footprint_extent < 1.0),
+            "footprint_max_deg": (None if footprint_max_deg is None or footprint_extent >= 1.0
+                                  else float(footprint_max_deg)),
+            "footprint_model": _footprint_model_name(footprint_extent, footprint_near_px, footprint_floor,
+                                                     footprint_max_deg),
             "projection": proj.to_proj4(),
             "runtime_s": time.perf_counter() - t_start,
         })
@@ -662,12 +837,21 @@ def horizon_flat(site: Site, observer_height_m: float = config.DEFAULT_OBSERVER_
 
 def compute_horizon(terrain: Terrain | None, site: Site, method: str = "raymarch",
                     **kwargs) -> HorizonMask:
-    """Dispatcher: method in {"raymarch", "bruteforce", "flat"}."""
+    """Dispatcher: method in {"raymarch", "bruteforce", "flat"}.
+
+    ``near_exclusion_m`` (raymarch near-field exclusion, ``"auto"`` = 250 m on <= 5 m DEMs, see
+    :func:`resolve_near_exclusion_m`) is a raymarch option; for bruteforce only ``None`` /
+    ``"auto"`` / 0 are accepted (nothing excluded), any other value raises ValueError.
+    """
     if method == "raymarch":
         return horizon_raymarch(terrain, site, **kwargs)
     if method == "bruteforce":
         if not isinstance(terrain, DemPatch):
             raise TypeError("bruteforce needs a DemPatch (use rasterize_height_function)")
+        ne = kwargs.pop("near_exclusion_m", None)
+        if ne is not None and not (isinstance(ne, str) and ne.strip().lower() == "auto") \
+                and resolve_near_exclusion_m(ne, 1.0) > 0:
+            raise ValueError("near_exclusion_m applies to the raymarch method only")
         return horizon_bruteforce(terrain, site, **kwargs)
     if method == "flat":
         return horizon_flat(site, **kwargs)

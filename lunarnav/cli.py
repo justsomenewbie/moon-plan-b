@@ -114,6 +114,19 @@ def resolve_sites(spec: str | None, custom: Sequence[Site] = ()) -> list[Site]:
     return uniq
 
 
+def _near_exclusion(v: str):
+    """--near-exclusion-m value: 'auto' or a distance >= 0 (m)."""
+    if v.strip().lower() == "auto":
+        return "auto"
+    try:
+        d = float(v)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"--near-exclusion-m: expected 'auto' or metres, got {v!r}")
+    if not (math.isfinite(d) and d >= 0):
+        raise argparse.ArgumentTypeError(f"--near-exclusion-m must be >= 0, got {v!r}")
+    return d
+
+
 def _add_common(p: argparse.ArgumentParser, period: bool = True) -> None:
     p.add_argument("--sites", help="catalog ids (comma separated), 'all' or 'group:<name>'")
     p.add_argument("--custom-site", action="append", type=parse_custom_site, default=[],
@@ -139,6 +152,9 @@ def _add_common(p: argparse.ArgumentParser, period: bool = True) -> None:
     p.add_argument("--dem-fallback", default="error", choices=["error", "flat"],
                    help="sites outside the DEM coverage: 'error' (default, checked for all sites before "
                         "computing) or 'flat' (smooth-sphere horizon, recorded in dem_source)")
+    p.add_argument("--near-exclusion-m", type=_near_exclusion, default="auto", metavar="auto|M",
+                   help="raymarch: ignore terrain closer than M metres; 'auto' (default) = 250 m when the "
+                        "finest DEM is <= 5 m (Moon Trek 5 m knobs), nothing on coarser DEMs; 0 = off")
 
 
 def _setup(args):
@@ -162,7 +178,8 @@ def _setup(args):
         for sid, why in probs.items():
             print(f"note: site {sid}: smooth-sphere horizon (--dem-fallback flat): {why}", flush=True)
     hfn = make_horizon_fn(args.dem, method, args.radius_km, args.az_step, args.observer_height,
-                          args.dem_res_m, args.dem_label, args.dem_path, dem_fallback=args.dem_fallback)
+                          args.dem_res_m, args.dem_label, args.dem_path, dem_fallback=args.dem_fallback,
+                          near_exclusion_m=args.near_exclusion_m)
     opt = AnalysisOptions(min_earth_clearance_deg=args.min_clearance, observer_height_m=args.observer_height)
     return sites, provider, hfn, opt, method
 

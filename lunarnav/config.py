@@ -24,6 +24,20 @@ DEFAULT_STEP_MINUTES = 60
 DEFAULT_AZ_STEP_DEG = 0.5
 DEFAULT_HORIZON_RADIUS_KM = 150.0
 
+# Raymarch near-field exclusion ``near_exclusion_m="auto"`` (docs/VALIDATION_TERRAIN.md §7): on DEMs
+# of <= 5 m (Moon Trek LOLA v04 5 m) terrain closer than 250 m is ignored, because their 4-7 m knobs
+# 12-60 m from the mast become false horizons of up to 19 deg; on coarser DEMs nothing is excluded
+# (the 250 m cut would remove real horizon terrain: Cabeus B 61.0 -> 71.4 % sun on Trek 30 m).
+NEAR_EXCLUSION_AUTO_M = 250.0
+NEAR_EXCLUSION_AUTO_MAX_RES_M = 5.0
+
+# Raymarch minimum distance of one file row for a Moon Trek geographic ``*_EQ`` near-field file
+# (docs/VALIDATION_TERRAIN.md §7): only for the products of these nominal resolutions (m).  The
+# 30 m product's rows are 86.7 m apart near the pole and one row becomes a false peak next to the
+# mast (a3_nobile_rim_1).  Not the 100 m product (155.7 m rows, measured effect <= 0.03 pp) nor the
+# 5 m one (35.7 m rows, below the 250 m auto exclusion).
+EQ_ROW_MIN_DISTANCE_NOMINAL_MPP = (30.0,)
+
 
 def data_root() -> Path:
     root = Path(os.environ.get("LUNARNAV_DATA", Path(__file__).resolve().parent.parent / "data"))
