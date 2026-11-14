@@ -11,9 +11,11 @@ Both sites originally have five hourly Sun and Earth observations from 00:00 thr
 
 The shared time slider skips from 01:00 to 03:00 in the second import. The exact-sample table for Odysseus still contains its 02:00 values. Compare the [control screenshot](control-chart.png), [gap screenshot](gap-chart.png) and [UTC rows and SVG paths](result.json).
 
+**Reversing the sites.** With the same gap copy still loaded, selecting Athena in **Primary site** moved Odysseus to **Alternative site**. Only Athena’s solid Sun and Earth lines broke across 02:00. Odysseus retained both 02:00 markers and two continuous dashed paths. Starting at 01:00, one Right Arrow press moved the cursor to 03:00. The visible and accessible readouts showed 03:00 UTC for both sites. The check ran on the local production frontend from [main at 1fcb741](https://github.com/justsomenewbie/moon-plan-b/commit/1fcb7418916f9c96b2eb41eae387f79b1681ec85). [Chart with the cursor at 03:00](athena-primary-chart.png)
+
 **Data.** The test reuses the archived [Odysseus ephemerides](../odysseus-hour-gap/README.md). New, unmodified JPL Horizons responses for [Athena’s Sun](sun-response.json) and [Earth](earth-response.json) use the same UTCs, one-hour cadence and airless apparent azimuth/elevation in degrees (quantity 4). The observer coordinates are 84.7906° S, 29.1957° E with height 5.321 km. The assumed height datum is the Horizons lunar reference sphere. Request URLs, retrieval instants, model and SHA-256 hashes are in the control. [LROC site coordinates](https://lroc.im-ldi.com/featured_sites/im2/flip-book)
 
-**Replay.** Start the frontend, import the control, select **Compare sites**, and select Odysseus as primary and Athena as alternative. Repeat with the gap copy. For the Playwright check, run from the repository root with the [same browser setup as the single-site test](../odysseus-hour-gap/README.md).
+**Replay.** Start the frontend, import the control, select **Compare sites**, and select Odysseus as primary and Athena as alternative. Repeat with the gap copy, then change **Primary site** to Athena. Use the timeline slider’s Right Arrow to step from 01:00 to 03:00. For the Playwright check, run from the repository root with the [same browser setup as the single-site test](../odysseus-hour-gap/README.md).
 
 ```sh
 node qa/evidence/odysseus-hour-gap/check.mjs --compare-sites http://127.0.0.1:3014

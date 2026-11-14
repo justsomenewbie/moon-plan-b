@@ -52,14 +52,20 @@ try {
   await page.goto(origin);
   await page.getByRole("button", { name: "Import data", exact: true }).waitFor();
   const observed = {};
-  for (const [name, data] of [["control", control], ["gap", gap]]) {
-    await page.getByLabel("Import JSON dataset").setInputFiles(file(name));
+  const cases = [["control", control], ["gap", gap]];
+  if (paired) cases.push(["athena-primary", gap]);
+  for (const [name, data] of cases) {
+    const swapped = name === "athena-primary";
+    if (!swapped) await page.getByLabel("Import JSON dataset").setInputFiles(file(name));
     await page.locator("#sources").getByText(data.datasetId, { exact: true }).waitFor({ state: "attached" });
     const compare = page.getByRole("button", { name: "Compare sites", exact: true });
-    await compare.click();
+    if (!swapped) await compare.click();
     assert.equal(await compare.getAttribute("aria-pressed"), "true");
-    assert.equal(await page.getByLabel(/^Primary site/).inputValue(), ids[0]);
-    if (paired) assert.equal(await page.getByLabel(/^Alternative site/).inputValue(), ids[1]);
+    const primary = page.getByLabel(/^Primary site/);
+    if (swapped) await primary.selectOption("athena-jan07");
+    const scenarios = swapped ? data.scenarios.toReversed() : data.scenarios;
+    assert.equal(await primary.inputValue(), scenarios[0].id);
+    if (paired) assert.equal(await page.getByLabel(/^Alternative site/).inputValue(), scenarios[1].id);
     const details = page.locator("details").filter({ has: page.getByText("Inspect exact samples", { exact: true }) });
     if (!(await details.evaluate(el => el.open))) await details.locator("summary").click();
     const chart = page.locator(".timeline");
@@ -67,9 +73,9 @@ try {
     const [, , width, height] = (await svg.getAttribute("viewBox")).split(" ").map(Number);
     assert.equal(await svg.locator("path.plot-line").count(), 2 * ids.length);
     observed[name] = {};
-    for (const [index, scenario] of data.scenarios.entries()) {
+    for (const [index, scenario] of scenarios.entries()) {
       const samples = scenario.samples;
-      const slots = name === "gap" && index === affected ? [0, 1, 3, 4] : hours;
+      const slots = data === gap && scenario.id === ids[affected] ? [0, 1, 3, 4] : hours;
       const role = index === 0 ? "Primary" : "Alternative";
       const table = details.getByRole("table", { name: new RegExp(role + " · " + scenario.id + " · " + scenario.coverage) });
       const rows = await table.locator("tbody tr").evaluateAll(rs => rs.map(r => Array.from(r.cells, c => c.textContent)));
@@ -97,20 +103,31 @@ try {
       else observed[name] = view;
       if (evidenceDir && !paired) await table.screenshot({ path: join(evidenceDir,name+"-table.png") });
     }
-    if (evidenceDir) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
+    if (evidenceDir && !swapped) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
     if (paired) {
       const slider = page.getByRole("slider", { name: "Timeline sample" });
-      const sharedHours = name === "gap" ? [0, 1, 3, 4] : hours;
+      const sharedHours = data === gap ? [0, 1, 3, 4] : hours;
       assert.equal(await slider.getAttribute("max"), String(sharedHours.length - 1));
       await slider.press("Home");
+      const readouts = [];
       for (const h of sharedHours) {
         if (h) await slider.press("ArrowRight");
-        assert.match(await slider.getAttribute("aria-valuetext"), new RegExp("^"+h+" hours elapsed\\."));
+        const clock = String(h).padStart(2, "0") + ":00 UTC";
+        const label = await slider.getAttribute("aria-valuetext");
+        assert.match(label, new RegExp("^"+h+" hours? elapsed\\. Primary .*"+clock+"\\. Alternative .*"+clock+"$"));
+        const visible = await page.locator(".sample-time").innerText();
+        assert.match(visible, new RegExp("Primary: .*"+clock+" · Alternative: .*"+clock+"$"));
+        readouts.push(visible);
+        if (swapped && h === 3 && evidenceDir) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
       }
       observed[name].sharedHours = sharedHours;
+      if (swapped) observed[name].sliderReadouts = readouts;
     }
   }
-  if (paired) assert.deepEqual(observed.gap.im1_odysseus, observed.control.im1_odysseus);
+  if (paired) {
+    assert.deepEqual(observed.gap.im1_odysseus, observed.control.im1_odysseus);
+    for (const { siteId } of gap.scenarios) assert.deepEqual(observed["athena-primary"][siteId], observed.gap[siteId]);
+  }
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ chromium: browser.version(), viewport, observed,
     scope: paired ? "Two-site browser QA: only the Athena copy omits 02:00 UTC." :
