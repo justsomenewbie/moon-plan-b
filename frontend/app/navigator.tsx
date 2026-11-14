@@ -13,6 +13,7 @@ import type { Message } from "../lib/i18n";
 import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindows, readSelection, selectionParams, validateDataset } from "../lib/dataset";
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
 import { Comparison, formatUtc, SampleTable, SiteAssessments, SkyPosition, Sources, Timeline, Windows } from "./observations";
+import QaInspector from "./qa-inspector";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -32,6 +33,7 @@ export default function Navigator() {
   const [tick, setTick] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [qaEnabled, setQaEnabled] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const loadGeneration = useRef(0);
   const loadFocus = useRef<Element | null>(null);
@@ -47,7 +49,10 @@ export default function Navigator() {
     }
   }, [loading, error, importCompletion]);
 
+  useEffect(() => { setQaEnabled(new URLSearchParams(window.location.search).get("qa") === "true"); }, []);
+
   function replaceUrl(url: string) {
+    if (!url.includes("?") && qaEnabled) url += "?qa=true";
     window.history.replaceState(null, "", url);
     lastLocation.current = window.location.pathname + window.location.search;
   }
@@ -90,6 +95,7 @@ export default function Navigator() {
     loadFocus.current = null;
     setRetryLoad(null); setSelection(null); setTick(0); setPlaying(false); setShareUrl(""); setMessage(""); setError("");
     const params = new URLSearchParams(window.location.search);
+    setQaEnabled(params.get("qa") === "true");
     try {
       for (const key of ["from", "to", "resolutionSeconds", "job"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
       const request = ["from", "to", "resolutionSeconds"].some((key) => params.has(key)) ? validateWindow({ from: params.get("from") ?? "", to: params.get("to") ?? "", resolutionSeconds: Number(params.get("resolutionSeconds")) }) : defaultWindow;
@@ -170,6 +176,7 @@ export default function Navigator() {
     if (!data || !selection || !b) return;
     const url = new URL(window.location.href);
     url.search = selectionParams(data, selection).toString(); url.hash = "";
+    if (qaEnabled) url.searchParams.set("qa", "true");
     for (const key of ["from", "to", "resolutionSeconds"] as const) url.searchParams.set(key, String(requestWindow[key]));
     if (sharedJobId) url.searchParams.set("job", sharedJobId);
     setShareUrl(url.href); replaceUrl(url.href);
@@ -210,6 +217,7 @@ export default function Navigator() {
     </section>
 
     <ApiControls request={requestWindow} loading={loading} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
+    {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
     {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId)}>{t("Retry API request")}</button> : null}{isMock || !retryLoad ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? t("Reset to demonstration") : t("Retry API request")}</button> : null}<button className="button outline" onClick={() => fileInput.current?.click()}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 

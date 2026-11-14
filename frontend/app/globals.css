@@ -175,6 +175,23 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
 .visibility-bands { margin-top: 20px; }
 .visibility-row { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; align-items: center; margin: 7px 0; font-size: .73rem; }
 .visibility-row svg { width: 100%; height: 16px; }
+.visibility-row.simultaneous { color: var(--positive); }
+.golden-note { margin-top: 10px; }
+.skyplot { max-width: 360px; aspect-ratio: 1; }
+.skyplot .grid-ring { fill: none; stroke: var(--grid); }
+.skyplot .horizon-ring { fill: var(--below-horizon); fill-opacity: .28; stroke: var(--horizon); stroke-width: 1.5; }
+.elevation-label { fill: var(--muted); font-size: 7px; }
+.qa-inspector { border: 1px solid var(--earth); background: var(--surface); padding: 22px; margin: 24px 0; display: grid; gap: 16px; }
+.qa-inspector .eyebrow { margin-bottom: 4px; }
+.qa-pass { color: var(--positive); font-weight: 600; }
+.qa-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.qa-metrics div { border-top: 1px solid var(--line); padding-top: 8px; min-width: 0; }
+.qa-metrics dt { color: var(--muted); font-size: .72rem; }
+.qa-metrics dd { overflow-wrap: anywhere; font: .78rem "SFMono-Regular", Consolas, monospace; }
+.qa-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.qa-actions button { min-height: 54px; text-align: left; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+.qa-actions button.active { border-color: var(--sun); box-shadow: inset 3px 0 var(--sun); }
+.qa-actions span { display: block; color: var(--muted); font-size: .68rem; margin-top: 2px; }
 
 @media (min-width: 1500px) { .workspace { grid-template-columns: 310px minmax(0, 1fr); gap: 32px; } }
 @media (max-width: 1100px) { .workspace { grid-template-columns: 240px minmax(0, 1fr); gap: 22px; } .controls { padding-right: 20px; } .detail-row { grid-template-columns: 1fr; } .sky { border-right: 0; padding: 0 0 20px; border-bottom: 1px solid var(--line); } .sky svg { max-width: 420px; } }
@@ -187,11 +204,13 @@ summary { min-height: 32px; font-size: .95rem; font-weight: 600; }
   .window-labels { gap: 12px; font-size: .76rem; } .section-heading h2 { font-size: 1.5rem; } .axis-label { font-size: 15px; }
   .timeline .text-sm { font-size: .75rem; } .sample-time { font-size: .7rem; } .detail-row { display: block; } .sky { margin-bottom: 24px; } .source-columns { grid-template-columns: 1fr; gap: 28px; } .data-notice { font-size: .9rem; } .app-footer { display: block; } .app-footer p + p { margin-top: 8px; }
 }
+@media (max-width: 760px) { .qa-metrics { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 380px) {
   .app-shell { padding: 0 14px; } .app-header nav { gap: 12px; } .app-header nav .button { margin-left: 0; } .controls { grid-template-columns: 1fr; } .mode-switch, .control-actions, .share-field, .controls > p, .controls > .text-button { grid-column: auto; } .control-actions { grid-template-columns: 1fr; } .window-labels, .assessments { grid-template-columns: 1fr; } .playback { gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media print {
+  .qa-inspector { display: none; }
   .request-panel, .lunar-figure, .hero-actions, .reference-resources, .eyebrow { display: none; }
   .intro { display: block; }
   .intro h1 { font-size: 26pt; max-width: none; }

@@ -1,5 +1,9 @@
 # Current handoff — 14 November 2026
 
+## Minh creative QA update — 14 November, 12:36 UTC+07
+
+Outcome: the validated frontend now shows producer-supplied simultaneous intervals as Golden windows, replaces the rectangular sky schematic with an accessible polar skyplot, and exposes a `?qa=true` inspector for complete/partial/missing fixture scenarios. Scientific results remain producer-owned; no readiness score or named Artemis data was fabricated. Evidence: 34 frontend tests, full offline `qa.run_checks`, TypeScript and Next production build passed; live Edge verified the inspector, Golden rows, skyplot semantics, missing state and persistent QA flag. Full record: `qa/LOCAL_WEB_DEEP_TEST_REPORT.md`. Owner: Minh. Git state: verified local implementation on branch `Minh`; remote publication not performed. Environment limit: Node 24.22.1 is below the declared 24.22.3 minimum. Pending: real producer export, OpenAPI agreement, browser network/fallback/mobile evidence. Next action: review `http://localhost:3001/?qa=true` and approve or revise the UI before any remote publication.
+
 **Minh's QA branch** starts at fetched `origin/main` commit `4328c85329250d3f2e80fb7ae61ba7b9aa564458` in `justsomenewbie/moon-plan-b`. Owner: Minh. The team can test the offline validator, synthetic edge cases and the existing frontend importer with `python -B -m qa.run_checks`. [Instructions](qa/README.md) · [terminal evidence](qa/evidence/2026-11-14/terminal.txt) · [two JPL parser samples](qa/docs/JPL_CHECK.md).
 
 ## Current decisions

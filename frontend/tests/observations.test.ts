@@ -75,6 +75,27 @@ test("visibility text distinguishes unavailable, empty and absent alternatives",
   assert.ok(!empty.includes("Alternative"));
 });
 
+test("timeline exposes producer-supplied golden windows without deriving replacements", () => {
+  const [a, b] = fixture().scenarios;
+  const html = renderToStaticMarkup(createElement(compiled.exports.Timeline, { a, b, mode: "dates", offset: 0 }));
+  assert.equal(html.match(/Golden window supplied visibility intervals/g)?.length, 2);
+  assert.match(html, /frontend does not calculate new scientific boundaries/);
+  for (const scenario of [a, b]) for (const interval of scenario.intervals!.simultaneous) {
+    assert.ok(html.includes(`x="${(Date.parse(interval.startUtc) - Date.parse(scenario.startUtc)) / (Date.parse(scenario.endUtc) - Date.parse(scenario.startUtc)) * 800}`));
+  }
+});
+
+test("polar skyplot keeps shape labels, cardinal directions and exact numeric readout", () => {
+  const scenario = fixture().scenarios[0];
+  const html = renderToStaticMarkup(createElement(compiled.exports.SkyPosition, { scenario, offset: 9 * 3600000 }));
+  assert.match(html, /class="skyplot"/);
+  assert.match(html, /Polar skyplot of Sun and Earth/);
+  for (const direction of ["N", "E", "S", "W"]) assert.ok(html.includes(`>${direction}</text>`));
+  assert.ok(html.includes(`${scenario.samples[3].sun!.elevationDeg.toFixed(1)}°`));
+  assert.match(html, /<circle[^>]+class="sun"|class="sun"[^>]*><circle/);
+  assert.match(html, /<rect/);
+});
+
 test("sample scroll regions are keyboard focusable and named by unique table captions", () => {
   const [a, b] = fixture().scenarios;
   const html = renderToStaticMarkup(createElement(compiled.exports.SampleTable, { a, b }));

@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { chartPath, durationHours, sampleAt, skyPath } from "../lib/dataset";
+import { chartPath, durationHours, sampleAt } from "../lib/dataset";
 import type { Dataset, Mode, Scenario } from "../lib/dataset";
 import type { Locale } from "../lib/i18n";
 import { useLanguage } from "./language";
@@ -71,30 +71,50 @@ export function Timeline({ a, b, mode, offset }: { a: Scenario; b?: Scenario; mo
       return <span key={v}>{mode === "dates" ? `${Number((durationHours(a) * v).toFixed(2))} h` : <><span>{new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "short", timeZone: "UTC" }).format(time)}</span><span>{time.toISOString().slice(11, 16)}</span></>}</span>;
     })}</div></div>
     <p className="axis-caption">{mode === "dates" ? t("Elapsed time from each window’s start · hours") : t("Time · UTC")} <span>{t("0° = ideal horizon")}</span></p>
-    <div className="visibility-bands">{[a, b].map((s, i) => s ? (["sun", "earth"] as const).map((body) => <div className={`visibility-row ${body}`} key={`${s.id}-${body}`}><span>{i ? t("Alternative") : t("Primary")} · {body === "sun" ? t("Sun") : t("Earth")}</span>{s.intervals === null ? <span className="muted">{t("Intervals unavailable")}</span> : <svg viewBox="0 0 800 16" preserveAspectRatio="none" role="img" aria-label={t("{role} {body} supplied visibility intervals: {count}", { role: i ? t("Alternative") : t("Primary"), body: body === "sun" ? t("Sun") : t("Earth"), count: s.intervals[body].length })}><rect width="800" height="16" fill="none" stroke="var(--line)" />{s.intervals[body].map((v) => <rect key={v.startUtc} x={(Date.parse(v.startUtc) - Date.parse(s.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} y="2" width={(Date.parse(v.endUtc) - Date.parse(v.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} height="12" fill={i ? "none" : "currentColor"} stroke="currentColor" />)}</svg>}</div>) : null)}</div>
+    <div className="visibility-bands">{[a, b].map((s, i) => s ? (["sun", "earth", "simultaneous"] as const).map((body) => <div className={`visibility-row ${body}`} key={`${s.id}-${body}`}><span>{i ? t("Alternative") : t("Primary")} · {body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window")}</span>{s.intervals === null ? <span className="muted">{t("Intervals unavailable")}</span> : <svg viewBox="0 0 800 16" preserveAspectRatio="none" role="img" aria-label={t("{role} {body} supplied visibility intervals: {count}", { role: i ? t("Alternative") : t("Primary"), body: body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window"), count: s.intervals[body].length })}><rect width="800" height="16" fill="none" stroke="var(--line)" />{s.intervals[body].map((v) => <rect key={v.startUtc} x={(Date.parse(v.startUtc) - Date.parse(s.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} y="2" width={(Date.parse(v.endUtc) - Date.parse(v.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} height="12" fill={i ? "none" : "currentColor"} stroke="currentColor" />)}</svg>}</div>) : null)}</div>
+    <p className="muted text-xs golden-note">{t("Golden windows are producer-supplied Sun-and-Earth overlap intervals. The frontend does not calculate new scientific boundaries.")}</p>
   </div>;
 }
 
 export function SkyPosition({ scenario, offset }: { scenario: Scenario; offset: number }) {
   const { t } = useLanguage();
   const sample = sampleAt(scenario, offset);
+  const point = (azimuthDeg: number, elevationDeg: number) => {
+    const radius = 82 * (90 - Math.max(0, Math.min(90, elevationDeg))) / 90;
+    const radians = (azimuthDeg - 90) * Math.PI / 180;
+    return { x: 100 + radius * Math.cos(radians), y: 100 + radius * Math.sin(radians) };
+  };
+  const trails = (body: "sun" | "earth") => {
+    const paths: string[] = [];
+    scenario.samples.forEach((entry, index) => {
+      const value = entry[body];
+      if (!value || value.elevationDeg < 0) { paths.push(""); return; }
+      const previous = index ? scenario.samples[index - 1][body] : null;
+      const gap = index > 0 && Date.parse(entry.utc) - Date.parse(scenario.samples[index - 1].utc) > scenario.sampleStepSeconds * 1500;
+      const wrap = previous && Math.abs(value.azimuthDeg - previous.azimuthDeg) > 180;
+      const p = point(value.azimuthDeg, value.elevationDeg);
+      if (!paths.length || !paths.at(-1) || gap || wrap || !previous) paths.push(`M${p.x},${p.y}`);
+      else paths[paths.length - 1] += ` L${p.x},${p.y}`;
+    });
+    return paths.filter(Boolean);
+  };
   return <section className="sky" aria-labelledby="sky-title">
-    <h3 id="sky-title">{t("Sky positions")}</h3>
-    <p className="muted text-sm">{t("Primary sample · schematic, no terrain")}</p>
-    <svg viewBox="-20 -10 400 200" role="img" aria-labelledby="sky-description">
-      <title id="sky-description">{t("Azimuth and elevation of the Sun and Earth at the selected primary sample")}</title>
-      <rect x="0" y="90" width="360" height="90" className="below-horizon" />
-      {[0, 90, 180, 270, 360].map((x, i) => <g key={x}><line x1={x} x2={x} y1="0" y2="180" className="grid-line" /><text x={x} y="-2" textAnchor="middle" className="axis-label">{["N", "E", "S", "W", "N"][i]}</text></g>)}
-      <polyline points={scenario.horizonCurve.map((p) => `${p.azimuthDeg},${90 - p.elevationDeg}`).join(" ")} fill="none" className="horizon-line" />
-      {(["sun", "earth"] as const).map((body) => <path key={body} d={skyPath(scenario, body)} fill="none" className={`plot-line ${body}`} opacity=".45" />)}
-      {(["sun", "earth"] as const).map((body) => sample?.[body] ? <g key={body} className={body}>
-        {body === "sun" ? <circle cx={sample[body].azimuthDeg} cy={90 - sample[body].elevationDeg} r="6" fill="currentColor" /> : <rect x={sample[body].azimuthDeg - 5} y={85 - sample[body].elevationDeg} width="10" height="10" fill="currentColor" />}
+    <h3 id="sky-title">{t("Lunar sky dome")}</h3>
+    <p className="muted text-sm">{t("Primary sample · polar skyplot · ideal horizon, no terrain")}</p>
+    <svg className="skyplot" viewBox="0 0 200 200" role="img" aria-labelledby="sky-description">
+      <title id="sky-description">{t("Polar skyplot of Sun and Earth azimuth and elevation at the selected primary sample")}</title>
+      {[82, 55, 27].map((r, i) => <circle key={r} cx="100" cy="100" r={r} className={i === 0 ? "horizon-ring" : "grid-ring"} />)}
+      {[0, 90, 180, 270].map((azimuth, i) => { const edge = point(azimuth, 0); const label = point(azimuth, -10); return <g key={azimuth}><line x1="100" y1="100" x2={edge.x} y2={edge.y} className="grid-line" /><text x={label.x} y={label.y} textAnchor="middle" dominantBaseline="middle" className="axis-label">{["N", "E", "S", "W"][i]}</text></g>; })}
+      <text x="104" y="104" className="elevation-label">90°</text><text x="104" y="47" className="elevation-label">30°</text>
+      {(["sun", "earth"] as const).flatMap(body => trails(body).map((d, i) => <path key={`${body}-${i}`} d={d} fill="none" className={`plot-line ${body}`} opacity=".45" />))}
+      {(["sun", "earth"] as const).map((body) => sample?.[body] && sample[body].elevationDeg >= 0 ? <g key={body} className={body}>
+        {body === "sun" ? <circle cx={point(sample[body].azimuthDeg, sample[body].elevationDeg).x} cy={point(sample[body].azimuthDeg, sample[body].elevationDeg).y} r="6" fill="currentColor" /> : <rect x={point(sample[body].azimuthDeg, sample[body].elevationDeg).x - 5} y={point(sample[body].azimuthDeg, sample[body].elevationDeg).y - 5} width="10" height="10" fill="currentColor" />}
       </g> : null)}
     </svg>
     <dl className="angle-readout">
       {(["sun", "earth"] as const).map((body) => <div key={body}><dt className={body}>{body === "sun" ? t("Sun") : t("Earth")}</dt><dd>{t("El")}{" "}{t(angle(sample?.[body]?.elevationDeg))} <span>{t("Az")}{" "}{t(angle(sample?.[body]?.azimuthDeg))}</span></dd></div>)}
     </dl>
-    <p className="muted text-xs">{t("Circle: Sun. Square: Earth. Shading is below the supplied ideal horizon. Lines join supplied samples, breaking at gaps and the north wrap. Azimuth: N 0° → E 90° → S 180° → W 270°. This is not a perspective view.")}</p>
+    <p className="muted text-xs">{t("Circle: Sun. Square: Earth. Bodies below the ideal horizon remain in the numeric readout but are not plotted. The rim is 0° and the center is the 90° zenith. Trails use supplied samples above the horizon and break at gaps and the north wrap. This is not a terrain or perspective view.")}</p>
   </section>;
 }
 

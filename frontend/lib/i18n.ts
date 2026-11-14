@@ -258,6 +258,22 @@ export const vietnamese: Record<string, string> = {
   "Interactive OpenAPI documentation": "Tài liệu OpenAPI tương tác",
   "Opening API documentation…": "Đang mở tài liệu API…",
   "The original API specification and interactive documentation remain in English.": "Đặc tả API gốc và tài liệu tương tác được giữ bằng tiếng Anh.",
+  "Golden window": "Cửa sổ vàng",
+  "Golden windows are producer-supplied Sun-and-Earth overlap intervals. The frontend does not calculate new scientific boundaries.": "Cửa sổ vàng là các khoảng Mặt Trời–Trái Đất đồng thời do bên tạo dữ liệu cung cấp. Frontend không tự tính ranh giới khoa học mới.",
+  "Lunar sky dome": "Vòm trời Mặt Trăng",
+  "Primary sample · polar skyplot · ideal horizon, no terrain": "Mẫu chính · biểu đồ cực bầu trời · đường chân trời lý tưởng, không có địa hình",
+  "Polar skyplot of Sun and Earth azimuth and elevation at the selected primary sample": "Biểu đồ cực thể hiện phương vị và góc cao của Mặt Trời và Trái Đất tại mẫu chính đã chọn",
+  "Circle: Sun. Square: Earth. Bodies below the ideal horizon remain in the numeric readout but are not plotted. The rim is 0° and the center is the 90° zenith. Trails use supplied samples above the horizon and break at gaps and the north wrap. This is not a terrain or perspective view.": "Hình tròn: Mặt Trời. Hình vuông: Trái Đất. Thiên thể dưới đường chân trời lý tưởng vẫn có trong số liệu nhưng không được vẽ. Vành ngoài là 0° và tâm là thiên đỉnh 90°. Vệt dùng các mẫu phía trên chân trời và ngắt tại khoảng trống hoặc điểm quấn qua hướng Bắc. Đây không phải góc nhìn địa hình hay phối cảnh.",
+  "Local test harness": "Bộ kiểm thử cục bộ",
+  "QA & Judge Inspector": "Bảng kiểm tra QA & giám khảo",
+  "Contract validation passed before rendering": "Đã vượt qua kiểm tra hợp đồng trước khi hiển thị",
+  "Evidence": "Loại bằng chứng",
+  "Coverage": "Mức bao phủ",
+  "Stress scenarios": "Kịch bản kiểm thử biên",
+  "0° crossing": "cắt qua 0°",
+  "north wrap": "quấn qua hướng Bắc",
+  "Inspector scenarios are validated synthetic fixtures. They do not become real lunar observations, and this panel does not simulate GPU failure.": "Các kịch bản trong bảng kiểm tra là fixture giả lập đã được xác thực. Chúng không trở thành quan trắc Mặt Trăng thật và bảng này không giả lập lỗi GPU.",
+  "Inspector scenarios passed structural validation. This panel does not independently verify scientific validity or simulate GPU failure.": "Các kịch bản đã vượt qua kiểm tra cấu trúc. Bảng này không tự xác minh giá trị khoa học hoặc giả lập lỗi GPU.",
 };
 
 export function translate(locale: Locale, message: Message, values?: MessageValues): string {
