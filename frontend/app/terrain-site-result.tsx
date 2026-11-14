@@ -12,10 +12,10 @@ export function TimeRange({ start, end }: { start: string; end: string }) {
   return <><UtcTime value={start} /> → <UtcTime value={end} /></>;
 }
 
-export function EarthSightTimes({ windows }: { windows?: readonly EarthWindow[] }) {
+export function EarthSightTimes({ windows, hours }: { windows?: readonly EarthWindow[]; hours?: number }) {
   const { t } = useLanguage();
   return <details className="earth-sight-times my-3">
-    <summary>{t("When is Earth in direct view?")}</summary>
+    <summary>{hours === undefined ? t("When is Earth in direct view?") : t("{hours} h · Show times", { hours })}</summary>
     {windows === undefined ? <p>{t("Exact times are unavailable for this site and date range.")}</p>
       : windows.length === 0 ? <p>{t("The model shows no direct view of Earth’s centre during this period.")}</p>
       : <>

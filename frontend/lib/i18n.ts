@@ -638,6 +638,7 @@ export const vietnamese: Record<string, string> = {
   "The original API specification and interactive documentation remain in English.": "Đặc tả API gốc và tài liệu tương tác được giữ bằng tiếng Anh.",
   "Golden window": "Cửa sổ vàng",
   "Golden windows are producer-supplied Sun-and-Earth overlap intervals. The frontend does not calculate new scientific boundaries.": "Cửa sổ vàng là các khoảng Mặt Trời–Trái Đất đồng thời do bên tạo dữ liệu cung cấp. Frontend không tự tính ranh giới khoa học mới.",
+  "{hours} h · Show times": "{hours} giờ · Xem khung giờ",
   "When is Earth in direct view?": "Khi nào có đường nhìn thẳng tới Trái Đất?",
   "Exact times are unavailable for this site and date range.": "Chưa có mốc giờ cụ thể cho địa điểm và khoảng ngày đã chọn.",
   "The model shows no direct view of Earth’s centre during this period.": "Trong khoảng này, mô hình không ghi nhận thời điểm nào nhìn thấy tâm Trái Đất.",

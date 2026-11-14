@@ -304,7 +304,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
       }
     }}>
     {mode === "sites" ? <CatalogSearch key={source + "/" + run.runId} initialSite={seed.get("site")} runIds={pins} initialDuration={seed.get("missionHours") ?? ""} initialLongest={seed.get("order") === "longest" && priority === "joint"} run={run} first={first} last={last} priority={priority} source={source} /> :
-      source !== "live" ? <SavedLanding key={source} source={source} runIds={pins} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
+      source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialEarliest={landingClock(seed, "earliest")} initialLatest={landingClock(seed, "latest")}
         initialExtras={liveExtras(seed)} initialSunAtLanding={seed.get("sunAtLanding") === "1"} initialEarthAtLanding={seed.get("earthAtLanding") === "1"}

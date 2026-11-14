@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usesSmoothSphere } from "../../lib/site-horizon";
-import { plannerLink, savedLandingHour } from "../../lib/planner-source";
+import { savedLandingHour } from "../../lib/planner-source";
 import { archiveB2Run, savedB2EarthWindows, searchArchiveB2 } from "../../lib/archive-b2";
 import { getSavedPlannerDates, savedEarthWindows, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
 import { useLanguage } from "../language";
@@ -40,7 +40,7 @@ function rank(fields: Fields) {
   return { ...saved, rows: rows.slice(0, 5), nEvaluated: rows.length, best, first: stamp(first), last: stamp(last), ties: rows.filter(row => row[metric[fields.priority]] === best).length };
 }
 
-export default function SavedLanding({ siteId, from, to, missionHours, priority, source, earliest, latest, liveOptions, onFieldsChange, runIds }: Props & { runIds: string[]; source: "saved" | "saved-b2"; earliest?: string; latest?: string; liveOptions?: boolean; onFieldsChange: (form: HTMLFormElement) => void }) {
+export default function SavedLanding({ siteId, from, to, missionHours, priority, source, earliest, latest, liveOptions, onFieldsChange }: Props & { source: "saved" | "saved-b2"; earliest?: string; latest?: string; liveOptions?: boolean; onFieldsChange: (form: HTMLFormElement) => void }) {
   const { locale, t } = useLanguage();
   const vi = locale === "vi";
   const b2 = source === "saved-b2";
@@ -110,8 +110,8 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
           : `Best visibility: ${result.best} of ${submitted.missionHours} hours. ${result.ties} of ${result.nEvaluated} evaluated starts reach that total. Showing the first ${Math.min(5, result.rows.length)}, earliest first within each tie.`}</p>
         <div className="table-scroll"><table><thead><tr><th scope="col">{vi ? "Chuyến đi (UTC)" : "Mission window (UTC)"}</th>
           <th scope="col">{labels.sun}</th><th scope="col">{labels.earth}</th><th scope="col">{labels.joint}</th></tr></thead>
-          <tbody>{result.rows.slice(0, 5).map(row => <tr key={row.start}><th scope="row"><a href={plannerLink("/plan/site", { source, site: submitted.siteId, from: row.start, to: row.end, priority: submitted.priority }, runIds)}><TimeRange start={row.start} end={row.end} /></a></th>
-            <td>{row.sunHours} h</td><td>{row.earthHours} h</td><td>{row.bothHours} h</td></tr>)}</tbody></table></div>
+          <tbody>{result.rows.slice(0, 5).map(row => <tr key={row.start}><th scope="row"><TimeRange start={row.start} end={row.end} /></th>
+            <td>{row.sunHours} h</td><td><EarthSightTimes hours={row.earthHours} windows={(b2 ? savedB2EarthWindows : savedEarthWindows)(submitted.siteId, row.start, row.end)} /></td><td>{row.bothHours} h</td></tr>)}</tbody></table></div>
       </> : <p role="status">{vi
         ? `Cả ${result.nEvaluated} giờ hạ cánh đều cho 0 giờ theo ưu tiên này. Chưa có giờ hạ cánh phù hợp.`
         : `All ${result.nEvaluated} landing times have 0 hours of the selected visibility. No landing time is recommended.`}</p>}
