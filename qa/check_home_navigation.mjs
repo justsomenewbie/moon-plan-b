@@ -52,6 +52,14 @@ try {
     await nav.getByLabel("Language").selectOption("vi");
     assert.equal(await primary.innerText(), "So sánh Athena và Odysseus");
     assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
+    const guide = page.locator("#home-guide");
+    for (const [i, img] of (await guide.locator("img").all()).entries()) {
+      await img.scrollIntoViewIfNeeded();
+      await img.evaluate(el => el.decode());
+      assert.equal(await img.getAttribute("src"), `/images/guide/plan-step-${i + 1}-vi.webp`);
+    }
+    assert.equal(await guide.locator("img").count(), 3);
+    assert.equal(await page.locator("#resources .resource-links a").count(), 3);
     assert.deepEqual(await nav.getByRole("link").allTextContents(),
       ["So sánh", "Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);
     for (const id of ["team", "about", "resources"]) {
@@ -66,6 +74,8 @@ try {
     await page.waitForFunction(() => document.activeElement.id === "saved-model-source" &&
       document.activeElement.closest("details").open);
     assert.equal(new URL(page.url()).pathname, "/compare");
+    assert.equal(await page.locator("#resources").count(), 0);
+    assert.equal(await page.locator('nav a[href="/#resources"]').count(), 1);
     assert.equal(await page.locator(".site-pin-key button").count(), 2);
     await page.locator("#globe-site").selectOption({ index: 1 });
     assert.ok(await page.locator(".globe-place").isVisible());
