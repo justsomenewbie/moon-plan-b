@@ -14,7 +14,7 @@ The comparison results link to the current run’s lunar globe and local 3D sky.
 
 Comparison globes expand from 1×, support location-centered zoom and retain the selected site. Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md).
 
-Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup compares flat and Sun-facing panels. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+The [Data catalog](docs/BACKEND_RECONCILIATION.md#live-run-directory-and-earth-visibility) opens live A2 and B2. Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup distinguishes Earth-centre clearance and visible disc area. Retained responses passed EN/VI replay. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Reference cards remain on both pages. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
 
