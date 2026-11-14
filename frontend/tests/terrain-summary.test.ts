@@ -28,18 +28,17 @@ function example() {
   };
 }
 
-test("reads aggregate windows, individual clipping, total, longest and provenance without interpreting series or horizons", () => {
+test("reads summary-only aggregates and leaves unavailable plotting sections null", () => {
   const d = example();
-  d.include.push("series", "horizon");
-  const raw = { ...d, sites: [{ ...d.sites[0], series: { t: [] }, horizon: {} }] };
-  const parsed = parseTerrainSummary(raw, { from: stamp(0), to: stamp(8) });
+  const parsed = parseTerrainSummary(d, { from: stamp(0), to: stamp(8) });
   assert.deepEqual(parsed.sites[0].windows, d.sites[0].windows);
   assert.equal(parsed.sites[0].metrics?.both_hours, 3);
   assert.equal(parsed.sites[0].metrics?.longest_both_h, 2);
   assert.deepEqual(parsed.sources, d.sources);
   assert.deepEqual(parsed.run, d.run);
   assert.deepEqual(parsed.model, d.model);
-  assert.deepEqual(Object.keys(parsed.sites[0]).sort(), ["coverage", "coverage_in_range", "id", "metrics", "name", "windows"].sort());
+  assert.equal(parsed.sites[0].series, null);
+  assert.equal(parsed.sites[0].horizon, null);
 });
 
 test("accepts snapped client input and run clamping, rejects wrong request, reversed range and sample count", () => {
@@ -127,4 +126,67 @@ test("saved guide reports only joint visibility and honors exclusive saved range
   assert.equal(read("2026-11-21T00:00:00Z", "2026-11-14T00:00:00Z"), null);
   assert.equal(read("2026-11-28T00:00:00Z"), null);
   assert.equal(read("2026-11-18T00:00:00Z", "unknown"), null);
+});
+
+function plotted(hours = [0, 1, 2, 3, 4, 5, 7]) {
+  const d = example();
+  const series = {
+    t: hours.map(stamp), step_s: 4 * 3600, decimated: true, n_transitions: 4,
+    sun_az_deg: hours.map(() => 0), sun_el_deg: hours.map(() => 1),
+    earth_az_deg: hours.map(() => 359), earth_el_deg: hours.map(() => -1),
+    sun_visible: hours.map(h => h !== 2), earth_visible: hours.map(h => h >= 1 && h < 5),
+    both_visible: hours.map(h => h !== 2 && h >= 1 && h < 5),
+  };
+  const horizon = { method: "test", dem_source: "Synthetic test", source_step_deg: 0.5, step_deg: 1,
+    az_deg: Array.from({ length: 361 }, (_, i) => i), el_deg: Array(361).fill(0) as number[], min_el_deg: -2, max_el_deg: 1 };
+  return { ...d, include: [...d.include, "series", "horizon"], sites: [{ ...d.sites[0], series, horizon }] };
+}
+
+test("keeps irregular transition rows, signed elevations, zero azimuth and terrain flags", () => {
+  const d = plotted(), site = parseTerrainSummary(d).sites[0];
+  assert.deepEqual(site.series, d.sites[0].series);
+  assert.deepEqual(site.horizon, d.sites[0].horizon);
+  const full = plotted([0, 1, 2, 3, 4, 5, 6, 7]);
+  full.sites[0].series.decimated = false;
+  assert.equal(parseTerrainSummary(full).sites[0].series?.step_s, 4 * 3600);
+  assert.throws(() => parseTerrainSummary(plotted([0, 1, 2, 3, 4, 7])), /transition/);
+  assert.throws(() => parseTerrainSummary(plotted([0, 1, 2, 3, 5, 7])), /regular/);
+});
+
+test("rejects contradictory normal, clock, parallel column and visibility fields", () => {
+  const mutations: ((series: ReturnType<typeof plotted>["sites"][number]["series"]) => void)[] = [
+    s => { s.sun_az_deg[0] = 360; },
+    s => { s.earth_el_deg[0] = NaN; }, s => { s.t[2] = s.t[1]; },
+    s => { s.t[2] = "2026-01-01T02:30:00Z"; }, s => { s.t[6] = stamp(8); },
+    s => { s.earth_az_deg.pop(); }, s => { s.both_visible[1] = false; },
+    s => { s.sun_visible[2] = true; }, s => { s.earth_visible[1] = false; },
+    s => { s.decimated = false; }, s => { s.step_s = 3700; },
+  ];
+  for (const mutation of mutations) {
+    const d = plotted();
+    mutation(d.sites[0].series);
+    assert.throws(() => parseTerrainSummary(d));
+  }
+});
+
+test("accepts incomplete traces without a boundary sample and rejects samples for missing coverage", () => {
+  const d = plotted([1, 4, 7]), s = d.sites[0];
+  s.coverage = s.coverage_in_range = "partial";
+  assert.deepEqual(parseTerrainSummary(d).sites[0].series?.t, [1, 4, 7].map(stamp));
+  const missing = { ...s, coverage: "missing", coverage_in_range: "missing", windows: { sun: [], earth: [], both: [] }, metrics: null };
+  assert.throws(() => parseTerrainSummary({ ...d, sites: [missing] }), /cannot have series samples/);
+});
+
+test("requires a closed uniform horizon and bounds its elevations by the source extrema", () => {
+  const d = plotted(), h = d.sites[0].horizon;
+  h.az_deg[2] = h.az_deg[1];
+  assert.throws(() => parseTerrainSummary(d), /azimuth grid/);
+  h.az_deg[2] = 2; h.el_deg[360] = 0.5;
+  assert.throws(() => parseTerrainSummary(d), /closure/);
+  h.el_deg[360] = 0; h.el_deg[2] = 2;
+  assert.throws(() => parseTerrainSummary(d), /extrema/);
+  h.el_deg[2] = 0; h.source_step_deg = h.step_deg;
+  assert.throws(() => parseTerrainSummary(d), /source horizon minimum/);
+  h.min_el_deg = h.max_el_deg = 0;
+  assert.equal(parseTerrainSummary(d).sites[0].horizon?.el_deg.length, 361);
 });
