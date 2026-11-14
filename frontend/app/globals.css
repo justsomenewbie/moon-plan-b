@@ -74,7 +74,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .lunar-frame { aspect-ratio: 1; background: #050609; border-radius: 50%; overflow: hidden; max-width: 380px; margin: 0 auto; box-shadow: 0 0 0 1px var(--line), 0 0 0 18px var(--bg), 0 0 0 19px var(--line); }
 .lunar-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .lunar-frame { position: relative; }
-.lunar-frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; background: #050609; touch-action: pan-y pinch-zoom; cursor: grab; }
+.lunar-frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; background: #050609; touch-action: pan-y; cursor: grab; }
 .lunar-frame canvas:active { cursor: grabbing; }
 .lunar-frame:has(canvas:focus-visible) { outline: 3px solid var(--earth); outline-offset: 4px; }
 .lunar-figure figcaption > button { display: block; margin: 0 auto 8px; font-size: .82rem; }

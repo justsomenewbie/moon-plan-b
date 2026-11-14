@@ -9,6 +9,8 @@ import saved from "../lib/odysseus-athena-weeks.json";
 import sunlight from "../lib/horizons-weekly-sunlight.json";
 import "./globe-comparison.css";
 
+function clampZoom(value: number) { return Math.max(1, Math.min(4, Math.round(value * 100) / 100)); }
+
 const origin = { longitude: 15, latitude: -58 };
 const directions = [
   ["ArrowLeft", "←", "Look west", -30, 0], ["ArrowRight", "→", "Look east", 30, 0],
@@ -73,6 +75,8 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
   const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<{ context: CanvasRenderingContext2D; texture: ImageData; frame: ImageData } | null>(null);
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ distance: number; zoom: number } | null>(null);
   const drag = useRef<{ id: number; x: number; y: number; scale: number; center: typeof origin } | null>(null);
 
   useEffect(() => {
@@ -152,7 +156,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     }
     void load();
     return () => {
-      active = false; renderer.current = null; drag.current = null;
+      active = false; renderer.current = null; drag.current = null; touches.current.clear(); pinch.current = null;
       surface?.removeEventListener("contextlost", unavailable);
     };
   }, [enabled]);
@@ -167,20 +171,57 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     return () => cancelAnimationFrame(id);
   }, [center, zoom, sun]);
 
+  const wheelZoom = useEffectEvent((event: WheelEvent) => {
+    if (event.ctrlKey || event.metaKey || !event.deltaY) return;
+    const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.current!.clientHeight : 1);
+    const scale = clampZoom(zoom * Math.exp(-Math.max(-400, Math.min(400, pixels)) * 0.003));
+    if (scale === zoom) return;
+    event.preventDefault();
+    setRotating(false); setZoom(scale);
+  });
+  useEffect(() => {
+    const surface = canvas.current;
+    if (!surface || !ready) return;
+    const wheel = (event: WheelEvent) => wheelZoom(event);
+    surface.addEventListener("wheel", wheel, { passive: false });
+    return () => surface.removeEventListener("wheel", wheel);
+  }, [ready]);
+
+  function fingerDistance() {
+    const [a, b] = touches.current.values();
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
   function startDrag(event: PointerEvent<HTMLCanvasElement>) {
-    if (!ready || !event.isPrimary || event.button !== 0) return;
+    if (!ready || event.button !== 0 || (event.pointerType !== "touch" && !event.isPrimary)) return;
+    if (event.pointerType === "touch") {
+      if (touches.current.size >= 2) return;
+      touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
     setRotating(false);
     event.currentTarget.setPointerCapture(event.pointerId);
     setAnnounced(null);
+    if (touches.current.size === 2) {
+      drag.current = null;
+      pinch.current = { distance: Math.max(1, fingerDistance()), zoom };
+      return;
+    }
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scale: 150 / (zoom * event.currentTarget.getBoundingClientRect().width), center };
   }
   function moveDrag(event: PointerEvent<HTMLCanvasElement>) {
+    if (touches.current.has(event.pointerId)) {
+      touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pinch.current && touches.current.size === 2) {
+        setZoom(clampZoom(pinch.current.zoom * fingerDistance() / pinch.current.distance));
+        return;
+      }
+    }
     const start = drag.current;
     if (!start || start.id !== event.pointerId) return;
     setCenter(globeCenter(start.center.longitude - (event.clientX - start.x) * start.scale,
       start.center.latitude + (event.clientY - start.y) * start.scale));
   }
   function endDrag(event: PointerEvent<HTMLCanvasElement>) {
+    if (touches.current.delete(event.pointerId)) pinch.current = null;
     if (drag.current?.id === event.pointerId) drag.current = null;
   }
   function selectCenter(next: typeof origin) {
@@ -189,7 +230,13 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
   }
 
   function turnWithKeyboard(event: KeyboardEvent<HTMLCanvasElement>) {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (["+", "=", "-"].includes(event.key)) {
+      event.preventDefault(); setRotating(false);
+      setZoom(value => clampZoom(value * (event.key === "-" ? 0.5 : 2)));
+      return;
+    }
+    if (event.shiftKey) return;
     const direction = directions.find(([key]) => key === event.key);
     if (!direction) return;
     const [, , , dx, dy] = direction;
@@ -208,8 +255,8 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     <div className="lunar-frame">
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
-        tabIndex={home ? 0 : undefined} onKeyDown={home ? turnWithKeyboard : undefined}
-        aria-describedby={home ? "home-globe-instructions" : sun ? "globe-sunlight-description" : undefined}
+        tabIndex={0} onKeyDown={turnWithKeyboard}
+        aria-describedby={home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : "globe-zoom-help"}
         onPointerDown={startDrag} onPointerMove={moveDrag}
         onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} />}
       {ready && sunMarker && <span className="subsolar-marker" aria-hidden="true"
@@ -233,8 +280,8 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
         {!home && !reducedMotion && <button type="button" onClick={() => setRotating(active => !active)}>{t(rotating ? "Pause rotation" : "Resume rotation")}</button>}
         {!home && directions.map(([, icon, label, dx, dy]) =>
           <button type="button" key={label} aria-label={t(label)} title={t(label)} onClick={() => selectCenter(globeCenter(center.longitude + dx, center.latitude + dy))}>{icon}</button>)}
-        <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => { setRotating(false); setZoom(zoom / 2); }}>−</button>
-        <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => { setRotating(false); setZoom(zoom * 2); }}>+</button>
+        <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => { setRotating(false); setZoom(value => clampZoom(value / 2)); }}>−</button>
+        <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => { setRotating(false); setZoom(value => clampZoom(value * 2)); }}>+</button>
         <button type="button" onClick={() => { setZoom(1); selectCenter(origin); }}>{t("Reset view")}</button>
       </div>}
       {ready && solarChoices.length > 0 && <div className="globe-sunlight">
@@ -253,6 +300,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
           <a href={sunlight.query} target="_blank" rel="noreferrer">JPL Horizons · {t("Sun direction")} ↗</a>
         </div>}
       </div>}
+      {ready && <p id="globe-zoom-help">{t("Scroll or pinch to zoom the reference map (1–4×). With the globe focused, use + or − to zoom.")}</p>}
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)} · {zoom}×</p>}
       <p role="status">{failed ? t("Globe unavailable. The photograph is shown. Try again to reload the map.") : enabled && !ready ? t("Loading lunar surface map…") :
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>

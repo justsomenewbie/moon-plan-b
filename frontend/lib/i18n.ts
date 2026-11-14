@@ -510,6 +510,7 @@ export const vietnamese: Record<string, string> = {
   "Golden window": "Cửa sổ vàng",
   "Golden windows are producer-supplied Sun-and-Earth overlap intervals. The frontend does not calculate new scientific boundaries.": "Cửa sổ vàng là các khoảng Mặt Trời–Trái Đất đồng thời do bên tạo dữ liệu cung cấp. Frontend không tự tính ranh giới khoa học mới.",
   "Earth visibility describes a line of sight. Radio signal strength is unavailable.": "Khả năng nhìn thấy Trái Đất cho biết có đường nhìn trực tiếp. Chưa có số liệu cường độ tín hiệu vô tuyến.",
+  "Scroll or pinch to zoom the reference map (1–4×). With the globe focused, use + or − to zoom.": "Cuộn hoặc chụm hai ngón tay để thu phóng bản đồ tham khảo (1–4×). Khi chọn quả cầu bằng bàn phím, dùng + hoặc − để thu phóng.",
   "Zoom in": "Phóng to",
   "Zoom out": "Thu nhỏ",
   "Inspect {site}": "Xem {site}",
