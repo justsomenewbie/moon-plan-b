@@ -87,7 +87,11 @@
 @media screen and (max-width: 600px) {
   :root[data-theme="light"] .sky-clouds span:nth-child(1) { width: 96vw; left: -57%; top: 8%; opacity: .46; }
   :root[data-theme="light"] .sky-clouds span:nth-child(2) { width: 82vw; right: -34%; top: 14%; }
-  :root[data-theme="light"] .sky-clouds span:nth-child(3) { width: 106vw; right: -50%; top: 54%; }
+  :root[data-theme="light"] .sky-clouds span:nth-child(3) {
+    width: 106vw; right: -50%; top: 54%;
+    mask-image: linear-gradient(to top, transparent, black 45%), linear-gradient(to right, transparent 8%, black 83%);
+    mask-composite: intersect;
+  }
   :root[data-theme="light"] .sky-clouds span:nth-child(4) { width: 80vw; left: -30%; bottom: 10%; }
 }
 /* Match the 16:9 projected sky texture to the viewport and display density. */

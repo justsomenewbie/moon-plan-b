@@ -285,6 +285,7 @@ export const vietnamese: Record<string, string> = {
   "Color shows elevation. Shading shows the shape of the terrain under fixed lighting.": "Màu thể hiện độ cao. Ánh sáng minh họa chiếu từ một hướng cố định để làm rõ hình dạng địa hình.",
   "The ring marks the selected coordinates.": "Vòng tròn đánh dấu tọa độ đã chọn.",
   "Select a site with verified coordinates to view its surface.": "Chọn địa điểm đã có tọa độ xác minh để xem ảnh bề mặt.",
+  "Open this area in the LROC map ↗": "Mở vùng này trên bản đồ LROC ↗",
   "View this site in LROC imagery ↗": "Xem ảnh LROC tại địa điểm này ↗",
   "School of Aerospace Engineering": "Viện Công nghệ Hàng không Vũ trụ",
   "VNU University of Engineering and Technology": "Trường Đại học Công nghệ, ĐHQGHN",

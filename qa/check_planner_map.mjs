@@ -33,6 +33,13 @@ try {
     await globe.locator(".globe-center").getByText(/2×/).waitFor();
     if (from === "14") {
       const requests = [];
+      async function checkRegionLink(region) {
+        const href = new URL(await region.getByRole("link", {name: "Open this area in the LROC map ↗"}).getAttribute("href"));
+        const image = requests.at(-1);
+        const [, , lon, lat] = image.get("SRS").split(",");
+        assert.deepEqual([href.searchParams.get("c_lon"), href.searchParams.get("c_lat")], [lon, lat]);
+        assert.equal(href.searchParams.get("layers"), image.get("LAYERS").toUpperCase());
+      }
       await page.route("https://wms.im-ldi.com/**", route => {
         requests.push(new URL(route.request().url()).searchParams);
         if (requests.length === 1) return route.abort();
@@ -56,6 +63,8 @@ try {
       await page.setViewportSize({width: 375, height: 810});
       await map.getByRole("button", {name: "Surface close-up", exact: true}).click();
       const region = map.locator(".plan-regional-view");
+      await region.getByRole("button", {name: "Retry image"}).waitFor();
+      await checkRegionLink(region);
       await region.getByRole("button", {name: "Retry image"}).click();
       await region.locator(".plan-regional-center").waitFor();
       assert.equal(requests[1].get("BBOX"), "-40000,-40000,40000,40000");
@@ -72,6 +81,7 @@ try {
       await region.getByRole("button", {name: "Terrain relief", exact: true}).click();
       await region.locator(".plan-regional-center").waitFor();
       assert.equal(requests.at(-1).get("LAYERS"), "luna_wac_dtm");
+      await checkRegionLink(region);
       assert.equal(requests.at(-1).get("BBOX"), "-20000,-20000,20000,20000");
       assert.equal(requests.at(-1).get("SRS"), `IAU2000:30166,9001,${far.lon_deg},${far.lat_deg}`);
       for (const width of [80, 160]) {
@@ -89,12 +99,14 @@ try {
       await globe.getByRole("button", {name: "Close-up at map center"}).click();
       await region.locator(".plan-regional-center").waitFor();
       assert.notEqual(requests.at(-1).get("SRS"), siteSrs);
+      await checkRegionLink(region);
       assert.match(await region.locator("figcaption strong").innerText(), /Map location/);
       await map.getByRole("button", {name: "Flat map", exact: true}).click();
       await map.locator(".plan-map-surface image").click({position: {x: 15, y: 20}});
       await region.locator(".plan-regional-center").waitFor();
       assert.match(await region.locator("figcaption strong").innerText(), /Map location/);
       assert.equal(await selector.inputValue(), "apollo11");
+      await checkRegionLink(region);
     }
     await map.getByRole("button", { name: "Flat map", exact: true }).click();
     assert.equal(await selector.inputValue(), "apollo11");

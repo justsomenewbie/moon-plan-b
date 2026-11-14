@@ -49,6 +49,7 @@ function SurfaceCloseUp({ point, name }: { point: MapPoint | null; name: string 
       </div>
       <p>{t(relief ? "Color shows elevation. Shading shows the shape of the terrain under fixed lighting." :
         "Some crater floors appear dark in this mosaic. Switch to terrain relief to see their shape.")} {t("The ring marks the selected coordinates.")}</p>
+      <p><a href={lrocSiteUrl(point, relief)} target="_blank" rel="noreferrer">{t("Open this area in the LROC map ↗")}</a></p>
       <a href="https://www.lroc.im-ldi.com/about/terms" target="_blank" rel="noreferrer">NASA/GSFC/Arizona State University</a>
     </figcaption>
   </figure>;
@@ -154,7 +155,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
             <span>{zoom}×</span>
             <button type="button" aria-label={t("Zoom in")} disabled={zoom === 8} onClick={() => setZoom(zoom * 2)}>+</button>
           </div>}
-          <a href={lrocSiteUrl(point)} target="_blank" rel="noreferrer">{t("View this site in LROC imagery ↗")}</a>
+          {view !== "surface" && <a href={lrocSiteUrl(point)} target="_blank" rel="noreferrer">{t("View this site in LROC imagery ↗")}</a>}
         </>}
       </div>
     </div>
