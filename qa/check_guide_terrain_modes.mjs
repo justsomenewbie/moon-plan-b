@@ -33,12 +33,12 @@ try {
     const panel = page.locator("aside[popover]");
     const modes = locale === "en" ? { compareSites: "Compare sites", compareDates: "Compare dates" }
       : { compareSites: "So sánh hai địa điểm", compareDates: "So sánh hai khoảng thời gian" };
-    async function ask(mode, context = "terrain") {
+    async function ask(mode, context = "terrain", source) {
       action = mode;
       expectedContext = context;
       await page.locator("button[popovertarget]").first().click();
       await panel.getByText(locale === "en" ? "Ask the astronaut" : "Hỏi phi hành gia", { exact: true }).click();
-      if (context === "saved") await panel.locator("select").selectOption("saved");
+      if (source) await panel.locator("select").selectOption(source);
       await panel.locator("textarea").fill(mode);
       await panel.locator('button[type="submit"]').click();
       await panel.getByRole("log").getByText("Fixture action", { exact: false }).waitFor();
@@ -51,12 +51,12 @@ try {
     }
     assert.ok(catalogGets > 0);
 
-    await (await ask("compareSites", "saved")).click();
+    await (await ask("compareSites", "saved", "saved")).click();
     assert.equal(new URL(page.url()).hash, "#observed-week");
     const file = page.locator("input[type=file]");
     await file.setInputFiles({ name: "offline.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(fixture)) });
     await page.locator("#terrain-pair").waitFor({ state: "detached" });
-    assert.equal(await (await ask("compareSites")).count(), 0);
+    assert.equal(await (await ask("compareSites", "terrain", "workspace")).count(), 0);
     assert.equal(await panel.getByRole("link", { name: modes.compareSites, exact: true }).count(), 0);
     await page.keyboard.press("Escape");
     await file.setInputFiles(fileURLToPath(new URL("../frontend/public/data/demo.json", import.meta.url)));

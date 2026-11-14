@@ -62,6 +62,26 @@ try {
   await checkSavedAnswer(launcher, english, "im2_athena", [
     "Athena · IM-2 · 139 h\n" + week1, "Athena · IM-2 · 168 h\n" + week2,
   ]);
+  // Opening the guide from the selected saved result starts with its rows.
+  await launcher.click();
+  await panel.getByText("Ask the astronaut", { exact: true }).click();
+  const source = panel.getByRole("combobox", { name: "Use data from" });
+  assert.equal(await source.inputValue(), "saved");
+  const request = page.waitForRequest(req => new URL(req.url()).pathname === "/guide/chat");
+  await page.route("**/guide/chat", route => route.fulfill({ json: { answer: "OK", action: null } }));
+  await panel.getByRole("textbox").fill("Which result am I viewing?");
+  await panel.getByRole("button", { name: "Send", exact: true }).click();
+  const { context } = (await request).postDataJSON();
+  assert.equal(context.kind, "saved");
+  assert.deepEqual(context.rows.map(row => [row.site, row.bothHours]), [["Athena · IM-2", 139], ["Athena · IM-2", 168]]);
+  await source.selectOption("workspace");
+  await page.keyboard.press("Escape");
+  await saved.selectOption("im1_odysseus");
+  await launcher.click();
+  await panel.getByText("Ask the astronaut", { exact: true }).click();
+  assert.equal(await source.inputValue(), "workspace");
+  await page.keyboard.press("Escape");
+
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.getByRole("combobox", { name: "Language" }).selectOption("vi");

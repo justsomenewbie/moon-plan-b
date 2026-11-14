@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { askGuide, GuideRequestError, type GuideErrorKey, type GuideAction, type GuideContext, type GuideReply } from "../lib/api/guide-chat";
 import { useLanguage } from "./language";
+import { isSavedResultLink } from "./observed-week";
 import styles from "./guide-chat.module.css";
 
 const copy = {
@@ -28,23 +29,36 @@ const copy = {
 
 export type GuideDestination = string | (() => void);
 export type GuideActions = Partial<Record<GuideAction, GuideDestination>>;
-type Props = { saved: GuideContext; workspace?: GuideContext; pair?: GuideContext; savedActions: GuideActions; workspaceActions?: GuideActions };
+export type GuideScope = "saved" | "workspace" | "pair";
+type Props = { choice: GuideScope | null; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; pair?: GuideContext; savedActions: GuideActions; workspaceActions?: GuideActions };
 type Turn = GuideReply & { question: string };
 
-export default function GuideChat({ saved, workspace, pair, savedActions, workspaceActions }: Props) {
+function subscribeToLocation(notify: () => void) {
+  window.addEventListener("popstate", notify);
+  window.addEventListener("hashchange", notify);
+  return () => {
+    window.removeEventListener("popstate", notify);
+    window.removeEventListener("hashchange", notify);
+  };
+}
+
+const savedRoute = () => isSavedResultLink(window.location);
+
+export default function GuideChat({ choice, onChoice, saved, workspace, pair, savedActions, workspaceActions }: Props) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const [opened, setOpened] = useState(false);
-  const [choice, setChoice] = useState<"pair" | "workspace" | "saved" | null>(null);
-  const scope = choice === "saved" ? "saved" : choice === "workspace" && workspace ? "workspace"
-    : pair ? "pair" : workspace ? "workspace" : "saved";
+  const onSavedRoute = useSyncExternalStore(subscribeToLocation, savedRoute, () => false);
+  const defaultScope = onSavedRoute ? "saved" : pair ? "pair" : workspace ? "workspace" : "saved";
+  const scope = choice === "saved" || (choice === "workspace" && workspace) || (choice === "pair" && pair)
+    ? choice : defaultScope;
   const context = (scope === "pair" ? pair : scope === "workspace" ? workspace : saved) ?? saved;
   return <details className={styles.chat} onToggle={event => setOpened(event.currentTarget.open)}>
     <summary>{labels.title}</summary>
     {opened && <>
       {workspace && <label className={styles.label}>{labels.source}<select value={scope} onChange={e => {
         const value = e.target.value;
-        if (value === "pair" || value === "workspace" || value === "saved") setChoice(value);
+        if (value === "pair" || value === "workspace" || value === "saved") onChoice(value);
       }}>
         {pair && <option value="pair">{labels.pair}</option>}
         <option value="workspace">{labels.workspace}</option><option value="saved">{labels.saved}</option>
