@@ -338,6 +338,8 @@ export default function Navigator() {
           <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
         </div>
       </div>
+      <MoonGlobe savedResult={savedResult} primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
+        alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
       <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
         <h2 id="home-guide-title">{t("Quick guide")}</h2>
         <ol>
@@ -348,10 +350,7 @@ export default function Navigator() {
         <a href={comparisonHref}>{t("Open the observation workspace")}</a>
       </section>
     </section>
-    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")}>
-      <MoonGlobe savedResult={savedResult} primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
-        alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
-    </ObservedWeek>
+    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")} />
 
     <div className="workspace-notice">
       <p className="muted text-sm">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Team API · terrain horizon model")} · <a href="/api-docs">{t("API explorer")}</a></p>

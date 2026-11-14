@@ -15,7 +15,7 @@ function weekLabel(week: typeof weeks[number]) {
   return `${week.startUtc.slice(0, 10)} → ${lastDay} UTC`;
 }
 
-export default function ObservedWeek({ selection, onSelect, onPrint, children }: { selection: string; onSelect: (value: string) => void; onPrint: () => void; children: React.ReactNode }) {
+export default function ObservedWeek({ selection, onSelect, onPrint }: { selection: string; onSelect: (value: string) => void; onPrint: () => void }) {
   const { t, locale } = useLanguage();
   const selectedWeek = weeks.find(week => week.startUtc === selection);
 
@@ -33,6 +33,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
       </label>
       <div className="week-actions">
         <button className="button outline" type="button" onClick={onPrint}>{t("Print saved result")}</button>
+        <a href="#lunar-reference">{t("View lunar globe")}</a>
         <a href={`?saved=${encodeURIComponent(selection)}#observed-week`} target="_blank" rel="noreferrer">{t("Open this saved result in a new tab")} ↗</a>
       </div>
       <div className="week-sites" aria-live="polite">
@@ -60,6 +61,5 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
         <p>{t("Source run")} · <code>{runId}</code> · <a href="https://github.com/justsomenewbie/moon-plan-b/blob/953a39cf1b5ac7e8b61d82d6b0dc5bc0469807f1/docs/BACKEND_RECONCILIATION.md#reproduce-the-odysseus-and-athena-weeks" target="_blank" rel="noreferrer">{t("Source and interval checks")} ↗</a></p>
       </details>
     </div>
-    {children}
   </section>;
 }

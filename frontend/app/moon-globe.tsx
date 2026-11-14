@@ -38,6 +38,8 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
   const [failed, setFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState(origin);
+  const [rotating, setRotating] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(true);
   const [announced, setAnnounced] = useState<typeof origin | null>(null);
   const [chosen, setChosen] = useState<Pick<Target, "key" | "identity"> | null>(null);
   const targets: Target[] = [];
@@ -63,13 +65,48 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
   useEffect(() => {
     const mission = missionSites.find(item => item.id === savedResult);
     if (mission) {
-      setChosen({ key: mission.name, identity: mission }); setCenter(mission);
+      setChosen({ key: mission.name, identity: mission }); setCenter(mission); setRotating(false);
     } else { setChosen(null); setCenter(origin); }
     setZoom(1); setAnnounced(null);
   }, [savedResult]);
 
   const currentCenter = useEffectEvent(() => ({ ...center, zoom }));
   useEffect(() => { setEnabled(true); }, []);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(preference.matches);
+    update();
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const surface = canvas.current;
+    if (!ready || !surface || !rotating || reducedMotion) return;
+    let timer: number | undefined;
+    let visible = false;
+    function update() {
+      window.clearInterval(timer);
+      if (visible && !document.hidden) {
+        // The CPU-projected reference map turns slowly, at twelve updates per second.
+        timer = window.setInterval(() => {
+          setCenter(c => globeCenter(c.longitude + 0.24, c.latitude));
+        }, 1000 / 12);
+      }
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      update();
+    });
+    observer.observe(surface);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", update);
+      window.clearInterval(timer);
+    };
+  }, [ready, rotating, reducedMotion]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -119,6 +156,7 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
 
   function startDrag(event: PointerEvent<HTMLCanvasElement>) {
     if (!ready || !event.isPrimary || event.button !== 0) return;
+    setRotating(false);
     event.currentTarget.setPointerCapture(event.pointerId);
     setAnnounced(null);
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scale: 150 / (zoom * event.currentTarget.getBoundingClientRect().width), center };
@@ -133,10 +171,12 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
     if (drag.current?.id === event.pointerId) drag.current = null;
   }
   function selectCenter(next: typeof origin) {
+    setRotating(false);
     setCenter(next); setAnnounced(next);
   }
 
   function locate(item: Target | undefined) {
+    setRotating(false);
     setChosen(item ? { key: item.key, identity: item.identity } : null);
     if (item && "point" in item.location) selectCenter(item.location.point);
   }
@@ -159,13 +199,15 @@ export default function MoonGlobe({ primary, alternative, evidence, savedResult,
     </div>
     <figcaption>
       <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
+        setRotating(false);
         setCenter(point ?? origin); setZoom(1); setAnnounced(null); setReady(false); setFailed(false); setEnabled(!enabled);
       }}>{t(failed ? "Retry globe" : enabled ? "Return to photograph" : "Rotate the Moon")}</button>
       {ready && <div className="globe-controls" role="group" aria-label={t("Rotate the lunar globe")}>
+        {!reducedMotion && <button type="button" onClick={() => setRotating(active => !active)}>{t(rotating ? "Pause rotation" : "Resume rotation")}</button>}
         {([["←", "Look west", -30, 0], ["→", "Look east", 30, 0], ["↑", "Look north", 0, 30], ["↓", "Look south", 0, -30]] as const).map(([icon, label, dx, dy]) =>
           <button type="button" key={label} aria-label={t(label)} title={t(label)} onClick={() => selectCenter(globeCenter(center.longitude + dx, center.latitude + dy))}>{icon}</button>)}
-        <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => setZoom(zoom / 2)}>−</button>
-        <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => setZoom(zoom * 2)}>+</button>
+        <button type="button" aria-label={t("Zoom out")} disabled={zoom === 1} onClick={() => { setRotating(false); setZoom(zoom / 2); }}>−</button>
+        <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => { setRotating(false); setZoom(zoom * 2); }}>+</button>
         <button type="button" onClick={() => { setZoom(1); selectCenter(origin); }}>{t("Reset view")}</button>
       </div>}
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)} · {zoom}×</p>}
