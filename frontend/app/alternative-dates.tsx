@@ -3,6 +3,7 @@
 import { ApiProblemText, useRetryCountdown, useProblemFields } from "./api-problem-text";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { usesSmoothSphere } from "../lib/site-horizon";
 import type { ExtraField } from "../lib/planner-source";
 import { findAltDates, landingDelayHours, landingGridBounds, noVisibilityForObjective, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
@@ -60,7 +61,7 @@ function LandingWindows({ search, earliest }: { search: AltDatesResponse; earlie
   </ol>;
 }
 
-type SearchSite = { id: string; name: string };
+type SearchSite = { id: string; name: string; demSource?: string; horizonMethod?: string };
 export type LandingSearchProps = {
   runId: string; sites: readonly SearchSite[]; initialSiteId?: string;
   stepSeconds: number; from: string; to: string; coverageStart?: string; coverageEnd?: string;
@@ -78,6 +79,8 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
   const latest = new Date(Math.min(lastAllowed, Math.max(Date.parse(from), Date.parse(to) - duration * 3600000))).toISOString().slice(0, 19);
   const lastSample = coverageEnd && new Date(Date.parse(coverageEnd) - stepSeconds * 1000).toISOString().slice(0, 19);
   const gridStart = coverageStart ?? from;
+  const [selectedSiteId, setSelectedSiteId] = useState(initialSiteId ?? sites[0]?.id ?? "");
+  const selectedSite = sites.find(site => site.id === selectedSiteId);
   const [completed, setCompleted] = useState<{ request: AltDatesRequest; search: AltDatesResponse }>();
   const search = completed?.search;
   const zeroVisibility = search && noVisibilityForObjective(search);
@@ -151,9 +154,10 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
   return <>
     {!planner && <p>{sites[0]?.name}</p>}
     {planner && <p className="muted text-sm">{t("To test one landing time, use the same UTC time for both bounds. The model evaluates starts every {hours} h.", { hours: stepHours })}</p>}
+    {planner && usesSmoothSphere(selectedSite) && <p className="data-notice" role="status">{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
     <form className="request-fields my-4 print:hidden" onSubmit={submit} onChange={clearSearch}>
       {planner && <label className="field">{t("Site")}
-        <select name="landingSite" {...fieldAttributes("site_id")} defaultValue={initialSiteId ?? sites[0]?.id ?? ""} required>
+        <select name="landingSite" {...fieldAttributes("site_id")} value={selectedSiteId} onChange={event => setSelectedSiteId(event.target.value)} required>
           <option value="">{t("Choose a site")}</option>
           {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
         </select></label>}

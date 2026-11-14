@@ -7,7 +7,7 @@ import { getSavedPlannerRanking, savedPlannerRun } from "../../../lib/saved-plan
 import { lrocSiteUrl } from "../../../lib/globe-sites";
 import { LanguageControl, useLanguage } from "../../language";
 import { SiteFooter, SkyBackground } from "../../site-chrome";
-import { TimeRange } from "../../terrain-site-result";
+import { SiteHorizonSource, TimeRange } from "../../terrain-site-result";
 import ThemeControl from "../../theme-control";
 
 const fields = ["source", "site", "from", "to", "priority"] as const;
@@ -70,6 +70,7 @@ function SiteReport() {
     </section>
     <section className="space-y-3" aria-labelledby="site-sources">
       <h2 id="site-sources">{text("Model and source files", "Mô hình và tệp nguồn")}</h2>
+      <SiteHorizonSource method={site.horizonMethod} source={site.demSource} />
       <p>{t("Run ID")} · <code>{ranking.runId}</code><br/>{t("Model step")} · {ranking.stepSeconds / 3600} h</p>
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         <a href={folder + "/catalog.json"}>{text("Original site catalog (JSON)", "Danh mục địa điểm gốc (JSON)")}</a>

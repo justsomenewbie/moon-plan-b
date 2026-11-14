@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { usesSmoothSphere } from "../../lib/site-horizon";
 import { savedLandingHour } from "../../lib/planner-source";
 import { archiveB2Run, searchArchiveB2 } from "../../lib/archive-b2";
 import { getSavedPlannerDates, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
@@ -62,7 +63,7 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
     const limits = { ...submitted, earliest: savedLandingHour(submitted.earliest, "earliest"), latest: savedLandingHour(submitted.latest, "latest") };
     return b2 ? searchArchiveB2({ ...limits, earliest: limits.earliest || undefined, latest: limits.latest || undefined }) : rank(limits);
   }, [b2, submitted]);
-  const validSite = sites.some(site => site.id === fields.siteId);
+  const selectedSite = sites.find(site => site.id === fields.siteId);
   const labels = { joint: t("Both visible"), sun: t("Sun visible"), earth: t("Earth visible") };
   const title = vi ? "Giờ hạ cánh nào phù hợp ở đây?" : "When should I land at this site?";
 
@@ -72,9 +73,10 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
     {liveOptions && <p className="data-notice" role="status">{vi
       ? "Bản lưu giữ nguyên địa điểm, giới hạn giờ và thời lượng. Tìm kiếm tại đây xếp theo giờ quan sát; điều kiện bổ sung và cách xếp hạng riêng của API chỉ áp dụng khi bạn quay lại dữ liệu trực tuyến."
       : "Your site, landing bounds and duration are retained. The saved search ranks visibility hours. Additional live constraints and live-only ranking options apply again when you return to live data."}</p>}
+    {usesSmoothSphere(selectedSite) && <p className="data-notice" role="status">{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
     <form ref={formRef} className="request-fields print:hidden" onSubmit={event => { event.preventDefault(); setSubmitted(fields); }}>
       <label className="field">{t("Site")}<select name="savedLandingSite" value={fields.siteId} onChange={event => change("siteId", event.target.value)}>
-        {!validSite && <option value={fields.siteId}>{(b2 ? archiveB2Run : savedPlannerRun).sites.find(s => s.id === fields.siteId)?.name ?? fields.siteId}</option>}
+        {!selectedSite && <option value={fields.siteId}>{(b2 ? archiveB2Run : savedPlannerRun).sites.find(s => s.id === fields.siteId)?.name ?? fields.siteId}</option>}
         {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
       </select></label>
       <label className="field">{vi ? "Bắt đầu chuyến đi (UTC)" : "Travel window start (UTC)"}<input required type="date" name="savedFrom" value={fields.from} onChange={e => change("from", e.target.value)} /></label>
