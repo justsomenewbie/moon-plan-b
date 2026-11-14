@@ -14,11 +14,11 @@ Imports, saved links, EN/VI, printing and sources work. View from switches or ov
 
 Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
-Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body readings. Mobile checks cover contacts, imports, selection, UTC, clearance and API status.
+Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body readings. Mobile QA covers contacts, imports, selection, UTC, clearance and API.
 
 Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Pair links restore sites and ranks. Reports include coordinates/heights. UTC lookup shows requested and native samples. FE/backend preserve 1 ns ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
-[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Site selection stays in comparisons. [Sky projection](docs/CREDITS.md#night-theme-star-map).
+[UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Site selection: comparisons. [Sky projection](docs/CREDITS.md#night-theme-star-map), cloud shading and four meteor paths.
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 

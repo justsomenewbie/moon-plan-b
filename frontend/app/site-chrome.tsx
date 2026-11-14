@@ -6,7 +6,7 @@ import ThemeControl from "./theme-control";
 export function SkyBackground() {
   return <>
     <div className="sky-clouds" aria-hidden="true">{[0, 1, 2, 3].map(i => <span key={i} />)}</div>
-    <div className="night-stars" aria-hidden="true">{[0, 1, 2, 3].map(i => <i key={i} />)}{[0, 1, 2].map(i => <span key={i} />)}</div>
+    <div className="night-stars" aria-hidden="true">{[0, 1, 2, 3].map(i => <i key={i} />)}{[0, 1, 2, 3].map(i => <span key={i} />)}</div>
   </>;
 }
 
