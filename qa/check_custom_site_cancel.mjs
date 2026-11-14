@@ -50,10 +50,14 @@ async function exercise(mode) {
           deletes.push(jobId);
           if (mode === "offline") return route.abort("internetdisconnected");
           if (mode === "uncertain") return route.abort("connectionreset");
+          if (mode === "not-owner" || mode === "unconfirmed-owner") {
+            const problem = { status: 403, code: "JOB_NOT_YOURS", detail: "Fixture ownership refusal." };
+            if (mode === "not-owner") Object.assign(problem, { type: "about:blank", title: "Forbidden" });
+            return route.fulfill({ status: 403, contentType: "application/problem+json", json: problem });
+          }
           if (mode === "race") {
-            status = "succeeded";
             return route.fulfill({ status: 409, contentType: "application/problem+json",
-              json: { code: "JOB_NOT_CANCELLABLE", status: 409, detail: "Fixture job already completed." } });
+              json: { type: "about:blank", title: "Conflict", code: "JOB_NOT_CANCELLABLE", status: 409, detail: "Fixture job already completed." } });
           }
           if (mode !== "shared") status = "cancelled";
           return route.fulfill({ json: job(mode === "shared" ? 1 : 0) });
@@ -86,8 +90,19 @@ async function exercise(mode) {
     }
     await cancel.click();
 
-    if (mode === "race") {
-      await form.getByRole("button", { name: "Open job results" }).waitFor();
+    if (mode === "race" || mode === "not-owner" || mode === "unconfirmed-owner") {
+      const check = form.getByRole("button", { name: "Check job status", exact: true });
+      await check.waitFor();
+      await Promise.all([page.waitForResponse(r => new URL(r.url()).pathname === "/api/v1/jobs/" + firstId &&
+        r.request().method() === "GET"), check.click()]);
+      assert.equal(await cancel.count(), mode === "unconfirmed-owner" ? 1 : 0);
+      if (mode === "race") {
+        status = "succeeded";
+        await check.click();
+        await form.getByRole("button", { name: "Open job results" }).waitFor();
+      } else {
+        await form.getByRole("button", { name: "Stop following this job", exact: true }).click();
+      }
       assert(reads.length > readsBeforeCancel);
       assert.equal(await cancel.count(), 0);
     } else if (mode === "offline") {
@@ -125,6 +140,6 @@ async function exercise(mode) {
 }
 
 try {
-  for (const mode of ["exclusive", "shared", "race", "uncertain", "offline"]) await exercise(mode);
-  console.log("Custom-site cancellation, shared detach, completion race, uncertain receipt, offline cancellation and replacement request passed.");
+  for (const mode of ["exclusive", "shared", "race", "not-owner", "unconfirmed-owner", "uncertain", "offline"]) await exercise(mode);
+  console.log("Custom-site cancellation, shared detach, definitive and uncertain refusals, completion race, offline cancellation and replacement request passed.");
 } finally { await browser.close(); }
