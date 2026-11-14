@@ -85,6 +85,29 @@ test("timeline exposes producer-supplied golden windows without deriving replace
   }
 });
 
+test("timeline leaves a missing hourly observation blank and still plots a measured 0°", () => {
+  const partial = readFileSync(new URL("../../qa/fixtures/partial.json", import.meta.url), "utf8");
+  const { scenarios } = dataset.validateDataset(JSON.parse(partial));
+  const render = (site: string) => renderToStaticMarkup(createElement(compiled.exports.Timeline, {
+    a: scenarios.find(s => s.siteId === site)!, mode: "sites", offset: 0,
+  }));
+
+  // Basin omits 02:00 UTC. Both traces must stop at 01:00 and restart at 03:00.
+  const basin = render("basin");
+  const paths = Array.from(basin.matchAll(/<path\b[^>]*\bd="([^"]*)"/g), match => match[1]);
+  assert.equal(paths.length, 2);
+  for (const path of paths) {
+    assert.deepEqual(path.match(/[ML][\d.]+(?=,)/g), ["M0.00", "L200.00", "M600.00", "L800.00"]);
+  }
+  assert.doesNotMatch(basin, /<(?:circle|rect)\b[^>]*\b(?:cx|x)="50%"/);
+
+  // Ridge supplies a real 0° Sun at 01:00, then only Earth at 02:00.
+  const ridge = render("ridge");
+  assert.match(ridge, /<circle\b[^>]*cx="25%"[^>]*cy="50%"/);
+  assert.doesNotMatch(ridge, /<circle\b[^>]*cx="50%"/);
+  assert.match(ridge, /<rect\b[^>]*\bx="50%"/);
+});
+
 test("polar skyplot keeps shape labels, cardinal directions and exact numeric readout", () => {
   const scenario = fixture().scenarios[0];
   const html = renderToStaticMarkup(createElement(compiled.exports.SkyPosition, { scenario, offset: 9 * 3600000 }));
