@@ -48,6 +48,7 @@ Record only consented, minimal observations; avoid names, recordings and persona
 - [ ] Sourced production package validates with `--release`; true query receipts, raw exports, parser compatibility and source authenticity reviewed. Synthetic labels remain on mocks.
 - [ ] Supported-runtime install, full frontend test/typecheck/build and production-preview checks pass at the frozen commit; no unsupported Node waiver.
 - [ ] Manual resilience/network/accessibility evidence and three real-user sessions recorded; no unresolved P0/P1 or scientific correctness defect. Exceptions require named human acceptance.
+- [ ] Before submitting the Final Project or demo, review the public roster and contact block against the [NASA participant terms](https://www.spaceappschallenge.org/legal/). The working site shows team names. Exclude identifiable names and likenesses of anyone under 18 and personal phone numbers from the submission. Keep the portrait preview private.
 - [ ] Licence/third-party notices, source and AI disclosures, current official rules and public links checked. Team Owner verifies portal rights, submits and retains receipt; Save Progress is not submission.
 
 Next handoff input: one agreed, versioned two-site producer export with original requests/raw responses. Run the package validator, report incompatibilities, then let integration owners approve any adapter before changing shared contracts.

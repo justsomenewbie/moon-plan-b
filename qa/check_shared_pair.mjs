@@ -37,6 +37,11 @@ try {
   assert.match(await cards.nth(0).innerText(), /0\.67416° latitude · 23\.47314° east longitude/);
   assert.match(await cards.nth(1).innerText(), /-86\.752966° latitude · 336\.328186° east longitude/);
   assert.match(await cards.nth(1).innerText(), /representative point/);
+  for (const [index, longitude, latitude] of [[0, "23.47314", "0.67416"], [1, "336.328186", "-86.752966"]]) {
+    const imagery = new URL(await cards.nth(index).getByRole("link", { name: "View this site in LROC imagery ↗" }).getAttribute("href"));
+    assert.equal(imagery.host, "data.lroc.im-ldi.com");
+    assert.deepEqual([imagery.searchParams.get("c_lon"), imagery.searchParams.get("c_lat")], [longitude, latitude]);
+  }
   await ranks(entry).getByRole("button", { name: "Show this pair on the globe" }).click();
   await pairMap.locator("canvas:visible").waitFor();
   assert.equal(await pairMap.locator(".site-pin button").count(), 2);

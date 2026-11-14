@@ -133,7 +133,10 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
           {/* The run-pinned Haworth site record identifies this point as the centre of a region. */}
           {row.id === "a3_haworth" && runId === "B_spice_pgda_bruteforce_2026_2030" &&
             <p className="muted text-sm">{t("This run uses a representative point for the Haworth region.")}</p>}
-          {"reason" in row.location && <p>{t(row.location.reason)}</p>}
+          {"point" in row.location
+            ? <a href={`https://data.lroc.im-ldi.com/lroc/?projection=ORTHO&c_lon=${row.location.point.longitude}&c_lat=${row.location.point.latitude}&x=0&y=0&resolution=73.05454999604635&layers=LUNA_WAC_GLOBAL`}
+                target="_blank" rel="noreferrer">{t("View this site in LROC imagery ↗")}</a>
+            : <p>{t(row.location.reason)}</p>}
           <p>{t("Coverage")} · {t(coverage)}</p>
           {completePair && <p><strong>{t("Rank {rank} of 2", { rank: row.rank })}</strong> · {t("Weighted score")} {row.score}</p>}
           {coverage === "complete" ? <dl className="metadata">

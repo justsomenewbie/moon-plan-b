@@ -223,6 +223,8 @@ export const vietnamese: Record<string, string> = {
   "Star map": "Bản đồ sao",
   "Pause sky and astronaut motion": "Tạm dừng chuyển động của nền trời và phi hành gia",
   "University and school": "Trường và viện",
+  "School of Aerospace Engineering on Facebook": "Facebook của Viện Công nghệ Hàng không Vũ trụ",
+  "View this site in LROC imagery ↗": "Xem ảnh LROC tại địa điểm này ↗",
   "School of Aerospace Engineering": "Viện Công nghệ Hàng không Vũ trụ",
   "VNU University of Engineering and Technology": "Trường Đại học Công nghệ, ĐHQGHN",
   "Contact the Moon Plan B team": "Liên hệ nhóm Moon Plan B",
