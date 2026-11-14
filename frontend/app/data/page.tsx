@@ -3,6 +3,7 @@
 import { useState } from "react";
 import manifest from "../../public/data/run-b2/manifest.json";
 import catalog from "../../public/data/run-b2/catalog.json";
+import earlierCatalog from "../../public/data/run-b/catalog.json";
 import weeks from "../../lib/odysseus-athena-weeks.json";
 import { archiveB2Run } from "../../lib/archive-b2";
 import { TimeRange } from "../terrain-site-result";
@@ -16,7 +17,7 @@ const runId = catalog.run_id;
 const runPath = "/api/v1/runs/" + encodeURIComponent(runId);
 const summaryPath = "/api/v1/export/summary.csv?" + new URLSearchParams({ run_id: runId });
 const geoPath = "/api/v1/sites?" + new URLSearchParams({ run_id: runId, format: "geojson" });
-const originalBManifestHash = "35601268e464e2e610e3cf33cf7e7b8588e59e23877857708799f29a8ac615a4";
+const manifestHash = "35601268e464e2e610e3cf33cf7e7b8588e59e23877857708799f29a8ac615a4";
 const savedCatalogWindows = [["2026-01-01", "2031-01-01"], ["2026-11-14", "2026-11-15"], ["2026-12-01", "2026-12-04"]];
 const groups: Record<string, [string, string]> = {
   south_pole: ["South pole", "Cực Nam"], reference: ["Reference sites", "Địa điểm đối chiếu"],
@@ -90,7 +91,7 @@ export default function DataPage() {
         <h2 id="bundled-data">{text("Earlier run B · bundled sources", "Lần chạy B trước đó · nguồn có sẵn")}</h2>
         <p>{text("Run B covers 23 catalog sites from 1 January 2026 through 31 December 2030, sampled every hour in UTC.",
           "Lần chạy B gồm 23 địa điểm, lấy mẫu mỗi giờ theo UTC từ ngày 1/1/2026 đến hết ngày 31/12/2030.")}</p>
-        <code>{weeks.runId}</code>
+        <code>{earlierCatalog.run_id}</code>
 
         <p>{text("The manifest lists the original files and their SHA-256 checksums. The saved site catalog includes names, coordinates, terrain methods and full-run summary values.",
           "Manifest liệt kê các tệp gốc và mã SHA-256 của từng tệp. Danh mục địa điểm lưu sẵn có tên, tọa độ, phương pháp mô hình địa hình và số liệu tổng hợp của cả lần chạy.")}</p>
@@ -98,7 +99,7 @@ export default function DataPage() {
           <a href="/data/run-b/manifest.json" download="manifest.json">{text("Download original manifest (JSON)", "Tải manifest gốc (JSON)")}</a>
           <a href="/data/run-b/catalog.json" download="run-b-catalog.json">{text("Download saved site catalog (JSON)", "Tải danh mục địa điểm đã lưu (JSON)")}</a>
         </div>
-        <code className="hash">manifest.json · SHA-256 {originalBManifestHash}</code>
+        <code className="hash">manifest.json · SHA-256 {manifestHash}</code>
         <h3>{text("Saved rankings for all 23 sites", "Bảng xếp hạng đã lưu của 23 địa điểm")}</h3>
         <p>{text("Compare the sites for one of these three UTC windows. Each contains summary values for the entire selected window.",
           "So sánh các địa điểm trong một trong ba khoảng UTC sau. Mỗi bộ số liệu tổng hợp bao phủ toàn bộ khoảng đã chọn.")}</p>
