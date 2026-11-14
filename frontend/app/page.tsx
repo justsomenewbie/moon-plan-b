@@ -35,8 +35,10 @@ export default function Home() {
           <h1 id="home-title" tabIndex={-1}>{t("Find a clearer window")}</h1>
           <p className="lead">{t("See when a lunar landing site can see both the Sun and Earth.")}</p>
           <div className="hero-actions">
-            <a className="button primary" href="/compare">{t("Open comparison tool")} <span aria-hidden="true">↗</span></a>
-            <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
+            <a className="button primary" href="/plan?mode=sites">{t("Find sites for my dates")}</a>
+            <a className="button outline" href="/plan?mode=dates">{t("Find dates for my site")}</a>
+            <a href="/compare">{t("Open comparison tool")}</a>
+
           </div>
         </div>
         <MoonGlobe home savedResult={savedResult} />

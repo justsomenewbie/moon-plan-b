@@ -384,6 +384,7 @@ export default function Navigator() {
     <SiteHeader comparisonHref={comparisonHref} showSources={Boolean((data || terrain) && !loading)} />
     <div className="comparison-toolbar">
       <h1 className="comparison-heading">{t("Comparison tool")}</h1>
+      <a className="button outline" href="/plan">{t("Plan a lunar visit")}</a>
       <button className="button outline" type="button" aria-haspopup="dialog" aria-controls="import-dialog" disabled={loading} onClick={() => { recoverPinnedImport.current = false; importDialog.current?.showModal(); }}>{t("Import data")}</button>
     </div>
     <ImportDialog ref={importDialog} onImport={importFile} />

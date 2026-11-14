@@ -1,0 +1,9 @@
+.plan-main { max-width: 74rem; margin: 2.5rem auto; min-height: 55vh; }
+.plan-main h1 { font-size: clamp(2.3rem, 5vw, 4rem); }
+.plan-main h2, .plan-results h3 { margin: 1.25rem 0 .65rem; }
+.plan-main .mode-switch { margin: 1.8rem 0; flex-wrap: wrap; }
+.plan-coverage, .plan-main .request-fields, .plan-results { margin: 1rem 0; }
+.plan-main .table-scroll { margin: 1rem 0; overflow-x: auto; }
+.plan-main table { width: 100%; font-variant-numeric: tabular-nums; }
+.plan-main table th, .plan-main table td { padding: .55rem .75rem; text-align: start; border-bottom: 1px solid var(--line); }
+.plan-main caption { text-align: start; font-weight: 600; }
