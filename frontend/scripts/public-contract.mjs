@@ -1,5 +1,32 @@
 import { publicRoute } from '../lib/lunarnav-scope.ts';
 
+// Pin the examples so they remain reproducible if the producer switches its default run.
+const runId = 'B2_spice_pgda_bruteforce_2026_2030_fix676af9d';
+const sites = ['im1_odysseus', 'im2_athena'];
+const start = '2026-11-14T00:00:00Z';
+const end = '2026-11-21T00:00:00Z';
+const parameterExamples = {
+  run_id: runId, site_id: sites[0], site_ids: sites.join(','), start, end,
+  t: start, max_points: 168, file_path: 'sites/im1_odysseus/horizon_bruteforce.csv',
+};
+const bodyExamples = {
+  CompareRequest: { run_id: runId, site_ids: sites, start, end, include: { windows: ['both'] } },
+  AltDatesRequest: {
+    run_id: runId, site_id: sites[1], earliest: start, latest: '2026-11-20T00:00:00Z',
+    mission_h: 24, max_results: 3, constraints: { objective: 'both' },
+  },
+};
+
+function publicParameter(parameter) {
+  if (!Object.hasOwn(parameterExamples, parameter.name)) return parameter;
+  const exposed = { ...parameter, example: parameterExamples[parameter.name] };
+  if (parameter.in === 'path' && parameter.name === 'run_id')
+    exposed.description = 'Use a run ID returned by GET /api/v1/runs. The example selects a pinned B2 run.';
+  if (parameter.name === 'file_path')
+    exposed.description = 'Paste manifest.json or a relative path from the run manifest. Enter literal slashes in Swagger UI. When constructing a URL yourself, encode this path parameter once.';
+  return exposed;
+}
+
 export function publicContract(producer) {
   const paths = {};
   const schemas = { ...producer.components.schemas };
@@ -18,13 +45,14 @@ export function publicContract(producer) {
           properties: { status: { const: 502, type: 'integer' }, detail: { type: 'string' } } } } },
       };
       if (operation.parameters) {
-        exposed.parameters = operation.parameters.filter(p => p.in === 'path' || (p.in === 'query' && match.query.includes(p.name)));
+        exposed.parameters = operation.parameters.filter(p => p.in === 'path' || (p.in === 'query' && match.query.includes(p.name))).map(publicParameter);
       }
       if (match.body) {
         const name = operation.requestBody.content['application/json'].schema.$ref.split('/').at(-1);
         const schema = schemas[name];
         const properties = Object.fromEntries(Object.entries(schema.properties).filter(([field]) => match.body.includes(field)));
-        schemas[name] = { ...schema, properties, required: schema.required.filter(field => match.body.includes(field)), additionalProperties: false };
+        properties.run_id = { ...properties.run_id, examples: [runId], description: 'Run ID from GET /api/v1/runs. Omit it to use the default run.' };
+        schemas[name] = { ...schema, properties, required: schema.required.filter(field => match.body.includes(field)), additionalProperties: false, examples: [bodyExamples[name]] };
       }
       (paths[path] ??= {})[method] = exposed;
     }
@@ -38,7 +66,7 @@ export function publicContract(producer) {
   windows.description = 'Windows are clipped to the range, grouped by kind and sorted by start. The download name includes the site, run, requested UTC bounds, and a hash of the kinds when specified.';
 
   const original = paths['/api/v1/runs/{run_id}/files/{file_path}'].get;
-  original.description = 'Use manifest.json or a file path listed in the run manifest, URL-encoding its path separators. The relay keeps the original bytes and SHA-256 ETag. The local download name identifies the run and file path.';
+  original.description = 'Download a file listed in the run manifest. Swagger UI encodes the file path for you. The relay keeps the original bytes and SHA-256 ETag. The local download name identifies the run and file path.';
 
   // Swagger also displays component schemas. Keep the request/response models reached by these operations.
   const used = new Set();

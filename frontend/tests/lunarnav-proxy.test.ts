@@ -122,16 +122,59 @@ test("public Swagger operations match the relay and retain producer parameter de
       for (const param of operation.parameters ?? []) {
         if (param.in === "path" || await forward(req("?" + param.name + "=example"))) allowed.push(param);
       }
-      assert.deepEqual(exposed.parameters ?? [], allowed);
+      // The explorer supplies its own descriptions and examples. Keep the producer's validation and defaults.
+      const validation = ({ description, example, ...rest }: { description?: string; example?: unknown; name: string }) => rest;
+      assert.deepEqual((exposed.parameters ?? []).map(validation), allowed.map(validation));
       if (operation.requestBody) {
         const ref = operation.requestBody.content["application/json"].schema.$ref;
         const name = ref.split("/").at(-1)!;
-        assert.deepEqual(published.components.schemas[name], producer.components.schemas[name]);
+        const publishedSchema = structuredClone(published.components.schemas[name]);
+        const sourceSchema = structuredClone(producer.components.schemas[name]);
+        for (const schema of [publishedSchema, sourceSchema]) {
+          delete schema.examples;
+          delete schema.properties.run_id.description;
+          delete schema.properties.run_id.examples;
+        }
+        assert.deepEqual(publishedSchema, sourceSchema);
       }
     }
   }
   assert.equal(published.components.schemas.CreateJobRequest, undefined);
   assert.equal(published.components.schemas.Job, undefined);
+});
+
+test("Swagger inputs refer to the archived B2 run, catalog sites and a bounded UTC window", async () => {
+  const read = async (path: string) => JSON.parse(await readFile(new URL(path, import.meta.url), "utf8"));
+  const spec = await read("../public/api-contract/lunarnav.json");
+  const catalog = await read("../public/data/run-b2/catalog.json");
+  const manifest = await read("../public/data/run-b2/manifest.json");
+  const siteIds = new Set(catalog.sites.map((s: { id: string }) => s.id));
+  const examples = (path: string) => Object.fromEntries(spec.paths["/api/v1/" + path].get.parameters
+    .map((p: { name: string; example?: unknown }) => [p.name, p.example]));
+  const dataset = examples("dataset");
+  assert.equal(dataset.run_id, catalog.run_id);
+  assert.equal(dataset.site_ids.split(",").length, 2);
+  assert.ok(dataset.site_ids.split(",").every((site: string) => siteIds.has(site)));
+  const duration = (Date.parse(dataset.end) - Date.parse(dataset.start)) / 3_600_000;
+  assert.ok(duration >= 24 && duration <= 168 && dataset.max_points >= duration);
+  const file = examples("runs/{run_id}/files/{file_path}");
+  assert.equal(file.run_id, catalog.run_id);
+  assert.ok(Object.hasOwn(manifest.files, file.file_path));
+  assert.match(file.file_path, /\//);
+  assert.doesNotMatch(file.file_path, /%/);
+  const instant = examples("sites/{site_id}/instant");
+  assert.ok(siteIds.has(instant.site_id));
+  assert.equal(instant.t, dataset.start);
+  const compare = spec.components.schemas.CompareRequest.examples[0];
+  assert.equal(compare.run_id, catalog.run_id);
+  assert.deepEqual(compare.site_ids, dataset.site_ids.split(","));
+  assert.equal(compare.start, dataset.start);
+  assert.equal(compare.end, dataset.end);
+  const search = spec.components.schemas.AltDatesRequest.examples[0];
+  assert.equal(search.run_id, catalog.run_id);
+  assert.ok(siteIds.has(search.site_id));
+  assert.equal(search.earliest, dataset.start);
+  assert.equal(Date.parse(search.latest) + search.mission_h * 3_600_000, Date.parse(dataset.end));
 });
 
 test("public CSV filenames distinguish site, run, requested UTC bounds and selected columns", async () => {
