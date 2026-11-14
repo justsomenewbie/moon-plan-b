@@ -29,9 +29,9 @@
   background: #142a3b;
   color: #95deff;
 }
-.site-pin-key, .sky-scenario-key { display: flex; flex-wrap: wrap; gap: 6px; }
+.site-pin-key { display: flex; flex-wrap: wrap; gap: 6px; }
 .site-pin-key { margin-bottom: 10px; }
-.site-pin-key button, .sky-scenario-key button {
+.site-pin-key button {
   min-height: 44px;
   max-width: 100%;
   padding: 4px 9px;
@@ -40,10 +40,10 @@
   text-align: start;
   overflow-wrap: anywhere;
 }
-.site-pin-key b, .sky-scenario-key b, .sky-ray[data-site="A"] { color: var(--sun); }
-.site-pin-key [data-pin="1"] b, .sky-scenario-key [data-site="B"] b, .sky-ray[data-site="B"] { color: var(--earth); }
-.site-pin-key [aria-pressed="true"], .sky-scenario-key [aria-pressed="true"] { border-color: currentColor; background: var(--bg); }
-.site-pin-key small, .sky-scenario-key small { display: block; color: var(--muted); }
+.site-pin-key b, .sky-ray[data-site="A"] { color: var(--sun); }
+.site-pin-key [data-pin="1"] b, .sky-ray[data-site="B"] { color: var(--earth); }
+.site-pin-key [aria-pressed="true"] { border-color: currentColor; background: var(--bg); }
+.site-pin-key small { display: block; color: var(--muted); }
 .site-week-readings p { margin-bottom: 6px; }
 .site-week-range { margin-top: 10px; }
 .site-week-range label, .site-week-range meter { display: block; width: 100%; }
@@ -304,7 +304,7 @@
   .clearance-band, .clearance-band-ring, .hud-clearance-band { opacity: .25; }
 }
 @media print {
-  .clearance-controls, .sky-orbit, .sky-stage, .sky-scenario-key { display: none !important; }
+  .clearance-controls, .sky-orbit, .sky-stage, .local-sky-picker { display: none !important; }
   .mission-studio { border-top: 0; }
   .studio-grid { grid-template-columns: 1fr; }
   .mission-ribbon-card, .lander-hud-card { break-inside: avoid; }

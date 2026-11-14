@@ -76,6 +76,7 @@ export default function LocalSky({
   const numbers = useMemo(() => new Intl.NumberFormat(locale, { maximumSignificantDigits: 4, useGrouping: false }), [locale]);
   const [openIntervals, setOpenIntervals] = useState<string | null>(null);
   const [orbit, setOrbit] = useState(0);
+  const [overlay, setOverlay] = useState(false);
   const [internalClearance, setInternalClearance] = useState(0);
   const [referenceHours, setReferenceHours] = useState(24);
   const clearanceDeg = clampClearanceDeg(externalClearance ?? internalClearance);
@@ -96,7 +97,7 @@ export default function LocalSky({
 
   const drag = useRef<{ id: number; x: number; orbit: number; width: number } | null>(null);
   function startOrbit(event: PointerEvent<SVGSVGElement>) {
-    if (!event.isPrimary || event.button !== 0 || (event.target as Element).closest("[data-sky-body]")) return;
+    if (!event.isPrimary || event.button !== 0 || (event.target as Element).closest('[data-sky-body][role="button"]')) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { id: event.pointerId, x: event.clientX, orbit, width: event.currentTarget.getBoundingClientRect().width };
   }
@@ -121,6 +122,7 @@ export default function LocalSky({
   }));
   const selected = alternative && b ? 1 : 0;
   const { scenario, site, sample } = observations[selected];
+  const showBoth = Boolean(b) && overlay;
   const hud = computeLanderHud(sample, clearanceDeg);
 
   const sunTarget = hud.sunAzimuthDeg !== null ? polarXY(90, 90, 62, hud.sunAzimuthDeg) : null;
@@ -132,12 +134,17 @@ export default function LocalSky({
 
   return <section className="local-sky" id="local-sky" aria-labelledby="local-sky-title" tabIndex={-1}>
     <div className="local-sky-heading"><h2 id="local-sky-title">{t("Local sky in 3D")}</h2>
-      {b && <div role="group" className="sky-scenario-key" aria-label={t("Inspect observation")}>
-        {observations.map(({ label, site, scenario }, index) => <button type="button" key={scenario.id}
-          data-site={label} aria-pressed={selected === index} onClick={() => setAlternative(index === 1)}>
-          <b>{label}</b> {site.name}{a.siteId === b.siteId && <small>{scenario.startUtc}</small>}
-        </button>)}
-      </div>}</div>
+      {b && <label className="local-sky-picker">{t("View from")}
+        <select value={showBoth ? "both" : observations[selected].label} onChange={event => {
+          const view = event.target.value;
+          setOverlay(view === "both");
+          if (view !== "both") setAlternative(view === "B");
+        }}>
+          {observations.map(({ scenario, label, site }) =>
+            <option key={scenario.id} value={label}>{t(label === "A" ? "Primary" : "Alternative")} · {site.name}{a.siteId === b.siteId && ` · ${scenario.startUtc}`}</option>)}
+          <option value="both">{t("Both observations")}</option>
+        </select>
+      </label>}</div>
     <div className="sky-stage">
       <svg viewBox="-150 -126 300 252" onPointerDown={startOrbit} onPointerMove={moveOrbit}
         onPointerUp={endOrbit} onPointerCancel={endOrbit} onLostPointerCapture={endOrbit} role="group" aria-label={t("Sun and Earth directions around the local horizon")}>
@@ -154,30 +161,32 @@ export default function LocalSky({
           return <text key={dir} x={p.x * 1.13} y={p.y * 1.2} dy=".35em" textAnchor="middle" className="sky-bearing">{t(dir)}</text>;
         })}
         <circle r="2.5" className="sky-observer" />
-        {observations.map(({ label, site, scenario, sample: reading }, index) => bodies.map(([key, name]) => {
-          const angles = reading?.[key];
-          if (!angles) return null;
-          const { x, y } = point(angles.azimuthDeg, angles.elevationDeg, orbit);
-          const description = `${label} · ${site.name} · ${t(name)} · ${reading!.utc}`;
-          const inspect = () => setAlternative(index === 1);
-          const belowMask = angles.elevationDeg <= clearanceDeg;
-          return <g key={scenario.id + key} data-site={label} className="sky-ray">
-            <line x1="0" y1="0" x2={x} y2={y} stroke="currentColor" strokeWidth="1.5" strokeDasharray={belowMask ? "3 3" : undefined} />
-            <g transform={`translate(${x} ${y})`} data-sky-body={key} role="button" tabIndex={0}
-              aria-label={description} aria-pressed={selected === index} onClick={inspect} onKeyDown={event => {
-                if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspect(); }
-              }}>
-              <title>{description}</title>
-              <circle r="9" fill="transparent" />
-              {key === "sun" ? <circle r="5" fill="currentColor" stroke="var(--bg)" /> :
-                <rect x="-4.5" y="-4.5" width="9" height="9" fill="currentColor" stroke="var(--bg)" />}
-              <text x={index === 0 ? -7 : 7} y={index === 0 ? -6 : 10} textAnchor={index === 0 ? "end" : "start"}>{label}</text>
-            </g>
-          </g>;
-        }))}
+        {observations.map(({ label, site, scenario, sample: reading }, index) => {
+          if (!showBoth && index !== selected) return null;
+          return bodies.map(([key, name]) => {
+            const angles = reading?.[key];
+            if (!angles) return null;
+            const { x, y } = point(angles.azimuthDeg, angles.elevationDeg, orbit);
+            const description = `${label} · ${site.name} · ${t(name)} · ${reading!.utc}`;
+            const inspect = () => setAlternative(index === 1);
+            return <g key={scenario.id + key} data-site={showBoth ? label : undefined} className={`sky-ray ${key}`}>
+              <line x1="0" y1="0" x2={x} y2={y} stroke="currentColor" strokeWidth="1.5" strokeDasharray={angles.elevationDeg <= clearanceDeg ? "3 3" : undefined} />
+              <g transform={`translate(${x} ${y})`} data-sky-body={key} role={showBoth ? "button" : undefined} tabIndex={showBoth ? 0 : undefined}
+                aria-label={description} aria-pressed={showBoth ? selected === index : undefined} onClick={showBoth ? inspect : undefined} onKeyDown={showBoth ? event => {
+                  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspect(); }
+                } : undefined}>
+                <title>{description}</title>
+                <circle r="9" fill="transparent" stroke={!showBoth && key === "sun" ? "currentColor" : undefined} />
+                {key === "sun" ? <circle r="5" fill="currentColor" stroke="var(--bg)" /> :
+                  <rect x="-4.5" y="-4.5" width="9" height="9" fill="currentColor" stroke="var(--bg)" />}
+                {showBoth && <text x={index === 0 ? -7 : 7} y={index === 0 ? -6 : 10} textAnchor={index === 0 ? "end" : "start"}>{label}</text>}
+              </g>
+            </g>;
+          });
+        })}
       </svg>
       <div className="sky-info" aria-label={t("Selected observation")}>
-        <strong>{observations[selected].label} · {site.name}</strong>
+        <strong>{showBoth && `${observations[selected].label} · `}{site.name}</strong>
         <p className="muted text-sm">{t(data.evidence === "synthetic-fixture" ? "Synthetic release" : "Dataset")} · {scenario.id}</p>
         {sample ? <time dateTime={sample.utc}>{sample.utc}</time> : <p>{t("No shared samples")}</p>}
         <dl>{bodies.map(([key, name]) => {
@@ -191,7 +200,7 @@ export default function LocalSky({
     </div>
     <div className="sky-orbit"><label htmlFor="sky-orbit-input">{t("Rotate sky view")}</label><input id="sky-orbit-input" type="range" min="0" max="360" step="5" value={orbit}
       aria-valuetext={`${orbit}°`} onChange={e => setOrbit(Number(e.target.value))} /><span className="mono" aria-hidden="true">{orbit}°</span></div>
-    {b && <p className="muted text-xs">{t("A and B use their own local north and horizon at the same elapsed time. Circle: Sun. Square: Earth. Select a marker or a name for its readings.")}</p>}
+    {showBoth && <p className="muted text-xs">{t("A and B use their own local north and horizon at the same elapsed time. Circle: Sun. Square: Earth. Select a marker for its readings.")}</p>}
     <p className="muted text-xs">{t("The solid ring marks the ideal 0° horizon. Dashed rays indicate a body at or below the selected angle. The sky uses the selected observation and omits local terrain.")}</p>
 
     <div className="mission-studio" aria-labelledby="mission-studio-title">

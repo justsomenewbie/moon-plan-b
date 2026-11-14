@@ -22,7 +22,8 @@ try {
   const limit = page.locator(".battery-picker select");
   const rows = page.locator(".mission-scenario-row");
   const hud = page.locator(".hud-readouts dd");
-  const key = page.locator(".sky-scenario-key");
+  const view = page.getByRole("combobox", { name: "View from" });
+  const markers = page.locator(".sky-stage [data-sky-body]");
   const slider = page.getByRole("slider", { name: "Timeline sample" });
   const line = page.locator(".timeline-svg .clearance-line");
   const ring = page.locator(".skyplot .clearance-ring");
@@ -64,8 +65,15 @@ try {
   assert.equal(Number(await line.getAttribute("y1")), (90 - 0.5) / 180 * 240);
   assert.equal(Number(await ring.getAttribute("r")), 82 * (90 - 0.5) / 90);
   await stateMatches("comms-only");
-  await key.locator('button[data-site="B"]').click();
-  assert.equal(await key.locator('button[data-site="B"]').getAttribute("aria-pressed"), "true");
+  assert.equal(await view.inputValue(), "A");
+  assert.equal(await markers.count(), 2);
+  await view.selectOption("both");
+  assert.equal(await markers.count(), 4);
+  const alternativeEarth = page.locator('.sky-ray[data-site="B"] [data-sky-body="earth"]');
+  await alternativeEarth.press("Enter");
+  assert.equal(await alternativeEarth.getAttribute("aria-pressed"), "true");
+  await view.selectOption("B");
+  assert.equal(await markers.count(), 2);
   assert.match(await hud.nth(1).innerText(), /200°.*1°/);
   await checkShadow(20, 1);
   await stateMatches("golden");
@@ -98,21 +106,28 @@ try {
   assert.deepEqual((await hud.allInnerTexts()).slice(0, 4), ["Unavailable", "Unavailable", "Az 182° · El 1°", "Unavailable"]);
   assert.equal(await hud.last().innerText(), "Unavailable");
   assert.equal(await page.locator(".hud-sun-node, .hud-solar-wing, .hud-shadow-ray").count(), 0);
-  assert.equal(await page.locator(".hud-earth-node").count(), 1);
+  for (const view of [".lander-hud-svg", ".lander-side-svg"]) {
+    assert.equal(await page.locator(view + " .hud-earth-node").count(), 1);
+  }
   assert.equal(await rows.locator(".mission-metrics-row").count(), 0);
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
   assert.equal(await rows.count(), 2);
   assert.equal(await rows.locator(".mission-metrics-row").count(), 0);
   for (const row of await rows.all()) {
-    const covered = await row.locator(".ribbon-seg").evaluateAll(segments =>
+    const covered = await row.locator(".ribbon-seg:not(.unavailable)").evaluateAll(segments =>
       segments.map(segment => [segment.style.left, segment.style.width]));
     assert.deepEqual(covered, [["0%", "25%"], ["75%", "25%"]]);
+    assert.deepEqual(await row.locator(".ribbon-seg.unavailable").evaluateAll(gaps =>
+      gaps.map(gap => [gap.style.left, gap.style.width])), [["25%", "50%"]]);
   }
 
   await importFixture("missing");
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
-  assert.deepEqual(await rows.locator(".ribbon-empty").allInnerTexts(), ["Unavailable", "Unavailable"]);
-  assert.equal(await rows.locator(".mission-metrics-row, .ribbon-seg").count(), 0);
+  for (const row of await rows.all()) {
+    assert.deepEqual(await row.locator(".ribbon-seg.unavailable").evaluateAll(gaps =>
+      gaps.map(gap => [gap.style.left, gap.style.width])), [["0%", "100%"]]);
+  }
+  assert.equal(await rows.locator(".mission-metrics-row, .ribbon-seg:not(.unavailable)").count(), 0);
   assert.ok(await slider.isDisabled());
   assert.deepEqual(await hud.allInnerTexts(), Array(5).fill("Unavailable"));
   assert.equal(await page.locator(".hud-solar-wing, .hud-dish-arc, .hud-dish-boom, .hud-sun-node, .hud-earth-node, .hud-shadow-ray").count(), 0);
