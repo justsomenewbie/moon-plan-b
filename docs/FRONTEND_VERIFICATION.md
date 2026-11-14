@@ -315,6 +315,10 @@ Chromium opened the run B JSON in a separate tab and downloaded the original man
 
 A separate Chromium replay intercepted all job submissions. In English and Vietnamese, confirmed storage, quota and unsupported-job rejections displayed the backend detail. An ambiguous service failure offered manual retry with the original payload. The eight cases made ten intercepted POSTs, including the two manual retries.
 
+### Cancelling a custom-site request
+
+The [controlled Chromium replay](../qa/check_custom_site_cancel.mjs) covers a queued job cancelled for its only client, a running job that continues for other clients, a job finishing just before cancellation, a lost DELETE response, and cancelling while offline. Each case targets only the accepted job and allows a replacement request. After a completion conflict the frontend reads status and offers the result. After an offline cancellation attempt the user can stop tracking locally, and reconnecting does not resend the DELETE. All calculation and cancellation requests in these tests were intercepted.
+
 ## Run-pinned CSV downloads
 
 Chromium downloaded six real CSV attachments for bounded result cards and matched their bytes and filenames to direct producer responses. From 00:00 up to 03:00 UTC on November 15, Athena and Odysseus each yielded three hourly observation rows. Two Athena date cards opened distinct ranges under the same producer filename. An injected HTTP 422 opened the problem in a separate tab and preserved the original report. The [repeatable browser check](../qa/check_terrain_csv.mjs) also covers evaluated bounds after clamping, a custom site ID and the absence of remote downloads on local imports and in mock mode.
