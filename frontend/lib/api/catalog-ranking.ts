@@ -41,7 +41,7 @@ export async function readCatalogRanking(
     weights: rankingMetrics.map(field => field + ":" + (weights[field] ?? 0)).join(","),
   } } });
   signal?.throwIfAborted();
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   check(data && data.run_id === run_id && data.step_s === context.step_s && data.precision_h === context.precision_h &&
     data.range?.start === range.start && data.range.end === range.end && data.range.step_s === range.step_s &&
     data.range.n_samples === range.n_samples && (data.source === "computed" || data.source === "summary"));

@@ -61,6 +61,18 @@ test("rejects invalid bounds, duration and constraints before POST and does not 
   assert.equal(calls, 1);
 });
 
+test("a busy alternative-date search surfaces the producer wait time and is submitted once", async t => {
+  const now = Date.parse("2026-11-15T04:13:00Z");
+  t.mock.method(Date, "now", () => now);
+  const fetch = t.mock.method(globalThis, "fetch", async () => Response.json({
+    type: "about:blank", title: "Queue full", status: 429, code: "QUEUE_FULL",
+    detail: "Too many landing searches in progress.",
+  }, { status: 429, headers: { "Retry-After": "5", "Content-Type": "application/problem+json" } }));
+  await assert.rejects(findAltDates(request, 3600), (e: unknown) =>
+    e instanceof ApiError && e.status === 429 && e.code === "QUEUE_FULL" && e.retryAt === "2026-11-15T04:13:05.000Z");
+  assert.equal(fetch.mock.callCount(), 1);
+});
+
 test("checks response identity, counts, rank, source grid, mission bounds, and observable percentages", async t => {
   const baseline = example();
   let reply: unknown = baseline;

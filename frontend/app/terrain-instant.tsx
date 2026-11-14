@@ -1,9 +1,11 @@
+import { ApiProblemText } from "./api-problem-text";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getSiteInstant, type SiteInstant } from "../lib/api/site-instant";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
+import { instantEventText } from "../lib/instant-events";
 import { useLanguage } from "./language";
 
-type Lookup = { status: "idle" | "pending" } | { status: "error"; message: string } | { status: "ready"; value: SiteInstant };
+type Lookup = { status: "idle" | "pending" } | { status: "error"; message: Error | string } | { status: "ready"; value: SiteInstant };
 
 export default function TerrainInstant({ runId, site, range, initialUtc }: {
   runId: string; site: TerrainSummary["sites"][number]; range: TerrainSummary["range"]; initialUtc: string;
@@ -34,7 +36,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
       const value = await getSiteInstant(runId, site.id, input, range.step_s, range.start, controller.signal, site.series);
       if (!controller.signal.aborted) setLookup({ status: "ready", value });
     } catch (error) {
-      if (!controller.signal.aborted) setLookup({ status: "error", message: error instanceof Error ? error.message : "The request could not be completed. Retry or check the connection." });
+      if (!controller.signal.aborted) setLookup({ status: "error", message: error instanceof Error ? error : "The request could not be completed. Retry or check the connection." });
     }
   }
   const value = lookup.status === "ready" ? lookup.value : null;
@@ -53,7 +55,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
         {t(lookup.status === "error" ? "Retry observation lookup" : "Look up observation")}</button>
     </form>
     {lookup.status === "pending" && <p role="status">{t("Loading observation…")}</p>}
-    {lookup.status === "error" && <p role="alert">{t(lookup.message)}</p>}
+    {lookup.status === "error" && <p role="alert"><ApiProblemText error={lookup.message} /></p>}
     {value && <section aria-labelledby="instant-heading">
       <h4 id="instant-heading">{t("Observation at the requested time")}</h4>
       <p>{site.name}</p>
@@ -71,6 +73,10 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
           <div><dt>{t("Horizon elevation at this azimuth")}</dt><dd>{value[body].horizon_el_deg}°</dd></div>
           <div><dt>{t("Body centre above horizon")}</dt><dd>{value[body].clearance_deg}°</dd></div>
           <div><dt>{t("Visibility")}</dt><dd>{t(value[body].visible ? "Visible" : "Hidden")}</dd></div>
+          {(body === "sun" ? ["sunset", "sunrise"] as const : ["earthset", "earthrise"] as const).map(key => {
+            const { label, text, at } = instantEventText(locale, key, value);
+            return <div key={key}><dt>{label}</dt><dd>{text}{at && <> · <time dateTime={at}>{at}</time></>}</dd></div>;
+          })}
           {body === "sun" && value.sun.fraction !== undefined && <div><dt>{t("Visible share of the solar disc")}</dt>
             <dd>{value.sun.fraction.toLocaleString(locale, { style: "percent", maximumFractionDigits: 4 })}</dd></div>}
           {body === "sun" && value.sun.irradiance_tracking_wm2 !== undefined && <div><dt>{t("Modeled irradiance on a Sun-facing surface")}</dt>

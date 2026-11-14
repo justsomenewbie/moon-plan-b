@@ -22,7 +22,7 @@ function shortText(value: unknown): value is string {
 
 export async function getCustomSiteCapability(signal?: AbortSignal) {
   const { data, error, response } = await producer.GET("/api/v1/capabilities", { signal });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   const jobs = Array.isArray(data?.job_types) ? data.job_types.filter(item => item?.type === "custom_site") : [];
   const job = jobs[0], spice = data?.providers?.spice, pgda = data?.dems?.pgda;
   const message = "The server returned invalid custom-site capabilities.";
@@ -47,7 +47,7 @@ export async function createCustomSite(input: CustomSiteInput) {
     type: "custom_site", lat_deg, lon_deg, observer_height_m, start, end,
     step_min: 60, provider: "spice", dem: "pgda", horizon_method: "raymarch",
   } });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   const message = "The server returned an invalid custom-site job receipt.";
   valid(data?.type === "custom_site" && typeof data.job_id === "string" && jobIdPattern.test(data.job_id) && typeof data.cached === "boolean" && data.poll === `/api/v1/jobs/${data.job_id}`, message);
   valid((response.status === 202 && (data.status === "queued" || data.status === "running")) || (response.status === 200 && data.cached && data.status === "succeeded"), message);
@@ -64,7 +64,7 @@ export async function getCustomSiteJob(
 ) {
   if (!jobIdPattern.test(jobId)) throw new ApiError("Invalid custom-site job ID.", 422);
   const { data, error, response } = await producer.GET("/api/v1/jobs/{job_id}", { params: { path: { job_id: jobId } }, signal });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   return readCustomSiteJob(data, jobId, acceptedSiteId, submitted);
 }
 
@@ -103,7 +103,7 @@ export async function cancelCustomSiteJob(jobId: string, acceptedSiteId: string,
   if (!jobIdPattern.test(jobId) || !customSiteId.test(acceptedSiteId) || utcMillis(submitted.end) <= utcMillis(submitted.start))
     throw new ApiError("Invalid custom-site job receipt.", 422);
   const { data, error, response } = await producer.DELETE("/api/v1/jobs/{job_id}", { params: { path: { job_id: jobId } } });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   const { status } = readCustomSiteJob(data, jobId, acceptedSiteId, submitted);
   const clients = data?.clients;
   valid(response.status === 200 && typeof clients === "number" && Number.isSafeInteger(clients) &&

@@ -43,7 +43,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
   return <section id="observed-week" className="observed-week saved-comparison" aria-labelledby="observed-week-title" tabIndex={-1}>
     <div>
       <h2 id="observed-week-title">{t("Odysseus and Athena · Sun and Earth visibility")}</h2>
-      <p className="muted">{t("Saved team model results")} · {t("Interval boundaries ±{hours} h", { hours: precisionHours })}</p>
+      <p className="muted">{t("Earlier model · run B")} · {t("Interval boundaries ±{hours} h", { hours: precisionHours })}</p>
       <p>{t("Choose a week to compare two sites. Choose a site to compare two weeks there.")}</p>
       <label className="field week-selection">{t("Compare saved results")}
         <select value={selection} onChange={event => onSelect(event.target.value)}>

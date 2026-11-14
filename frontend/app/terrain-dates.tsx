@@ -1,5 +1,7 @@
 "use client";
 
+import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
+
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTerrainDateSites, getTerrainDates, type TerrainDateRequest } from "../lib/api/terrain-dates";
@@ -42,7 +44,8 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
   ];
   const comparedSite = catalog.data?.find(site => site.id === completed?.request.siteId);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
+  const wait = useRetryCountdown(error);
   const active = useRef<AbortController | null>(null);
   const from = inputs.from + "Z", to = inputs.to + "Z", other = inputs.other + "Z";
   const span = Date.parse(to) - Date.parse(from);
@@ -53,11 +56,12 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
   function edit(key: keyof typeof inputs, value: string) {
     active.current?.abort();
     setPending(false);
-    setError("");
+    if (!wait) setError("");
     setInputs(previous => ({ ...previous, [key]: value }));
   }
 
   async function compare(request: TerrainDateRequest) {
+    if (wait) return;
     active.current?.abort();
     const controller = new AbortController();
     active.current = controller;
@@ -71,7 +75,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
         onCompared?.(pinned);
       }
     } catch (cause) {
-      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "The request could not be completed. Retry or check the connection.");
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause : "The request could not be completed. Retry or check the connection.");
     } finally {
       if (!controller.signal.aborted) setPending(false);
     }
@@ -103,15 +107,15 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
         <label className="field">{t("Site")}<select name="dateSite" value={inputs.site} onChange={e => edit("site", e.target.value)}>
           {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
         </select></label>
-        <button className="button outline" disabled={pending}>{t("Compare these dates")}</button>
+        <button className="button outline" disabled={pending || wait > 0}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Compare these dates")}</button>
       </form>
       {catalog.isFetching && <p role="status">{t("Loading sites for this run…")}</p>}
-      {catalog.isError && <p role="status">{t("The full site list is unavailable. You can still compare the selected site.")}{" "}
+      {catalog.isError && <p role="status">{t("The full site list is unavailable. You can still compare the selected site.")} <span className="block"><ApiProblemText error={catalog.error} /></span>
         <button type="button" className="button outline" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button>
       </p>}
       {Number.isFinite(span) && span > 0 && <p className="muted text-sm print:hidden">{t("Duration")} · {span / 3600000} h</p>}
       {pending && <p role="status">{t("Loading dataset…")}</p>}
-      {error && <p role="alert">{t(error)}</p>}
+      {error && <p role="alert"><ApiProblemText error={error} /></p>}
       {completed && <>
         {stale && <p className="data-notice" role="status">{t("Showing the previous comparison. Submit the edited dates to update the results.")}</p>}
         <p className="muted text-sm">{t("Model")} · {completed.first.model.label}<br />

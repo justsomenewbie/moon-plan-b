@@ -120,7 +120,7 @@ export async function compareSites(request: SiteComparisonRequest, signal?: Abor
     weights: { ...weights }, include: { windows: [...kinds] },
   } });
   signal?.throwIfAborted();
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   check(data?.run_id === runId && data.range && Number.isSafeInteger(data.step_s) && data.step_s > 0 &&
     data.range.step_s === data.step_s && data.precision_h === data.step_s / 3600);
   const start = sourceTime(data.range.start), end = sourceTime(data.range.end), step = data.step_s * 1000;

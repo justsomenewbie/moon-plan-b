@@ -1,5 +1,7 @@
 "use client";
 
+import { ApiProblemText, useRetryCountdown, useProblemFields } from "./api-problem-text";
+
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ExtraField } from "../lib/planner-source";
 import { findAltDates, landingDelayHours, landingGridBounds, type AltDatesRequest, type AltDatesResponse } from "../lib/api/alt-dates";
@@ -68,7 +70,9 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
   const showGrid = request && grid && grid.first <= grid.last
     && (grid.first !== Date.parse(request.earliest) || grid.last !== Date.parse(request.latest));
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
+  const wait = useRetryCountdown(error);
+  const { prefix, fieldAttributes } = useProblemFields(error);
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
 
@@ -76,11 +80,12 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
     active.current?.abort();
     setCompleted(undefined);
     setPending(false);
-    setError("");
+    if (!wait) setError("");
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending || wait) return;
     clearSearch();
     const inputs = new FormData(event.currentTarget);
     const objective = String(inputs.get("objective") ?? "");
@@ -121,7 +126,7 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
       const response = await findAltDates(payload, stepSeconds, controller.signal, gridStart);
       if (!controller.signal.aborted) setCompleted({ request: payload, search: response });
     } catch (cause) {
-      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "The request could not be completed. Retry or check the connection.");
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause : "The request could not be completed. Retry or check the connection.");
     } finally {
       if (!controller.signal.aborted) setPending(false);
     }
@@ -132,35 +137,35 @@ export function LandingSearch({ runId, sites, initialSiteId, stepSeconds, from, 
     {planner && <p className="muted text-sm">{t("To test one landing time, use the same UTC time for both bounds. The model evaluates starts every {hours} h.", { hours: stepHours })}</p>}
     <form className="request-fields my-4 print:hidden" onSubmit={submit} onChange={clearSearch}>
       {planner && <label className="field">{t("Site")}
-        <select name="landingSite" defaultValue={initialSiteId ?? sites[0]?.id ?? ""} required>
+        <select name="landingSite" {...fieldAttributes("site_id")} defaultValue={initialSiteId ?? sites[0]?.id ?? ""} required>
           <option value="">{t("Choose a site")}</option>
           {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
         </select></label>}
-      <label className="field">{t("Earliest landing (UTC, inclusive)")}<input name="earliest" type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={initialEarliest ?? from.slice(0, 19)} required /></label>
-      <label className="field">{t("Latest landing (UTC, inclusive)")}<input name="latest" type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={initialLatest ?? latest} required /></label>
-      <label className="field">{t("Mission duration (h)")}<input name="missionHours" type="number" min={stepHours} step="any" defaultValue={duration} required /></label>
-      <label className="field">{t("Minimum joint visibility (%)")}<input name="minBothPct" type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minBothPct ?? "0"} required /></label>
-      <label className="field">{t("Minimum spacing between proposals (h)")}<input name="separationHours" type="number" min="0" step="any" defaultValue={initialExtras?.separationHours ?? "12"} required /></label>
-      <label className="field">{t("Maximum proposals")}<input name="maxResults" type="number" min="1" max="50" step="1" defaultValue={initialExtras?.maxResults ?? "5"} required /></label>
-      <label className="field">{t("Order proposals by")}<select name="objective" defaultValue={initialObjective ?? (planner ? "both" : "earliest")}>
+      <label className="field">{t("Earliest landing (UTC, inclusive)")}<input name="earliest" {...fieldAttributes("earliest")} type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={initialEarliest ?? from.slice(0, 19)} required /></label>
+      <label className="field">{t("Latest landing (UTC, inclusive)")}<input name="latest" {...fieldAttributes("latest")} type="datetime-local" step="1" min={coverageStart?.slice(0, 19)} max={lastSample} defaultValue={initialLatest ?? latest} required /></label>
+      <label className="field">{t("Mission duration (h)")}<input name="missionHours" {...fieldAttributes("mission_h")} type="number" min={stepHours} step="any" defaultValue={duration} required /></label>
+      <label className="field">{t("Minimum joint visibility (%)")}<input name="minBothPct" {...fieldAttributes("constraints.min_both_pct")} type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minBothPct ?? "0"} required /></label>
+      <label className="field">{t("Minimum spacing between proposals (h)")}<input name="separationHours" {...fieldAttributes("constraints.min_separation_h")} type="number" min="0" step="any" defaultValue={initialExtras?.separationHours ?? "12"} required /></label>
+      <label className="field">{t("Maximum proposals")}<input name="maxResults" {...fieldAttributes("max_results")} type="number" min="1" max="50" step="1" defaultValue={initialExtras?.maxResults ?? "5"} required /></label>
+      <label className="field">{t("Order proposals by")}<select name="objective" {...fieldAttributes("constraints.objective")} defaultValue={initialObjective ?? (planner ? "both" : "earliest")}>
         {Object.entries(objectives).filter(([key]) => !planner || key !== "energy").map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
       </select></label>
-      <label className="flex items-center gap-2"><input name="sunAtLanding" type="checkbox" defaultChecked={initialSunAtLanding ?? !planner} />{t("Require sunlight at landing")}</label>
-      <label className="flex items-center gap-2"><input name="earthAtLanding" type="checkbox" defaultChecked={initialEarthAtLanding} />{t("Require Earth visibility at landing")}</label>
+      <label className="flex items-center gap-2"><input name="sunAtLanding" {...fieldAttributes("constraints.require_sun_at_landing")} type="checkbox" defaultChecked={initialSunAtLanding ?? !planner} />{t("Require sunlight at landing")}</label>
+      <label className="flex items-center gap-2"><input name="earthAtLanding" {...fieldAttributes("constraints.require_earth_at_landing")} type="checkbox" defaultChecked={initialEarthAtLanding} />{t("Require Earth visibility at landing")}</label>
       {planner && <details className="basis-full">
         <summary>{t("Additional visibility requirements")}</summary>
         <div className="request-fields my-4">
-          <label className="field">{t("Minimum sunlight (%)")}<input name="minSunPct" type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minSunPct ?? "0"} /></label>
-          <label className="field">{t("Minimum Earth visibility (%)")}<input name="minEarthPct" type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minEarthPct ?? "0"} /></label>
-          <label className="field">{t("Maximum dark gap (h)")}<input name="maxDarkGap" defaultValue={initialExtras?.maxDarkGap} type="number" min="0" step="any" /></label>
-          <label className="field">{t("Maximum Earth visibility gap (h)")}<input name="maxEarthGap" defaultValue={initialExtras?.maxEarthGap} type="number" min="0" step="any" /></label>
+          <label className="field">{t("Minimum sunlight (%)")}<input name="minSunPct" {...fieldAttributes("constraints.min_sun_pct")} type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minSunPct ?? "0"} /></label>
+          <label className="field">{t("Minimum Earth visibility (%)")}<input name="minEarthPct" {...fieldAttributes("constraints.min_earth_pct")} type="number" min="0" max="100" step="any" defaultValue={initialExtras?.minEarthPct ?? "0"} /></label>
+          <label className="field">{t("Maximum dark gap (h)")}<input name="maxDarkGap" {...fieldAttributes("constraints.max_dark_gap_h")} defaultValue={initialExtras?.maxDarkGap} type="number" min="0" step="any" /></label>
+          <label className="field">{t("Maximum Earth visibility gap (h)")}<input name="maxEarthGap" {...fieldAttributes("constraints.max_comms_gap_h")} defaultValue={initialExtras?.maxEarthGap} type="number" min="0" step="any" /></label>
         </div>
       </details>}
       <p className="basis-full muted text-sm">{t("Use whole {step} s steps for the mission duration.", { step: stepSeconds })}</p>
-      <button className="button outline" type="submit" disabled={pending}>{t("Search landing dates")}</button>
+      <button className="button outline" type="submit" disabled={pending || wait > 0}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Search landing dates")}</button>
     </form>
     {pending && <p role="status">{t("Searching landing dates…")}</p>}
-    {error && <p role="alert">{t(error)}</p>}
+    {error && <p role="alert"><ApiProblemText error={error} fieldPrefix={prefix} /></p>}
     {search && request && <section data-landing-results={planner ? "" : undefined} aria-label={t("Landing search results")}>
       {planner && <h3>{sites.find(site => site.id === search.site_id)?.name}</h3>}
       <p role="status">{t("{feasible} of {evaluated} landing times meet the constraints. Showing {count}.", {

@@ -1,5 +1,7 @@
 "use client";
 
+import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
+
 import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { compareSites, type SiteComparison } from "../lib/api/compare-sites";
@@ -37,7 +39,8 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
   const [comparison, setComparison] = useState<SiteComparison>();
   const [showGlobe, setShowGlobe] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
+  const wait = useRetryCountdown(error);
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
   const canSubmit = choice[0] !== choice[1] && choice.every(id => sites.some(site => site.id === id));
@@ -60,12 +63,12 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
     active.current?.abort();
     setShowGlobe(false); setPending(false);
     setComparison(undefined);
-    setError("");
+    if (!wait) setError("");
     setChoice(index === 0 ? [value, choice[1]] : [choice[0], value]);
   }
 
   async function compare() {
-    if (!canSubmit || pending) return;
+    if (!canSubmit || pending || wait) return;
     const controller = new AbortController();
     active.current?.abort();
     active.current = controller;
@@ -76,7 +79,7 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
       const next = await compareSites({ runId, siteIds: choice, from: start, to: end }, controller.signal);
       if (!controller.signal.aborted) setComparison(next);
     } catch (cause) {
-      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "The request could not be completed. Retry or check the connection.");
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause : "The request could not be completed. Retry or check the connection.");
     } finally {
       if (!controller.signal.aborted) setPending(false);
     }
@@ -106,17 +109,17 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
           {sites.map(site => <option key={site.id} value={site.id} disabled={site.id === choice[1 - index]}>{site.name}</option>)}
         </select>
       </label>)}
-      <button className="button outline" type="submit" disabled={!canSubmit || pending}>
-        {t(error ? "Retry pair comparison" : "Compare this pair")}
+      <button className="button outline" type="submit" disabled={!canSubmit || pending || wait > 0}>
+        {wait ? t("Try again in {seconds} s", { seconds: wait }) : t(error ? "Retry pair comparison" : "Compare this pair")}
       </button>
     </form>
     {catalog.isFetching && <p role="status">{t("Loading sites for this run…")}</p>}
-    {catalog.isError && <p role="status">{t("The full site list is unavailable. Only sites in the current dataset are available.")}{" "}
+    {catalog.isError && <p role="status">{t("The full site list is unavailable. Only sites in the current dataset are available.")} <span className="block"><ApiProblemText error={catalog.error} /></span>
       <button className="button outline" type="button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button>
     </p>}
     {!catalog.isFetching && sites.length < 2 && <p>{t("Two distinct sites from this run are needed for a pair comparison.")}</p>}
     {pending && <p role="status">{t("Comparing the selected sites…")}</p>}
-    {error && <p role="alert">{t(error)}</p>}
+    {error && <p role="alert"><ApiProblemText error={error} /></p>}
     {comparison && <section data-pair-results aria-label={t("Pair comparison results")}>
       <div className="hidden print:block">
         <h1>{t("Pair comparison results")}</h1>

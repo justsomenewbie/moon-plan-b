@@ -9,7 +9,7 @@ export async function getRunFiles(run: TerrainSummary["run"], signal?: AbortSign
   const { data, response, error } = await producer.GET("/api/v1/runs/{run_id}", {
     params: { path: { run_id: run.run_id } }, signal,
   });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   check(data?.run_id === run.run_id && data.status === "ready" && data.run_timestamp_utc === run.run_timestamp_utc &&
     data.code_version === run.code_version && Array.isArray(data.manifest?.files));
   const used = new Set<string>();

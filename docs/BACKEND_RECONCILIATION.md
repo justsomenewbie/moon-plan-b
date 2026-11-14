@@ -10,6 +10,8 @@ On the public web frontend, a browser opened both weekly site reports without si
 
 The original CSV endpoints returned different data for Odysseus on November 18 at 00:00–03:00 UTC and November 19 at 00:00–04:00 UTC, but suggested the same filename for each export type in both periods. A browser configured for unattended downloads overwrote the first files. The public FE now includes the site, run and both UTC bounds in the download name. Four browser downloads produced four distinct names and matched the respective original files byte for byte. On the November 14 production retest, new producer responses for both periods included the snapped UTC start and end in the attachment name. Each original URL still served its older attachment header from the Cloudflare cache (HIT; max-age 14,400 seconds). The same four queries with reordered parameters missed the cache and returned four distinct range-specific filenames. The CSV bodies matched their earlier SHA-256 values for both cache outcomes.
 
+**Closed on November 15 at 00:19 Hanoi.** On run B2, all four original Odysseus export URLs now return HTTP 200 with distinct attachment names containing the correct UTC start and end. Cloudflare reported EXPIRED for those URLs and MISS for four requests with reordered parameters. All eight producer bodies matched the saved SHA-256 digests. The same four downloads on the public frontend had distinct names and matching bytes. For November 18 00:00–03:00 UTC, series and windows contained three data rows each. For November 19 00:00–04:00 UTC, series contained four and windows five.
+
 A [bounded JPL comparison](../qa/docs/JPL_CHECK.md#b2-body-center-directions) now also covers two sites, two targets and five hourly samples.
 
 

@@ -1,3 +1,4 @@
+import { ApiProblemText } from "./api-problem-text";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
@@ -35,7 +36,7 @@ export function RunDownloads({ run }: { run: TerrainSummary["run"] }) {
     <details onToggle={e => setOpened(e.currentTarget.open)}>
       <summary>{t("Original files from this run")}</summary>
       {files.isFetching ? <p role="status">{t("Loading source files…")}</p> :
-        files.isError ? <div role="alert"><p>{t(files.error.message)}</p><button className="button outline" type="button" onClick={() => void files.refetch()}>{t("Retry")}</button></div> :
+        files.isError ? <div role="alert"><p><ApiProblemText error={files.error} /></p><button className="button outline" type="button" onClick={() => void files.refetch()}>{t("Retry")}</button></div> :
         file ? <div className="space-y-1 mt-2">
           <label className="block">{t("Choose a source file")} <select className="max-w-full" value={file.path} onChange={e => setSelected(e.target.value)}>
             {files.data?.map(f => <option key={f.path} value={f.path}>{f.path}</option>)}</select></label>
