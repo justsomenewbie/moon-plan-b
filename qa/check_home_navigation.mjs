@@ -15,14 +15,19 @@ try {
     const mobile = width < 760;
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
     const compare = page.locator('.hero-actions a[href="/compare"]');
-    assert.equal(await compare.innerText(), "Compare");
+    assert.match(await compare.innerText(), /Open comparison tool/);
+    const plan = page.locator('.hero-actions a[href="/plan"]');
+    assert.equal(await plan.innerText(), "Plan a lunar visit");
+    await plan.press("Enter");
+    await page.waitForURL(new URL("/plan", origin).href);
+    await page.goBack();
     assert.equal(await nav.locator('a[href="/compare"]').count(), 0);
     await compare.press("Enter");
     await page.waitForURL(new URL("/compare", origin).href);
     await page.getByRole("heading", { name: "Comparison tool", exact: true }).waitFor();
     await page.goBack();
     const guideLink = page.locator('.hero-actions a[href="#home-guide"]');
-    assert.equal(await page.locator(".hero-actions a").count(), 2);
+    assert.equal(await page.locator(".hero-actions a").count(), 3);
     await guideLink.press("Enter");
     await page.waitForFunction(() => document.activeElement.id === "home-guide");
     const steps = page.locator("#home-guide details");
@@ -76,7 +81,8 @@ try {
       await menu.click();
     }
     await nav.getByLabel("Language").selectOption("vi");
-    assert.equal(await compare.innerText(), "So sánh");
+    assert.match(await compare.innerText(), /Mở công cụ so sánh/);
+    assert.equal(await plan.innerText(), "Lập kế hoạch cho chuyến đi tới Mặt Trăng");
     assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
     assert.deepEqual(await nav.getByRole("link").allTextContents(),
       ["Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);
