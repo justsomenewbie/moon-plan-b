@@ -68,8 +68,17 @@ function storedResult(from: string, to: string, priority: PlannerPriority, sourc
 
 function savedSearchError(source: PlannerSource, duration: string) {
   return source === "saved" && duration
-    ? "The earlier archive supports shorter missions only for Odysseus and Athena during 14–21 November 2026 UTC. Open saved run B2 for all sites."
+    ? "The earlier archive has no mission windows for these dates. Use the saved range for Odysseus and Athena below, or open saved run B2."
     : "No saved observations cover this request. Choose a saved range below or connect to the team API.";
+}
+
+function catalogInputError(run: PlannerRun, from: string, to: string, duration: string) {
+  if (from < run.start || to > run.end || from >= to) return "Choose an increasing UTC window inside the model run.";
+  const hours = Number(duration);
+  if (duration && (!Number.isSafeInteger(hours) || hours < 1 || hours * 3600000 > Date.parse(to) - Date.parse(from) || hours * 3600 % run.stepSeconds !== 0)) {
+    return "Choose a whole number of mission hours that fits the dates and model step.";
+  }
+  return "";
 }
 
 function CatalogSearch({ run, first, last, priority, source, initialSite, runIds, initialDuration }: { initialDuration: string; run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource; initialSite: string | null; runIds: string[] }) {
@@ -77,7 +86,8 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
   const [result, setResult] = useState<SearchResult | null>(() => source === "live" ? null : storedResult(first, last, priority, source, initialDuration ? Number(initialDuration) : undefined));
   const [duration, setDuration] = useState(initialDuration);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | Error>(() => source !== "live" && initialDuration && !result ? savedSearchError(source, initialDuration) : "");
+  const [error, setError] = useState<string | Error>(() => source !== "live" && initialDuration && !result
+    ? catalogInputError(run, midnight(first), midnight(last), initialDuration) || savedSearchError(source, initialDuration) : "");
   const wait = useRetryCountdown(error);
   const { prefix, fieldAttributes } = useProblemFields(error);
   const [metric, setMetric] = useState(priority);
@@ -87,6 +97,8 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
   const best = result?.rows.filter(r => result.leaders.includes(r.id)) ?? [];
   const column = { sun: 0, earth: 1, joint: 2 }[metric];
   const flatLeaders = best.filter(row => row.smoothSphere && (row.hours?.[column] ?? 0) > 0);
+  const pairRange = savedPlannerWindows.pair;
+  const presets = savedPlannerWindows.catalog.filter(range => !duration || Date.parse(range.to) - Date.parse(range.from) === Number(duration) * 3600000);
   const showLongest = result?.scope === "live" && result.missionHours === undefined;
   function detailHref(siteId: string) {
     if (!result) return undefined;
@@ -110,11 +122,9 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
       const form = new FormData(e.currentTarget);
       const from = midnight(String(form.get("from"))), to = midnight(String(form.get("to")));
       clear();
-      if (from < run.start || to > run.end || from >= to) { setError("Choose an increasing UTC window inside the model run."); return; }
+      const invalid = catalogInputError(run, from, to, duration);
+      if (invalid) { setError(invalid); return; }
       const missionHours = duration ? Number(duration) : undefined;
-      if (missionHours !== undefined && (!Number.isSafeInteger(missionHours) || missionHours < 1 || missionHours * 3600000 > Date.parse(to) - Date.parse(from) || missionHours * 3600 % run.stepSeconds !== 0)) {
-        setError("Choose a whole number of mission hours that fits the dates and model step."); return;
-      }
       if (source !== "live") {
         const next = storedResult(from, to, metric, source, missionHours);
         setResult(next);
@@ -151,8 +161,10 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
     </form>
     {pending && <p role="status">{t("Checking visibility for the catalog…")}</p>}
     {error && <p role="alert"><ApiProblemText error={error} fieldPrefix={prefix} /></p>}
-    {source === "saved" && duration && <p><a href={plannerLink("/plan", {mode:"sites",source:"saved",from:savedPlannerWindows.pair.from.slice(0,10),to:savedPlannerWindows.pair.to.slice(0,10),priority:metric,missionHours:duration}, runIds)}>{t("Search the saved week for Odysseus and Athena")}</a></p>}
-    {source === "saved" && !duration && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{savedPlannerWindows.catalog.map(w => <a key={w.from} href={plannerLink("/plan", {mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric}, runIds)}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
+    {source === "saved" && duration && <p><a href={plannerLink("/plan", {mode:"sites",source:"saved",from:pairRange.from.slice(0,10),to:pairRange.to.slice(0,10),priority:metric,missionHours:duration}, runIds)}>
+      {t("Search the saved range for Odysseus and Athena")} · <TimeRange start={pairRange.from} end={pairRange.to} />
+    </a></p>}
+    {source === "saved" && presets.length > 0 && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{presets.map(w => <a key={w.from} href={plannerLink("/plan", {mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric,...(duration ? { missionHours: duration } : {})}, runIds)}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
     {result && <section aria-label={t("Site search results")} className="plan-results">
       <h3>{t("Site search results")}</h3>
       <p><TimeRange start={result.from} end={result.to} /> · {t(criteria[metric])}</p>
