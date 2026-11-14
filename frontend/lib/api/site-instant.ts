@@ -6,7 +6,8 @@ type RetainedVisibility = Pick<components["schemas"]["DatasetSeries"], "t" | "su
 type Instant = components["schemas"]["InstantResponse"];
 type Body = Pick<Instant["sun"], "az_deg" | "el_deg" | "horizon_el_deg" | "clearance_deg" | "visible">;
 export type SiteInstant = Pick<Instant, "run_id" | "site_id" | "t" | "sample_utc" | "sample_index" | "step_s" | "precision_h" | "both_visible"> & {
-  sun: Body; earth: Body;
+  sun: Body & Partial<Pick<Instant["sun"], "fraction" | "irradiance_tracking_wm2">>;
+  earth: Body;
 };
 
 function wholeSecond(utc: string, status: number): number {
@@ -51,7 +52,10 @@ export async function getSiteInstant(
     (Number.isSafeInteger(data.sample_index) && data.sample_index >= 0)));
   const sample = wholeSecond(data.sample_utc, 502);
   check(sample <= requested && (requested - sample) / 1000 < stepSeconds && ((sample - grid) / 1000) % stepSeconds === 0);
-  const sun = readBody(data.sun), earth = readBody(data.earth);
+  const sun: SiteInstant["sun"] = readBody(data.sun), earth = readBody(data.earth);
+  const { fraction, irradiance_tracking_wm2 } = data.sun;
+  if (Number.isFinite(fraction) && fraction >= 0 && fraction <= 1) sun.fraction = fraction;
+  if (Number.isFinite(irradiance_tracking_wm2) && irradiance_tracking_wm2 >= 0) sun.irradiance_tracking_wm2 = irradiance_tracking_wm2;
   check(data.both_visible === (sun.visible && earth.visible));
   if (series) {
     const index = series.t.indexOf(data.sample_utc);

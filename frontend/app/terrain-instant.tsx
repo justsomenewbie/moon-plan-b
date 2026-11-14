@@ -8,7 +8,7 @@ type Lookup = { status: "idle" | "pending" } | { status: "error"; message: strin
 export default function TerrainInstant({ runId, site, range, initialUtc }: {
   runId: string; site: TerrainSummary["sites"][number]; range: TerrainSummary["range"]; initialUtc: string;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [lookup, setLookup] = useState<Lookup>({ status: "idle" });
   const active = useRef<AbortController | null>(null);
   const timeInput = useRef<HTMLInputElement>(null);
@@ -58,6 +58,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
       <h4 id="instant-heading">{t("Observation at the requested time")}</h4>
       <p>{site.name}</p>
       <dl className="metadata">
+        <div><dt>{t("Run ID")}</dt><dd className="break-all">{value.run_id}</dd></div>
         <div><dt>{t("Requested time (UTC)")}</dt><dd><time dateTime={value.t}>{value.t}</time></dd></div>
         <div><dt>{t("Model sample (UTC)")}</dt><dd><time dateTime={value.sample_utc}>{value.sample_utc}</time></dd></div>
       </dl>
@@ -70,7 +71,12 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
           <div><dt>{t("Horizon elevation at this azimuth")}</dt><dd>{value[body].horizon_el_deg}°</dd></div>
           <div><dt>{t("Body centre above horizon")}</dt><dd>{value[body].clearance_deg}°</dd></div>
           <div><dt>{t("Visibility")}</dt><dd>{t(value[body].visible ? "Visible" : "Hidden")}</dd></div>
+          {body === "sun" && value.sun.fraction !== undefined && <div><dt>{t("Visible share of the solar disc")}</dt>
+            <dd>{value.sun.fraction.toLocaleString(locale, { style: "percent", maximumFractionDigits: 4 })}</dd></div>}
+          {body === "sun" && value.sun.irradiance_tracking_wm2 !== undefined && <div><dt>{t("Modeled irradiance on a Sun-facing surface")}</dt>
+            <dd>{value.sun.irradiance_tracking_wm2.toLocaleString(locale, { maximumFractionDigits: 3 })} W/m²</dd></div>}
         </dl>
+        {body === "earth" && <p className="muted text-sm">{t("Earth visibility describes a line of sight. Radio signal strength is unavailable.")}</p>}
       </div>)}</div>
       {value.sun.visible && value.sun.clearance_deg < 0 && <p>{t("Part of the Sun is visible while its centre is below the local horizon.")}</p>}
       <p>{t("Both visible")} · {t(value.both_visible ? "Yes" : "No")}</p>

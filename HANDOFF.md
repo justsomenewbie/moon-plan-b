@@ -2,9 +2,9 @@
 
 ## Mission Survival & Horizon Clearance Studio
 
-Checkpoint `54386ef` refines the studio without new endpoints or dependencies. The simulated clearance control spans 0–10° in 0.1° steps with 0/2/5° educational presets. The ribbon keeps four known states plus explicit unavailable UTC intervals, shows hours and percentages, and never turns a null or cadence gap into blackout. Educational darkness endurance uses 24/100/150-hour assumptions; a boundary-clipped dark span stays unresolved unless its observed duration already exceeds the selected reference. Producer intervals remain unchanged and separately labeled.
+The clearance control spans 0–10° in 0.1° steps with 0/2/5° educational presets. The ribbon keeps four known states plus explicit unavailable UTC intervals, shows hours and percentages, and never turns a null or cadence gap into blackout. Educational darkness endurance uses 24/100/150-hour assumptions; a boundary-clipped dark span stays unresolved unless its observed duration already exceeds the selected reference. Producer intervals remain unchanged and separately labeled.
 
-The synced HUD retains shortest-angle north wrapping, adds a side-elevation schematic, and labels its uniform mask as a sensitivity test rather than local terrain. Timeline and polar plots shade the selected clearance band. State patterns, always-mounted screen-reader interval text, 44px controls, forced-colors boundaries and printable results supplement color. English remains default with optional Vietnamese display translation; values, UTC and IDs are unchanged. Sun clearance is not a power model, and Earth visibility is not a radio-link budget.
+The HUD retains shortest-angle north wrapping, adds a side-elevation schematic, and labels its uniform mask as a sensitivity test rather than local terrain. Timeline and polar plots shade the selected clearance band. State patterns, always-mounted screen-reader interval text, 44px controls, forced-colors boundaries and printable results supplement color. English remains default with optional Vietnamese display translation; values, UTC and IDs are unchanged. Sun clearance is not a power model, and Earth visibility is not a radio-link budget.
 
 Minh’s clearance checkpoint passed 82 tests, route generation, TypeScript and build. The [QA replay](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram) covers the side-view fix, 320px, desktop, forced colors, PDF and both orders of the archived Horizons comparison. On `65b7375`, both clocks skipped Athena’s missing 02:00 UTC in both directions.
 
@@ -16,13 +16,13 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Saved globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Markers select body readings. Mobile QA covers contacts, imports, selection, UTC, clearance and API.
 
-Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Pair links restore sites and ranks. Reports include coordinates/heights. UTC lookup shows requested and native samples. FE/backend preserve 1 ns ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). Pair cards show coordinates, globe pins and LROC imagery. Haworth represents a region; Apollo 11 assumes a smooth horizon. UTC lookup labels optional solar-disc fraction and Sun-facing irradiance. Retained responses passed EN/VI replay; the LAN producer was unreachable on retest. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus visible. Sources reopen. [Home navigation](qa/check_home_navigation.mjs) reaches members and methods. Site selection: comparisons. [Sky projection](docs/CREDITS.md#night-theme-star-map), cloud shading and four meteor paths.
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The astronaut offers help, labels modeled readings, pauses its wave and opens pair/date controls for saved or displayed results. Saved joint visibility: Odysseus 33 h, Athena 139 h, with UTC and source. [Local Ollama](README.md#ask-the-astronaut).
+The astronaut turns, blinks and waves; pause and reduced motion keep it still. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [Local Ollama](README.md#ask-the-astronaut).
 
 ## Pending
 

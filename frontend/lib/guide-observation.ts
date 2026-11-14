@@ -10,6 +10,20 @@ function sampleTime(now: number, start: string, end: string, step: number) {
   return first + Math.floor((now - first) / step) * step;
 }
 
+export function nextGuideUpdate(now: number, savedResult: string, terrain: TerrainSummary | null) {
+  const ranges = terrain ? [terrain.range] : snapshot.weeks
+    .filter(week => week.startUtc === savedResult || week.sites.some(site => site.id === savedResult))
+    .map(week => ({ start: week.startUtc, end: week.endUtc, step_s: 3600 }));
+  for (const range of ranges) {
+    const start = Date.parse(range.start);
+    if (now < start) return start;
+    const step = range.step_s * 1000;
+    const time = sampleTime(now, range.start, range.end, step);
+    if (time !== null) return Math.min(time + step, Date.parse(range.end));
+  }
+  return null;
+}
+
 export function guideObservation(now: number, savedResult: string, terrain: TerrainSummary | null) {
   if (terrain) {
     const { range } = terrain;

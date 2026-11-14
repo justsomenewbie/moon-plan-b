@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
-import { guideObservation } from "../lib/guide-observation";
+import { useEffect, useId, useState } from "react";
+import { guideObservation, nextGuideUpdate } from "../lib/guide-observation";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
@@ -55,9 +55,28 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
   const { locale } = useLanguage();
   const copy = messages[locale];
   const id = useId();
-  const [openedAt, setOpenedAt] = useState<number | null>(null);
+  const [open, setOpen] = useState(false);
+  const [now, setNow] = useState<number | null>(null);
   const [guideChoice, setGuideChoice] = useState<GuideScope | null>(null);
-  const reading = openedAt === null ? null : guideObservation(openedAt, savedResult, terrain);
+  useEffect(() => {
+    if (!open) return;
+    let timer: number | undefined;
+    function refresh() {
+      window.clearTimeout(timer);
+      if (document.hidden) return;
+      const current = Date.now();
+      setNow(current);
+      const next = nextGuideUpdate(current, savedResult, terrain);
+      if (next !== null) timer = window.setTimeout(refresh, Math.min(next - current, 2_147_483_647));
+    }
+    refresh();
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [open, savedResult, terrain]);
+  const reading = !open || now === null ? null : guideObservation(now, savedResult, terrain);
   const rows = snapshot.weeks.flatMap(week => week.sites
     .filter(site => week.startUtc === savedResult || site.id === savedResult)
     .map(site => ({ week, site })));
@@ -74,13 +93,13 @@ export default function AstronautGuide({ savedResult, terrain, comparisonPath = 
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
       <span className={styles.astronaut} aria-hidden="true" />
     </button>
-    <aside id={id} popover="auto" onToggle={event => setOpenedAt(event.newState === "open" ? Date.now() : null)} className={styles.panel} aria-labelledby={id + "-title"}>
+    <aside id={id} popover="auto" onToggle={event => setOpen(event.newState === "open")} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
         <h2 id={id + "-title"}>{copy.title}</h2>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
       <p className={styles.greeting}>{copy.greeting}<br />{copy.measurementNote}</p>
-      {openedAt !== null && <GuideChat choice={guideChoice} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
+      {open && <GuideChat choice={guideChoice} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
       {reading && <section className={styles.sample}>
         <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
         <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>

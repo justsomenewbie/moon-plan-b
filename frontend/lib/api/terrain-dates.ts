@@ -22,10 +22,13 @@ export async function getTerrainDateSites(runId: string, signal?: AbortSignal) {
     if (!site || typeof site.id !== "string" || !siteIdPattern.test(site.id) || ids.has(site.id)
         || typeof site.name !== "string" || !site.name.trim()
         || typeof site.dem_source !== "string" || !site.dem_source.trim()
-        || typeof site.horizon_method !== "string" || !site.horizon_method.trim())
+        || typeof site.horizon_method !== "string" || !site.horizon_method.trim()
+        || (site.lat_deg != null && (!Number.isFinite(site.lat_deg) || Math.abs(site.lat_deg) > 90))
+        || (site.lon_deg != null && (!Number.isFinite(site.lon_deg) || site.lon_deg < 0 || site.lon_deg >= 360)))
       throw new ApiError("The model returned an invalid site list.", 502);
     ids.add(site.id);
-    return { id: site.id, name: site.name, demSource: site.dem_source, horizonMethod: site.horizon_method };
+    return { id: site.id, name: site.name, demSource: site.dem_source, horizonMethod: site.horizon_method,
+      lat_deg: site.lat_deg ?? null, lon_deg: site.lon_deg ?? null };
   });
 }
 

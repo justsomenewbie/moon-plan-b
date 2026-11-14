@@ -19,7 +19,7 @@ test("reads the containing model sample with pinned IDs and preserves visibility
   const last = await getSiteInstant(run, site, inside, 3600, time);
   assert.equal(last.t, inside);
   assert.equal(last.sample_utc, time);
-  assert.deepEqual(last.sun, sun); assert.deepEqual(last.earth, earth); assert.equal(last.both_visible, true);
+  assert.deepEqual(last.sun, { ...sun, fraction: 0.08 }); assert.deepEqual(last.earth, earth); assert.equal(last.both_visible, true);
   for (const at of ["2026-11-19T15:00", "2026-11-19T15:00:00", time]) {
     assert.equal((await getSiteInstant(run, site, at, 3600, time)).t, time);
   }
@@ -31,6 +31,32 @@ test("reads the containing model sample with pinned IDs and preserves visibility
   }
   handler.mock.mockImplementation(async () => Response.json({ ...sample, sample_index: undefined }));
   assert.equal((await getSiteInstant(run, site, inside, 3600, time)).sample_index, undefined);
+});
+
+test("preserves supplied tracking irradiance and disc fraction independently of optional-field availability", async t => {
+  // Run B Athena /instant at 2026-11-15T05:00:00Z, including the partially visible solar disc.
+  const source = {
+    run_id: "B_spice_pgda_bruteforce_2026_2030", site_id: "im2_athena", t: "2026-11-15T05:00:00Z", sample_utc: "2026-11-15T05:00:00Z",
+    step_s: 3600, precision_h: 1, both_visible: true,
+    sun: { az_deg: 82.867692, el_deg: 2.2111, horizon_el_deg: 2.350644, clearance_deg: -0.139544, visible: true },
+    earth: { az_deg: 327.936864, el_deg: 1.108645, horizon_el_deg: -1.457118, clearance_deg: 2.565763, visible: true },
+  };
+  let fields: Record<string, unknown> = {};
+  t.mock.method(globalThis, "fetch", async () => Response.json({ ...source, sun: { ...source.sun, ...fields } }));
+  const cases = [
+    [{ fraction: 0.185915, irradiance_tracking_wm2: 259.149 }, { fraction: 0.185915, irradiance_tracking_wm2: 259.149 }],
+    [{ fraction: 0, irradiance_tracking_wm2: 0 }, { fraction: 0, irradiance_tracking_wm2: 0 }],
+    [{ fraction: 1.1, irradiance_tracking_wm2: 10 }, { irradiance_tracking_wm2: 10 }],
+    [{ fraction: 0.5, irradiance_tracking_wm2: -1 }, { fraction: 0.5 }],
+    [{ fraction: null, irradiance_tracking_wm2: "259.149" }, {}],
+    [{}, {}],
+  ] as const;
+  for (const [input, expected] of cases) {
+    fields = input;
+    const value = await getSiteInstant(source.run_id, source.site_id, source.t, 3600, source.t);
+    assert.deepEqual(value.sun, { ...source.sun, ...expected });
+    assert.deepEqual(value.earth, source.earth);
+  }
 });
 
 test("rejects invalid identity, UTC sample boundaries, cadence and body data", async t => {

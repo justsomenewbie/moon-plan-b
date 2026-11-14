@@ -55,6 +55,7 @@ export function SiteFooter() {
       <div className="footer-directory" id="contact">
         <section><h2>{t("University and school")}</h2>
           <a href="https://sae.uet.vnu.edu.vn/">{t("School of Aerospace Engineering")}</a>
+          <a href="https://www.facebook.com/SAE.UET.VNU/">{t("School of Aerospace Engineering on Facebook")}</a>
           <a href="https://uet.vnu.edu.vn/">{t("VNU University of Engineering and Technology")}</a>
         </section>
         <section><h2>{t("Contact the Moon Plan B team")}</h2>
