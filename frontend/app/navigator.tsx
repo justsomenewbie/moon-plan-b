@@ -313,7 +313,7 @@ export default function Navigator() {
   }
 
   return <div className="app-shell" ref={reportShell}>
-    <div className="sky-clouds" aria-hidden="true">{[0, 1, 2, 3].map(i => <span key={i}>☁︎</span>)}</div>
+    <div className="sky-clouds" aria-hidden="true">{[0, 1, 2, 3].map(i => <span key={i} />)}</div>
     <div className="night-stars" aria-hidden="true">{[0, 1, 2, 3].map(i => <i key={i} />)}</div>
     <a className="skip-link" href={comparisonHref}>{t("Skip to comparison")}</a>
     <header className="app-header"><a className="brand" href="/">Moon Plan B</a>

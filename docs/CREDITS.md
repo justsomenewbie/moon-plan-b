@@ -4,7 +4,7 @@
 
 Codex generated and revised the frontend implementation, runtime validator, tests, documentation and synthetic demonstration fixture after the recorded event start. Independent Codex reviewers inspected code, checked the fixture numerically and reran tests. Built-in Image Gen generated an internal design concept labeled as AI-generated; that raster is not shipped in the app. The app's simple icon and scientific diagrams are code-native SVG, also AI-assisted. No generated content includes NASA branding.
 
-Codex assisted the bilingual home and astronaut guide, site selection, globe zoom and sky comparison controls. The astronaut and decorative cloud shapes are system-rendered Unicode characters. The guide uses prepared explanations and reports time-stamped values from the saved model or loaded terrain result. Codex assisted the UTC lookup and test cases.
+Codex assisted the bilingual home and astronaut guide, site selection, globe zoom and sky comparison controls. The astronaut is a system-rendered Unicode character. The guide uses prepared explanations and reports time-stamped values from the saved model or loaded terrain result. Codex assisted the UTC lookup and test cases.
 
 The proposal had AI-assisted history before implementation. Preserve that history in submission disclosure. The NASA guide's condition about SI supplying solution ideas remains unresolved for this history; no originality or award-eligibility declaration is made here.
 
@@ -64,6 +64,10 @@ The interactive comparison globe uses the 2025 surface color map from NASA’s C
 NASA adapted the color map from LRO Wide Angle Camera imagery and used lower-resolution laser reflectance near the poles. NASA describes its color processing and gap filling as intended for visualization. The application samples these pixels onto a smooth sphere with fixed display shading. Codex assisted the projection, controls, translations and tests. The photographic texture was downloaded directly from NASA. Neither lunar image supplies values to the comparison. [Processing notes](https://svs.gsfc.nasa.gov/4720/)
 
 The SVS reuse FAQ permits redistribution unless an item specifies another restriction. The item requests acknowledgment and lists no separate copyright restriction for this texture. NASA’s guidelines cover educational web pages and computer simulations using texture maps, subject to acknowledgment and its endorsement and third-party restrictions. Preserve the credit in educational demos, judging materials and repository copies that use the asset. [SVS FAQ](https://svs.gsfc.nasa.gov/help/) · [NASA media guidelines](https://www.nasa.gov/nasa-brand-center/images-and-media/)
+
+## Decorative cloud photographs
+
+OlegVegan photographed the clouds and released [Realistic transparent clouds (41)](https://olegvegan.itch.io/realistic-transparent-clouds) under [CC0](https://creativecommons.org/publicdomain/zero/1.0/). The day and night themes use images 3, 18, 25 and 26 from the `cloud_second_day` series. The original 1280-pixel widths and transparent edges are retained in WebP. Night mode dims the same photographs. These Earth clouds are part of the interface decoration. Codex assisted selection, conversion and integration.
 
 ## Night theme star map
 

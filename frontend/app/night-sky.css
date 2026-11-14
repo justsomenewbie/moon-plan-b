@@ -25,22 +25,31 @@
     pointer-events: none;
     overflow: hidden;
   }
-  .sky-clouds {
-    display: block;
-    color: #fff;
-  }
+  .sky-clouds { display: block; }
   .sky-clouds span {
     position: absolute;
-    font: clamp(5rem, 10vw, 9rem)/1 Georgia, serif;
-    opacity: .65;
-    text-shadow: 0 2px 6px rgb(96 146 170 / 18%);
+    width: clamp(155px, 24vw, 370px);
+    background: center / contain no-repeat;
+    opacity: .86;
   }
-  :root[data-theme="dark"] .sky-clouds { color: #71819b; }
-  :root[data-theme="dark"] .sky-clouds span { opacity: .25; text-shadow: none; }
-  .sky-clouds span:nth-child(1) { left: -1%; top: 20%; }
-  .sky-clouds span:nth-child(2) { right: 7%; top: 9%; font-size: clamp(3rem, 6vw, 6rem); }
-  .sky-clouds span:nth-child(3) { right: -1%; top: 62%; }
-  .sky-clouds span:nth-child(4) { left: 19%; bottom: 2%; font-size: clamp(3rem, 7vw, 7rem); }
+  :root[data-theme="dark"] .sky-clouds { filter: brightness(.62) saturate(.68); }
+  :root[data-theme="dark"] .sky-clouds span { opacity: .44; }
+  .sky-clouds span:nth-child(1) {
+    left: -3%; top: 19%; aspect-ratio: 1280 / 526;
+    background-image: url("/images/cloud-cumulus.webp");
+  }
+  .sky-clouds span:nth-child(2) {
+    right: 5%; top: 9%; width: clamp(130px, 19vw, 280px); aspect-ratio: 1280 / 517;
+    background-image: url("/images/cloud-wisps.webp");
+  }
+  .sky-clouds span:nth-child(3) {
+    right: -3%; top: 62%; aspect-ratio: 1280 / 579;
+    background-image: url("/images/cloud-bank.webp");
+  }
+  .sky-clouds span:nth-child(4) {
+    left: 15%; bottom: 2%; width: clamp(140px, 20vw, 310px); aspect-ratio: 1280 / 445;
+    background-image: url("/images/cloud-trail.webp");
+  }
   .sky-appearance { display: block; }
   :root[data-theme="dark"] .night-stars { display: block; }
   .night-stars i {
