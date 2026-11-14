@@ -313,6 +313,12 @@ For Apollo 11 on November 15 at 00:00–03:00 UTC, the producer reported a flat 
 
 Chromium compared four run B site cards to the bounded aggregate and opened each full-run site record explicitly. Coordinates, surface heights and the declared conventions matched. The Vietnamese view retained Apollo 11’s 0 m and Haworth’s east longitude above 180° at 320 CSS pixels. A two-date report showed the pinned site in both cards, and a pair comparison linked each selected site to its own record. A local import retained the supplied location without remote actions. An older import opened with no location fields.
 
+### Shared site rankings and fractional UTC ends
+
+On run B, a November 14–15 comparison selected Haworth first and Apollo 11 second. Chromium and Safari reopened both site cards in the selected order and restored the separate result ranking (Apollo first). English/Vietnamese and reload retained the link. Chromium also checked observation-only links, a matching file after a network failure, and rejected mixed or duplicate site parameters. Replay with `node qa/check_shared_pair.mjs <live-frontend-origin>`.
+
+A separate Chromium check sent an exclusive end of `01:00:00.000000001Z` unchanged for both sites, then resubmitted it from the UTC editor. Each site returned 00:00 and 01:00. Selecting exactly 01:00 returned only 00:00. The date comparison showed its evaluated model bounds. Replay with `node qa/check_precise_window.mjs <live-frontend-origin>`.
+
 ### Live observation lookup
 
 On run B, Chromium compared each displayed angle and visibility flag to the producer response for Athena before, at and after its 05:00 UTC transition on November 15. The first build could overwrite a time entered immediately after opening the form. After fixing the opening handler, three consecutive replays passed. Invalid bounds, editing, and changing sites made no unintended requests. A simulated 503 could be retried, a delayed response could not replace the newly selected observation, and local imports kept their offline inspector. The Vietnamese report fit at 320 CSS pixels.
