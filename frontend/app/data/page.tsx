@@ -40,8 +40,8 @@ function LiveModelRuns() {
   const [offset, setOffset] = useState(0);
   const query = useQuery({
     queryKey: ["ready-model-runs", offset],
-    enabled: q => !hasRetryDeadline(q.state.error),
     queryFn: ({ signal }) => getReadyModelRuns(offset, signal),
+    enabled: q => !hasRetryDeadline(q.state.error),
     retry: false,
   });
   const page = query.data;

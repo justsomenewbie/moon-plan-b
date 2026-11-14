@@ -36,8 +36,9 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const released = cancel.isSuccess || stoppedFollowing;
   const cancelWait = useRetryCountdown(cancel.error ?? "");
   const status = useQuery({
-    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: q => !!accepted && !released && !hasRetryDeadline(q.state.error),
+    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt],
     queryFn: ({ signal }) => getCustomSiteJob(accepted!.job_id, accepted!.site_id, signal, create.variables),
+    enabled: q => !!accepted && !released && !hasRetryDeadline(q.state.error),
     refetchInterval: query => {
       const state = query.state.data?.status;
       return cancel.isPending || cancelWait > 0 || query.state.error || (state !== "queued" && state !== "running") ? false : jobPollMs;
