@@ -16,6 +16,7 @@ const defaults: Constraints = {
 };
 const objectives: Constraints["objective"][] = ["earliest", "sun", "earth", "both", "energy", "balanced"];
 const HOUR = 3600000;
+const METRIC_TOLERANCE = 1e-6;
 
 function between(value: number, min: number, max = Infinity) {
   return Number.isFinite(value) && value >= min && value <= max;
@@ -41,7 +42,8 @@ function validateRequest(request: AltDatesRequest, stepSeconds: number): Request
     throw new ApiError("Choose a positive mission duration that is a multiple of the model sampling step.", 422);
   const max_results = request.max_results ?? 10;
   const c = { ...defaults, ...request.constraints };
-  if (!countInRange(max_results, 50) || !max_results || !objectives.includes(c.objective)
+  if (Object.keys(c).some(key => !Object.hasOwn(defaults, key))
+      || !countInRange(max_results, 50) || !max_results || !objectives.includes(c.objective)
       || ![c.min_sun_pct, c.min_earth_pct, c.min_both_pct].every(pct => between(pct, 0, 100))
       || ![c.min_continuous_sun_h, c.min_continuous_earth_h, c.min_separation_h].every(hours => between(hours, 0))
       || ![c.max_dark_gap_h, c.max_comms_gap_h].every(hours => hours === null || between(hours, 0))
@@ -67,7 +69,8 @@ export async function findAltDates(request: AltDatesRequest, stepSeconds: number
       || data.precision_h !== stepSeconds / 3600 || data.mission_duration_h !== body.mission_h
       || data.earliest_utc !== body.earliest || data.latest_utc !== body.latest
       || typeof data.cache_id !== "string" || !/^[a-f0-9]{64}$/i.test(data.cache_id)
-      || !c || !Object.entries(body.constraints).every(([key, value]) => c[key as keyof Constraints] === value))
+      || !c || Object.keys(c).some(key => !Object.hasOwn(defaults, key))
+      || !Object.entries(body.constraints).every(([key, value]) => c[key as keyof Constraints] === value))
     throw new ApiError("The returned landing search differs from the request.", 502);
 
   const { n_evaluated, n_feasible, rejected_by, candidates } = data;
@@ -92,12 +95,18 @@ export async function findAltDates(request: AltDatesRequest, stepSeconds: number
         || !Number.isFinite(candidate.score)
         || ![candidate.sun_pct, candidate.earth_pct, candidate.both_pct].every(pct => between(pct, 0, 100))
         || candidate.both_pct > Math.min(candidate.sun_pct, candidate.earth_pct)
-        || candidate.sun_pct + 1e-6 < c.min_sun_pct || candidate.earth_pct + 1e-6 < c.min_earth_pct
-        || candidate.both_pct + 1e-6 < c.min_both_pct
+        || candidate.sun_pct + METRIC_TOLERANCE < c.min_sun_pct || candidate.earth_pct + METRIC_TOLERANCE < c.min_earth_pct
+        || candidate.both_pct + METRIC_TOLERANCE < c.min_both_pct
         || (c.require_sun_at_landing && !candidate.sun_at_landing) || (c.require_earth_at_landing && !candidate.earth_at_landing)
         || ![candidate.longest_dark_h, candidate.longest_comms_gap_h].every(hours => between(hours, 0, body.mission_h))
         || ![candidate.continuous_sun_h, candidate.continuous_earth_h].every(hours => between(hours, 0))
         || ![candidate.sun_el_at_landing_deg, candidate.earth_el_at_landing_deg].every(el => between(el, -90, 90))
+        || (c.max_dark_gap_h !== null && candidate.longest_dark_h > c.max_dark_gap_h + METRIC_TOLERANCE)
+        || (c.max_comms_gap_h !== null && candidate.longest_comms_gap_h > c.max_comms_gap_h + METRIC_TOLERANCE)
+        || (c.min_sun_el_at_landing_deg !== null && candidate.sun_el_at_landing_deg + METRIC_TOLERANCE < c.min_sun_el_at_landing_deg)
+        // A lower bound alone cannot disprove a required continuous duration.
+        || (!candidate.continuous_sun_lower_bound && candidate.continuous_sun_h + METRIC_TOLERANCE < c.min_continuous_sun_h)
+        || (!candidate.continuous_earth_lower_bound && candidate.continuous_earth_h + METRIC_TOLERANCE < c.min_continuous_earth_h)
         || ![candidate.sun_at_landing, candidate.earth_at_landing, candidate.continuous_sun_lower_bound,
           candidate.continuous_earth_lower_bound].every(flag => typeof flag === "boolean")
         || !Number.isFinite(candidate.mean_power_horizontal) || !Number.isFinite(candidate.mean_power_tracking))
