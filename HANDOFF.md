@@ -1,6 +1,6 @@
 # Current handoff — 14 November 2026
 
-**Frontend visual refresh implemented and checked; comparison data remains synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
+**Animate UI installed and checked; comparison data remains synthetic.** Repository: https://github.com/justsomenewbie/moon-plan-b · owner `justsomenewbie` · base `main` · review branch `codex/frontend-kickoff` · checkout `/Users/nns/Documents/ChatGPT/moon-plan-b`.
 
 ## Current decisions
 
@@ -10,16 +10,18 @@ AI planning assistance remains a proposed backend capability, with server-side k
 
 ## Current result and evidence
 
-Auto/Light/Dark appearance works. Auto follows the local clock (07:00–18:59 light), with saved manual override; scientific times stay UTC. The refreshed hero uses a credited NASA LRO photographic mosaic, not AI-generated imagery. Reference resources are explicitly separate from comparison-value provenance. No dependency, API or fixture changed.
+Auto/Light/Dark appearance works. Auto follows the local clock (07:00–18:59 light), with saved manual override; scientific times stay UTC. The hero uses a credited NASA LRO photographic mosaic, not AI-generated imagery. Reference resources are separate from comparison-value provenance.
 
-**24 tests and final production build/TypeScript pass.** Independent review reran tests, checked timezones/contrast/asset identity, and identified a print-heading issue now corrected. In-app production checks cover saved modes, keyboard selection, 320px/no-overflow layout, charts, missing/error/recovery states and white print styling from both themes. Logs were empty; owned tab and viewport/media overrides were cleared. Earlier history, request/retry/job and large-import checks remain in [verification](docs/FRONTEND_VERIFICATION.md).
+At Sơn's request, Animate UI 2.4.3/Motion 14.14.0 now supply Share comparison's press feedback. Its reviewed official skill is installed locally and automatically routed by AGENTS/local visual guidance. Five packages were added; previous lock entries are unchanged. Notices retain MIT + Commons Clause and the Motion licences. No API or fixture changed.
+
+**24 tests, final production build and TypeScript pass.** Independent review reran tests/checks. npm/OSV found no known vulnerabilities. In-app pointer/keyboard intermediate frames, focus, sharing, repeated presses, reduced motion and disabled state were checked; logs were empty. Earlier theme/320px/print, history/request/job/import checks remain recorded. See [verification](docs/FRONTEND_VERIFICATION.md). Owned tab/media overrides were cleared.
 
 Native Safari resumed in a separate QA window and loaded six observation windows and passed keyboard criterion change. Upload, exact CSS width, console and final window closure remain unconfirmed. User tabs were not navigated or edited. In-app checks are not Safari evidence.
 
-External receipts/screenshots: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `visual-browser-checks.json` and `native-safari-resume.json`. Initial theme hydration can briefly show dark; Auto boundaries may lag one minute. Real science/backend, full release licensing and spoken screen-reader checks remain open.
+External evidence: `/Users/nns/Documents/ChatGPT/nasa-preparation-deliverables/frontend-kickoff-2026-11-14/`, including `animate-ui-browser-checks.json`, `visual-browser-checks.json` and `native-safari-resume.json`. Theme hydration may briefly show dark; Auto may lag one minute. An in-flight press return may finish when reduced motion is enabled. Real science/backend, full release licensing and spoken screen-reader checks remain open.
 
 ## Ownership and publication
 
-Root is the sole editor; independent agents reviewed read-only. Prior verified review head: `19d98adde237239ad68f387cca4265cd0e347aee`. The new task's external transport receipt records its encompassing commit/readback. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge, deployment or submission. Product cloud SHA is unestablished. Preparation files unchanged; no preparation sync required. Release edit ownership after publication verification.
+Root is the sole editor; agents reviewed read-only. Prior verified review head: `c1af6a85739129bb49cbedb45875d6a48264d861`. External publication receipt records this task's encompassing commit/readback. `main` remains `d7e9d6246a115257acbd3acf65200c9006d4ad4e`; no merge/deployment/submission. Product cloud SHA is unestablished. Preparation unchanged; no preparation sync required. Release edit ownership after publication verification.
 
-Next action under two minutes: open the local preview and try Appearance; when supplied, inspect Chung's exported OpenAPI and a small sourced example before adapting the frontend.
+Next action under two minutes: open the local preview and press Share comparison; inspect Chung's exported OpenAPI and sourced example when supplied.

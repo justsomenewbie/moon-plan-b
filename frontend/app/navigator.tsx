@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button as AnimatedButton } from "@animate-ui/react/primitives/buttons/button";
 import { defaultWindow, getDataset, getJob, isMock, validateWindow } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
@@ -210,7 +211,7 @@ export default function Navigator() {
         <div className="field">Window<p className="fixed-value">{durationHours(a)} hours <span className="muted text-sm">from the dataset</span></p></div>
         <label className="field">Joint-window criterion<select value={selection.h} onChange={(e) => { setSelection({ ...selection, h: Number(e.target.value) }); setShareUrl(""); replaceUrl(window.location.pathname); }}>{data.criteriaHours.map((h) => <option value={h} key={h}>{h} hours</option>)}</select></label>
         {selection.mode === "dates" ? <button className="text-button find-match" onClick={findMatch}>Find a later published match</button> : null}
-        <div className="control-actions"><button className="button primary" disabled={!b} onClick={() => void share()}>Share comparison</button><button className="button outline" onClick={printReport}>Print report</button></div>
+        <div className="control-actions"><AnimatedButton type="button" className="button primary" disabled={!b} onClick={() => void share()}>Share comparison</AnimatedButton><button className="button outline" onClick={printReport}>Print report</button></div>
         {shareUrl ? <label className="field share-field">Selection link<input readOnly value={shareUrl} onFocus={(e) => e.target.select()} /></label> : null}
         <p className="muted text-xs mt-5">Only supplied windows are selectable. Requests include a bounded UTC range and desired resolution; the server supplies the observations.</p>
         <button className="text-button mt-4" onClick={() => void loadDemo(true, requestWindow, sharedJobId)}>Reload current window</button>

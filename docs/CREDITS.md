@@ -30,6 +30,12 @@ Permission basis checked on that date: [SVS reuse FAQ](https://svs.gsfc.nasa.gov
 
 Codex implemented the appearance controls, layout and reference links. No AI image generation was used for this refresh. The synthetic dataset and AI-assisted proposal history remain unchanged.
 
+## Animate UI — 14 November 2026
+
+At the user's request, the Share comparison button uses `@animate-ui/react` 2.4.3 with `motion` 14.14.0. Animate UI is **MIT + Commons Clause**, copyright 2025 Elliot Sutton; it permits use within an application but restricts selling/redistributing original components themselves. The app imports the package and does not publish a standalone component collection. Motion, framer-motion 14.14.0, motion-dom 14.14.0 and motion-utils 14.7.0 retain their MIT notices. Complete installed notices were appended to THIRD_PARTY_NOTICES; the previously documented four notice gaps remain open.
+
+The separately installed official skill is pinned to [upstream commit 22a9236](https://github.com/imskyleen/animate-ui/tree/22a9236ae107328f8564edb7e3299375da3247af/skills/animate-ui), with its NOTICE and root licence retained locally. It is not copied into this public repository. Codex selected and integrated the existing press-feedback primitive; no framework-wide codemod or generated image was used.
+
 ### Notice recovery check — 14 November 2026
 
 Ten installed package entries lack package-root license/notice files. The notice file now retains five upstream repository license texts covering six of those entries: `@next/env` and `@next/swc-darwin-arm64` 16.4.6, `@redocly/openapi-core` 1.34.24, `@tailwindcss/oxide-wasm32-wasi` 4.3.5, `@napi-rs/wasm-runtime` 1.2.2 and `change-case` 5.4.4. Each supplement records its exact source commit, Git blob hash and package-version association. Registry `gitHead` identifies three sources; Next.js and Tailwind use resolved official version tags. These are upstream supplements, not files found in the npm installation. Original retained notices are unchanged.
