@@ -20,6 +20,8 @@ Status on 14 November 2026: the team has selected the backend contract and a sin
 
 Chung owns the production OpenAPI. The FE requests one aggregate per UTC range and can import the producer JSON export. A separate team member owns Colab execution and testing.
 
+An [offline comparison with JPL Horizons](../qa/docs/JPL_CHECK.md#november-b2-overlap-using-jpl-directions) reproduced the two November overlap intervals from independent sky directions and the original B2 terrain masks. Both intervals extend to the exclusive end of the selected week.
+
 ## Planner and dataset checks, November 15, 2026
 
 Run B2’s [site catalog](../frontend/public/data/run-b2/catalog.json) identifies five sites outside PGDA elevation coverage with a flat horizon: Apollo 11, 15 and 17, and Chang’e-4 and Chang’e-6. For 00:00 UTC November 15 through 00:00 November 16, Apollo 17 and Chandrayaan-3 Vikram each have 24 hours of simultaneous visibility. Apollo 17 omits local terrain shadows. Vikram uses a horizon computed from the PGDA elevation model. The date-first results and site-first searches display the caveat using each site's model metadata.

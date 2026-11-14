@@ -18,7 +18,7 @@ The [Data catalog](docs/BACKEND_RECONCILIATION.md#live-run-directory-and-earth-v
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Reference cards remain on both pages. [Daylight clouds and planner map](docs/FRONTEND_VERIFICATION.md#planner-result-map-and-homepage-guide).
 
-[Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
+[Live API and Horizons replay](qa/README.md#frontend-integration-retest). [JPL replay](qa/docs/JPL_CHECK.md#november-b2-overlap-using-jpl-directions) matches both November windows using B2 terrain.
 
 [Astronaut guide configuration](frontend/README.md#ask-the-astronaut).
 

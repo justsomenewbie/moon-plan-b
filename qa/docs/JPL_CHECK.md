@@ -15,10 +15,25 @@ For reproduction use the [Horizons API](https://ssd-api.jpl.nasa.gov/doc/horizon
 
 At 09:20 UTC on 14 November 2026, the offline Python regression compared the complete [paired control](../evidence/odysseus-athena-hour-gap/control.json) against four original JSON responses from Horizons. Each SHA-256 covered the original response bytes. The Sun and Earth targets, Moon center, observer coordinates, and all five hourly UTC, azimuth and elevation records per target matched for both Odysseus and Athena on 7 January 2026. The parser now accepts the full Q4 column names emitted with extra precision, as well as the abbreviated text headers. Run `python3 -B -m unittest qa.test_edge_cases.TraceabilityTests.test_archived_horizons_q4` from the repository root.
 
-An independent CLI retest used a temporary QA manifest with normalized request times. Its calendar format was inferred from the returned calendar dates. The control passed four raw comparisons. Changing Athena’s 02:00 solar azimuth by 0.001° or importing the deliberately gapped copy failed the row comparison even with updated dataset hashes. Appending one whitespace byte to an original response failed the raw-hash check. DATA-001 still awaits a production package from the data owner and scientific review.
+An independent CLI retest used a temporary QA manifest with normalized request times. Its calendar format was inferred from the returned calendar dates. The control passed four raw comparisons. Changing Athena’s 02:00 solar azimuth by 0.001° or importing the deliberately gapped copy failed the row comparison even with updated dataset hashes. Appending one whitespace byte to an original response failed the raw-hash check. At that checkpoint QA had not received a production package. The November B2 comparison below uses a subsequently published production slice.
 
 ## B2 body-center directions
 
 At 00:00–04:00 UTC on January 7, 2026, four archived JPL Horizons tables and the public B2 SPICE service both returned the airless apparent directions of the Sun and Earth at Odysseus and Athena. The largest angular separation across the 20 comparisons was about 0.0094 arcseconds (Earth at Odysseus). The six-decimal-degree B2 output limits the precision of small residuals. The coordinates matched in latitude and east longitude. The B2 observers were 15.074 m and 2.906 m higher, respectively, and the ephemeris configurations differed. Terrain masking, upper-limb visibility, and the complete five-year time series require separate validation.
 
 Run `python3 qa/check_b2_horizons_angles.py` to compare the stored source responses, or add `--live` to repeat the B2 request. [Verifier and source identifiers](../check_b2_horizons_angles.py).
+
+## November B2 overlap using JPL directions
+
+For November 14–21, 2026 UTC, all 168 hourly samples at each site agree with the public B2 dataset for Sun, Earth and joint visibility. Both sites still meet the joint criterion at the last sample, November 20 at 23:00. The query stops at November 21 at 00:00 UTC. The hourly data do not give an exact time of rise or loss between samples.
+
+| Site | Sun (h) | Earth (h) | Both (h) | First joint sample (UTC) | Solar upper limb relative to the local horizon, previous → first joint sample |
+| --- | ---: | ---: | ---: | --- | --- |
+| IM-1 Odysseus | 47 | 168 | 47 | Nov 19 01:00 | −0.06605° → +0.01227° |
+| IM-2 Athena | 139 | 168 | 139 | Nov 15 05:00 | −0.01854° → +0.13011° |
+
+The four topocentric Sun and Earth tables came directly from NASA/JPL Horizons. Both coordinates use east-positive longitude in the lunar mean-Earth frame. Observer heights above the 1737.4 km lunar reference sphere are 2.594074 km at Odysseus and 5.323906 km at Athena, including B2’s 2 m mast. The queries selected airless apparent azimuth and elevation (quantity 4), angular diameter (13) and observer range in kilometres (20). The last requested JPL instant was November 20 at 23:00 UTC. [JPL observer quantities](https://ssd.jpl.nasa.gov/horizons/manual.html#quan) · [Exact source URLs](../evidence/b2-horizons-week/sources.json)
+
+For each timestamp the replay interpolates the site's original B2 horizon at each body's azimuth. Sun visibility requires the upper limb to clear the horizon. The replay calculates its angular radius from 695,700 km and the range reported by JPL. Earth visibility requires its centre to clear B2's 0° threshold. Intersecting the two states produces the joint intervals. Across these sites and hours the largest angular separation from B2's reported body-centre directions was 0.00372 arcseconds or less. The replay checks the producer’s per-hour flags, interval boundaries and totals. It reuses B2’s terrain horizons. A separate terrain assessment and science-owner review remain open. [Model conventions](../../lunar-navigator/docs/OUTPUT_SPEC.md#visibility-rules-lunarnavvisibilitypy)
+
+From the repository root, run `python3 -B qa/check_b2_horizons_week.py`. All seven original inputs are stored with [SHA-256 checksums](../evidence/b2-horizons-week/SHA256SUMS.txt). The [B2 manifest](../../frontend/public/data/run-b2/manifest.json) identifies the original horizon files and site metadata. Repeating a live JPL query can produce a different raw-file hash because the response includes its generation time.

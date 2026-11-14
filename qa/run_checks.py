@@ -35,6 +35,7 @@ def main():
     args = parser.parse_args()
     checks = [run([sys.executable, "-B", "-m", "qa.generate_fixtures", "--check"]),
               run([sys.executable, "-B", "-m", "unittest", "qa.test_edge_cases", "-v"])]
+    checks.append(run([sys.executable, "-B", "qa/check_b2_horizons_week.py"]))
     for name in ("normal", "crossing_wrap", "partial", "missing"):
         command = [sys.executable, "-B", "-m", "qa.verify_json_contract", f"qa/fixtures/{name}.json",
                    "--manifest", f"qa/fixtures/{name}.manifest.json"]
@@ -48,6 +49,8 @@ def main():
     files = [p for p in (ROOT / "qa").rglob("*") if p.is_file() and
              not any(part in ("evidence", "__pycache__") for part in p.relative_to(ROOT / "qa").parts)]
     evidence = ROOT / "qa/evidence"
+    files.extend(sorted((evidence / "b2-horizons-week").glob("*")))
+    files.extend(ROOT / "frontend/public/data/run-b2" / name for name in ("sites.json", "manifest.json"))
     files.append(evidence / "odysseus-athena-hour-gap/control.json")
     for directory in ("odysseus-hour-gap", "odysseus-athena-hour-gap"):
         files.extend(evidence / directory / f"{body}-response.json" for body in ("sun", "earth"))
@@ -57,7 +60,7 @@ def main():
     node_version = subprocess.run([node, "--version"], capture_output=True, text=True).stdout.strip()
     report = {"generatedAtUtc": datetime.now(timezone.utc).isoformat(), "baseHeadAtRun": head,
               "python": platform.python_version(), "node": node_version,
-              "scope": "QA artifacts plus dependency-free frontend source smoke tests",
+              "scope": "Contract QA, the two-site JPL/B2 weekly replay and frontend source smoke tests",
               "releaseApproval": "NOT_GRANTED",
               "limitations": ["This offline runner does not install frontend dependencies, typecheck, or build the application.",
                               "Synthetic fixtures do not verify astronomical accuracy.",

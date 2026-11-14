@@ -1,3 +1,5 @@
 # Public archive checksums cover exact producer and derived file bytes.
 frontend/public/data/run-b/*.json -text
 frontend/public/data/run-b2/*.json -text
+qa/evidence/b2-horizons-week/*.json -text
+qa/evidence/b2-horizons-week/*.csv -text

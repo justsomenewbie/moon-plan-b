@@ -52,6 +52,8 @@ Record only consented, minimal observations; avoid names, recordings and persona
 - [ ] Before submitting the Final Project or demo, review the public roster and contact block against the [NASA participant terms](https://www.spaceappschallenge.org/legal/). The working site shows team names. Exclude identifiable names and likenesses of anyone under 18 and personal phone numbers from the submission. Keep the portrait preview private.
 - [ ] Licence/third-party notices, source and AI disclosures, current official rules and public links checked. Team Owner verifies portal rights, submits and retains receipt; Save Progress is not submission.
 
+The [two-site November replay](JPL_CHECK.md#november-b2-overlap-using-jpl-directions) covers the independent JPL sample check for those sites and that week. Terrain accuracy, other periods and the science owner’s release decision remain separate.
+
 For the data handoff, identify the run and archive links tested, the commit, and any differences from the original responses. Integration owners review contract changes. Science and release owners record their decisions separately.
 
 ## Tool routing record
