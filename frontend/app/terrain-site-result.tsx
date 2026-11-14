@@ -30,6 +30,17 @@ export function SiteCsvLinks({ siteId, runId, range }: { siteId: string; runId: 
   </div>;
 }
 
+export function RunSourceLinks({ run }: { run: TerrainSummary["run"] }) {
+  const { t } = useLanguage();
+  if (run.run_id === "." || run.run_id === "..") return null;
+  const runPath = "/api/v1/runs/" + encodeURIComponent(run.run_id);
+  return <div className="flex flex-wrap gap-x-4 gap-y-1 print:hidden">
+    <a href={runPath} target="_blank" rel="noreferrer">{t("Open run details (JSON)")}</a>
+    {run.manifest_url === runPath + "/files/manifest.json" &&
+      <a href={run.manifest_url} target="_blank" rel="noreferrer">{t("Download run manifest (JSON)")}</a>}
+  </div>;
+}
+
 export function SiteHorizonSource({ method, source }: { method: string; source: string }) {
   const { t } = useLanguage();
   return <p className="muted text-sm break-words">{t("Site horizon method")} · {method}<br />

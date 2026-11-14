@@ -538,6 +538,8 @@ export const vietnamese: Record<string, string> = {
   "Observer height above surface": "Độ cao điểm quan sát so với bề mặt",
   "Minimum Earth clearance": "Góc cao tối thiểu của Trái Đất so với đường chân trời",
   "Code version": "Phiên bản mã nguồn",
+  "Open run details (JSON)": "Mở thông tin lần chạy (JSON)",
+  "Download run manifest (JSON)": "Tải danh mục tệp của lần chạy (JSON)",
   "Manifest path on the source server": "Đường dẫn tệp kê khai trên máy chủ nguồn",
   "Data sources": "Nguồn dữ liệu",
   "No source entries were supplied.": "Bộ dữ liệu chưa cung cấp mục nguồn nào.",

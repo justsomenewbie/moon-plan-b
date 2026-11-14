@@ -55,7 +55,7 @@ export interface paths {
         put?: never;
         /**
          * Start a Python job (async): custom_site, precompute, analyse, alt_dates_python, check, validate, ...
-         * @description Body = CreateJobRequest, discriminated on `type` (one schema per job type; GET /api/v1/capabilities lists the types this server runs - others answer 501 JOB_TYPE_UNAVAILABLE). 202 = queued, or an identical job is already queued/running: you are then subscribed to it (cached: true, same job_id; poll `poll` every 1-2 s; `Location` header = the same URL). 200 = an identical job already succeeded (cached: true). 429 TOO_MANY_JOBS when this client (IP) already waits on JOB_MAX_ACTIVE_PER_CLIENT (default 2) queued/running jobs; 429 QUEUE_FULL when JOB_QUEUE_MAX jobs wait. start snaps down / end snaps up to whole hours. When succeeded, use result.run_id with the normal endpoints. Measured on the dev machine (1 site, hourly, spice + pgda + raymarch, PGDA tiles of the area already cached): POST -> succeeded in ~14 s for 1 month and ~19 s for 1 year (precompute 11-18 s, import 1-3 s). The first job in a polar area not yet cached also downloads PGDA tiles and can take minutes.
+         * @description Body = CreateJobRequest, discriminated on `type` (one schema per job type; GET /api/v1/capabilities lists the types this server runs - others answer 501 JOB_TYPE_UNAVAILABLE). 202 = queued, or an identical job is already queued/running: you are then subscribed to it (cached: true, same job_id; poll `poll` every 1-2 s; `Location` header = the same URL). 200 = an identical job already succeeded (cached: true). 429 TOO_MANY_JOBS when this client (IP) already waits on JOB_MAX_ACTIVE_PER_CLIENT (default 2) queued/running jobs; 429 QUEUE_FULL when JOB_QUEUE_MAX jobs wait. Job types that import a run (custom_site, precompute) have a storage budget: 429 QUOTA_EXCEEDED beyond JOB_RUNS_MAX_PER_CLIENT live runs of this client, 503 STORAGE_FULL when the server keeps JOB_RUNS_MAX_TOTAL runs / JOB_RUNS_MAX_MB or DATA_DIR is low on space; dem pgda work: 429 QUOTA_EXCEEDED once the daily PGDA download budget is used. 409 RUN_NOT_READY when a run the job reads (check, compare_runs, ...) is still importing or failed. start snaps down / end snaps up to whole hours. When succeeded, use result.run_id with the normal endpoints. Measured on the dev machine (1 site, hourly, spice + pgda + raymarch, PGDA tiles of the area already cached): POST -> succeeded in ~14 s for 1 month and ~19 s for 1 year (precompute 11-18 s, import 1-3 s). The first job in a polar area not yet cached also downloads PGDA tiles and can take minutes.
          */
         post: operations["createJob"];
         delete?: never;
@@ -201,6 +201,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One run with its manifest ("about the data")
+         * @description Any status (importing / failed runs too: data routes answer 409 RUN_NOT_READY for them).
+         */
+        get: operations["getRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/files/{file_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download a raw precompute file of a run
+         * @description file_path must be `manifest.json` or one of RunDetail.manifest.files[].path, URL-encoded (sites%2Fapollo11%2Fwindows.json). ETag = the sha256 of the file (from the manifest, strong: the body is never re-encoded by the server); If-None-Match -> 304. Content-Type from the extension: .json application/json, .csv text/csv, .csv.gz application/gzip, else application/octet-stream.
+         */
+        get: operations["getRunFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -252,7 +292,7 @@ export interface components {
             step_min: number;
             /**
              * @description Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)
-             * @default spice
+             * @default horizons
              * @enum {string}
              */
             provider: "spice" | "horizons" | "analytic";
@@ -537,7 +577,7 @@ export interface components {
             step_min: number;
             /**
              * @description Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)
-             * @default spice
+             * @default horizons
              * @enum {string}
              */
             provider: "spice" | "horizons" | "analytic";
@@ -760,7 +800,8 @@ export interface components {
              */
             step_min: 60;
             /**
-             * @default spice
+             * @description Ephemeris: horizons (JPL Horizons API, online; the web default since 14/11), spice (local NAIF kernels, ~45 MB, works offline), analytic (approximate)
+             * @default horizons
              * @enum {string}
              */
             provider: "spice" | "horizons" | "analytic";
@@ -1418,7 +1459,7 @@ export interface components {
             step_min: number;
             /**
              * @description Ephemeris method: spice (local kernels), horizons (JPL API, network), analytic (approximate)
-             * @default spice
+             * @default horizons
              * @enum {string}
              */
             provider: "spice" | "horizons" | "analytic";
@@ -1477,7 +1518,7 @@ export interface components {
              * @description Stable machine-readable error code - switch on this in the FE
              * @enum {string}
              */
-            code: "VALIDATION_ERROR" | "TOO_MANY_POINTS" | "NOT_FOUND" | "SITE_NOT_FOUND" | "RUN_NOT_FOUND" | "JOB_NOT_FOUND" | "JOB_NOT_YOURS" | "FILE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "RUN_NOT_READY" | "JOB_NOT_CANCELLABLE" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "OUT_OF_RANGE" | "BAD_MISSION_LENGTH" | "CAPABILITY_UNAVAILABLE" | "JOB_TOO_LARGE" | "RATE_LIMITED" | "QUEUE_FULL" | "TOO_MANY_JOBS" | "TOO_MANY_STREAMS" | "INTERNAL" | "JOB_TYPE_UNAVAILABLE" | "PYTHON_FAILED" | "SERVICE_UNAVAILABLE" | "PYTHON_TIMEOUT";
+            code: "VALIDATION_ERROR" | "TOO_MANY_POINTS" | "NOT_FOUND" | "SITE_NOT_FOUND" | "RUN_NOT_FOUND" | "JOB_NOT_FOUND" | "JOB_NOT_YOURS" | "FILE_NOT_FOUND" | "METHOD_NOT_ALLOWED" | "RUN_NOT_READY" | "JOB_NOT_CANCELLABLE" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "OUT_OF_RANGE" | "BAD_MISSION_LENGTH" | "CAPABILITY_UNAVAILABLE" | "JOB_TOO_LARGE" | "RATE_LIMITED" | "QUEUE_FULL" | "TOO_MANY_JOBS" | "TOO_MANY_STREAMS" | "QUOTA_EXCEEDED" | "INTERNAL" | "JOB_TYPE_UNAVAILABLE" | "PYTHON_FAILED" | "SERVICE_UNAVAILABLE" | "STORAGE_FULL" | "PYTHON_TIMEOUT";
             /** @description Human-readable explanation of this occurrence */
             detail?: string;
             /** @description Request path that produced the problem */
@@ -2539,6 +2580,307 @@ export interface components {
             source: "summary" | "computed";
             ranking: components["schemas"]["RankingRow"][];
         };
+        DataSource: {
+            name: string;
+            url: string | null;
+            sha256: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @example {
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "kind": "precompute",
+         *       "is_default": true,
+         *       "label": "Sample 2026-Q1, SPICE + PGDA raymarch (6 sites)",
+         *       "status": "ready",
+         *       "imported_at": "2026-11-14T09:00:00Z",
+         *       "expires_at": null,
+         *       "params_fingerprint": "21c3f3f6dc56b1e1",
+         *       "code_version": "0.1.0",
+         *       "git_commit": "60d405cfb0bc25831c49acff7286383cc9f7bde6",
+         *       "run_timestamp_utc": "2026-11-14T00:00:00Z",
+         *       "provider": "spice",
+         *       "dem": "pgda",
+         *       "horizon_method": "raymarch",
+         *       "start_utc": "2026-01-01T00:00:00Z",
+         *       "end_utc": "2026-04-01T00:00:00Z",
+         *       "step_s": 3600,
+         *       "n_samples": 2160,
+         *       "observer_height_m": 2,
+         *       "min_earth_clearance_deg": 0,
+         *       "rank_weights": {
+         *         "pct_both": 0.3,
+         *         "pct_earth": 0.3,
+         *         "pct_sun": 0.4
+         *       },
+         *       "site_ids": [
+         *         "ref_connecting_ridge_c1",
+         *         "ref_shackleton_rim",
+         *         "a3_haworth",
+         *         "a3_de_gerlache_rim_2",
+         *         "apollo11",
+         *         "change6"
+         *       ],
+         *       "n_sites": 6,
+         *       "manifest": {
+         *         "format": "lunarnav-precompute",
+         *         "format_version": 1,
+         *         "parameters": {
+         *           "az_step_deg": 0.5,
+         *           "dem": "pgda",
+         *           "dem_fallback": "flat",
+         *           "dem_label": null,
+         *           "dem_path": null,
+         *           "dem_res_m": null,
+         *           "end_utc": "2026-04-01T00:00:00Z",
+         *           "horizon_method": "raymarch",
+         *           "horizon_radius_km": 150,
+         *           "min_earth_clearance_deg": 0,
+         *           "n_samples": 2160,
+         *           "observer_height_m": 2,
+         *           "provider": "spice",
+         *           "provider_config": {
+         *             "abcorr": "CN+S",
+         *             "frame": "MOON_ME",
+         *             "full_spk": false,
+         *             "lunar_set": "de440",
+         *             "method": "manual"
+         *           },
+         *           "rank_weights": {
+         *             "pct_both": 0.3,
+         *             "pct_earth": 0.3,
+         *             "pct_sun": 0.4
+         *           },
+         *           "site_ids": [
+         *             "ref_connecting_ridge_c1",
+         *             "ref_shackleton_rim",
+         *             "a3_haworth",
+         *             "a3_de_gerlache_rim_2",
+         *             "apollo11",
+         *             "change6"
+         *           ],
+         *           "start_utc": "2026-01-01T00:00:00Z",
+         *           "step_minutes": 60,
+         *           "step_s": 3600
+         *         },
+         *         "data_sources": [
+         *           {
+         *             "name": "DEM pgda: bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+         *             "sha256": null,
+         *             "url": "https://pgda.gsfc.nasa.gov/"
+         *           },
+         *           {
+         *             "name": "NAIF SPICE generic kernels",
+         *             "sha256": null,
+         *             "url": "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/"
+         *           },
+         *           {
+         *             "name": "NASA GSFC PGDA LOLA DEM",
+         *             "sha256": null,
+         *             "url": "https://pgda.gsfc.nasa.gov/"
+         *           }
+         *         ],
+         *         "conventions": {
+         *           "azimuth": "degrees [0,360) clockwise from local north (N=0, E=90), as JPL Horizons",
+         *           "bodies": "Sun and Earth positions are for the body CENTER",
+         *           "coordinates": "planetocentric latitude, EAST longitude [0,360), MOON_ME (Mean-Earth/Polar-Axis) frame",
+         *           "earth_visible": "Earth center elevation - terrain horizon elevation > min_earth_clearance_deg",
+         *           "elevation": "degrees above the plane perpendicular to the local sphere radial, airless, apparent",
+         *           "heights": "metres above the 1737.4 km reference sphere",
+         *           "sun_visible": "upper limb above the terrain horizon (visible disc fraction > 0)",
+         *           "time": "UTC, ISO 8601 'YYYY-MM-DDTHH:MM:SSZ'; sample i represents [t_i, t_i + step)",
+         *           "windows": "maximal runs of equal state tiling [start, end); boundaries +- one step"
+         *         },
+         *         "files": [
+         *           {
+         *             "path": "sites.json",
+         *             "sha256": "8721aa60ad48d8743409969d28366acf05cc38a39da01b3e6724e653c0fabc03"
+         *           },
+         *           {
+         *             "path": "sites/a3_de_gerlache_rim_2/ephemeris_spice.csv.gz",
+         *             "sha256": "930a80f6f29a56d0caabb12852d7e29b20d51c3780ebecbd423f6e19a63854e5"
+         *           },
+         *           {
+         *             "path": "sites/a3_de_gerlache_rim_2/horizon_raymarch.csv",
+         *             "sha256": "0fd6d69c142d5b2d82b842d9470287bc26f7ad3aec1b10c8bfb78577bfdf645c"
+         *           },
+         *           {
+         *             "path": "sites/a3_de_gerlache_rim_2/visibility.csv.gz",
+         *             "sha256": "3dd8129ac5fd646f671c598864e09eb310f375051858b79cadbf295f5bc114a4"
+         *           },
+         *           {
+         *             "path": "sites/a3_de_gerlache_rim_2/windows.json",
+         *             "sha256": "e2b7ff66ecf1a7a7a5ea1bf9cefda880b40b56c77c2ef157b2dc615a61c3d5d7"
+         *           },
+         *           {
+         *             "path": "sites/a3_haworth/ephemeris_spice.csv.gz",
+         *             "sha256": "32a8d291a49ee0c562e57315e8e7d140b595e005028df805d15d2db7709a6f90"
+         *           },
+         *           {
+         *             "path": "sites/a3_haworth/horizon_raymarch.csv",
+         *             "sha256": "c2d42d6af17f6bf7e45c49d6a34d0f34309cbdcaf7fa82e789c673faac57e072"
+         *           },
+         *           {
+         *             "path": "sites/a3_haworth/visibility.csv.gz",
+         *             "sha256": "72e3827b26dd8d6ef061f2d5ddafd7929197d76320570588070a86f842d969f8"
+         *           },
+         *           {
+         *             "path": "sites/a3_haworth/windows.json",
+         *             "sha256": "f125c4f18b1b9f0fe67580211f367e33de22e24d4f0ebe249c9b6ee6907d38cf"
+         *           },
+         *           {
+         *             "path": "sites/apollo11/ephemeris_spice.csv.gz",
+         *             "sha256": "ff471d784742414657596946d02670cd407a7dd57e5a07bc8782a58650ec4bc8"
+         *           },
+         *           {
+         *             "path": "sites/apollo11/horizon_flat.csv",
+         *             "sha256": "f9b46731d3b2d1cee105fa454bab90efd4094172b3816531a1bd2065962daf40"
+         *           },
+         *           {
+         *             "path": "sites/apollo11/visibility.csv.gz",
+         *             "sha256": "efcd264e141f0c08b7ec4ce4f11248458b82d5296e1ec5f626b357504cebe15d"
+         *           },
+         *           {
+         *             "path": "sites/apollo11/windows.json",
+         *             "sha256": "e30c6cd598b025253f7417033c8eb140bf2ab1dd295f70c718ebd2b7310b00f1"
+         *           },
+         *           {
+         *             "path": "sites/change6/ephemeris_spice.csv.gz",
+         *             "sha256": "93800bf173a04c88871c463694e196c3327a7420dec3895541b518b59bbe1b10"
+         *           },
+         *           {
+         *             "path": "sites/change6/horizon_flat.csv",
+         *             "sha256": "f9b46731d3b2d1cee105fa454bab90efd4094172b3816531a1bd2065962daf40"
+         *           },
+         *           {
+         *             "path": "sites/change6/visibility.csv.gz",
+         *             "sha256": "e12074ac1d75e393f6fcd8b95d0f164f909cea632f734f1182600a2df9a78737"
+         *           },
+         *           {
+         *             "path": "sites/change6/windows.json",
+         *             "sha256": "c6434694342393e798d3fa31bcb63b99780c67c87198f2f6e85b20e5f4087d8f"
+         *           },
+         *           {
+         *             "path": "sites/ref_connecting_ridge_c1/ephemeris_spice.csv.gz",
+         *             "sha256": "5b289d5af68aee04df588aec41dcbb3dab6a6c5a5644a63c5126d5053f7d0e2b"
+         *           },
+         *           {
+         *             "path": "sites/ref_connecting_ridge_c1/horizon_raymarch.csv",
+         *             "sha256": "4807ee68cb9243f0c7413e7459c31b50b13e608bcdbefd4700d49dff326ee839"
+         *           },
+         *           {
+         *             "path": "sites/ref_connecting_ridge_c1/visibility.csv.gz",
+         *             "sha256": "205405dfaa3e8a065a4544370989e93622cbfce2cec3975106be51e25bd79236"
+         *           },
+         *           {
+         *             "path": "sites/ref_connecting_ridge_c1/windows.json",
+         *             "sha256": "929e4b9e985005085784a86a00ab625d90637058aeba82a3c65e6f419173aa45"
+         *           },
+         *           {
+         *             "path": "sites/ref_shackleton_rim/ephemeris_spice.csv.gz",
+         *             "sha256": "3b78af0ba17c489dc79db1527c53d9158e6889aa42e31536d4d5e39a5c97740e"
+         *           },
+         *           {
+         *             "path": "sites/ref_shackleton_rim/horizon_raymarch.csv",
+         *             "sha256": "1b15c0c0e9be1d4b72d879ca4617ad539ccc1149fb579a7394e7950c864c589b"
+         *           },
+         *           {
+         *             "path": "sites/ref_shackleton_rim/visibility.csv.gz",
+         *             "sha256": "ae8318d9267bdf1ce39d36e68db92ad14d48c25ad3cfa121fa10ee2e9a495bc6"
+         *           },
+         *           {
+         *             "path": "sites/ref_shackleton_rim/windows.json",
+         *             "sha256": "2b4582b3137af27d74f6d16d0327bd8003687c866f7094e2bc9d795ed79175d0"
+         *           },
+         *           {
+         *             "path": "summary.csv",
+         *             "sha256": "97ea39a21f47815e66a8c5d7c64ecf12835861ca84e52172fbd689e2b682acd7"
+         *           }
+         *         ]
+         *       }
+         *     }
+         */
+        RunDetail: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description precompute = imported Colab output; custom = result of a POST /jobs
+             * @enum {string}
+             */
+            kind: "precompute" | "custom";
+            /** @description Used when a request omits run_id */
+            is_default: boolean;
+            label: string;
+            /**
+             * @description Only `ready` runs serve data (others -> 409 RUN_NOT_READY)
+             * @enum {string}
+             */
+            status: "importing" | "ready" | "failed";
+            imported_at: string | null;
+            /** @description custom runs are deleted after this instant; null = kept */
+            expires_at: string | null;
+            /** @description 16-hex hash of the computation parameters (lunarnav manifest) */
+            params_fingerprint: string;
+            /** @description lunarnav version that produced the run */
+            code_version: string;
+            git_commit: string | null;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            run_timestamp_utc: string;
+            /** @description Ephemeris method: horizons | spice | analytic | synthetic */
+            provider: string;
+            /** @description Terrain source: trek | pgda | none */
+            dem: string;
+            /** @description raymarch | bruteforce | flat */
+            horizon_method: string;
+            /**
+             * @description UTC instant, ISO 8601 `YYYY-MM-DDTHH:MM:SSZ`
+             * @example 2026-01-01T00:00:00Z
+             */
+            start_utc: string;
+            /**
+             * @description EXCLUSIVE end
+             * @example 2026-01-01T00:00:00Z
+             */
+            end_utc: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            n_samples: number;
+            observer_height_m: number;
+            min_earth_clearance_deg: number;
+            rank_weights: components["schemas"]["RankWeights"];
+            site_ids: string[];
+            n_sites: number;
+            manifest: {
+                /** @constant */
+                format: "lunarnav-precompute";
+                /** @constant */
+                format_version: 1;
+                /** @description manifest.json "parameters" verbatim */
+                parameters: {
+                    [key: string]: unknown;
+                };
+                data_sources: components["schemas"]["DataSource"][];
+                /** @description Human-readable conventions (time, azimuth, ...) */
+                conventions: {
+                    [key: string]: string;
+                };
+                /** @description Raw files downloadable via GET /api/v1/runs/{run_id}/files/{file_path} */
+                files: {
+                    path: string;
+                    sha256: string;
+                }[];
+            };
+        };
     };
     responses: never;
     parameters: never;
@@ -2633,7 +2975,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2651,7 +2993,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -2692,7 +3034,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2771,6 +3113,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Request body too large */
             413: {
                 headers: {
@@ -2798,7 +3149,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2825,7 +3176,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -2878,7 +3229,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2896,7 +3247,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -2983,7 +3334,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -3010,7 +3361,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -3093,7 +3444,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -3189,7 +3540,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -3281,7 +3632,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -3299,7 +3650,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -3382,7 +3733,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -3400,7 +3751,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Database unavailable (SERVICE_UNAVAILABLE) */
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -3486,7 +3837,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS) */
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -3497,6 +3848,167 @@ export interface operations {
             };
             /** @description Internal error (INTERNAL) */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetail"];
+                };
+            };
+            /** @description Not Modified: the ETag sent in If-None-Match is current (empty body) */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getRunFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id: string;
+                /** @description Path relative to the run directory, exactly as listed in RunDetail.manifest.files[].path (URL-encode "/" as %2F) */
+                file_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Raw file bytes, never re-encoded (no Content-Encoding). ETag = "<sha256 from the manifest>"; Content-Type from the extension: .json -> application/json, .csv -> text/csv, .csv.gz -> application/gzip, anything else -> application/octet-stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                    "text/csv": string;
+                    "application/gzip": string;
+                    "application/octet-stream": string;
+                };
+            };
+            /** @description Not modified (If-None-Match matched the ETag) */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -91,6 +91,11 @@ async function checkLive() {
   await page.goto(href(liveOrigin, "/compare", { ...whole, run_id: run, resolutionSeconds: "3600" }));
   const cards = page.locator("#workspace.terrain-result .week-sites").first().locator("article");
   await cards.first().waitFor();
+  const runPath = "/api/v1/runs/" + run;
+  const runLinks = (scope, path) => scope.locator('a[href="' + path + '"]');
+  const manifestPath = runPath + "/files/manifest.json";
+  assert.equal(await runLinks(page, runPath).count(), 1);
+  assert.equal(await runLinks(page, manifestPath).count(), 1);
   assert.equal(await links(page).count(), 4);
   assert.equal(rows.length, 0);
   for (const [i, id] of ids.entries()) await checkCard(page, cards.nth(i), id, 1);
@@ -103,6 +108,9 @@ async function checkLive() {
   });
   await page.waitForFunction(expected => document.querySelector("#terrain-sample-utc")?.dateTime === expected, bounds(3).start);
   assert.equal(await links(page).count(), 0);
+  assert.equal(await runLinks(page, runPath).count(), 0);
+  assert.equal(await runLinks(page, manifestPath).count(), 0);
+  assert.ok(await page.locator("#sources").getByText(manifestPath, { exact: true }).isVisible());
   assert.equal(rows.length, 4);
 
   await page.goto(href(liveOrigin, "/compare-dates", {
@@ -110,6 +118,8 @@ async function checkLive() {
   }));
   const dateCards = page.locator("#terrain-dates .week-sites article");
   await dateCards.first().waitFor();
+  assert.equal(await runLinks(page, runPath).count(), 1);
+  assert.equal(await runLinks(page, manifestPath).count(), 1);
   assert.equal(await links(page).count(), 4);
   assert.equal(rows.length, 4);
   for (const day of [1, 2]) await checkCard(page, dateCards.nth(day - 1), custom, day);

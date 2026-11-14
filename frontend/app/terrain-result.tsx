@@ -1,7 +1,7 @@
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainObservations from "./terrain-observations";
 import { useLanguage } from "./language";
-import { SiteResult, TimeRange } from "./terrain-site-result";
+import { RunSourceLinks, SiteResult, TimeRange } from "./terrain-site-result";
 import TerrainDates from "./terrain-dates";
 import TerrainPair, { type DisplayedPair } from "./terrain-pair";
 import AlternativeDates from "./alternative-dates";
@@ -67,6 +67,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
           </dl>
           <p>{t("Manifest path on the source server")} · <code>{run.manifest_url}</code></p>
           <code className="hash">SHA-256 {run.manifest_sha256}</code>
+          {view.link && <RunSourceLinks run={run} />}
         </div>
       </div>
       <h3>{t("Data sources")}</h3>

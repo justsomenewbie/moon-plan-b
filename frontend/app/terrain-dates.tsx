@@ -6,7 +6,7 @@ import { getTerrainDateSites, getTerrainDates, type TerrainDateRequest } from ".
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { terrainDatesHref } from "../lib/terrain-date-link";
 import { useLanguage } from "./language";
-import { SiteHorizonSource, SiteResult, TimeRange } from "./terrain-site-result";
+import { RunSourceLinks, SiteHorizonSource, SiteResult, TimeRange } from "./terrain-site-result";
 
 type Bounds = TerrainDateRequest["first"];
 type Props = ({ result: TerrainSummary; baseWindow?: Bounds; initialRequest?: never }
@@ -115,6 +115,8 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
         <p className="muted text-sm">{t("Model")} · {completed.first.model.label}<br />
           {t("Run ID")} · <code className="break-all">{completed.first.run.run_id}</code></p>
         <p className="muted text-sm">{completed.first.attribution}</p>
+        <code className="hash">SHA-256 {completed.first.run.manifest_sha256}</code>
+        <RunSourceLinks run={completed.first.run} />
         {comparedSite
           ? <SiteHorizonSource method={comparedSite.horizonMethod} source={comparedSite.demSource} />
           : <p className="muted text-sm">{t("Site horizon details are unavailable.")}</p>}
