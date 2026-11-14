@@ -58,6 +58,7 @@
   }
   :root[data-theme="light"] .sky-clouds span:nth-child(2) {
     right: -2%; top: 7%; width: clamp(300px, 45vw, 770px); opacity: .37;
+    filter: contrast(.78) brightness(1.25) saturate(.76);
   }
   :root[data-theme="light"] .sky-clouds span:nth-child(3) {
     right: -13%; top: 59%; width: clamp(350px, 49vw, 840px); opacity: .46;
