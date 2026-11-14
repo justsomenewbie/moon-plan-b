@@ -1,6 +1,7 @@
-import { memo } from "react";
+import { memo, useMemo, useState } from "react";
 import { chartPath, durationHours, sampleAt } from "../lib/dataset";
 import type { Dataset, Mode, Scenario } from "../lib/dataset";
+import type { SkyScenario } from "../lib/terrain-sky";
 import type { Locale } from "../lib/i18n";
 import { useLanguage } from "./language";
 
@@ -40,18 +41,37 @@ export const SiteAssessments = memo(function SiteAssessments({ data, scenarios, 
   </section>;
 });
 
-const SampleMarkers = memo(function SampleMarkers({ a, b }: { a: Scenario; b?: Scenario }) {
+const SampleMarkers = memo(function SampleMarkers({ a, b }: { a: SkyScenario; b?: SkyScenario }) {
   return <svg className="plot-markers" aria-hidden="true">{[a, b].map((s, i) => s ? s.samples.flatMap((sample) => (["sun", "earth"] as const).map((body) => {
     const value = sample[body]; if (!value) return null;
-    const x = `${(Date.parse(sample.utc) - Date.parse(s.startUtc)) / (durationHours(s) * 3600000) * 100}%`, y = `${(90 - value.elevationDeg) / 180 * 100}%`;
+    const span = durationHours(s) * 3600000;
+    const x = span ? `${(Date.parse(sample.utc) - Date.parse(s.startUtc)) / span * 100}%` : "50%";
+    const y = `${(90 - value.elevationDeg) / 180 * 100}%`;
     return body === "sun" ? <circle key={`${s.id}-${sample.utc}-${body}`} cx={x} cy={y} r="3.5" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" /> : <rect key={`${s.id}-${sample.utc}-${body}`} x={x} y={y} width="7" height="7" transform="translate(-3.5 -3.5)" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" />;
   })) : null)}</svg>;
 });
 
-export function Timeline({ a, b, mode, offset, clearanceDeg = 0 }: { a: Scenario; b?: Scenario; mode: Mode; offset: number; clearanceDeg?: number }) {
+type TimelineProps = { mode: Mode; offset: number; clearanceDeg?: number } & (
+  | { a: Scenario; b?: Scenario; angularOnly?: false }
+  | { a: SkyScenario; b?: SkyScenario; angularOnly: true }
+);
+
+export function Timeline(props: TimelineProps) {
+  const { a, b, mode, offset, clearanceDeg = 0 } = props;
   const { t, locale } = useLanguage();
   const width = 800, height = 240;
-  const cursor = offset / (durationHours(a) * 3600000) * width;
+  const span = durationHours(a) * 3600000;
+  const cursor = span ? offset / span * width : width / 2;
+  const dense = props.angularOnly && Math.max(a.samples.length, b?.samples.length ?? 0) > width;
+  const lines = useMemo(() => [a, b].flatMap((s, i) => s ? (["sun", "earth"] as const).map(body => {
+    const d = span ? chartPath(s, body, width, height) : "";
+    // A move followed by a zero-length stroke draws each measured point in a single SVG element.
+    const dots = dense ? d.replace(/[ML](-?[\d.]+,-?[\d.]+)/g, "M$1h0") : undefined;
+    return <g key={`${s.id}-${body}`} className={body}>
+      <path d={d} fill="none" className={`plot-line ${body}`} strokeDasharray={i ? "7 6" : undefined} opacity={i ? 0.65 : 1} />
+      {dots && <path d={dots} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap={body === "sun" ? "round" : "square"} vectorEffect="non-scaling-stroke" />}
+    </g>;
+  }) : []), [a, b, dense, span]);
   return <div className="timeline">
     <div className="section-heading"><h2>{t("Sun & Earth, over time")}</h2><div className="legend"><span className="sun">{t("Sun")}</span><span className="earth">{t("Earth")}</span></div></div>
     <p className="muted text-sm">{t("Solid: primary. Dashed: alternative. Straight segments join supplied samples; they are not new observations.")}</p>
@@ -64,21 +84,21 @@ export function Timeline({ a, b, mode, offset, clearanceDeg = 0 }: { a: Scenario
       </g>)}
       {clearanceDeg > 0 ? <rect x="0" y={(90 - clearanceDeg) / 180 * height} width={width} height={clearanceDeg / 180 * height} className="clearance-band" /> : null}
       {clearanceDeg > 0 ? <line x1="0" x2={width} y1={(90 - clearanceDeg) / 180 * height} y2={(90 - clearanceDeg) / 180 * height} className="clearance-line" /> : null}
-      {[a, b].map((s, i) => s ? ["sun", "earth"].map((body) => <path key={`${s.id}-${body}`} d={chartPath(s, body as "sun" | "earth", width, height)} fill="none" className={`plot-line ${body}`} strokeDasharray={i ? "7 6" : undefined} opacity={i ? 0.65 : 1} />) : null)}
-      {a.samples.length > 0 ? <line x1={cursor} x2={cursor} y1="0" y2={height} className="cursor-line" /> : null}
+      {lines}
+      {a.samples.length > 0 && offset >= 0 ? <line x1={cursor} x2={cursor} y1="0" y2={height} className="cursor-line" /> : null}
     </svg>
-    <SampleMarkers a={a} b={b} /></div>
-    <div className="x-ticks" aria-hidden="true">{[0, .25, .5, .75, 1].map((v) => {
+    {!dense && <SampleMarkers a={a} b={b} />}</div>
+    <div className="x-ticks" aria-hidden="true">{(span ? [0, .25, .5, .75, 1] : [0]).map((v) => {
       const time = new Date(Date.parse(a.startUtc) + durationHours(a) * v * 3600000);
       return <span key={v}>{mode === "dates" ? `${Number((durationHours(a) * v).toFixed(2))} h` : <><span>{new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "short", timeZone: "UTC" }).format(time)}</span><span>{time.toISOString().slice(11, 16)}</span></>}</span>;
     })}</div></div>
     <p className="axis-caption">{mode === "dates" ? t("Elapsed time from each window’s start · hours") : t("Time · UTC")} <span>{t("0° = ideal horizon")}{clearanceDeg > 0 ? ` · θ_mask = ${clearanceDeg.toFixed(1)}°` : ""}</span></p>
-    <div className="visibility-bands">{[a, b].map((s, i) => s ? (["sun", "earth", "simultaneous"] as const).map((body) => <div className={`visibility-row ${body}`} key={`${s.id}-${body}`}><span>{i ? t("Alternative") : t("Primary")} · {body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window")}</span>{s.intervals === null ? <span className="muted">{t("Intervals unavailable")}</span> : <svg viewBox="0 0 800 16" preserveAspectRatio="none" role="img" aria-label={t("{role} {body} supplied visibility intervals: {count}", { role: i ? t("Alternative") : t("Primary"), body: body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window"), count: s.intervals[body].length })}><rect width="800" height="16" fill="none" stroke="var(--line)" />{s.intervals[body].map((v) => <rect key={v.startUtc} x={(Date.parse(v.startUtc) - Date.parse(s.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} y="2" width={(Date.parse(v.endUtc) - Date.parse(v.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} height="12" fill={i ? "none" : "currentColor"} stroke="currentColor" />)}</svg>}</div>) : null)}</div>
-    <p className="muted text-xs golden-note">{t("Golden windows are producer-supplied Sun-and-Earth overlap intervals. The frontend does not calculate new scientific boundaries.")}</p>
+    {!props.angularOnly && <><div className="visibility-bands">{[props.a, props.b].map((s, i) => s ? (["sun", "earth", "simultaneous"] as const).map((body) => <div className={`visibility-row ${body}`} key={`${s.id}-${body}`}><span>{i ? t("Alternative") : t("Primary")} · {body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window")}</span>{s.intervals === null ? <span className="muted">{t("Intervals unavailable")}</span> : <svg viewBox="0 0 800 16" preserveAspectRatio="none" role="img" aria-label={t("{role} {body} supplied visibility intervals: {count}", { role: i ? t("Alternative") : t("Primary"), body: body === "sun" ? t("Sun") : body === "earth" ? t("Earth") : t("Golden window"), count: s.intervals[body].length })}><rect width="800" height="16" fill="none" stroke="var(--line)" />{s.intervals[body].map((v) => <rect key={v.startUtc} x={(Date.parse(v.startUtc) - Date.parse(s.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} y="2" width={(Date.parse(v.endUtc) - Date.parse(v.startUtc)) / (Date.parse(s.endUtc) - Date.parse(s.startUtc)) * 800} height="12" fill={i ? "none" : "currentColor"} stroke="currentColor" />)}</svg>}</div>) : null)}</div>
+    <p className="muted text-xs golden-note">{t("Golden windows are producer-supplied Sun-and-Earth overlap intervals. The frontend does not calculate new scientific boundaries.")}</p></>}
   </div>;
 }
 
-export function SkyPosition({ scenario, offset, clearanceDeg = 0 }: { scenario: Scenario; offset: number; clearanceDeg?: number }) {
+export function SkyPosition({ scenario, offset, clearanceDeg = 0, siteName }: { scenario: SkyScenario; offset: number; clearanceDeg?: number; siteName?: string }) {
   const { t } = useLanguage();
   const sample = sampleAt(scenario, offset);
   const point = (azimuthDeg: number, elevationDeg: number) => {
@@ -86,7 +106,7 @@ export function SkyPosition({ scenario, offset, clearanceDeg = 0 }: { scenario: 
     const radians = (azimuthDeg - 90) * Math.PI / 180;
     return { x: 100 + radius * Math.cos(radians), y: 100 + radius * Math.sin(radians) };
   };
-  const trails = (body: "sun" | "earth") => {
+  const trails = useMemo(() => (["sun", "earth"] as const).flatMap(body => {
     const paths: string[] = [];
     scenario.samples.forEach((entry, index) => {
       const value = entry[body];
@@ -98,19 +118,19 @@ export function SkyPosition({ scenario, offset, clearanceDeg = 0 }: { scenario: 
       if (!paths.length || !paths.at(-1) || gap || wrap || !previous) paths.push(`M${p.x},${p.y}`);
       else paths[paths.length - 1] += ` L${p.x},${p.y}`;
     });
-    return paths.filter(Boolean);
-  };
+    return paths.filter(Boolean).map((d, i) => <path key={`${body}-${i}`} d={d} fill="none" className={`plot-line ${body}`} opacity=".45" />);
+  }), [scenario]);
   return <section className="sky" aria-labelledby="sky-title">
     <h3 id="sky-title">{t("Lunar sky dome")}</h3>
-    <p className="muted text-sm">{t("Primary sample · polar skyplot · ideal horizon, no terrain")}</p>
+    <p className="muted text-sm">{siteName ? <>{siteName} · {t("0° = ideal horizon")}</> : t("Primary sample · polar skyplot · ideal horizon, no terrain")}</p>
     <svg className="skyplot" viewBox="0 0 200 200" role="img" aria-labelledby="sky-description">
-      <title id="sky-description">{t("Polar skyplot of Sun and Earth azimuth and elevation at the selected primary sample")}</title>
+      <title id="sky-description">{siteName ? siteName + " · " + t("Directions at the selected sample") : t("Polar skyplot of Sun and Earth azimuth and elevation at the selected primary sample")}</title>
       {[82, 55, 27].map((r, i) => <circle key={r} cx="100" cy="100" r={r} className={i === 0 ? "horizon-ring" : "grid-ring"} />)}
       {clearanceDeg > 0 ? <circle cx="100" cy="100" r={82 - (82 - 82 * (90 - clearanceDeg) / 90) / 2} className="clearance-band-ring" strokeWidth={82 - 82 * (90 - clearanceDeg) / 90} /> : null}
       {clearanceDeg > 0 ? <circle cx="100" cy="100" r={82 * (90 - clearanceDeg) / 90} className="clearance-ring" strokeDasharray="4 3" /> : null}
       {[0, 90, 180, 270].map((azimuth, i) => { const edge = point(azimuth, 0); const label = point(azimuth, -10); return <g key={azimuth}><line x1="100" y1="100" x2={edge.x} y2={edge.y} className="grid-line" /><text x={label.x} y={label.y} textAnchor="middle" dominantBaseline="middle" className="axis-label">{["N", "E", "S", "W"][i]}</text></g>; })}
       <text x="104" y="104" className="elevation-label">90°</text><text x="104" y="47" className="elevation-label">30°</text>
-      {(["sun", "earth"] as const).flatMap(body => trails(body).map((d, i) => <path key={`${body}-${i}`} d={d} fill="none" className={`plot-line ${body}`} opacity=".45" />))}
+      {trails}
       {(["sun", "earth"] as const).map((body) => sample?.[body] && sample[body].elevationDeg >= 0 ? <g key={body} className={body}>
         {body === "sun" ? <circle cx={point(sample[body].azimuthDeg, sample[body].elevationDeg).x} cy={point(sample[body].azimuthDeg, sample[body].elevationDeg).y} r="6" fill="currentColor" /> : <rect x={point(sample[body].azimuthDeg, sample[body].elevationDeg).x - 5} y={point(sample[body].azimuthDeg, sample[body].elevationDeg).y - 5} width="10" height="10" fill="currentColor" />}
       </g> : null)}
@@ -138,10 +158,11 @@ export function Comparison({ a, b, h }: { a: Scenario; b?: Scenario; h: number }
   </section>;
 }
 
-export const SampleTable = memo(function SampleTable({ a, b }: { a: Scenario; b?: Scenario }) {
+export const SampleTable = memo(function SampleTable({ a, b, terrain = false }: { a: SkyScenario; b?: SkyScenario; terrain?: boolean }) {
   const { t } = useLanguage();
-  return <details className="details-section"><summary>{t("Inspect exact samples")}</summary><p className="muted text-sm">{t("Angles in degrees. Null observations remain unavailable. The right endpoint supports boundary evaluation and adds no extra duration.")}</p>
-    {[a, b].map((s, i) => s ? <div key={s.id} className="table-scroll sample-table" tabIndex={0} role="region" aria-labelledby={`sample-caption-${i}`}><table><caption id={`sample-caption-${i}`}>{i ? t("Alternative") : t("Primary")} · {s.id} · {t(s.coverage)} {t("coverage · nominal step")}{" "}{s.sampleStepSeconds} s</caption><thead><tr><th scope="col">UTC</th><th scope="col">{t("Sun elevation")}</th><th scope="col">{t("Sun azimuth")}</th><th scope="col">{t("Earth elevation")}</th><th scope="col">{t("Earth azimuth")}</th></tr></thead><tbody>{s.samples.length ? s.samples.map((sample) => <tr key={sample.utc}><th scope="row">{sample.utc}</th><td>{t(exactAngle(sample.sun?.elevationDeg))}</td><td>{t(exactAngle(sample.sun?.azimuthDeg))}</td><td>{t(exactAngle(sample.earth?.elevationDeg))}</td><td>{t(exactAngle(sample.earth?.azimuthDeg))}</td></tr>) : <tr><td colSpan={5}>{t("No observations in this window.")}</td></tr>}</tbody></table></div> : null)}
+  const [open, setOpen] = useState(false);
+  return <details className="details-section" onToggle={terrain ? e => setOpen(e.currentTarget.open) : undefined}><summary>{t("Inspect exact samples")}</summary><p className="muted text-sm">{terrain ? t("Body tracks show centre elevation. Visibility uses the flags returned by the model.") : t("Angles in degrees. Null observations remain unavailable. The right endpoint supports boundary evaluation and adds no extra duration.")}</p>
+    {(!terrain || open) && [a, b].map((s, i) => s ? <div key={s.id} className="table-scroll sample-table" tabIndex={0} role="region" aria-labelledby={`sample-caption-${i}`}><table><caption id={`sample-caption-${i}`}>{i ? t("Alternative") : t("Primary")} · {s.id} · {t(s.coverage)} {t("coverage · nominal step")}{" "}{s.sampleStepSeconds} s</caption><thead><tr><th scope="col">UTC</th><th scope="col">{t("Sun elevation")}</th><th scope="col">{t("Sun azimuth")}</th><th scope="col">{t("Earth elevation")}</th><th scope="col">{t("Earth azimuth")}</th></tr></thead><tbody>{s.samples.length ? s.samples.map((sample) => <tr key={sample.utc}><th scope="row">{sample.utc}</th><td>{t(exactAngle(sample.sun?.elevationDeg))}</td><td>{t(exactAngle(sample.sun?.azimuthDeg))}</td><td>{t(exactAngle(sample.earth?.elevationDeg))}</td><td>{t(exactAngle(sample.earth?.azimuthDeg))}</td></tr>) : <tr><td colSpan={5}>{t("No observations in this window.")}</td></tr>}</tbody></table></div> : null)}
   </details>;
 });
 

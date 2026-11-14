@@ -150,3 +150,20 @@ test("Vietnamese observations retain exact UTC boundaries, values and original p
     assert.ok(compiled.exports.formatUtc("2026-11-14T00:00:00Z", "vi").endsWith(" UTC"));
   } finally { locale = "en"; }
 });
+
+test("terrain angle displays accept one UTC instant without visibility intervals", () => {
+  const s = fixture().scenarios[0];
+  const angular = { id: s.id, siteId: s.siteId, startUtc: s.startUtc, endUtc: s.startUtc,
+    sampleStepSeconds: s.sampleStepSeconds, coverage: s.coverage, samples: s.samples.slice(0, 1) };
+  const timeline = renderToStaticMarkup(createElement(compiled.exports.Timeline, {
+    a: angular, angularOnly: true, mode: "sites", offset: 0,
+  }));
+  assert.doesNotMatch(timeline, /NaN|Infinity|visibility-bands|Golden windows/);
+  assert.match(timeline, /class="plot-markers"/);
+  assert.match(timeline, /cx="50%"/);
+  const sky = renderToStaticMarkup(createElement(compiled.exports.SkyPosition, { scenario: angular, offset: 0, siteName: "Odysseus" }));
+  assert.match(sky, /Odysseus · Directions at the selected sample/);
+  const table = renderToStaticMarkup(createElement(compiled.exports.SampleTable, { a: angular, terrain: true }));
+  assert.match(table, /Inspect exact samples/);
+  assert.doesNotMatch(table, /<tbody>|right endpoint/);
+});
