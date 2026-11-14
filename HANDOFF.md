@@ -16,7 +16,7 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Vietnamese mobile QA covered home, comparison, import errors, site selectors, UTC samples, clearance and API status capitalization.
 
-Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks every site ID and both selected scores. Apollo 11’s live and imported horizons use a smooth sphere. Six CSVs matched source bytes. FE preserves the fractional end sample pending backend confirmation. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks every site ID and both selected scores. Apollo 11’s live and imported horizons use a smooth sphere. Six CSVs matched source bytes. Live reports link the run and manifest. FE preserves sub-millisecond exclusive ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
 
@@ -26,4 +26,4 @@ The EN/VI astronaut opens pair/date controls, reads the displayed pair and suppo
 
 ## Pending
 
-Direct backend fractional-end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Named stashes retain backend-QA and pre-sync work.
+Backend sub-millisecond end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Named stashes retain backend-QA and pre-sync work.

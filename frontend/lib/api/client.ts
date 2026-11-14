@@ -115,8 +115,7 @@ function producerExclusiveEnd(end: string) {
   const seconds = fraction ? end.slice(0, fraction.index) + "Z" : end;
   const milliseconds = utcMillis(seconds, "End UTC");
   if (!fraction || !/[1-9]/.test(fraction[1])) return end;
-  // The producer discards fractions before snapping up to its integer-second grid.
-  // Sending the next whole second preserves the requested exclusive grid boundary.
+  // Preserve sub-millisecond ends when the producer snaps to its whole-second grid.
   const next = new Date(milliseconds + 1000);
   if (next.getUTCFullYear() > 9999) throw new ApiError("End UTC exceeds the supported four-digit year.", 422);
   return next.toISOString().replace(".000Z", "Z");
