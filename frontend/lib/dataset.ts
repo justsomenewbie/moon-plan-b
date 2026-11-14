@@ -218,7 +218,7 @@ export function sharedDatasetVersion(params: URLSearchParams): string | null {
   if (!params.has("sample") && !keys.some(key => params.has(key))) return null;
   requireValue(keys.every(key => params.getAll(key).length === 1 && params.get(key) !== "") && params.getAll("sample").length <= 1,
     "The shared selection is incomplete or contains duplicate fields.");
-  requireValue(!["run_id", "site_id", "view_site", "at"].some(key => params.has(key)),
+  requireValue(!["run_id", "site_id", "site_ids", "view_site", "at"].some(key => params.has(key)),
     "This link mixes an imported comparison with a live observation.");
   return params.get("v");
 }

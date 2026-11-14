@@ -549,7 +549,9 @@ export const vietnamese: Record<string, string> = {
   "Inspector scenarios passed structural validation. This panel does not independently verify scientific validity or simulate GPU failure.": "Các kịch bản đã vượt qua kiểm tra cấu trúc. Bảng này không tự xác minh giá trị khoa học hoặc giả lập lỗi GPU.",
 
   // Terrain-horizon aggregate results.
-  "Open comparison in a new tab": "Mở kết quả so sánh trong thẻ mới",
+  "Open selected observation in a new tab": "Mở quan trắc đã chọn trong thẻ mới",
+  "Open this ranked pair in a new tab": "Mở kết quả xếp hạng cặp này trong thẻ mới",
+  "The shared pair needs both UTC bounds and a sampling step.": "Đường dẫn chia sẻ cặp địa điểm cần có mốc đầu, mốc cuối UTC và bước lấy mẫu.",
   "Requested coverage": "Mức độ đầy đủ trong khoảng yêu cầu",
   "Evaluated coverage": "Mức độ đầy đủ trong khoảng đã tính",
   "Total time with both visible": "Tổng thời gian nhìn thấy cả hai thiên thể",

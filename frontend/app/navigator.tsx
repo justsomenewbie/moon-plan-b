@@ -2,9 +2,10 @@
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { defaultTerrainSites, defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateCustomWindow, validateTerrainWindow, validateWindow } from "../lib/api/client";
+import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, validateTerrainTargetWindow, validateWindow } from "../lib/api/client";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
+import { readTerrainTarget, terrainSiteIds, writeTerrainTarget } from "../lib/terrain-target";
 import type { DisplayedPair } from "./terrain-pair";
 import TerrainResult from "./terrain-result";
 import type { TerrainTarget, WindowRequest } from "../lib/api/client";
@@ -34,6 +35,7 @@ export default function Navigator() {
   const [sharedJobId, setSharedJobId] = useState("");
   const [data, setData] = useState<Dataset | null>(null);
   const [terrain, setTerrain] = useState<TerrainSummary | null>(null);
+  const [replayPair, setReplayPair] = useState(false);
   const [displayedPair, setDisplayedPair] = useState<DisplayedPair | null>(null);
   const [terrainView, setTerrainView] = useState({ siteIndex: 0, sample: 0, link: "" });
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -123,11 +125,12 @@ export default function Navigator() {
     let url: URL | undefined;
     if (request) {
       url = new URL(window.location.pathname, window.location.origin);
-      url.search = new URLSearchParams({ from: request.from, to: request.to, resolutionSeconds: String(request.resolutionSeconds), run_id: next.run.run_id }).toString();
-      if (target?.site_id) url.searchParams.set("site_id", target.site_id);
+      url.search = new URLSearchParams({ from: request.from, to: request.to, resolutionSeconds: String(request.resolutionSeconds) }).toString();
+      writeTerrainTarget(url.searchParams, target ?? { run_id: next.run.run_id });
       url.hash = "workspace";
     }
     setData(null); setSelection(null); setTerrain(next); setSharedJobId(""); setShareUrl(""); setError(""); setPlaying(false);
+    setReplayPair(Boolean(request && target?.site_ids && !reset && window.location.hash === "#terrain-pair"));
     showObservation(next, siteIndex, sample, url, reset);
   }
 
@@ -178,21 +181,21 @@ export default function Navigator() {
     try {
       const version = sharedDatasetVersion(params);
       if (hasObservation && !params.get("run_id")) throw new Error("The shared observation needs a pinned model run.");
-      for (const key of ["from", "to", "resolutionSeconds", "job", "run_id", "site_id", "view_site", "at"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
-      const validateRange = isMock ? validateWindow : params.has("site_id") ? validateCustomWindow : validateTerrainWindow;
+      for (const key of ["from", "to", "resolutionSeconds", "job", "view_site", "at"]) if (params.getAll(key).length > 1) throw new Error("The shared request contains duplicate fields.");
+      const target = readTerrainTarget(params);
+      if (target && (params.has("job") || isMock)) throw new Error("This run link requires a live backend and a valid model run ID.");
+      if (target?.site_ids && !["from", "to", "resolutionSeconds"].every(key => params.has(key)))
+        throw new Error("The shared pair needs both UTC bounds and a sampling step.");
+      const validateRange = isMock ? validateWindow : (range: WindowRequest) => validateTerrainTargetWindow(range, target);
       const request = ["from", "to", "resolutionSeconds"].some((key) => params.has(key)) ? validateRange({ from: params.get("from") ?? "", to: params.get("to") ?? "", resolutionSeconds: Number(params.get("resolutionSeconds")) }) : defaultWindow;
       const jobId = params.get("job") ?? "";
-      const runId = params.get("run_id") ?? undefined;
-      if (runId !== undefined && (!/^[A-Za-z0-9_.-]{1,64}$/.test(runId) || jobId || isMock)) throw new Error("This run link requires a live backend and a valid model run ID.");
-      const siteId = params.get("site_id") ?? undefined;
-      if (siteId !== undefined && (!runId || !/^[A-Za-z0-9_.:-]{1,64}$/.test(siteId))) throw new Error("The shared site requires a model run and a valid site ID.");
       if (params.has("job") && !/^[a-zA-Z0-9._-]{1,100}$/.test(jobId)) throw new Error("The shared job ID is invalid.");
       if (data && version === data.datasetId && jobId === sharedJobId && Date.parse(request.from) === Date.parse(requestWindow.from) && Date.parse(request.to) === Date.parse(requestWindow.to) && request.resolutionSeconds === requestWindow.resolutionSeconds) {
         setSelection(readSelection(params, data)); setLoading(false);
       } else if (version !== null && !isMock) {
         throw new Error(needsRelease);
       } else {
-        void loadDemo(false, request, jobId, runId ? { run_id: runId, site_id: siteId } : undefined);
+        void loadDemo(false, request, jobId, target);
         // Browser history owns focus/scroll; a request must not move it to results.
         loadFocus.current = null;
       }
@@ -277,7 +280,7 @@ export default function Navigator() {
           if (!selection && sharedDatasetVersion(params) !== null) throw new Error(needsRelease);
           if (pin?.target) {
             if (next.run.run_id !== pin.target.run_id) throw new Error("The returned model run differs from the shared link.");
-            if (next.sites.map(site => site.id).join(",") !== (pin.target.site_id ?? defaultTerrainSites))
+            if (next.sites.map(site => site.id).join(",") !== terrainSiteIds(pin.target))
               throw new Error("The returned sites do not match the requested comparison.");
             // A series may retain transitions between its regular samples. The range step is the native grid.
             const spacing = Math.max(1, Math.floor(pin.request.resolutionSeconds / next.range.step_s)) * next.range.step_s;
@@ -394,7 +397,7 @@ export default function Navigator() {
     {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(locale === "vi" && error.syntax ? "JSON syntax error. Check the file before trying again." : error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target, true)}>{t("Retry API request")}</button> : null}{isMock ? <button className="button outline" onClick={() => void loadDemo(true, defaultWindow)}>{t("Reset to demonstration")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => { recoverPinnedImport.current = true; importDialog.current?.showModal(); }}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
-    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult onDisplayedPair={setDisplayedPair} result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
+    {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult replayPair={replayPair} onDisplayedPair={setDisplayedPair} result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
       <aside className="controls" aria-label={t("Comparison controls")}>
         <div className="mode-switch" role="group" aria-label={t("Comparison mode")}>{(["dates", "sites"] as const).map((mode) => <button key={mode} aria-pressed={selection.mode === mode} onClick={() => choose(a, mode)}>{mode === "dates" ? t("Compare dates") : t("Compare sites")}</button>)}</div>
         {selection.mode === "sites" && siteWindow ? <>

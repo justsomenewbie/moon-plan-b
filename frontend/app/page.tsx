@@ -8,7 +8,7 @@ import AstronautGuide from "./astronaut-guide";
 import MoonGlobe from "./moon-globe";
 
 const savedResult = savedResultFromUrl(new URLSearchParams());
-const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "view_site", "at"];
+const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
 
 export default function Home() {
   const { t } = useLanguage();

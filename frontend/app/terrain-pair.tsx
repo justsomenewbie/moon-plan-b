@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { compareSites, type SiteComparison } from "../lib/api/compare-sites";
 import { pairGuideContext, type GuideContext } from "../lib/api/guide-chat";
 import { getTerrainDateSites } from "../lib/api/terrain-dates";
+import { writeTerrainTarget } from "../lib/terrain-target";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 import { SiteSourceLinks, TimeRange } from "./terrain-site-result";
@@ -17,13 +18,13 @@ const weightLabels = [
 
 export type DisplayedPair = { terrain: TerrainSummary; context: GuideContext };
 
-export default function TerrainPair({ result, onDisplayedPair }: {
-  result: TerrainSummary; onDisplayedPair: (pair: DisplayedPair | null) => void;
+export default function TerrainPair({ result, onDisplayedPair, replay, resolutionSeconds }: {
+  result: TerrainSummary; replay: boolean; resolutionSeconds: number; onDisplayedPair: (pair: DisplayedPair | null) => void;
 }) {
   const { t } = useLanguage();
   const runId = result.run.run_id;
   const { start, end } = result.range;
-  const [opened, setOpened] = useState(false);
+  const [opened, setOpened] = useState(replay);
   const catalog = useQuery({
     queryKey: ["terrain-date-sites", runId],
     queryFn: ({ signal }) => getTerrainDateSites(runId, signal),
@@ -57,8 +58,7 @@ export default function TerrainPair({ result, onDisplayedPair }: {
     setChoice(index === 0 ? [value, choice[1]] : [choice[0], value]);
   }
 
-  async function compare(event: FormEvent) {
-    event.preventDefault();
+  async function compare() {
     if (!canSubmit || pending) return;
     const controller = new AbortController();
     active.current?.abort();
@@ -76,13 +76,22 @@ export default function TerrainPair({ result, onDisplayedPair }: {
     }
   }
 
-  return <details id="terrain-pair" className="details-section" onToggle={event => {
+  const reopen = useEffectEvent(() => { void compare(); });
+  useEffect(() => { if (replay) reopen(); }, [replay]);
+
+  function pairHref() {
+    const params = new URLSearchParams({ from: start, to: end, resolutionSeconds: String(resolutionSeconds) });
+    writeTerrainTarget(params, { run_id: runId, site_ids: choice.join(",") });
+    return "/compare?" + params + "#terrain-pair";
+  }
+
+  return <details id="terrain-pair" open={replay || undefined} className="details-section" onToggle={event => {
     setOpened(event.currentTarget.open);
     if (!event.currentTarget.open) { active.current?.abort(); setPending(false); }
   }}>
     <summary>{t("Rank two sites for this UTC range")}</summary>
     <p>{t("Comparison window (UTC, end exclusive)")} · <TimeRange start={start} end={end} /></p>
-    <form className="request-fields my-4 print:hidden" onSubmit={compare}>
+    <form className="request-fields my-4 print:hidden" onSubmit={event => { event.preventDefault(); void compare(); }}>
       {choice.map((id, index) => <label key={index} className="field">
         {t(index === 0 ? "First site in pair" : "Second site in pair")}
         <select name={index === 0 ? "pairFirstSite" : "pairSecondSite"} required
@@ -126,6 +135,7 @@ export default function TerrainPair({ result, onDisplayedPair }: {
           <SiteSourceLinks siteId={row.site_id} runId={comparison.run_id} range={comparison.range} />
         </article>;
       })}</div>
+      <a className="print:hidden" href={pairHref()} target="_blank" rel="noreferrer">{t("Open this ranked pair in a new tab")}</a>
       {opened && completePair && <PairCatalogRanking comparison={comparison} catalogSites={catalog.data} />}
     </section>}
   </details>;

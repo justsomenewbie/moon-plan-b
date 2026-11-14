@@ -6,9 +6,9 @@ import TerrainDates from "./terrain-dates";
 import TerrainPair, { type DisplayedPair } from "./terrain-pair";
 import AlternativeDates from "./alternative-dates";
 
-export default function TerrainResult({ result, view, onSelect, onPrint, liveWindow, onDisplayedPair }: {
+export default function TerrainResult({ result, view, onSelect, onPrint, liveWindow, replayPair, onDisplayedPair }: {
   onDisplayedPair: (pair: DisplayedPair | null) => void;
-  liveWindow?: { from: string; to: string };
+  liveWindow?: { from: string; to: string; resolutionSeconds: number }; replayPair: boolean;
   result: TerrainSummary; view: { siteIndex: number; sample: number; link: string };
   onSelect: (siteIndex: number, sample: number) => void; onPrint: () => void;
 }) {
@@ -20,7 +20,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     <div className="section-heading">
       <h2 id="terrain-title">{t("Sun and Earth visibility above the site horizon")}</h2>
       <div className="terrain-print flex flex-wrap items-center gap-3">
-        {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t("Open comparison in a new tab")}</a>}
+        {view.link && <a href={view.link} target="_blank" rel="noreferrer">{t("Open selected observation in a new tab")}</a>}
         <button type="button" className="button outline terrain-print" onClick={onPrint}>{t("Print report")}</button>
       </div>
     </div>
@@ -30,7 +30,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} source={result} liveResult={liveWindow ? result : undefined} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
 
-    {liveWindow && <TerrainPair onDisplayedPair={onDisplayedPair} key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}
+    {liveWindow && <TerrainPair replay={replayPair} resolutionSeconds={liveWindow.resolutionSeconds} onDisplayedPair={onDisplayedPair} key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}
     {liveWindow && <TerrainDates key={result.dataset_id} result={result} baseWindow={liveWindow} />}
 
     {result.sites.length > 0 && <TerrainObservations live={Boolean(liveWindow)} result={result} siteIndex={view.siteIndex} sample={view.sample} onSelect={onSelect} />}
