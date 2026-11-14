@@ -87,7 +87,7 @@ test("terrain chart requests preserve the UTC range, drawing step, and versioned
   assert.equal(queries.length, 2);
   assert.deepEqual(Object.fromEntries(queries[0]), {
     start: request.from, end: request.to, site_ids: "im1_odysseus,im2_athena", step_s: "21600",
-    horizon_step_deg: "0.5", max_points: "10000", include: "horizon,series,windows,metrics",
+    horizon_step_deg: "0.5", max_points: "10000", include: "horizon,series,windows,metrics,criteria", criteria_hours: "24,72,168",
   });
   assert.equal(queries[1].get("run_id"), custom.run_id);
   assert.equal(queries[1].get("site_ids"), custom.site_id);

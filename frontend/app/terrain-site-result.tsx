@@ -9,11 +9,16 @@ export function TimeRange({ start, end }: { start: string; end: string }) {
   return <><UtcTime value={start} /> → <UtcTime value={end} /></>;
 }
 
+const criterionLabels = {
+  meets: "Meets the criterion", below: "Below the criterion", borderline: "Near the threshold",
+};
+
 export function SiteResult({ site }: { site: TerrainSummary["sites"][number] }) {
   const { t } = useLanguage();
   const complete = site.coverage_in_range === "complete";
   const metrics = complete ? site.metrics : null;
   const intervals = site.windows.both;
+  const criteria = site.criteria;
   return <article className="min-w-0">
     <h3>{site.name}</h3>
     <p className="muted text-sm">{t("Requested coverage")} · {t(site.coverage)}<br />
@@ -24,6 +29,16 @@ export function SiteResult({ site }: { site: TerrainSummary["sites"][number] }) 
       <div><dt>{t("Sun visible")}</dt><dd>{metrics.sun_hours} h</dd></div>
       <div><dt>{t("Earth visible")}</dt><dd>{metrics.earth_hours} h</dd></div>
     </dl> : <p className="data-notice my-4">{t("Coverage is incomplete. The total and longest overlap for the evaluated range are unknown.")}</p>}
+    {criteria && criteria.length > 0 && <section className="my-4" aria-label={t("Continuous Sun and Earth visibility requirements")}>
+      <h4 className="font-semibold">{t("Continuous Sun and Earth visibility requirements")}</h4>
+      <p className="muted text-sm">{t("Longest overlap in the evaluated range: {hours} h", { hours: criteria[0].value_h })}</p>
+      {criteria[0].value_clipped && <p className="muted text-sm">{t("A boundary clips the longest overlap. It may continue outside the evaluated range.")}</p>}
+      <ul className="mt-2">{criteria.map(criterion => <li key={criterion.minimum_hours} className="break-inside-avoid">
+        <details><summary>{t("At least {hours} h", { hours: criterion.minimum_hours })} · <span className={criterion.result}>{t(criterionLabels[criterion.result])}</span></summary>
+          <p className="muted text-sm">{criterion.reason}</p>
+        </details>
+      </li>)}</ul>
+    </section>}
     <h4 className="font-semibold">{t("Sun and Earth overlap intervals")}</h4>
     {intervals.length ? <ol className="interval-list list-decimal space-y-2">
       {intervals.map(window => <li key={window.start} className="break-inside-avoid">

@@ -1,5 +1,4 @@
-import { ApiError, getProducerDataset, validateTerrainWindow } from "./client.ts";
-import { parseTerrainSummary } from "./terrain-summary.ts";
+import { ApiError, getTerrainAggregate, validateTerrainWindow } from "./client.ts";
 
 type DateRange = { from: string; to: string };
 export type TerrainDateRequest = {
@@ -27,15 +26,8 @@ export async function getTerrainDates(request: TerrainDateRequest, signal?: Abor
   validateTerrainDates(request);
   async function load(range: DateRange, runId?: string) {
     signal?.throwIfAborted();
-    const data = await getProducerDataset({
-      run_id: runId, site_ids: request.siteId, start: range.from, end: range.to, step_s: 3600, include: "windows,metrics",
-    }, signal);
+    const result = await getTerrainAggregate({ ...range, resolutionSeconds: 3600 }, request.siteId, runId, false, signal);
     signal?.throwIfAborted();
-    const result = parseTerrainSummary(data, range);
-    if (runId !== undefined && result.run.run_id !== runId)
-      throw new ApiError("The returned model run differs from the shared link.", 502);
-    if (result.sites.length !== 1 || result.sites[0].id !== request.siteId)
-      throw new ApiError("The returned sites do not match the requested comparison.", 502);
     return result;
   }
   const first = await load(request.first, request.runId);

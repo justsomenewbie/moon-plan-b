@@ -91,33 +91,33 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   return withinRequestedWindow(validateDataset(data), request);
 }
 export type TerrainTarget = { run_id: string; site_id?: string };
-const terrainSections = ["horizon", "series", "windows", "metrics"] as const;
-type ProducerDatasetQuery = NonNullable<ProducerPaths["/api/v1/dataset"]["get"]["parameters"]["query"]>;
-export async function getProducerDataset(query: ProducerDatasetQuery, signal?: AbortSignal) {
-  try {
-    const { data, error, response } = await producer.GET("/api/v1/dataset", { params: { query }, signal });
-    if (!response.ok) throw apiError(error, response.status);
-    return data;
-  } catch (error) {
+const terrainCriteriaHours = [24, 72, 168];
+export async function getTerrainAggregate(request: WindowRequest, siteIds: string, runId: string | undefined, withObservations: boolean, signal?: AbortSignal) {
+  const sections = withObservations ? ["horizon", "series", "windows", "metrics", "criteria"] : ["windows", "metrics", "criteria"];
+  const { data, error, response } = await producer.GET("/api/v1/dataset", { signal, params: { query: {
+    run_id: runId, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
+    ...(withObservations ? { horizon_step_deg: 0.5, max_points: 10000 } : {}),
+    include: sections.join(","), criteria_hours: terrainCriteriaHours.join(","),
+  } } }).catch(error => {
     if (error instanceof SyntaxError) throw new ApiError("The API returned incomplete or invalid JSON. Please retry.", 502);
     throw error;
-  }
-}
-export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
-  if (target?.site_id) validateCustomWindow(request);
-  else validateTerrainWindow(request);
-  const siteIds = target?.site_id ?? "im1_odysseus,im2_athena";
-  const data = await getProducerDataset({
-    run_id: target?.run_id, site_ids: siteIds, start: request.from, end: request.to, step_s: request.resolutionSeconds,
-    horizon_step_deg: 0.5, max_points: 10000, include: terrainSections.join(","),
-  }, signal);
-  if (!Array.isArray(data?.include) || !terrainSections.every(section => data.include.includes(section)))
+  });
+  if (!response.ok) throw apiError(error, response.status);
+  if (!Array.isArray(data?.include) || !sections.every(section => data.include.some(value => value === section)))
     throw new ApiError("The server response is missing a requested dataset section.", 502);
   const result = parseTerrainSummary(data, request);
-  if (target && result.run.run_id !== target.run_id) throw new ApiError("The returned model run differs from the shared link.", 502);
+  if (result.criteria_hours?.length !== terrainCriteriaHours.length || !terrainCriteriaHours.every((hours, i) => result.criteria_hours?.[i] === hours))
+    throw new ApiError("The returned duration thresholds differ from the requested thresholds.", 502);
+  if (runId && result.run.run_id !== runId) throw new ApiError("The returned model run differs from the shared link.", 502);
   if (result.sites.map(site => site.id).join(",") !== siteIds)
     throw new ApiError("The returned sites do not match the requested comparison.", 502);
   return result;
+}
+
+export async function getTerrainWindow(request: WindowRequest, signal?: AbortSignal, target?: TerrainTarget) {
+  if (target?.site_id) validateCustomWindow(request);
+  else validateTerrainWindow(request);
+  return getTerrainAggregate(request, target?.site_id ?? "im1_odysseus,im2_athena", target?.run_id, true, signal);
 }
 export function validateJobRequest(request: JobRequest) {
   validateWindow(request);
