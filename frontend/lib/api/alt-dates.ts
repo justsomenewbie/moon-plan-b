@@ -75,7 +75,7 @@ export async function findAltDates(request: AltDatesRequest, stepSeconds: number
   signal?.throwIfAborted();
   const { data, error, response } = await producer.POST("/api/v1/alt-dates", { body, signal });
   signal?.throwIfAborted();
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
 
   const first = Date.parse(body.earliest), last = Date.parse(body.latest), step = stepSeconds * 1000;
   const c = data?.constraints;

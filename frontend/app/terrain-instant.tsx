@@ -1,9 +1,10 @@
+import { ApiProblemText } from "./api-problem-text";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getSiteInstant, type SiteInstant } from "../lib/api/site-instant";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 
-type Lookup = { status: "idle" | "pending" } | { status: "error"; message: string } | { status: "ready"; value: SiteInstant };
+type Lookup = { status: "idle" | "pending" } | { status: "error"; message: Error | string } | { status: "ready"; value: SiteInstant };
 
 export default function TerrainInstant({ runId, site, range, initialUtc }: {
   runId: string; site: TerrainSummary["sites"][number]; range: TerrainSummary["range"]; initialUtc: string;
@@ -34,7 +35,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
       const value = await getSiteInstant(runId, site.id, input, range.step_s, range.start, controller.signal, site.series);
       if (!controller.signal.aborted) setLookup({ status: "ready", value });
     } catch (error) {
-      if (!controller.signal.aborted) setLookup({ status: "error", message: error instanceof Error ? error.message : "The request could not be completed. Retry or check the connection." });
+      if (!controller.signal.aborted) setLookup({ status: "error", message: error instanceof Error ? error : "The request could not be completed. Retry or check the connection." });
     }
   }
   const value = lookup.status === "ready" ? lookup.value : null;
@@ -53,7 +54,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
         {t(lookup.status === "error" ? "Retry observation lookup" : "Look up observation")}</button>
     </form>
     {lookup.status === "pending" && <p role="status">{t("Loading observation…")}</p>}
-    {lookup.status === "error" && <p role="alert">{t(lookup.message)}</p>}
+    {lookup.status === "error" && <p role="alert"><ApiProblemText error={lookup.message} /></p>}
     {value && <section aria-labelledby="instant-heading">
       <h4 id="instant-heading">{t("Observation at the requested time")}</h4>
       <p>{site.name}</p>

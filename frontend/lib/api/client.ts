@@ -17,6 +17,10 @@ export function ensureMock(): Promise<void> {
 export class ApiError extends Error {
   status: number;
   code?: string;
+  title?: string;
+  hint?: string;
+  fields: { path: string; message: string }[] = [];
+  retryAt?: string;
   constructor(message: string, status = 0, code?: string) {
     super(message);
     this.name = "ApiError";
@@ -24,21 +28,51 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
-export function apiError(value: unknown, status = 0): ApiError {
+// A Retry-After delay starts at receipt. Store a fixed UTC instant so a language
+// switch or later render cannot restart the wait.
+function retryTime(header: string | null, bodySeconds: unknown): string | undefined {
+  const now = Date.now();
+  let ms: number | undefined;
+  if (header && /^\d+$/.test(header)) ms = now + Number(header) * 1000;
+  else if (header) {
+    const parsed = new Date(header);
+    if (Number.isFinite(parsed.getTime()) && parsed.toUTCString() === header) ms = parsed.getTime();
+  }
+  if (ms === undefined && typeof bodySeconds === "number" && Number.isSafeInteger(bodySeconds) && bodySeconds >= 0)
+    ms = now + bodySeconds * 1000;
+  if (ms !== undefined && Number.isFinite(ms) && ms >= 0 && ms < 253402300800000) return new Date(ms).toISOString();
+}
+
+export function apiError(value: unknown, response: Response | number = 0): ApiError {
   if (value instanceof ApiError) return value;
+  const status = typeof response === "number" ? response : response.status;
   const p = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const message = typeof p.detail === "string" ? p.detail : typeof p.title === "string" ? p.title : "The request could not be completed. Retry or check the connection.";
   const code = p.status === status && typeof p.type === "string" && p.type.length > 0 &&
     typeof p.title === "string" && p.title.length > 0 && typeof p.code === "string" &&
     /^[A-Z][A-Z0-9_]{0,63}$/.test(p.code) ? p.code : undefined;
-  return new ApiError(message.slice(0, 2000), status, code);
+  const error = new ApiError(message.slice(0, 2000), status, code);
+  if (code) {
+    error.title = (p.title as string).slice(0, 200);
+    if (typeof p.hint === "string" && p.hint.trim()) error.hint = p.hint.trim().slice(0, 2000);
+    if (Array.isArray(p.errors)) {
+      for (const field of p.errors) {
+        if (field && typeof field.path === "string" && typeof field.message === "string" && field.message.trim())
+          error.fields.push({ path: field.path.slice(0, 160), message: field.message.trim().slice(0, 500) });
+        if (error.fields.length === 5) break;
+      }
+    }
+  }
+  if (status === 429 || status === 503)
+    error.retryAt = retryTime(typeof response === "number" ? null : response.headers.get("retry-after"), code === "RATE_LIMITED" ? p.retry_after_s : undefined);
+  return error;
 }
 export function jobReceiptUncertain(error: unknown): boolean {
   if (!(error instanceof ApiError) || (error.status !== 0 && error.status < 500)) return false;
   return !(error.status === 503 && error.code === "STORAGE_FULL") &&
     !(error.status === 501 && error.code === "JOB_TYPE_UNAVAILABLE");
 }
-export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && (error.status === 0 || error.status >= 500);
+export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && !error.retryAt && (error.status === 0 || error.status >= 500);
 const baseUrl = typeof window === "undefined" ? "http://localhost" : "";
 async function boundedFetch(request: Request, retainBytes?: (bytes: Uint8Array<ArrayBuffer>) => void) {
   await ensureMock();
@@ -114,7 +148,7 @@ export async function getDataset(request: WindowRequest, signal?: AbortSignal) {
   if (response.status === 404 && error?.instance === "/api/v1/dataset" && error.title === "Route not found") {
     throw new ApiError("This backend does not yet serve the comparison dataset. Import a compatible JSON release or retry after the backend adds the route.", 404);
   }
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   return withinRequestedWindow(validateDataset(data), request);
 }
 export { defaultTerrainSites, type TerrainTarget } from "../terrain-target.ts";
@@ -137,7 +171,7 @@ export async function getTerrainAggregate(request: WindowRequest, siteIds: strin
     if (error instanceof SyntaxError) throw new ApiError("The API returned incomplete or invalid JSON. Please retry.", 502);
     throw error;
   });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   if (!Array.isArray(data?.include) || !sections.every(section => data.include.some(value => value === section)))
     throw new ApiError("The server response is missing a requested dataset section.", 502);
   const result = parseTerrainSummary(data, request);
@@ -187,7 +221,7 @@ export function validateJobRequest(request: JobRequest) {
 export async function createJob(request: JobRequest) {
   validateJobRequest(request);
   const { data, error, response } = await api.POST("/api/v1/jobs", { body: request });
-  if (response.status !== 202 || !data || typeof data.jobId !== "string" || !/^[a-zA-Z0-9._-]{1,100}$/.test(data.jobId)) throw apiError(error ?? { detail: "The server did not return a valid accepted job." }, response.status);
+  if (response.status !== 202 || !data || typeof data.jobId !== "string" || !/^[a-zA-Z0-9._-]{1,100}$/.test(data.jobId)) throw apiError(error ?? { detail: "The server did not return a valid accepted job." }, response);
   return data;
 }
 export function validateJob(value: unknown): Job {
@@ -202,7 +236,7 @@ export function validateJob(value: unknown): Job {
 export async function getJob(id: string, request: WindowRequest, signal?: AbortSignal) {
   validateWindow(request);
   const { data, error, response } = await api.GET("/api/v1/jobs/{id}", { params: { path: { id } }, signal });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   const job = validateJob(data);
   if (job.jobId !== id) throw new ApiError("The server returned a different job.", 502);
   if (job.status === "done") withinRequestedWindow(job.result, request);

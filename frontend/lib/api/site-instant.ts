@@ -46,7 +46,7 @@ export async function getSiteInstant(
     params: { path: { site_id: siteId }, query: { run_id: runId, t } }, signal,
   });
   signal?.throwIfAborted();
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   check(data && data.run_id === runId && data.site_id === siteId && data.t === t && data.step_s === stepSeconds &&
     data.precision_h === stepSeconds / 3600 && (data.sample_index === undefined ||
     (Number.isSafeInteger(data.sample_index) && data.sample_index >= 0)));
