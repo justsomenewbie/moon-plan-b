@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { compareSites, type SiteComparisonRequest } from "../lib/api/compare-sites.ts";
+import { getCatalogRanking } from "../lib/api/catalog-ranking.ts";
 import { pairGuideContext } from "../lib/api/guide-chat.ts";
 import { ApiError } from "../lib/api/client.ts";
 import type { components } from "../lib/api/producer";
@@ -133,6 +134,31 @@ test("shorter dark intervals break an exact score tie before site IDs", async t 
   assert.equal((await compareSites(request)).ranking[0].site_id, "earth-only");
   response.ranking.reverse().forEach((r, i) => { r.rank = i + 1; });
   await assert.rejects(compareSites(request), (e: unknown) => e instanceof ApiError && e.status === 502);
+});
+
+test("pair and catalog retain producer order when equal displayed scores have different visibility inputs", async t => {
+  const response = example();
+  const site = response.sites.dark, row = response.ranking[1];
+  const transition = "2026-11-14T18:00:00Z";
+  const original = site.windows!.sun![0];
+  site.windows!.sun = [
+    { ...original, state: true, end: transition, duration_h: 18, clipped_end: false },
+    { ...original, start: transition, duration_h: 6, clipped_start: false },
+  ];
+  Object.assign(site.metrics, { pct_sun: 75, pct_sun_no_earth: 75, longest_sun_h: 18,
+    longest_sun_truncated: true, longest_dark_h: 6, n_sun_windows: 1 });
+  Object.assign(row, site.metrics, { score: 30 });
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    if (req.method === "POST") return Response.json(response);
+    const { sites: _sites, ...ranking } = response;
+    return Response.json({ ...ranking, source: "computed" });
+  });
+  const pair = await compareSites(request);
+  const catalog = await getCatalogRanking(pair);
+  for (const result of [pair, catalog]) {
+    assert.deepEqual(result.ranking.map(r => [r.site_id, r.score, r.longest_dark_h]),
+      [["earth-only", 30, 24], ["dark", 30, 6]]);
+  }
 });
 
 test("the guide uses the displayed pair order, exact visible intervals and evaluated UTC range", async t => {
