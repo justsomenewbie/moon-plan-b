@@ -55,9 +55,9 @@ def main():
               "python": platform.python_version(), "node": node_version,
               "scope": "QA artifacts plus dependency-free frontend source smoke tests",
               "releaseApproval": "NOT_GRANTED",
-              "limitations": ["Node host may be below frontend engines; see package.json. Full supported-runtime build not certified.",
+              "limitations": ["This offline runner does not install frontend dependencies, typecheck, or build the application.",
                               "Synthetic fixtures do not verify astronomical accuracy.",
-                              "Browser resilience, network traces, real-user sessions and human contract acceptance remain pending."],
+                              "Browser testing, network traces, user sessions and contract acceptance require separate evidence."],
               "inputsSha256": {p.relative_to(ROOT).as_posix(): sha(p.read_bytes()) for p in sorted(set(files))},
               "checks": checks, "status": "PASS" if all(c["status"] == "PASS" for c in checks) else "FAIL"}
     args.output.mkdir(parents=True, exist_ok=True)
