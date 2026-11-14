@@ -18,11 +18,10 @@ export function ApiControls({ request, target, loading, wait, onLoad, onResult, 
   const previousRequest = useRef(request);
   const editedWhileLoading = useRef(false);
   useEffect(() => {
-    if (loading) return;
     const previous = previousRequest.current;
     const preserveDraft = editedWhileLoading.current;
     previousRequest.current = request;
-    editedWhileLoading.current = false;
+    if (!loading) editedWhileLoading.current = false;
     if (previous === request || preserveDraft) return;
     setInputs((current) => {
       try {

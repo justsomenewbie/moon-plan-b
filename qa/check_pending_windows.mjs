@@ -68,6 +68,11 @@ async function exercise(lateSuccess) {
     await Promise.all([firstRequest, page.goto(new URL("/compare", origin).href, { waitUntil: "domcontentloaded" })]);
     await busy.waitFor();
     await page.getByText("Request observation windows", { exact: true }).click();
+    const editor = page.locator("form.request-fields");
+    for (const [key, utc] of [["from", initial.start], ["to", initial.end]]) {
+      assert.equal(Date.parse(await editor.locator('[name="' + key + '"]').inputValue() + "Z"), Date.parse(utc));
+    }
+    assert.equal(await editor.locator('[name="resolution"]').inputValue(), "7200");
     assert.ok(await load.isDisabled());
     assert.ok(await importButton.isDisabled());
     assert.equal(await workspace.count(), 0);
