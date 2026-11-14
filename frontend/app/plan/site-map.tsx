@@ -2,7 +2,7 @@ import { useState } from "react";
 import { lrocSiteUrl, type MapPoint, type PairLocation } from "../../lib/globe-sites";
 import { useLanguage } from "../language";
 
-type MapSite = PairLocation & { hours: number[] | null };
+type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null };
 
 function project(point: MapPoint) {
   // The north-up NASA mosaic spans 180°W to 180°E with the prime meridian in its center.
@@ -66,6 +66,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
         <div aria-live="polite">
           <strong>{selected.name}</strong>
           <p>{criterion} · {selected.hours ? `${selected.hours[column]} h` : t("Incomplete coverage")}</p>
+          {selected.smoothSphere && <p>{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
           {point ? <p>{point.latitude}° {t("latitude")} · {point.longitude}° {t("east longitude")}</p> :
             "reason" in selected.location && <p>{t(selected.location.reason)}</p>}
         </div>

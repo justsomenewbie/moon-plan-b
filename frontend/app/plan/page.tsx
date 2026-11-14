@@ -19,6 +19,7 @@ import AstronautGuide from "../astronaut-guide";
 import { savedResultFromUrl } from "../observed-week";
 import { pairLocation, type PairLocation } from "../../lib/globe-sites";
 import SiteMap from "./site-map";
+import { usesSmoothSphere } from "../../lib/site-horizon";
 import "./plan.css";
 
 const criteria = { joint: "Sun and Earth together", sun: "Sunlight", earth: "Earth visibility" } as const;
@@ -28,7 +29,7 @@ const midnight = (date: string) => date + "T00:00:00Z";
 const planLink = (params: Record<string, string>) => "/plan?" + new URLSearchParams(params);
 type SearchResult = {
   from: string; to: string; scope: "live" | "catalog" | "pair";
-  rows: (PairLocation & { hours: number[] | null; longest?: number; coverage?: string })[];
+  rows: (PairLocation & { smoothSphere: boolean; hours: number[] | null; longest?: number; coverage?: string })[];
   leaders: string[];
 };
 
@@ -40,7 +41,7 @@ function storedResult(from: string, to: string, priority: PlannerPriority, sourc
     const site = run.sites.find(s => s.id === row.id);
     const location = site ? { point: { latitude: site.lat_deg, longitude: site.lon_deg } }
       : { reason: "This release supplies no coordinates for this site." };
-    return { id: row.id, name: row.name, location, hours: [row.sunHours, row.earthHours, row.bothHours] };
+    return { id: row.id, name: row.name, location, smoothSphere: usesSmoothSphere(site), hours: [row.sunHours, row.earthHours, row.bothHours] };
   }) };
 }
 
@@ -57,6 +58,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
   function clear() { active.current?.abort(); setPending(false); if (!wait) setError(""); setResult(null); }
   const best = result?.rows.filter(r => result.leaders.includes(r.id)) ?? [];
   const column = { sun: 0, earth: 1, joint: 2 }[metric];
+  const flatLeaders = best.filter(row => row.smoothSphere && (row.hours?.[column] ?? 0) > 0);
   return <section aria-labelledby="catalog-question">
     <h2 id="catalog-question">{t("Which site fits my dates?")}</h2>
     <form className="request-fields print:hidden" onChange={clear} onSubmit={async e => {
@@ -79,7 +81,8 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
           rows: ranking.ranking.map(row => {
             const site = evidence.sites.find(s => s.id === row.site_id)!;
             const m = site.coverage === "complete" && site.coverage_in_range === "complete" ? site.metrics : null;
-            return { ...pairLocation(row, run.sites, evidence.sites, evidence.conventions), hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
+            return { ...pairLocation(row, run.sites, evidence.sites, evidence.conventions),
+              smoothSphere: usesSmoothSphere(run.sites.find(s => s.id === row.site_id)), hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
           }) });
       } catch (cause) {
         if (!controller.signal.aborted) setError(cause instanceof Error ? cause : "The request could not be completed. Retry or check the connection.");
@@ -101,7 +104,8 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
       <p><strong>{result.scope === "pair" ? t("Saved observations: Odysseus and Athena only.") : result.scope === "catalog" ? t("Saved ranking: all 23 sites.") : t("Live catalog: {count} sites.", {count: result.rows.length})}</strong></p>
       <p className="data-notice">{!best.length ? t("No site has enough coverage for a recommendation.") : best.some(r => (r.hours?.[column] ?? 0) > 0)
         ? t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
-        : t("No evaluated site meets this visibility priority for any hour in this window.")}</p>
+        : t("No evaluated site meets this visibility priority for any hour in this window.")}
+        {flatLeaders.length > 0 && <span className="block">{t("Local terrain shadows are omitted for {sites}.", { sites: flatLeaders.map(r => r.name).join(" · ") })}</span>}</p>
       <SiteMap sites={result.rows} leaders={result.leaders} column={column} criterion={t(criteria[metric])} initialSite={initialSite} />
       <div className="table-scroll"><table><caption>{t("Visibility hours in the selected window")}</caption>
         <thead><tr><th scope="col">{t("Site")}</th>{["Sun visible","Earth visible","Both visible",...(result.scope === "live" ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
@@ -114,7 +118,8 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
             const params = new URLSearchParams({ run_id: run.runId, site_id: row.id, view_site: row.id, from: result.from, to: result.to, resolutionSeconds: String(run.stepSeconds) });
             href = "/compare?" + params + (longWindow ? "#workspace" : "#terrain-observations");
           }
-          return <tr key={row.id}><th scope="row">{href ? <a href={href}>{row.name}</a> : row.name}</th>
+          return <tr key={row.id}><th scope="row">{href ? <a href={href}>{row.name}</a> : row.name}
+            {row.smoothSphere && <small className="block">{t("Smooth-sphere horizon")}</small>}</th>
             {row.hours ? <>{row.hours.map((h,i) => <td key={i}>{h}</td>)}{result.scope === "live" && <td>{row.longest}</td>}</> : <td colSpan={4}>{t("Coverage")} · {t(row.coverage ?? "Incomplete coverage")}</td>}</tr>;
         })}</tbody></table></div>
       <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code>{run.runId}</code></p>

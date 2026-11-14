@@ -21,8 +21,17 @@ try {
     assert.equal(await map.locator(".plan-map-point").count(), catalog.sites.length);
     const diamonds = await map.locator(".map-leader").evaluateAll(nodes => nodes.map(el => el.parentElement.dataset.site).sort());
     assert.deepEqual(diamonds, winners);
+    const fallbackSites = catalog.sites.filter(s => s.horizon_method === "flat" && s.dem_source.startsWith("none:outside-"));
+    const fallbackWinners = fallbackSites.filter(s => winners.includes(s.id));
+    const caveat = page.locator(".plan-results .data-notice").getByText(/Local terrain shadows are omitted for/);
+    assert.equal(await caveat.count(), fallbackWinners.length ? 1 : 0);
+    for (const s of fallbackWinners) assert.ok((await caveat.textContent()).includes(s.name));
+    const notice = map.getByText(/Outside elevation-map coverage/);
+    await map.getByRole("combobox").selectOption("apollo11");
+    assert.ok(await notice.isVisible());
     const site = catalog.sites.find(s => s.id === "chandrayaan3_vikram");
     await map.getByRole("combobox").selectOption(site.id);
+    assert.equal(await notice.count(), 0);
     const imagery = new URL(await map.getByRole("link", {name: /LROC/}).getAttribute("href"));
     assert.equal(Number(imagery.searchParams.get("c_lat")), site.lat_deg);
     assert.equal(Number(imagery.searchParams.get("c_lon")), site.lon_deg);
@@ -32,6 +41,8 @@ try {
     const table = page.locator(".plan-results table");
     assert.equal(await table.getByRole("columnheader").count(), 4);
     assert.equal(await table.locator("tbody tr").count(), catalog.sites.length);
+    const labelled = table.getByRole("rowheader").filter({hasText: "Smooth-sphere horizon"});
+    assert.deepEqual((await labelled.getByRole("link").allTextContents()).sort(), fallbackSites.map(s => s.name).sort());
     assert.ok(await table.evaluate(el => el.getBoundingClientRect().top >= document.querySelector(".plan-site-map").getBoundingClientRect().bottom));
     const detail = catalog.sites.find(s => s.id === "apollo11");
     await table.getByRole("link", { name: detail.name, exact: true }).click();

@@ -783,6 +783,7 @@ export const vietnamese: Record<string, string> = {
   "Saved ranking: all 23 sites.": "Bảng xếp hạng đã lưu gồm đủ 23 địa điểm.",
   "Live catalog: {count} sites.": "Danh mục từ API gồm {count} địa điểm.",
   "No site has enough coverage for a recommendation.": "Chưa có địa điểm nào có đủ dữ liệu để đưa ra đề xuất.",
+  "Local terrain shadows are omitted for {sites}.": "Mô hình chưa tính bóng đổ của địa hình tại {sites}.",
   "Most hours meeting your priority: {sites}.": "Địa điểm có số giờ đáp ứng tiêu chí đã chọn cao nhất: {sites}.",
   "No evaluated site meets this visibility priority for any hour in this window.": "Trong khoảng đã chọn, tất cả địa điểm được đánh giá đều có 0 giờ đáp ứng tiêu chí tầm nhìn này.",
   "Visibility hours in the selected window": "Số giờ nhìn thấy các thiên thể trong khoảng đã chọn",
