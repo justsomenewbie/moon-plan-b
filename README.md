@@ -52,6 +52,16 @@ flowchart LR
 
 Details: [VALIDATION.md](docs/VALIDATION.md) · [VALIDATION_TERRAIN.md](docs/VALIDATION_TERRAIN.md)
 
+## How it meets the judging criteria
+
+| Criterion | Our answer |
+|---|---|
+| **Impact** | Mission planners, lander teams, educators and students see in seconds how many hours a site gets sunlight (power) and Earth contact (radio): the two things that decide whether a lander survives. Moving 100 m on the Shackleton–de Gerlache ridge can drop sunlight from 85 % to 20 %; the tool shows this before a site or date is fixed. Open source (MIT) with a public API. |
+| **Creativity** | Sun **and** Earth visibility together, from real terrain, every hour for 5 years. A "Plan B" date finder for launch slips. Two independent pipelines (Horizons + Moon Trek vs SPICE + PGDA) check each other. Plain-language panel and antenna pointing. |
+| **Validity** | Real physics: apparent Sun/Earth positions, terrain horizon out to 150 km, lunar curvature, 2 m mast. Checked against NASA: Horizons vs SPICE 0.002″, 0 % sun in all 30 shadowed-crater test pixels, median 3.9 points vs NASA illumination maps, hand checks in Horizons, QuickMap and Moon Trek. 441 Python and 426 API tests. Every run is reproducible (checksums in `manifest.json`). Limits are stated (±1 h timing, DEM resolution). |
+| **Relevance** | Answers the challenge directly: compare sites and dates, show the Sun and Earth against the horizon, assess power and direct-to-Earth comms. NASA data are the core input: Horizons, Moon Trek and QuickMap from the challenge Resources, plus NASA GSFC PGDA and NAIF SPICE. |
+| **Presentation** | Live web app (https://lunavigator.com), live API, this short README and the step-by-step guide. |
+
 ## Run it locally
 
 Needs Python ≥ 3.10, Node.js ≥ 24, MongoDB 8 (e.g. `docker run -d -p 27017:27017 mongo:8`).
