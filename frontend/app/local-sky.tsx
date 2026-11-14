@@ -77,6 +77,7 @@ export default function LocalSky({
   const [openIntervals, setOpenIntervals] = useState<string | null>(null);
   const [orbit, setOrbit] = useState(0);
   const [overlay, setOverlay] = useState(false);
+  const [inspected, setInspected] = useState<{ scenario: Scenario; body: "sun" | "earth" } | null>(null);
   const [internalClearance, setInternalClearance] = useState(0);
   const [referenceHours, setReferenceHours] = useState(24);
   const clearanceDeg = clampClearanceDeg(externalClearance ?? internalClearance);
@@ -122,6 +123,7 @@ export default function LocalSky({
   }));
   const selected = alternative && b ? 1 : 0;
   const { scenario, site, sample } = observations[selected];
+  const selectedBody = inspected?.scenario === scenario && sample?.[inspected.body] ? inspected.body : null;
   const showBoth = Boolean(b) && overlay;
   const hud = computeLanderHud(sample, clearanceDeg);
 
@@ -137,6 +139,7 @@ export default function LocalSky({
       {b && <label className="local-sky-picker">{t("View from")}
         <select value={showBoth ? "both" : observations[selected].label} onChange={event => {
           const view = event.target.value;
+          setInspected(null);
           setOverlay(view === "both");
           if (view !== "both") setAlternative(view === "B");
         }}>
@@ -167,16 +170,17 @@ export default function LocalSky({
             const angles = reading?.[key];
             if (!angles) return null;
             const { x, y } = point(angles.azimuthDeg, angles.elevationDeg, orbit);
-            const description = `${label} · ${site.name} · ${t(name)} · ${reading!.utc}`;
-            const inspect = () => setAlternative(index === 1);
+            const description = `${label} · ${site.name} · ${t(name)} · ${reading!.utc} · ${t("Az")} ${angles.azimuthDeg}° · ${t("El")} ${angles.elevationDeg}°`;
+            const active = selected === index && selectedBody === key;
+            const inspect = () => { setAlternative(index === 1); setInspected({ scenario, body: key }); };
             return <g key={scenario.id + key} data-site={showBoth ? label : undefined} className={`sky-ray ${key}`}>
               <line x1="0" y1="0" x2={x} y2={y} stroke="currentColor" strokeWidth="1.5" strokeDasharray={angles.elevationDeg <= clearanceDeg ? "3 3" : undefined} />
-              <g transform={`translate(${x} ${y})`} data-sky-body={key} role={showBoth ? "button" : undefined} tabIndex={showBoth ? 0 : undefined}
-                aria-label={description} aria-pressed={showBoth ? selected === index : undefined} onClick={showBoth ? inspect : undefined} onKeyDown={showBoth ? event => {
+              <g transform={`translate(${x} ${y})`} data-sky-body={key} role="button" tabIndex={0}
+                aria-label={description} aria-pressed={active} aria-controls="sky-body-readings" onClick={inspect} onKeyDown={event => {
                   if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspect(); }
-                } : undefined}>
+                }}>
                 <title>{description}</title>
-                <circle r="9" fill="transparent" stroke={!showBoth && key === "sun" ? "currentColor" : undefined} />
+                <circle className="sky-marker-hit" r="12" fill="transparent" />
                 {key === "sun" ? <circle r="5" fill="currentColor" stroke="var(--bg)" /> :
                   <rect x="-4.5" y="-4.5" width="9" height="9" fill="currentColor" stroke="var(--bg)" />}
                 {showBoth && <text x={index === 0 ? -7 : 7} y={index === 0 ? -6 : 10} textAnchor={index === 0 ? "end" : "start"}>{label}</text>}
@@ -189,9 +193,9 @@ export default function LocalSky({
         <strong>{showBoth && `${observations[selected].label} · `}{site.name}</strong>
         <p className="muted text-sm">{t(data.evidence === "synthetic-fixture" ? "Synthetic release" : "Dataset")} · {scenario.id}</p>
         {sample ? <time dateTime={sample.utc}>{sample.utc}</time> : <p>{t("No shared samples")}</p>}
-        <dl>{bodies.map(([key, name]) => {
+        <dl id="sky-body-readings">{bodies.map(([key, name]) => {
           const v = sample?.[key];
-          return <div key={key}><dt className={key}>{t(name)}</dt>
+          return <div key={key} data-selected={selectedBody === key || undefined}><dt className={key}>{t(name)}{selectedBody === key && <span className="sky-selected-label"> · {t("Selected marker")}</span>}</dt>
             <dd>{v ? <>{t(v.elevationDeg < 0 ? "Below horizon" : v.elevationDeg > 0 ? "Above horizon" : "On horizon")}
               {clearanceDeg > 0 && <> · <span>{t(v.elevationDeg > clearanceDeg ? "Above threshold" : "At or below threshold")}</span></>}<br/>
               <span>{t("Az")} {v.azimuthDeg}° · {t("El")} {v.elevationDeg}°</span></> : t("Unavailable")}</dd></div>;
