@@ -1,0 +1,24 @@
+{
+  "source": "NASA/JPL Horizons",
+  "quantity": "15 (SunSub-LON, SunSub-LAT)",
+  "observer": "Earth geocenter (500@399)",
+  "target": "Moon (301)",
+  "frame": "MOON_ME, east-positive longitude",
+  "ephemeris": "DE441",
+  "query": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27301%27&CENTER=%27500%40399%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&TLIST=%272461358.5%2C2461365.5%27&QUANTITIES=%2715%27&CSV_FORMAT=%27YES%27&TIME_DIGITS=%27SECONDS%27&EXTRA_PREC=%27YES%27&ANG_FORMAT=%27DEG%27&OBJ_DATA=%27NO%27",
+  "retrievedUtcDate": "2026-11-14",
+  "responseSha256": "d7895775547047d8c26cc980c87aca5a94806fa304f4267ea57a60716f4ee6a3",
+  "samples": [
+    {
+      "utc": "2026-11-14T00:00:00Z",
+      "longitude": 126.617658,
+      "latitude": -1.557279
+    },
+    {
+      "utc": "2026-11-21T00:00:00Z",
+      "longitude": 41.450414,
+      "latitude": -1.541521
+    }
+  ],
+  "tableSha256": "c0b6461d12af0c13c0ed0ab23ed360d4512cc98f76f78a3eff26be4655f2adc3"
+}

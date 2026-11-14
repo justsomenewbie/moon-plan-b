@@ -6,6 +6,7 @@ import type { GlobeSite, MapPoint } from "../lib/globe-sites";
 import type { Dataset } from "../lib/dataset";
 import { useLanguage } from "./language";
 import saved from "../lib/odysseus-athena-weeks.json";
+import sunlight from "../lib/horizons-weekly-sunlight.json";
 import "./globe-comparison.css";
 
 const origin = { longitude: 15, latitude: -58 };
@@ -44,6 +45,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState(origin);
   const [rotating, setRotating] = useState(true);
+  const [sunUtc, setSunUtc] = useState("");
   const [reducedMotion, setReducedMotion] = useState(true);
   const [announced, setAnnounced] = useState<typeof origin | null>(null);
   const [chosen, setChosen] = useState<Pick<Target, "key" | "identity"> | null>(null);
@@ -63,6 +65,12 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
   const marker = point && ready ? diskPosition(point, center, zoom) : null;
   const selectedWeek = saved.weeks.find(week => week.startUtc === savedResult);
   const displayedWeeks = selectedWeek ? [selectedWeek] : saved.weeks;
+  // The sunlight selector belongs to the saved comparison, separately from any imported observation.
+  const savedSite = saved.weeks.some(week => week.sites.some(site => site.id === savedResult));
+  const solarChoices = home || (target && !target.missionId) ? [] : sunlight.samples.filter(sample =>
+    sample.utc === selectedWeek?.startUtc || (savedSite && !selectedWeek));
+  const sun = solarChoices.find(sample => sample.utc === sunUtc);
+  const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<{ context: CanvasRenderingContext2D; texture: ImageData; frame: ImageData } | null>(null);
   const drag = useRef<{ id: number; x: number; y: number; scale: number; center: typeof origin } | null>(null);
@@ -72,10 +80,10 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     if (mission) {
       setChosen({ key: mission.name, identity: mission }); setCenter(mission); setRotating(false);
     } else { setChosen(null); setCenter(origin); }
-    setZoom(1); setAnnounced(null);
+    setZoom(1); setAnnounced(null); setSunUtc("");
   }, [savedResult]);
 
-  const currentCenter = useEffectEvent(() => ({ ...center, zoom }));
+  const currentCenter = useEffectEvent(() => ({ ...center, zoom, sun }));
   useEffect(() => { setEnabled(true); }, []);
 
   useEffect(() => {
@@ -136,7 +144,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
         const texture = source.getImageData(0, 0, buffer.width, buffer.height);
         const frame = context.createImageData(context.canvas.width, context.canvas.height);
         const initial = currentCenter();
-        drawGlobe(texture, frame, initial.longitude, initial.latitude, initial.zoom);
+        drawGlobe(texture, frame, initial.longitude, initial.latitude, initial.zoom, initial.sun);
         context.putImageData(frame, 0, 0);
         renderer.current = { context, texture, frame };
         setReady(true);
@@ -153,11 +161,11 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     const view = renderer.current;
     if (!view) return;
     const id = requestAnimationFrame(() => {
-      drawGlobe(view.texture, view.frame, center.longitude, center.latitude, zoom);
+      drawGlobe(view.texture, view.frame, center.longitude, center.latitude, zoom, sun);
       view.context.putImageData(view.frame, 0, 0);
     });
     return () => cancelAnimationFrame(id);
-  }, [center, zoom]);
+  }, [center, zoom, sun]);
 
   function startDrag(event: PointerEvent<HTMLCanvasElement>) {
     if (!ready || !event.isPrimary || event.button !== 0) return;
@@ -192,6 +200,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
   function locate(item: Target | undefined) {
     setRotating(false);
     setChosen(item ? { key: item.key, identity: item.identity } : null);
+    if (item && !item.missionId) setSunUtc("");
     if (item && "point" in item.location) selectCenter(item.location.point);
   }
 
@@ -200,9 +209,11 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
         tabIndex={home ? 0 : undefined} onKeyDown={home ? turnWithKeyboard : undefined}
-        aria-describedby={home ? "home-globe-instructions" : undefined}
+        aria-describedby={home ? "home-globe-instructions" : sun ? "globe-sunlight-description" : undefined}
         onPointerDown={startDrag} onPointerMove={moveDrag}
         onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} />}
+      {ready && sunMarker && <span className="subsolar-marker" aria-hidden="true"
+        style={{ left: `${(1 + sunMarker.x) * 50}%`, top: `${(1 + sunMarker.y) * 50}%` }}>☉</span>}
       {ready && !home && pins.map((item, index) => {
         if (!("point" in item.location)) return null;
         const position = diskPosition(item.location.point, center, zoom);
@@ -216,7 +227,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     <figcaption>
       <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
         setRotating(false);
-        setCenter(point ?? origin); setZoom(1); setAnnounced(null); setReady(false); setFailed(false); setEnabled(!enabled);
+        setCenter(point ?? origin); setZoom(1); setAnnounced(null); setSunUtc(""); setReady(false); setFailed(false); setEnabled(!enabled);
       }}>{t(failed ? "Retry globe" : enabled ? "Return to photograph" : "Rotate the Moon")}</button>
       {ready && <div className="globe-controls" role="group" aria-label={t("Rotate the lunar globe")}>
         {!home && !reducedMotion && <button type="button" onClick={() => setRotating(active => !active)}>{t(rotating ? "Pause rotation" : "Resume rotation")}</button>}
@@ -226,11 +237,28 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
         <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => { setRotating(false); setZoom(zoom * 2); }}>+</button>
         <button type="button" onClick={() => { setZoom(1); selectCenter(origin); }}>{t("Reset view")}</button>
       </div>}
+      {ready && solarChoices.length > 0 && <div className="globe-sunlight">
+        <label>{t("Modeled sunlight")}<select value={sun?.utc ?? ""} onChange={event => {
+          const chosen = solarChoices.find(sample => sample.utc === event.target.value);
+          setSunUtc(chosen?.utc ?? "");
+          if (chosen) { setZoom(1); selectCenter(chosen); }
+        }}>
+          <option value="">{t("Reference map")}</option>
+          {solarChoices.map(sample => <option key={sample.utc} value={sample.utc}>{t("Saved week start")} · {sample.utc.slice(0, 10)} 00:00 UTC</option>)}
+        </select></label>
+        {sun && <div id="globe-sunlight-description">
+          <p>{t("☉ marks where the Sun appears directly overhead.")} {t("Subsolar point")} · {coordinates({ latitude: Number(sun.latitude.toFixed(2)), longitude: Number(sun.longitude.toFixed(2)) }, false)}</p>
+          <p>{t("Smooth-sphere lighting at the selected UTC. Local terrain shadows are omitted.")}</p>
+          {!sunMarker && <button type="button" onClick={() => { setZoom(1); selectCenter(sun); }}>{t("Show subsolar point")}</button>}
+          <a href={sunlight.query} target="_blank" rel="noreferrer">JPL Horizons · {t("Sun direction")} ↗</a>
+        </div>}
+      </div>}
       {ready && <p className="globe-center">{t("View center")} · {coordinates(center)} · {zoom}×</p>}
       <p role="status">{failed ? t("Globe unavailable. The photograph is shown. Try again to reload the map.") : enabled && !ready ? t("Loading lunar surface map…") :
         ready && announced ? <span className="sr-only">{t("View center")} · {coordinates(announced)}</span> : ""}</p>
       {ready ? <><a href="https://svs.gsfc.nasa.gov/4720/" target="_blank" rel="noreferrer">{t("LRO surface map")} · NASA’s Scientific Visualization Studio</a><br /><span id={home ? "home-globe-instructions" : undefined}>{t(home
           ? "Drag to turn the globe, or focus it and use the arrow keys. Return to the photograph for a still image. Lighting is fixed. This globe does not model terrain or calculate Sun/Earth visibility."
+          : sun ? "Drag or use the arrows to rotate the sunlight map."
           : "Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</span></> :
         <><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</>}
       <div className="globe-locator">
