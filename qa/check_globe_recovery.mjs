@@ -46,6 +46,10 @@ try {
   assert.ok(baseline.paths.every(path => path?.startsWith("M")));
   assert.match(baseline.clock, /Primary: .*01:00 UTC · Alternative: .*01:00 UTC$/);
 
+  // The mock service worker handles image requests before page.route can inject either texture failure.
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Network.enable");
+  await cdp.send("Network.setBypassServiceWorker", { bypass: true });
   for (const fault of ["texture-404", "invalid-jpeg", "no-2d-context"]) {
     await globe.getByRole("button", { name: "Return to photograph" }).click();
     if (fault === "no-2d-context") {
