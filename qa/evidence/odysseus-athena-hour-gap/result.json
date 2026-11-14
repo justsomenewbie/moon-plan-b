@@ -110,7 +110,17 @@
         "Primary: 07 Jan 2026, 01:00 UTC · Alternative: 07 Jan 2026, 01:00 UTC",
         "Primary: 07 Jan 2026, 03:00 UTC · Alternative: 07 Jan 2026, 03:00 UTC",
         "Primary: 07 Jan 2026, 04:00 UTC · Alternative: 07 Jan 2026, 04:00 UTC"
-      ]
+      ],
+      "arrowLeft": {
+        "before": {
+          "visible": "Primary: 07 Jan 2026, 03:00 UTC · Alternative: 07 Jan 2026, 03:00 UTC",
+          "accessible": "3 hours elapsed. Primary 07 Jan 2026, 03:00 UTC. Alternative 07 Jan 2026, 03:00 UTC"
+        },
+        "after": {
+          "visible": "Primary: 07 Jan 2026, 01:00 UTC · Alternative: 07 Jan 2026, 01:00 UTC",
+          "accessible": "1 hours elapsed. Primary 07 Jan 2026, 01:00 UTC. Alternative 07 Jan 2026, 01:00 UTC"
+        }
+      }
     }
   },
   "scope": "Two-site browser QA: only the Athena copy omits 02:00 UTC."

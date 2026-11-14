@@ -109,19 +109,29 @@ try {
       const sharedHours = data === gap ? [0, 1, 3, 4] : hours;
       assert.equal(await slider.getAttribute("max"), String(sharedHours.length - 1));
       await slider.press("Home");
-      const readouts = [];
-      for (const h of sharedHours) {
-        if (h) await slider.press("ArrowRight");
+      async function readAt(h) {
         const clock = String(h).padStart(2, "0") + ":00 UTC";
         const label = await slider.getAttribute("aria-valuetext");
         assert.match(label, new RegExp("^"+h+" hours? elapsed\\. Primary .*"+clock+"\\. Alternative .*"+clock+"$"));
         const visible = await page.locator(".sample-time").innerText();
         assert.match(visible, new RegExp("Primary: .*"+clock+" · Alternative: .*"+clock+"$"));
-        readouts.push(visible);
+        return { visible, accessible: label };
+      }
+      const readouts = [];
+      for (const h of sharedHours) {
+        if (h) await slider.press("ArrowRight");
+        readouts.push((await readAt(h)).visible);
         if (swapped && h === 3 && evidenceDir) await chart.screenshot({ path: join(evidenceDir,name+"-chart.png") });
       }
       observed[name].sharedHours = sharedHours;
-      if (swapped) observed[name].sliderReadouts = readouts;
+      if (swapped) {
+        observed[name].sliderReadouts = readouts;
+        await slider.press("ArrowLeft"); // Move from the final sample to 03:00 UTC.
+        const before = await readAt(3);
+        await slider.press("ArrowLeft");
+        const after = await readAt(1);
+        observed[name].arrowLeft = { before, after };
+      }
     }
   }
   if (paired) {
