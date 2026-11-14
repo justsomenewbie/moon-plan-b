@@ -10,7 +10,7 @@ const browser = await chromium.launch({
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await page.clock.setFixedTime(new Date("2026-11-15T05:37:00Z"));
-  await page.goto(origin);
+  await page.goto(new URL("/compare", origin).href);
   const launcher = page.getByRole("button", { name: "Astronaut guide", exact: true });
   const panel = page.locator("aside[popover]");
   await launcher.focus();

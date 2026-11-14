@@ -8,11 +8,12 @@ import type { TerrainSummary } from "../lib/api/terrain-summary";
 import TerrainResult from "./terrain-result";
 import type { TerrainTarget, WindowRequest } from "../lib/api/client";
 import { ApiControls } from "./requests";
-import ThemeControl from "./theme-control";
+import { LunarResources, SiteFooter, SiteHeader, SkyBackground } from "./site-chrome";
 import AstronautGuide from "./astronaut-guide";
 import MoonGlobe from "./moon-globe";
 import LocalSky from "./local-sky";
-import { LanguageControl, useLanguage } from "./language";
+import ImportDialog from "./import-dialog";
+import { useLanguage } from "./language";
 import type { Message } from "../lib/i18n";
 import { alternatives, commonOffsets, durationHours, laterMatch, publishedWindows, readSelection, sampleAt, selectionParams, validateDataset } from "../lib/dataset";
 import type { Dataset, Mode, Scenario, Selection } from "../lib/dataset";
@@ -43,20 +44,19 @@ export default function Navigator() {
   const [playing, setPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [qaEnabled, setQaEnabled] = useState(false);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const importDialog = useRef<HTMLDialogElement>(null);
   const loadGeneration = useRef(0);
   const loadFocus = useRef<Element | null>(null);
   const lastLocation = useRef<string | null>(null);
-  const openObservation = useRef(false);
+  const pendingAnchor = useRef("");
 
   useEffect(() => {
     if (loading) return;
     // The fragment target is absent until the live dataset has rendered.
-    if (openObservation.current) {
-      openObservation.current = false;
-      if (!error && window.location.hash === "#terrain-observations")
-        document.getElementById("terrain-observations")?.scrollIntoView();
+    if (pendingAnchor.current && window.location.hash === pendingAnchor.current) {
+      document.getElementById(pendingAnchor.current.slice(1))?.scrollIntoView();
     }
+    pendingAnchor.current = "";
     const initiator = loadFocus.current;
     loadFocus.current = null;
     // Restore focus lost during loading without taking it from another control.
@@ -118,7 +118,6 @@ export default function Navigator() {
       if (target?.site_id) url.searchParams.set("site_id", target.site_id);
       url.hash = "workspace";
     }
-    openObservation.current = !reset && Boolean(request) && window.location.hash === "#terrain-observations";
     setData(null); setSelection(null); setTerrain(next); setSharedJobId(""); setShareUrl(""); setError(""); setPlaying(false);
     showObservation(next, siteIndex, sample, url, reset);
   }
@@ -154,10 +153,11 @@ export default function Navigator() {
 
   const restoreLocation = useEffectEvent(() => {
     const url = new URL(window.location.href);
+    pendingAnchor.current = url.hash;
     setSavedResult(savedResultFromUrl(url.searchParams));
     url.searchParams.delete("saved");
     const location = url.pathname + url.search;
-    if (location === lastLocation.current) return;
+    if (location === lastLocation.current) { pendingAnchor.current = ""; return; }
     lastLocation.current = location;
     loadGeneration.current++;
     loadFocus.current = null;
@@ -327,43 +327,18 @@ export default function Navigator() {
   }
 
   return <div className="app-shell" ref={reportShell}>
-    <div className="sky-clouds" aria-hidden="true">{[0, 1, 2, 3].map(i => <span key={i} />)}</div>
-    <div className="night-stars" aria-hidden="true">{[0, 1, 2, 3].map(i => <i key={i} />)}</div>
+    <SkyBackground />
     <a className="skip-link" href={comparisonHref}>{t("Skip to comparison")}</a>
-    <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
-      <nav aria-label={t("Main")}>
-        <a href={comparisonHref} className="active-link">{t("Compare")}</a>
-        <a href="#resources">{t("Lunar resources")}</a>
-        {(data || terrain) && !loading && <a href="#sources">{t("Sources & method")}</a>}
-        <LanguageControl />
-        <button className="button outline" onClick={() => fileInput.current?.click()} disabled={loading}>{t("Import data")}</button>
-        <ThemeControl />
-      </nav>
-      <input ref={fileInput} aria-label={t("Import JSON dataset")} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
-    </header>
-    <section className="intro" aria-labelledby="home-title">
-      <div className="hero-copy">
-        <p className="eyebrow">{t("Lunar observation explorer")}</p>
-        <h1 id="home-title">{t("Find a clearer window")}</h1>
-        <p className="lead">{t("See when a lunar landing site can see both the Sun and Earth.")}</p>
-        <div className="hero-actions">
-          <a className="button primary" href="#observed-week">{t("Open comparison tool")} <span aria-hidden="true">↗</span></a>
-          <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
-        </div>
-      </div>
+    <SiteHeader comparisonHref={comparisonHref} showSources={Boolean((data || terrain) && !loading)} />
+    <div className="comparison-toolbar">
+      <h1 className="comparison-heading">{t("Comparison tool")}</h1>
+      <button className="button outline" type="button" aria-haspopup="dialog" aria-controls="import-dialog" disabled={loading} onClick={() => importDialog.current?.showModal()}>{t("Import data")}</button>
+    </div>
+    <ImportDialog ref={importDialog} onImport={importFile} />
+    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")}>
       <MoonGlobe savedResult={savedResult} primary={!loading && a ? data?.sites.find(site => site.id === a.siteId) : undefined}
         alternative={!loading && b ? data?.sites.find(site => site.id === b.siteId) : undefined} evidence={data?.evidence} showSky={setSkyAlternative} />
-      <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
-        <h2 id="home-guide-title">{t("Quick guide")}</h2>
-        <ol>
-          <li>{t("Open the saved results and choose two sites in one week, or two weeks at one site.")}</li>
-          <li>{t("Read the hours when both the Sun and Earth are visible. Select a site on the globe to inspect it.")}</li>
-          <li>{terrain || !isMock && !data ? t("Open the observation workspace to inspect the terrain model’s UTC intervals and coverage.") : t("For individual observations, open the timeline and move the slider to a UTC sample.")}</li>
-        </ol>
-        <a href={comparisonHref}>{t("Open the observation workspace")}</a>
-      </section>
-    </section>
-    <ObservedWeek selection={savedResult} onSelect={chooseSavedResult} onPrint={() => printReport("saved")} />
+    </ObservedWeek>
 
     <div className="workspace-notice">
       <p className="muted text-sm">{isMock ? t("Synthetic mock API · draft contract, pending backend agreement") : t("Team API · terrain horizon model")} · <a href="/api-docs">{t("API explorer")}</a></p>
@@ -371,7 +346,7 @@ export default function Navigator() {
     </div>
     <ApiControls request={requestWindow} loading={loading} onTerrainResult={(request, target) => void loadDemo(true, request, "", target)} onLoad={(request) => void loadDemo(true, request)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
-    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target)}>{t("Retry API request")}</button> : null}{isMock || (!retryLoad && typeof error === "string") ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? t("Reset to demonstration") : t("Retry API request")}</button> : null}<button className="button outline" onClick={() => fileInput.current?.click()}>{t("Import the correct dataset")}</button></div></div> : null}
+    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" ? t(error) : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target)}>{t("Retry API request")}</button> : null}{isMock || (!retryLoad && typeof error === "string") ? <button className="button outline" onClick={() => void loadDemo(true, isMock ? defaultWindow : requestWindow, isMock ? "" : sharedJobId)}>{isMock ? t("Reset to demonstration") : t("Retry API request")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => importDialog.current?.showModal()}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
     {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult result={terrain} catalogWindow={terrainView.link && terrain.sites.length === 2 ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport("workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>
@@ -416,16 +391,8 @@ export default function Navigator() {
       </div>
     </main> : !loading && data && data.scenarios.length === 0 ? <main id="workspace" className="empty-state" tabIndex={-1}><h2>{t("No observation windows in this dataset")}</h2><p>{isMock ? t("Import a release containing scenarios, or explore the clearly labeled demonstration.") : t("Request another UTC range above, or import a release containing scenarios.")}</p><button className="button primary" onClick={() => void loadDemo(true, defaultWindow)}>{isMock ? t("Explore demonstration") : t("Load default date range")}</button></main> : null}
     {data && !loading ? <Sources data={data} a={a} b={b} /> : null}
-    <section id="resources" className="reference-resources" aria-labelledby="resources-heading"><p className="eyebrow">{t("Beyond the comparison")}</p><h2 id="resources-heading">{t("Explore the Moon through its sources.")}</h2><p className="muted">{t("Reference material for learning and cross-checks. These links do not supply the synthetic comparison values.")}</p><div className="resource-links">
-      <a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer"><strong>{t("The Moon, frame by frame ↗")}</strong><span>{t("See the source and credits for the LRO photographic mosaic.")}</span></a>
-      <a href="https://ssd.jpl.nasa.gov/horizons/manual.html#observer-table" target="_blank" rel="noreferrer"><strong>{t("Understand the observations ↗")}</strong><span>{t("Read the JPL Horizons observer-table documentation and coordinate conventions.")}</span></a>
-      <a href="https://trek.nasa.gov/moon/" target="_blank" rel="noreferrer"><strong>{t("Explore lunar terrain ↗")}</strong><span>{t("Open NASA Moon Trek in a separate tab to explore its lunar map.")}</span></a>
-    </div></section>
     <AstronautGuide savedResult={savedResult} terrain={loading || error ? null : terrain} />
-    <footer className="app-footer"><p>{t("Visibility alone does not measure solar power or radio signal strength.")}</p><p>{t("Frontend draft · AI-assisted implementation ·")}{" "}<a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">{t("Project repository")}</a> · <a href="https://github.com/justsomenewbie/moon-plan-b/issues" target="_blank" rel="noreferrer">{t("Project feedback")}</a></p>
-      <div className="sky-appearance"><a className="night-credit" href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noreferrer">{t("Star map")} · NASA/Goddard SVS · ESA/Gaia/DPAC</a>
-        <label><input type="checkbox" id="pause-sky-drift" />{t("Pause sky motion")}</label>
-      </div>
-    </footer>
+    <LunarResources />
+    <SiteFooter />
   </div>;
 }
