@@ -14,8 +14,12 @@ const radius = 104;
 const meridians = [0, 30, 60, 90, 120, 150];
 const compass = ["N", "E", "S", "W"] as const;
 const bodies = [["sun", "Sun"], ["earth", "Earth"]] as const;
-const clearancePresets = [0, 2, 3, 5];
-const referenceDurations = [6, 12, 24, 100];
+const clearancePresets = [
+  { deg: 0, label: "Ideal geometric baseline" },
+  { deg: 2, label: "Example low clearance" },
+  { deg: 5, label: "Example rough clearance" },
+] as const;
+const referenceDurations = [24, 100, 150];
 const opStateLabels: Record<MissionOpState, string> = {
   golden: "Sun and Earth above",
   "solar-only": "Only Sun above",
@@ -44,6 +48,11 @@ function polarXY(cx: number, cy: number, r: number, azDeg: number) {
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
+function sideElevationPoint(elevationDeg: number, length = 70) {
+  const radians = elevationDeg * Math.PI / 180;
+  return { x: 28 + Math.cos(radians) * length, y: 62 - Math.sin(radians) * Math.min(length, 50) };
+}
+
 export default function LocalSky({
   data,
   a,
@@ -68,7 +77,7 @@ export default function LocalSky({
   const [openIntervals, setOpenIntervals] = useState<string | null>(null);
   const [orbit, setOrbit] = useState(0);
   const [internalClearance, setInternalClearance] = useState(0);
-  const [referenceHours, setReferenceHours] = useState(12);
+  const [referenceHours, setReferenceHours] = useState(24);
   const clearanceDeg = clampClearanceDeg(externalClearance ?? internalClearance);
   const updateClearance = (next: number) => {
     const clamped = clampClearanceDeg(next);
@@ -117,6 +126,9 @@ export default function LocalSky({
   const sunTarget = hud.sunAzimuthDeg !== null ? polarXY(90, 90, 62, hud.sunAzimuthDeg) : null;
   const earthTarget = hud.earthAzimuthDeg !== null ? polarXY(90, 90, 62, hud.earthAzimuthDeg) : null;
   const shadowTarget = hud.shadowAzimuthDeg !== null ? polarXY(90, 90, 56, hud.shadowAzimuthDeg) : null;
+  const sunSide = hud.sunElevationDeg !== null ? sideElevationPoint(hud.sunElevationDeg) : null;
+  const earthSide = hud.earthElevationDeg !== null ? sideElevationPoint(hud.earthElevationDeg) : null;
+  const clearanceSide = sideElevationPoint(clearanceDeg, 140);
 
   return <section className="local-sky" id="local-sky" aria-labelledby="local-sky-title" tabIndex={-1}>
     <div className="local-sky-heading"><h2 id="local-sky-title">{t("Local sky in 3D")}</h2>
@@ -190,6 +202,7 @@ export default function LocalSky({
       <p className="muted text-xs">
         {t("The ribbon estimates when each body’s elevation is strictly above the selected angle. It assumes elevation changes linearly between adjacent valid samples. Hatched spans lack data. The timeline bands show the original intervals supplied with the dataset.")}
       </p>
+      <p className="clearance-caveat">{t("Uniform educational sensitivity test — not an azimuth-dependent local terrain model.")}</p>
 
       <div className="clearance-controls">
         <div className="sky-orbit">
@@ -199,15 +212,15 @@ export default function LocalSky({
             type="range"
             min="0"
             max="10"
-            step="0.5"
+            step="0.1"
             value={clearanceDeg}
-            aria-valuetext={`${clearanceDeg.toFixed(1)}°`}
+            aria-valuetext={t("{angle}° simulated uniform clearance", { angle: clearanceDeg.toFixed(1) })}
             onChange={e => updateClearance(Number(e.target.value))}
           />
           <span className="mono" aria-hidden="true">{clearanceDeg.toFixed(1)}°</span>
         </div>
         <div className="preset-pills" role="group" aria-label={t("Clearance presets")}>
-          {clearancePresets.map(deg => (
+          {clearancePresets.map(({ deg, label }) => (
             <button
               type="button"
               key={deg}
@@ -215,7 +228,7 @@ export default function LocalSky({
               aria-pressed={clearanceDeg === deg}
               onClick={() => updateClearance(deg)}
             >
-              {deg}°{deg === 0 && ` · ${t("Ideal horizon")}`}
+              {deg}° · {t(label)}
             </button>
           ))}
         </div>
@@ -226,9 +239,9 @@ export default function LocalSky({
           <div className="mission-card-head">
             <h4>{t("Estimated time above threshold")}</h4>
             <label className="battery-picker">
-              <span>{t("Reference duration")}</span>
+              <span>{t("Educational darkness endurance")}</span>
               <select value={referenceHours} onChange={e => setReferenceHours(Number(e.target.value))}>
-                {referenceDurations.map(hours => <option key={hours} value={hours}>{hours} h</option>)}
+                {referenceDurations.map(hours => <option key={hours} value={hours}>{hours} h · {t("assumption")}</option>)}
               </select>
             </label>
           </div>
@@ -237,22 +250,32 @@ export default function LocalSky({
             {Object.entries(opStateLabels).map(([state, label]) => <span key={state} className={`state-dot ${state}`}>{t(label)}</span>)}
           </div>
           <div className="mission-scenarios">
-            {observations.map(({ label, site: sSite, scenario: sc, summary }) => (
-              <div key={sc.id} className="mission-scenario-row">
+            {observations.map(({ label, site: sSite, scenario: sc, summary }) => {
+              const windowHours = (Date.parse(sc.endUtc) - Date.parse(sc.startUtc)) / 3_600_000;
+              const metric = (value: number | null) => value === null ? t("Unavailable")
+                : `${numbers.format(value)} h · ${numbers.format(value / windowHours * 100)}%`;
+              const stateSummary = summary.goldenHours === null ? t("Duration totals require complete coverage.")
+                : [
+                  `${t(opStateLabels.golden)} ${metric(summary.goldenHours)}`,
+                  `${t(opStateLabels["solar-only"])} ${metric(summary.solarOnlyHours)}`,
+                  `${t(opStateLabels["comms-only"])} ${metric(summary.commsOnlyHours)}`,
+                  `${t(opStateLabels.blackout)} ${metric(summary.blackoutHours)}`,
+                ].join("; ");
+              return <div key={sc.id} className="mission-scenario-row">
                 <div className="mission-scenario-meta">
                   <strong>{label} · {sSite.name}</strong>
                   <span className={`battery-badge ${summary.batteryStatus}`}>
                     {summary.batteryStatus === "safe"
-                      ? t("Within reference duration")
+                      ? t("Within selected endurance")
                       : summary.batteryStatus === "risk"
-                        ? t("Exceeds reference duration")
-                        : t("Incomplete coverage")}
+                        ? t("Exceeds selected endurance")
+                        : t(summary.darknessClipped ? "Unresolved at window boundary" : "Incomplete coverage")}
                   </span>
                 </div>
-                <div className="mission-ribbon" role="img" aria-label={t("{site} · estimated elevation states at {angle}° · {coverage}", {
+                <div className="mission-ribbon" role="img" aria-label={`${t("{site} · estimated elevation states at {angle}° · {coverage}", {
                   site: `${label} · ${sSite.name}`, angle: numbers.format(clearanceDeg),
                   coverage: t(summary.segments.length === 0 ? "Unavailable" : summary.coverage === "complete" ? "Complete coverage" : "Incomplete coverage"),
-                })}>
+                })}. ${stateSummary}`}>
                   {summary.segments.length === 0 ? (
                     <span className="ribbon-empty">{t("Unavailable")}</span>
                   ) : (
@@ -266,6 +289,8 @@ export default function LocalSky({
                     ))
                   )}
                 </div>
+                <ul className="sr-only">{summary.segments.map((seg, idx) =>
+                  <li key={`${seg.startUtc}-${idx}-accessible`}>{t(opStateLabels[seg.state])} · {seg.startUtc} → {seg.endUtc} · {numbers.format(seg.durationHours)} h</li>)}</ul>
                 {summary.segments.length > 0 && <details className="mission-intervals" onToggle={event => {
                   const open = event.currentTarget.open;
                   setOpenIntervals(current => open ? sc.id : current === sc.id ? null : current);
@@ -276,23 +301,25 @@ export default function LocalSky({
                 </details>}
                 {summary.coverage === "complete" ? (
                   <dl className="mission-metrics-row">
-                    <div><dt>{t(opStateLabels.golden)}</dt><dd>{numbers.format(summary.goldenHours!)} h</dd></div>
-                    <div><dt>{t(opStateLabels["solar-only"])}</dt><dd>{numbers.format(summary.solarOnlyHours!)} h</dd></div>
-                    <div><dt>{t(opStateLabels["comms-only"])}</dt><dd>{numbers.format(summary.commsOnlyHours!)} h</dd></div>
+                    <div><dt>{t(opStateLabels.golden)}</dt><dd>{metric(summary.goldenHours)}</dd></div>
+                    <div><dt>{t(opStateLabels["solar-only"])}</dt><dd>{metric(summary.solarOnlyHours)}</dd></div>
+                    <div><dt>{t(opStateLabels["comms-only"])}</dt><dd>{metric(summary.commsOnlyHours)}</dd></div>
+                    <div><dt>{t(opStateLabels.blackout)}</dt><dd>{metric(summary.blackoutHours)}</dd></div>
                     <div><dt>{t("Longest span with Sun at or below threshold / reference")}</dt><dd>{numbers.format(summary.longestSolarDarknessHours!)} h / {referenceHours} h</dd></div>
                   </dl>
                 ) : (
                   <p className="muted text-xs">{t("Duration totals require complete coverage.")}</p>
                 )}
-              </div>
-            ))}
+              </div>;
+            })}
           </div>
         </div>
 
         <div className="lander-hud-card">
           <h4>{t("Directions at the selected sample")} · {observations[selected].label}</h4>
           <div className="lander-hud-body">
-            <svg viewBox="0 0 180 180" className="lander-hud-svg" role="img" aria-label={t("Sun, Earth and ideal shadow bearings viewed from above")}>
+            <div className="lander-hud-diagrams">
+              <svg viewBox="0 0 180 180" className="lander-hud-svg" role="img" aria-label={t("Sun, Earth and ideal shadow bearings viewed from above")}>
               <circle cx="90" cy="90" r="72" className="hud-compass-ring" />
               <circle cx="90" cy="90" r="46" className="hud-inner-ring" strokeDasharray="2 3" />
               <text x="90" y="12" textAnchor="middle" className="sky-bearing">{t("N")}</text>
@@ -336,8 +363,26 @@ export default function LocalSky({
                 <line x1="0" y1="0" x2="0" y2="-12" className="hud-dish-boom" strokeWidth="1.5" />
               </g>}
 
-              <polygon points="90,82 97,87 95,96 85,96 83,87" className="hud-lander-deck" />
-            </svg>
+                <polygon points="90,82 97,87 95,96 85,96 83,87" className="hud-lander-deck" />
+              </svg>
+              <svg viewBox="0 0 180 120" className="lander-side-svg" role="img" aria-label={t("Sun and Earth elevation beside the simulated clearance band")}>
+                <path d={`M28 62 L168 62 L${clearanceSide.x.toFixed(2)} ${clearanceSide.y.toFixed(2)} Z`} className="hud-clearance-band" />
+                <line x1="12" y1="62" x2="172" y2="62" className="hud-horizon-line" />
+                <text x="170" y="58" textAnchor="end" className="hud-side-label">0°</text>
+                <polygon points="22,62 34,62 30,54 26,54" className="hud-lander-deck" />
+                {sunSide && <g>
+                  <line x1="28" y1="62" x2={sunSide.x} y2={sunSide.y} className="hud-sun-ray" strokeDasharray={hud.sunClearsMask ? undefined : "3 3"} />
+                  <circle cx={sunSide.x} cy={sunSide.y} r="4" className="hud-sun-node" />
+                  <text x={sunSide.x + 6} y={sunSide.y - 4} className="hud-side-label">{t("Sun")} · {hud.sunElevationDeg}°</text>
+                </g>}
+                {earthSide && <g>
+                  <line x1="28" y1="62" x2={earthSide.x} y2={earthSide.y} className="hud-earth-ray" strokeDasharray={hud.earthClearsMask ? undefined : "3 3"} />
+                  <rect x={earthSide.x - 3.5} y={earthSide.y - 3.5} width="7" height="7" className="hud-earth-node" />
+                  <text x={earthSide.x + 6} y={earthSide.y + 10} className="hud-side-label">{t("Earth")} · {hud.earthElevationDeg}°</text>
+                </g>}
+                <text x="12" y="112" className="hud-side-label">{t("Side elevation schematic · not local terrain")}</text>
+              </svg>
+            </div>
 
             <dl className="hud-readouts">
               <div>

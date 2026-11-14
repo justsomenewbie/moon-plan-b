@@ -19,7 +19,7 @@ test("shortestAzimuthDelta handles North wrap-around (359° -> 1°) without 180�
   assert.equal(shortestAzimuthDelta(0, 180), 180);
   assert.equal(clampClearanceDeg(-3), 0);
   assert.equal(clampClearanceDeg(14), 10);
-  assert.equal(clampClearanceDeg(2.6), 2.5);
+  assert.equal(clampClearanceDeg(2.64), 2.6);
 });
 
 test("analyzeScenarioClearance reproduces 0° baseline and degrades windows as θ_mask rises", () => {
@@ -33,10 +33,11 @@ test("analyzeScenarioClearance reproduces 0° baseline and degrades windows as �
   assert.equal(base.blackoutHours, 9);
   assert.equal(base.longestGoldenStreakHours, 9);
   assert.equal(base.longestSolarDarknessHours, 6);
-  assert.equal(base.batteryStatus, "safe");
+  assert.equal(base.darknessClipped, true);
+  assert.equal(base.batteryStatus, "unknown");
 
   const strictBattery = analyzeScenarioClearance(ridge1, 0, 3);
-  assert.equal(strictBattery.batteryStatus, "risk");
+  assert.equal(strictBattery.batteryStatus, "unknown");
 
   const elevatedMask = analyzeScenarioClearance(ridge1, 10, 12);
   assert.ok(elevatedMask.goldenHours! < base.goldenHours!);
@@ -52,10 +53,14 @@ test("analyzeScenarioClearance preserves null totals and unknown battery status 
   assert.equal(partialSummary.goldenHours, null);
   assert.equal(partialSummary.longestSolarDarknessHours, null);
   assert.equal(partialSummary.batteryStatus, "unknown");
+  assert.ok(partialSummary.segments.some(segment => segment.state === "unavailable"));
+  assert.equal(partialSummary.segments.reduce((sum, segment) => sum + segment.durationHours, 0),
+    (Date.parse(partial.endUtc) - Date.parse(partial.startUtc)) / 3_600_000);
 
   const missingSummary = analyzeScenarioClearance(missing, 0, 12);
   assert.equal(missingSummary.goldenHours, null);
-  assert.equal(missingSummary.segments.length, 0);
+  assert.equal(missingSummary.segments.length, 1);
+  assert.equal(missingSummary.segments[0].state, "unavailable");
   assert.equal(missingSummary.batteryStatus, "unknown");
 });
 
@@ -92,7 +97,8 @@ test("linear mask crossings split one hour into the three observed-order states"
   ]);
   assert.equal(summary.goldenHours, 0.5);
   assert.equal(summary.longestSolarDarknessHours, 0.25);
-  assert.equal(summary.batteryStatus, "safe");
+  assert.equal(summary.darknessClipped, true);
+  assert.equal(summary.batteryStatus, "unknown");
   assert.deepEqual(analyzeScenarioClearance({ ...scenario, coverage: "partial" }, 5).segments, summary.segments);
 });
 
@@ -120,8 +126,27 @@ test("null body or missing cadence breaks both neighboring spans and suppresses 
     assert.equal(summary.goldenHours, null);
     assert.equal(summary.batteryStatus, "unknown");
     assert.ok(summary.segments.length > 0);
-    assert.equal(Date.parse(summary.segments[0].startUtc), Date.parse(fifth.utc));
+    assert.equal(summary.segments[0].state, "unavailable");
+    assert.equal(Date.parse(summary.segments[0].startUtc), Date.parse(scenario.startUtc));
+    assert.equal(Date.parse(summary.segments.find(segment => segment.state !== "unavailable")!.startUtc), Date.parse(fifth.utc));
   }
+});
+
+test("endurance is evaluated only for darkness bounded inside a complete UTC window", () => {
+  const scenario = fixture().scenarios[0];
+  const start = Date.parse(scenario.startUtc);
+  const body = (elevationDeg: number) => ({ azimuthDeg: 0, elevationDeg });
+  scenario.samples = [10, 10, -10, -10, 10].map((elevationDeg, index) => ({
+    utc: new Date(start + index * 3_600_000).toISOString(),
+    sun: body(elevationDeg), earth: body(20),
+  }));
+  scenario.endUtc = scenario.samples.at(-1)!.utc;
+  scenario.sampleStepSeconds = 3600;
+  const risk = analyzeScenarioClearance(scenario, 0, 1);
+  assert.equal(risk.darknessClipped, false);
+  assert.equal(risk.longestSolarDarknessHours, 2);
+  assert.equal(risk.batteryStatus, "risk");
+  assert.equal(analyzeScenarioClearance(scenario, 0, 3).batteryStatus, "safe");
 });
 
 test("minute cadence accumulates an hour before rounding", () => {
