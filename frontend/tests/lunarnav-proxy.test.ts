@@ -189,6 +189,16 @@ test("public Swagger operations match the relay and retain producer parameter de
       assert.equal(exposed.security, undefined);
       assert.equal(exposed.responses["401"], undefined);
       assert.ok(exposed.responses["502"].content["application/json"]);
+      const timeout = exposed.responses["504"].content["application/problem+json"].schema;
+      const relayRef = { $ref: "#/components/schemas/RelayTimeout" };
+      const original = producer.paths[path][method].responses;
+      if (original["504"]) assert.deepEqual(timeout.anyOf, [original["504"].content["application/problem+json"].schema, relayRef]);
+      else assert.deepEqual(timeout, relayRef);
+      assert.equal(published.components.schemas.RelayTimeout.properties.code.const, "UPSTREAM_TIMEOUT");
+      assert.ok(exposed.responses["429"].headers["Retry-After"]);
+      if (original["502"]) assert.deepEqual(exposed.responses["502"].content["application/problem+json"], original["502"].content["application/problem+json"]);
+      if (method === "post") for (const status of [403, 408, 413, 415])
+        assert.equal(exposed.responses[status].content["application/json"].schema.properties.status.const, status);
       const allowed = [];
       for (const param of operation.parameters ?? []) {
         if (param.in === "path" || await forward(req("?" + param.name + "=example"))) allowed.push(param);

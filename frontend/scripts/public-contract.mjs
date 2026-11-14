@@ -27,9 +27,38 @@ function publicParameter(parameter) {
   return exposed;
 }
 
+// Keep producer problem bodies alongside the relay's own JSON response for a shared status.
+function addRelayErrors(responses, post) {
+  const messages = {
+    400: 'The relay rejected the path, query parameters or JSON body.',
+    502: 'The relay could not obtain an authorized data response from the team service.',
+    503: 'The production data service is not configured on this relay.',
+    ...(post && { 403: 'The relay requires a same-origin request.', 408: 'The incoming JSON upload timed out.',
+      413: 'The incoming JSON exceeds 16 KiB.', 415: 'The relay requires application/json.' }),
+  };
+  for (const [status, description] of Object.entries(messages)) {
+    const prior = responses[status];
+    responses[status] = { ...prior, description: [prior?.description, description].filter(Boolean).join(' '),
+      content: { ...prior?.content, 'application/json': { schema: { type: 'object', required: ['status', 'detail'],
+        properties: { status: { type: 'integer', const: Number(status) }, detail: { type: 'string' } } } } } };
+  }
+  const priorTimeout = responses['504'];
+  const timeoutType = 'application/problem+json';
+  const producerTimeout = priorTimeout?.content?.[timeoutType]?.schema;
+  const relayTimeout = { $ref: '#/components/schemas/RelayTimeout' };
+  responses['504'] = { ...priorTimeout, description: [priorTimeout?.description, 'The relay waited 180 seconds for upstream headers.'].filter(Boolean).join(' '),
+    content: { ...priorTimeout?.content, [timeoutType]: { schema: producerTimeout ? { anyOf: [producerTimeout, relayTimeout] } : relayTimeout } } };
+  responses['429'] = { ...responses['429'], headers: { ...responses['429']?.headers,
+    'Retry-After': { description: 'Wait until this time or for this many seconds before manually retrying.', schema: { type: 'string' } } } };
+}
+
 export function publicContract(producer) {
   const paths = {};
-  const schemas = { ...producer.components.schemas };
+  const schemas = { ...producer.components.schemas, RelayTimeout: {
+    type: 'object', required: ['type', 'title', 'status', 'code', 'detail'],
+    properties: { type: { const: 'about:blank' }, title: { const: 'Upstream timeout' }, status: { const: 504 },
+      code: { const: 'UPSTREAM_TIMEOUT' }, detail: { type: 'string' } },
+  } };
   for (const [path, methods] of Object.entries(producer.paths)) {
     const example = path.replaceAll(/\{[^}]+\}/g, 'example');
     for (const [method, operation] of Object.entries(methods)) {
@@ -39,11 +68,7 @@ export function publicContract(producer) {
       // Authentication is between the server relay and the producer. Its 401 challenge never reaches the browser.
       delete exposed.security;
       delete exposed.responses['401'];
-      exposed.responses['502'] = {
-        description: 'The relay could not obtain an authorized data response from the team service.',
-        content: { 'application/json': { schema: { type: 'object', required: ['status', 'detail'],
-          properties: { status: { const: 502, type: 'integer' }, detail: { type: 'string' } } } } },
-      };
+      addRelayErrors(exposed.responses, Boolean(match.body));
       if (operation.parameters) {
         exposed.parameters = operation.parameters.filter(p => p.in === 'path' || (p.in === 'query' && match.query.includes(p.name))).map(publicParameter);
       }

@@ -17,6 +17,7 @@ pinned.hash = "terrain-observations";
 const liveBrowserDeadline = 190_000;
 const cases = [
   { fault: "404", attempts: 1, message: "Dataset temporarily unavailable" },
+  { fault: "429", attempts: 1, message: "Dataset quota exhausted" },
   { fault: "500", attempts: 3, message: "Test server error" },
   { fault: "offline", attempts: 3, message: "The request could not be completed. Retry or check the connection." },
   { fault: "truncated", attempts: 3, message: "The API returned incomplete or invalid JSON. Please retry." },
@@ -84,6 +85,8 @@ async function checkFault({ fault, attempts, message }) {
     if (fault === "truncated") return route.fulfill({ status: 200, contentType: "application/json", body: '{"schema_version":' });
     if (fault === "504") return route.fulfill({ status: 504, contentType: "application/problem+json",
       json: { type: "about:blank", title: "Upstream timeout", status: 504, code: "UPSTREAM_TIMEOUT", detail: message } });
+    if (fault === "429") return route.fulfill({ status: 429, headers: { "Retry-After": "5" },
+      json: { type: "about:blank", title: "Too many requests", status: 429, code: "RATE_LIMITED", detail: message } });
     return route.fulfill({ status: Number(fault), json: { detail: message } });
   });
   const alert = page.locator("#data-error[role=alert]");
@@ -116,6 +119,19 @@ async function checkFault({ fault, attempts, message }) {
       await page.getByRole("combobox", { name: "Ngôn ngữ" }).selectOption("en");
     }
     if (fault === "404" || fault === "offline") await rejectFile();
+    if (fault === "429") {
+      const countdown = alert.getByRole("button", { name: /Try again in/ });
+      await countdown.waitFor();
+      assert.equal(await countdown.isDisabled(), true);
+      await page.getByText("Request observation windows", { exact: true }).click();
+      const form = page.locator("form.request-fields");
+      assert.equal(await form.getByRole("button", { name: /Try again in/ }).isDisabled(), true);
+      await form.evaluate(element => element.requestSubmit());
+      await rejectFile();
+      assert.equal(await countdown.isDisabled(), true, "A local import error must preserve the server deadline");
+      await retry.waitFor();
+      assert.equal(requests.length, 1, "Expiry enables a manual retry without fetching");
+    }
     if (fault === "offline") {
       assert.equal(await page.evaluate(() => navigator.onLine), false);
       await page.context().setOffline(false);

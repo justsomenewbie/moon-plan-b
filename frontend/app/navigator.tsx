@@ -1,10 +1,10 @@
 "use client";
 
-import { ApiProblemText } from "./api-problem-text";
+import { ApiProblemText, useRetryCountdown } from "./api-problem-text";
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { defaultWindow, getDataset, getJob, getTerrainWindow, isMock, terrainSummaryRequested, validateTerrainTargetWindow, validateWindow } from "../lib/api/client";
+import { ApiError, defaultWindow, getDataset, getJob, getTerrainWindow, isMock, terrainSummaryRequested, validateTerrainTargetWindow, validateWindow } from "../lib/api/client";
 import { parseTerrainSummary, readTerrainObservation } from "../lib/api/terrain-summary";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { readTerrainTarget, terrainSiteIds, writeTerrainTarget } from "../lib/terrain-target";
@@ -48,6 +48,9 @@ export default function Navigator() {
   const [loading, setLoading] = useState(true);
   const [importCompletion, setImportCompletion] = useState(0);
   const [error, setError] = useState<string | Error | { importReason: string; syntax?: boolean }>("");
+  // Local import errors can replace the alert while the producer still requires a wait.
+  const [loadLimit, setLoadLimit] = useState<ApiError | null>(null);
+  const loadWait = useRetryCountdown(loadLimit ?? "");
   const [retryLoad, setRetryLoad] = useState<{ request: WindowRequest; jobId: string; target?: TerrainTarget; reset: boolean } | null>(null);
   const [message, setMessage] = useState<Message>("");
   const [shareUrl, setShareUrl] = useState("");
@@ -141,6 +144,10 @@ export default function Navigator() {
   }
 
   async function loadDemo(reset = false, request: WindowRequest = requestWindow, jobId = "", target?: TerrainTarget, refresh = false) {
+    if (loadLimit?.retryAt && Date.parse(loadLimit.retryAt) > Date.now()) {
+      setError(loadLimit); setRetryLoad({ request, jobId, target, reset }); setLoading(false);
+      return;
+    }
     const generation = ++loadGeneration.current;
     loadFocus.current = document.activeElement?.closest("button, form") ? document.activeElement : null;
     setLoading(true); setError(""); setRetryLoad(null); setMessage(""); setPlaying(false);
@@ -165,7 +172,11 @@ export default function Navigator() {
         }
       }
     } catch (e) {
-      if (generation === loadGeneration.current) { setError(e instanceof Error ? e : "Data could not load."); setRetryLoad({ request, jobId, target, reset }); }
+      if (generation === loadGeneration.current) {
+        setLoadLimit(e instanceof ApiError && e.retryAt ? e : null);
+        setError(e instanceof Error ? e : "Data could not load.");
+        setRetryLoad({ request, jobId, target, reset });
+      }
     } finally { if (generation === loadGeneration.current) setLoading(false); }
   }
 
@@ -404,9 +415,9 @@ export default function Navigator() {
       <p className="muted text-sm">{isMock ? t("Synthetic mock API · Draft contract, pending backend agreement") : t("Team API · Terrain horizon model")} · <a href="/api-docs">{t("API explorer")}</a></p>
       <p className="data-notice">{terrain ? t("Terrain-model results use the supplied surface horizon. Visibility alone does not establish power or a radio link.") : !data ? isMock ? t("No scientific dataset connected. Use the demonstration or import a release.") : t("Waiting for a valid API dataset. You can also import a release.") : data.evidence === "synthetic-fixture" ? t("Demonstration data — fictional sites and values. Not for mission planning.") : t("Supplied data — scientific validity has not been independently verified. Not for mission planning.")}</p>
     </div>
-    <ApiControls request={requestWindow} target={observationTarget} loading={loading} onTerrainResult={(request, target) => void loadDemo(true, request, "", target)} onLoad={(request) => void loadDemo(true, request, "", observationTarget)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
+    <ApiControls wait={loadWait} request={requestWindow} target={observationTarget} loading={loading} onTerrainResult={(request, target) => void loadDemo(true, request, "", target)} onLoad={(request) => void loadDemo(true, request, "", observationTarget)} onResult={(next, range, jobId) => { loadGeneration.current++; setLoading(false); setRetryLoad(null); setRequestWindow({ from: range.from, to: range.to, resolutionSeconds: range.resolutionSeconds }); setSharedJobId(isMock ? "" : jobId); acceptDataset(next, true); setMessage(isMock ? "Mock job finished. These are synthetic fixture results; your coordinates were not calculated." : "Job result received. Shared links depend on backend job retention. Scientific validity is not independently verified."); }} />
     {!loading && data && selection && a && qaEnabled ? <QaInspector data={data} active={a} onSelect={(scenario) => choose(scenario, "dates")} /> : null}
-    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" || error instanceof Error ? <ApiProblemText error={error} /> : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(locale === "vi" && error.syntax ? "JSON syntax error. Check the file before trying again." : error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target, true)}>{t("Retry API request")}</button> : null}{isMock ? <button className="button outline" onClick={() => void loadDemo(true, defaultWindow)}>{t("Reset to demonstration")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => { recoverPinnedImport.current = true; importDialog.current?.showModal(); }}>{t("Import the correct dataset")}</button></div></div> : null}
+    {error ? <div id="data-error" tabIndex={-1} role="alert" className="error-state"><h2>{t("We could not use that data or selection.")}</h2><p>{typeof error === "string" || error instanceof Error ? <ApiProblemText error={error} /> : t("Import rejected: {reason} The previous dataset has not changed.", { reason: t(locale === "vi" && error.syntax ? "JSON syntax error. Check the file before trying again." : error.importReason) })}</p><div className="flex flex-wrap gap-3 mt-4">{data && !selection ? <button className="button primary" onClick={() => { acceptDataset(data, true); setMessage("Saved selection cleared. Using the loaded dataset’s default windows."); }}>{t("Use loaded dataset")}</button> : null}{retryLoad ? <button className="button outline" disabled={loadWait > 0} onClick={() => void loadDemo(retryLoad.reset, retryLoad.request, retryLoad.jobId, retryLoad.target, true)}>{loadWait ? t("Try again in {seconds} s", { seconds: loadWait }) : t("Retry API request")}</button> : null}{isMock ? <button className="button outline" onClick={() => void loadDemo(true, defaultWindow)}>{t("Reset to demonstration")}</button> : null}<button className="button outline" aria-haspopup="dialog" aria-controls="import-dialog" onClick={() => { recoverPinnedImport.current = true; importDialog.current?.showModal(); }}>{t("Import the correct dataset")}</button></div></div> : null}
     <div className="live-status" role="status" aria-live="polite">{loading ? t("Loading dataset…") : t(message)}</div>
 
     {loading ? <main id="workspace" className="loading-state" aria-busy="true"><div className="loading-line" /><h2>{t("Opening the dataset")}</h2><p className="muted">{t("Checking the schema, UTC windows and coverage before displaying results.")}</p></main> : terrain ? <TerrainResult reducedMotion={reducedMotion} printingPair={displayedPair?.terrain === terrain} replayPair={replayPair} onDisplayedPair={setDisplayedPair} result={terrain} liveWindow={terrainView.link && terrain.sites.length ? requestWindow : undefined} view={terrainView} onSelect={(siteIndex, sample) => showObservation(terrain, siteIndex, sample, terrainView.link ? new URL(terrainView.link) : undefined, Boolean(terrainView.link))} onPrint={() => printReport(displayedPair?.terrain === terrain ? "pair" : "workspace")} /> : data && selection && a ? <main id="workspace" className="workspace" tabIndex={-1}>

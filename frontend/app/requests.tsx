@@ -11,7 +11,7 @@ import { useLanguage } from "./language";
 type ResultHandler = (data: Dataset, request: WindowRequest, jobId: string) => void;
 const windowInputs = (request: WindowRequest) => ({ from: request.from.slice(0, -1), to: request.to.slice(0, -1), resolution: String(request.resolutionSeconds) });
 
-export function ApiControls({ request, target, loading, onLoad, onResult, onTerrainResult }: { request: WindowRequest; target?: TerrainTarget; loading: boolean; onLoad: (request: WindowRequest) => void; onResult: ResultHandler; onTerrainResult: (request: WindowRequest, result: { run_id: string; site_id: string }) => void }) {
+export function ApiControls({ request, target, loading, wait, onLoad, onResult, onTerrainResult }: { request: WindowRequest; target?: TerrainTarget; loading: boolean; wait: number; onLoad: (request: WindowRequest) => void; onResult: ResultHandler; onTerrainResult: (request: WindowRequest, result: { run_id: string; site_id: string }) => void }) {
   const { t } = useLanguage();
   const [error, setError] = useState("");
   const [inputs, setInputs] = useState(() => windowInputs(request));
@@ -41,12 +41,13 @@ export function ApiControls({ request, target, loading, onLoad, onResult, onTerr
   return <><details className="request-panel"><summary>{t("Request observation windows")}</summary><p className="muted">{isMock ? t("UTC throughout. Both actions use these editable values. The proposed API limits a request to 31 days and 10,000 samples per series. Actual cadence is reported with each result.") : target?.site_ids ? t("Load observations for the two sites in this shared link using the UTC range below.") : target?.site_id ? t("Load a new UTC window for the selected site.") : t("Compare Odysseus and Athena over up to 31 days. The team API returns full-resolution visibility intervals for the selected UTC range.")}</p>
     <form className="request-fields" onSubmit={(event) => {
       event.preventDefault();
+      if (loading || wait > 0) return;
       try { const next = readRequest(); setError(""); onLoad(next); } catch (e) { setError(e instanceof Error ? e.message : "Invalid request."); }
     }}>
       <label className="field">{t("From · UTC")}<input name="from" type={/\.\d{4,9}Z$/.test(request.from) ? "text" : "datetime-local"} step="0.001" required value={inputs.from} onChange={(e) => changeInput("from", e.target.value)} /></label>
       <label className="field">{t("To · UTC")}<input name="to" type={/\.\d{4,9}Z$/.test(request.to) ? "text" : "datetime-local"} step="0.001" required value={inputs.to} onChange={(e) => changeInput("to", e.target.value)} /></label>
       <label className="field">{t(isMock ? "Desired step · seconds" : "Track sampling step · seconds")}<input name="resolution" type="number" min={isMock ? 60 : 3600} max={isMock ? 86400 : 2678400} step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>
-      <button className="button outline" disabled={loading}>{t("Load windows")}</button>
+      <button className="button outline" disabled={loading || wait > 0}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}
   </details>{isPublicTeamApi ? <p className="muted">{t("Creating, tracking and cancelling custom-site jobs are unavailable on this public frontend.")}</p> : isMock ? <JobForm readRequest={readRequest} onResult={onResult} /> : <CustomSiteJob readRequest={() => windowFromInputs(inputs.from, inputs.to, "3600", validateCustomWindow)} onResult={onTerrainResult} />}</>;
 }
