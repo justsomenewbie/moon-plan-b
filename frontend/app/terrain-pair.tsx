@@ -6,7 +6,7 @@ import { compareSites, type SiteComparison } from "../lib/api/compare-sites";
 import { getTerrainDateSites } from "../lib/api/terrain-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
-import { TimeRange } from "./terrain-site-result";
+import { SiteCsvLinks, TimeRange } from "./terrain-site-result";
 
 const weightLabels = [
   ["pct_sun", "Sun visible"], ["pct_earth", "Earth visible"],
@@ -111,6 +111,7 @@ export default function TerrainPair({ result }: { result: TerrainSummary }) {
           </dl> : <p>{t("Visibility percentages are unknown for the full window.")}</p>}
           {warnings.length > 0 && <><h4>{t("Model warnings")}</h4>
             <ul className="list-disc pl-5">{warnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul></>}
+          <SiteCsvLinks siteId={row.site_id} runId={comparison.run_id} range={comparison.range} />
         </article>;
       })}</div>
     </section>}

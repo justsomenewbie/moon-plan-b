@@ -1,4 +1,5 @@
 import type { TerrainSummary } from "../lib/api/terrain-summary";
+import type { operations } from "../lib/api/producer";
 import { useLanguage } from "./language";
 
 function UtcTime({ value }: { value: string }) {
@@ -13,7 +14,26 @@ const criterionLabels = {
   meets: "Meets the criterion", below: "Below the criterion", borderline: "Near the threshold",
 };
 
-export function SiteResult({ site }: { site: TerrainSummary["sites"][number] }) {
+type ExportRange = Pick<TerrainSummary["range"], "start" | "end">;
+
+export function SiteCsvLinks({ siteId, runId, range }: { siteId: string; runId: string; range: ExportRange }) {
+  const { t } = useLanguage();
+  const bounds = { run_id: runId, start: range.start, end: range.end };
+  const series = {
+    ...bounds, fields: "sun_az_deg,sun_el_deg,sun_visible,earth_az_deg,earth_el_deg,earth_visible,both_visible",
+  } satisfies NonNullable<operations["exportSiteSeriesCsv"]["parameters"]["query"]>;
+  const windows = { ...bounds, kinds: "sun,earth,both" } satisfies NonNullable<operations["exportSiteWindowsCsv"]["parameters"]["query"]>;
+  const path = "/api/v1/sites/" + encodeURIComponent(siteId) + "/export/";
+  return <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 print:hidden">
+    <a href={path + "series.csv?" + new URLSearchParams(series)} target="_blank" rel="noreferrer">{t("Download observations (CSV)")}</a>
+    <a href={path + "windows.csv?" + new URLSearchParams(windows)} target="_blank" rel="noreferrer">{t("Download visibility windows (CSV)")}</a>
+  </div>;
+}
+
+export function SiteResult({ site, liveResult }: {
+  site: TerrainSummary["sites"][number];
+  liveResult?: Pick<TerrainSummary, "run" | "range">;
+}) {
   const { t } = useLanguage();
   const complete = site.coverage_in_range === "complete";
   const metrics = complete ? site.metrics : null;
@@ -47,5 +67,6 @@ export function SiteResult({ site }: { site: TerrainSummary["sites"][number] }) 
         {window.clipped_end && <p className="muted">{t("End clipped. The overlap may have continued later.")}</p>}
       </li>)}
     </ol> : <p className="muted">{t(complete ? "No simultaneous visibility in the evaluated range." : "No overlap intervals were supplied for the available coverage.")}</p>}
+    {liveResult && <SiteCsvLinks siteId={site.id} runId={liveResult.run.run_id} range={liveResult.range} />}
   </article>;
 }

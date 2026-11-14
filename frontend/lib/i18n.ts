@@ -52,6 +52,8 @@ export const vietnamese: Record<string, string> = {
   "Choose an increasing UTC range for the site comparison.": "Chọn khoảng UTC có mốc kết thúc sau mốc bắt đầu để so sánh địa điểm.",
   "The site comparison is inconsistent with the requested sites or UTC window.": "Kết quả so sánh không khớp với địa điểm hoặc khoảng UTC đã yêu cầu.",
   "The site comparison returned an invalid UTC instant.": "Kết quả so sánh địa điểm chứa mốc UTC không hợp lệ.",
+  "Download observations (CSV)": "Tải dữ liệu quan trắc (CSV)",
+  "Download visibility windows (CSV)": "Tải các khoảng nhìn thấy (CSV)",
   "Retry site list": "Tải lại danh sách địa điểm",
   "Choose a valid site ID for the date comparison.": "Chọn mã địa điểm hợp lệ để so sánh hai khoảng thời gian.",
   "Choose two different UTC ranges of equal duration.": "Chọn hai khoảng UTC khác nhau có cùng thời lượng.",

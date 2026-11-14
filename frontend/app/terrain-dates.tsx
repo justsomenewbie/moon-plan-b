@@ -130,7 +130,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
             {adjusted && <p className="muted text-sm">{t("Requested UTC range on the model grid")} · <TimeRange start={response.range.requested_start} end={response.range.requested_end} /></p>}
             <p className="muted text-sm">{t("Evaluated UTC range")} · <TimeRange start={response.range.start} end={response.range.end} /></p>
             <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: response.range.n_samples, step: response.range.step_s })}</p>
-            <SiteResult site={response.sites[0]} />
+            <SiteResult site={response.sites[0]} liveResult={response} />
           </section>;
         })}</div>
         <a className="print:hidden" href={terrainDatesHref(completed.request)} target="_blank" rel="noreferrer">{t("Open date comparison in a new tab")}</a>
