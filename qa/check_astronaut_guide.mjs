@@ -16,7 +16,7 @@ try {
   await page.keyboard.press("Enter");
   await panel.waitFor({ state: "visible" });
   const questions = panel.locator("summary");
-  assert.equal(await questions.count(), 3);
+  assert.equal(await questions.count(), 4);
   for (const [index, expected] of ["choose a week", "no live feed", "no signal-strength estimate"].entries()) {
     await questions.nth(index).click();
     const answer = panel.locator("details[open] p");
@@ -26,10 +26,37 @@ try {
   await page.keyboard.press("Escape");
   await panel.waitFor({ state: "hidden" });
   assert.ok(await launcher.evaluate(button => button === document.activeElement));
+  const saved = page.locator("#observed-week select");
+  const week1 = "2026-11-14 → 2026-11-20 UTC";
+  const week2 = "2026-11-21 → 2026-11-27 UTC";
+  async function checkSavedAnswer(button, question, selection, expected) {
+    await saved.selectOption(selection);
+    await button.click();
+    const summary = panel.getByText(question, { exact: true });
+    if (!await summary.evaluate(el => el.parentElement.open)) await summary.click();
+    const list = panel.locator("details[open] li");
+    assert.deepEqual(await list.allInnerTexts(), expected);
+    await page.keyboard.press("Escape");
+    await panel.waitFor({ state: "hidden" });
+  }
+  const english = "How long are the Sun and Earth both visible in my saved comparison?";
+  const vietnamese = "Trong kết quả đã chọn, cả Mặt Trời và Trái Đất cùng xuất hiện trong bao lâu?";
+  await checkSavedAnswer(launcher, english, "2026-11-14T00:00:00Z", [
+    "Odysseus · IM-1 · 33 h\n" + week1, "Athena · IM-2 · 139 h\n" + week1,
+  ]);
+  await checkSavedAnswer(launcher, english, "im2_athena", [
+    "Athena · IM-2 · 139 h\n" + week1, "Athena · IM-2 · 168 h\n" + week2,
+  ]);
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.getByRole("combobox", { name: "Language" }).selectOption("vi");
   const viLauncher = page.getByRole("button", { name: "Hướng dẫn của phi hành gia", exact: true });
+  await checkSavedAnswer(viLauncher, vietnamese, "2026-11-21T00:00:00Z", [
+    "Odysseus · IM-1 · 168 h\n" + week2, "Athena · IM-2 · 168 h\n" + week2,
+  ]);
+  await checkSavedAnswer(viLauncher, vietnamese, "im1_odysseus", [
+    "Odysseus · IM-1 · 33 h\n" + week1, "Odysseus · IM-1 · 168 h\n" + week2,
+  ]);
   await viLauncher.click();
   await panel.getByText("Bạn muốn tìm hiểu điều gì?").waitFor();
   await questions.first().click();

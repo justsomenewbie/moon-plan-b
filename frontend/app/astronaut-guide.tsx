@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import snapshot from "../lib/odysseus-athena-weeks.json";
 import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
 
@@ -15,6 +16,8 @@ const messages = {
       ["Does seeing Earth guarantee a radio link?", "Earth visibility tells you whether Earth is in view. Signal strength also depends on the radio equipment and the link conditions. The comparison gives no signal-strength estimate."],
     ],
     saved: "Go to saved comparisons",
+    resultQuestion: "How long are the Sun and Earth both visible in my saved comparison?",
+    resultIntro: "The saved model gives these hours when both bodies are visible in each UTC week.",
   },
   vi: {
     title: "Hướng dẫn của phi hành gia",
@@ -26,13 +29,18 @@ const messages = {
       ["Nhìn thấy Trái Đất có bảo đảm liên lạc vô tuyến không?", "Việc nhìn thấy Trái Đất cho biết Trái Đất nằm trong tầm nhìn. Cường độ tín hiệu còn phụ thuộc vào thiết bị vô tuyến và điều kiện đường truyền. Công cụ so sánh không ước tính cường độ tín hiệu."],
     ],
     saved: "Đến phần so sánh kết quả đã lưu",
+    resultQuestion: "Trong kết quả đã chọn, cả Mặt Trời và Trái Đất cùng xuất hiện trong bao lâu?",
+    resultIntro: "Mô hình đã lưu cho biết số giờ có thể nhìn thấy đồng thời cả hai thiên thể trong mỗi tuần tính theo UTC.",
   },
 };
 
-export default function AstronautGuide() {
+export default function AstronautGuide({ savedResult }: { savedResult: string }) {
   const { locale } = useLanguage();
   const copy = messages[locale];
   const id = useId();
+  const rows = snapshot.weeks.flatMap(week => week.sites
+    .filter(site => week.startUtc === savedResult || site.id === savedResult)
+    .map(site => ({ week, site })));
   return <>
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}>
       <span aria-hidden="true">🧑‍🚀</span>
@@ -49,6 +57,15 @@ export default function AstronautGuide() {
           <p>{answer}</p>
         </details>
       )}
+      {rows.length > 0 && <details name={id}>
+        <summary>{copy.resultQuestion}</summary>
+        <p>{copy.resultIntro}</p>
+        <ul className={styles.results}>{rows.map(({ week, site }) =>
+          <li key={week.startUtc + site.id}><strong>{site.name} · {site.overlap.duration_h} h</strong>
+            <span>{week.startUtc.slice(0, 10)} → {new Date(Date.parse(week.endUtc) - 1).toISOString().slice(0, 10)} UTC</span>
+          </li>
+        )}</ul>
+      </details>}
       <a className={styles.jump} href="#observed-week" onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.saved}</a>
     </aside>
   </>;

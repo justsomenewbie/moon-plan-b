@@ -38,6 +38,9 @@
 .panel summary, .jump { padding: .65rem 0; min-height: 2.75rem; }
 .panel summary { font-weight: 600; }
 .panel details p { margin-bottom: .85rem; }
+.results { list-style: none; margin-bottom: .85rem; }
+.results li + li { margin-top: .5rem; }
+.results span { display: block; color: var(--muted); }
 .jump { display: inline-block; color: var(--earth); text-decoration: underline; }
 
 @media (prefers-reduced-motion: no-preference) {
