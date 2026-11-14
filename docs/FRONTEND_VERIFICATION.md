@@ -313,6 +313,12 @@ For Apollo 11 on November 15 at 00:00–03:00 UTC, the producer reported a flat 
 
 Chromium compared four run B site cards to the bounded aggregate and opened each full-run site record explicitly. Coordinates, surface heights and the declared conventions matched. The Vietnamese view retained Apollo 11’s 0 m and Haworth’s east longitude above 180° at 320 CSS pixels. A two-date report showed the pinned site in both cards, and a pair comparison linked each selected site to its own record. A local import retained the supplied location without remote actions. An older import opened with no location fields.
 
+### Live observation lookup
+
+On run B, Chromium compared each displayed angle and visibility flag to the producer response for Athena before, at and after its 05:00 UTC transition on November 15. The first build could overwrite a time entered immediately after opening the form. After fixing the opening handler, three consecutive replays passed. Invalid bounds, editing, and changing sites made no unintended requests. A simulated 503 could be retried, a delayed response could not replace the newly selected observation, and local imports kept their offline inspector. The Vietnamese report fit at 320 CSS pixels.
+
+Safari 26.6.2 in the Hanoi time zone displayed a request for 05:30 UTC and its 05:00 model sample in both languages. It preserved the negative Sun-centre clearance and the positive visibility flag. The isolated WebDriver session closed. The live and mock production builds passed TypeScript and 121 frontend tests. The producer extract matched 15 live operations and 70 referenced components.
+
 ### Run provenance and custom-job rejections
 
 Chromium opened the run B JSON in a separate tab and downloaded the original manifest. Its bytes matched the digest displayed under **Sources & method**. The workspace, Vietnamese layout at 320 CSS pixels and standalone date report retained the same run and manifest links. Local import retained the path and digest as text. A manifest path for a different run stayed inactive, and a simulated 404 left the source report open. Native Safari 26.6.2 displayed both links in English and Vietnamese and opened the matching run record in a separate tab within the isolated test session.

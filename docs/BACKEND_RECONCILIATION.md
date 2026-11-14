@@ -24,6 +24,10 @@ Earlier on November 14, a run B query for November 19 from 14:00 UTC with the re
 
 At 16:50 Hanoi, a direct GET with `end=15:00:00.500Z` returned the expected 14:00 and 15:00 UTC samples at both sites. Its series response was byte-identical to the whole-second control ending at `15:00:01Z`. An end of exactly 15:00 or 14:59:59.999 yielded one sample, and 15:00:00.001 yielded two. The remaining discrepancy is below one millisecond. Both `15:00:00.000001Z` and `15:00:00.000000001Z` were accepted but returned one sample, ending at 15:00. The OpenAPI end pattern allows one to nine fractional digits and specifies snapping upward. The FE's transport rounding retains the final sample.
 
+### Lookup between model samples
+
+On November 15 from 03:00 to 09:00 UTC, 20 explicit `/instant` requests across Odysseus and Athena matched the run B series, aggregate angles and visibility intervals at the corresponding samples. At Athena, 04:59:59 belonged to the 04:00 sample with only Earth visible. At 05:30 the 05:00 sample showed both bodies visible. The Sun centre was 0.139544° below the local horizon and the visible disc fraction was 0.185915. The hour identifies the model sample. The physical crossing time within the hour remains unresolved.
+
 ### Source run and raw manifest
 
 The producer OpenAPI SHA-256 at this check was `d8ba996ed039111b682f8ac3f531cf3093764527c16e93988545e0066d971e33`. The run B detail listed 94 file paths and hashes, matching the manifest. The original `manifest.json` downloaded from the run’s file endpoint contained 13,678 bytes. Its SHA-256 matched the value declared in the aggregate and the download ETag. The raw horizon files for Odysseus and Athena also matched their listed hashes. Other files were checked at the list level only.

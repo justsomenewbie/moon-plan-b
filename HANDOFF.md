@@ -2,21 +2,21 @@
 
 ## Mission Survival & Horizon Clearance Studio
 
-Checkpoint `54386ef` refines the static-data studio without new endpoints or dependencies. The simulated uniform clearance control spans 0–10° in 0.1° steps with 0/2/5° educational presets. The ribbon keeps four known states plus explicit unavailable UTC intervals, shows hours and percentages, and never turns a null or cadence gap into blackout. Educational darkness endurance uses 24/100/150-hour assumptions; a boundary-clipped dark span stays unresolved unless its observed duration already exceeds the selected reference. Producer intervals remain unchanged and separately labeled.
+Checkpoint `54386ef` refines the studio without new endpoints or dependencies. The simulated clearance control spans 0–10° in 0.1° steps with 0/2/5° educational presets. The ribbon keeps four known states plus explicit unavailable UTC intervals, shows hours and percentages, and never turns a null or cadence gap into blackout. Educational darkness endurance uses 24/100/150-hour assumptions; a boundary-clipped dark span stays unresolved unless its observed duration already exceeds the selected reference. Producer intervals remain unchanged and separately labeled.
 
 The synced HUD retains shortest-angle north wrapping, adds a side-elevation schematic, and labels its uniform mask as a sensitivity test rather than local terrain. Timeline and polar plots shade the selected clearance band. State patterns, always-mounted screen-reader interval text, 44px controls, forced-colors boundaries and printable results supplement color. English remains default with optional Vietnamese display translation; values, UTC and IDs are unchanged. Sun clearance is not a power model, and Earth visibility is not a radio-link budget.
 
-Minh’s clearance checkpoint passed 82 frontend tests, route generation, TypeScript and a production build. The [QA replay](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram) covers the side-view fix, 320px, desktop, forced colors, PDF and both orders of the archived Horizons comparison. On `65b7375`, both clocks skipped Athena’s missing 02:00 UTC in both directions.
+Minh’s clearance checkpoint passed 82 tests, route generation, TypeScript and build. The [QA replay](qa/docs/UI_RESILIENCE.md#horizon-clearance-and-direction-diagram) covers the side-view fix, 320px, desktop, forced colors, PDF and both orders of the archived Horizons comparison. On `65b7375`, both clocks skipped Athena’s missing 02:00 UTC in both directions.
 
 ## Current product, backend and QA state
 
-Features include imports, saved links, EN/VI, printing and sources. Local sky initially shows one observation; View from switches or overlays both. Athena had two three-hour November proposals and none in December’s control. The date search distinguishes requested and grid times. Pinned imports check run, UTC, site, cadence and observation. Custom jobs preserve UTC, shared releases and definitive cancellation refusals. Science owns physical validation; data owns Colab. [Backend findings](docs/BACKEND_RECONCILIATION.md).
+Imports, saved links, EN/VI, printing and sources work. Local sky initially shows one observation; View from switches or overlays both. Athena had two three-hour November proposals and none in December’s control. The date search distinguishes requested and grid times. Pinned imports check run, UTC, site, cadence and observation. Custom jobs preserve UTC, shared releases and definitive cancellation refusals. Science owns physical validation; data owns Colab. [Backend findings](docs/BACKEND_RECONCILIATION.md).
 
 Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
 Saved-week globes offer [dated sunlight](docs/GLOBE_SUNLIGHT.md). Sky markers select body-specific readings. EN/VI mobile checks covered the team contact footer, imports, site selection, UTC, clearance and API status.
 
-Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Reports show coordinates, model heights and linked records. FE preserves sub-millisecond ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Reports link site coordinates and heights. UTC lookup shows requested and native samples. Fractional ends retain coverage. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gap navigation at 320px and 200% Chromium zoom. Home globe focus is visible. Reload reopens linked sources.
 
@@ -26,4 +26,4 @@ The astronaut offers help, labels modeled readings, pauses its wave and opens pa
 
 ## Pending
 
-Backend sub-millisecond end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain open. See the [freeze checklist](qa/docs/RUNBOOK.md). Named stashes retain backend-QA and pre-sync work.
+Backend sub-millisecond end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Named stashes retain backend-QA and pre-sync work.
