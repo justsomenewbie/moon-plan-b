@@ -59,8 +59,11 @@ export function plannerFormState(seed: URLSearchParams, mode: string, source: Pl
   p.set("mode", mode);
   if (mode === "sites") {
     for (const name of ["from", "to", "priority", "missionHours"]) set(name, text(form, name));
+    if (p.get("priority") === "longest") { p.set("order", "longest"); p.set("priority", "joint"); }
+    else p.delete("order");
     return p;
   }
+  p.delete("order");
   if (source === "live") {
     const hours = text(form, "missionHours");
     const objective = text(form, "objective");

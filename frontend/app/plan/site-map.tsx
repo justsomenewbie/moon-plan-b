@@ -5,7 +5,7 @@ import { useLanguage } from "../language";
 
 const MoonGlobe = dynamic(() => import("../moon-globe"));
 
-type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null; trackingPower?: number };
+type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null; longest?: number; trackingPower?: number };
 
 // Each bin is a quarter of unobstructed sunlight on a Sun-facing panel.
 const sunlightBins = [
@@ -79,7 +79,7 @@ function SurfaceCloseUp({ point, name }: { point: MapPoint | null; name: string 
 }
 
 export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref }: {
-  sites: MapSite[]; leaders: string[]; column: number; criterion: string; initialSite: string | null;
+  sites: MapSite[]; leaders: string[]; column: number | "longest"; criterion: string; initialSite: string | null;
   detailHref: (siteId: string) => string | undefined;
 }) {
   const { t, locale } = useLanguage();
@@ -91,7 +91,8 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   const [customPoint, setCustomPoint] = useState<MapPoint | null>(null);
   const surfaceButton = useRef<HTMLButtonElement>(null);
   const [imageFailed, setImageFailed] = useState(false);
-  const isLeader = (site: MapSite) => leaders.includes(site.id) && (site.hours?.[column] ?? 0) > 0;
+  const value = (site: MapSite) => column === "longest" ? site.longest : site.hours?.[column];
+  const isLeader = (site: MapSite) => leaders.includes(site.id) && (value(site) ?? 0) > 0;
   const selected = sites.find(site => site.id === selectedId) ?? sites.find(isLeader) ?? sites[0];
   if (!selected) return null;
   const details = detailHref(selected.id);
@@ -186,7 +187,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           <strong>{selected.name}</strong>
           {markerColors && view !== "surface" && <p>{solar.key} · <strong>{selected.trackingPower === undefined ? solar.missing :
             new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(selected.trackingPower)}</strong></p>}
-          <p>{criterion} · {selected.hours ? `${selected.hours[column]} h` : t("Incomplete coverage")}</p>
+          <p>{criterion} · {value(selected) !== undefined ? `${value(selected)} h` : t("Incomplete coverage")}</p>
           {selected.smoothSphere && <p>{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</p>}
           {point ? <p>{point.latitude}° {t("latitude")} · {point.longitude}° {t("east longitude")}</p> :
             "reason" in selected.location && <p>{t(selected.location.reason)}</p>}

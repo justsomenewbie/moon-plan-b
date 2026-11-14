@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { archiveB2Run, rankArchiveB2 } from "../../../lib/archive-b2";
-import { getSavedPlannerRanking, savedPlannerRun } from "../../../lib/saved-planner";
+import { getSavedPlannerRanking, savedJointWindows, savedPlannerRun } from "../../../lib/saved-planner";
 import { plannerLink } from "../../../lib/planner-source";
 import { lrocSiteUrl } from "../../../lib/globe-sites";
 import { LanguageControl, useLanguage } from "../../language";
@@ -31,8 +31,10 @@ function SiteReport() {
   const ranking = valid && (source === "saved-b2" ? rankArchiveB2 : getSavedPlannerRanking)({ from, to, priority });
   const site = run?.sites.find(row => row.id === siteId);
   const row = ranking && ranking.rows.find(row => row.id === siteId);
+  const longest = priority === "joint" && query.get("order") === "longest";
   const planner = new URLSearchParams({ mode: "sites" });
   if (run && source) planner.set("source", source);
+  if (longest) planner.set("order", "longest");
   if (ranking && priority) {
     const searchFrom = query.get("searchFrom") ?? "", searchTo = query.get("searchTo") ?? "";
     const duration = Number(query.get("missionHours"));
@@ -57,10 +59,14 @@ function SiteReport() {
   }
   const folder = source === "saved-b2" ? "/data/run-b2" : "/data/run-b";
   const sourceInfo = source === "saved-b2" ? "/data#run-b2" : "/data#bundled-data";
+  const savedInterval = longest && source === "saved" ? savedJointWindows(ranking.from, ranking.to)?.find(s => s.id === row.id) : undefined;
+  const uninterrupted = "longestBothHours" in row && typeof row.longestBothHours === "number" ? row.longestBothHours :
+    savedInterval ? savedInterval.window?.hours ?? 0 : undefined;
   const metrics = [
     [text("Sun visible", "Nhìn thấy Mặt Trời"), row.sunHours],
     [text("Earth visible", "Nhìn thấy Trái Đất"), row.earthHours],
     [text("Sun and Earth visible together", "Đồng thời nhìn thấy Mặt Trời và Trái Đất"), row.bothHours],
+    ...(longest && uninterrupted !== undefined ? [[t("Longest joint window"), uninterrupted] as const] : []),
   ] as const;
   return <>
     <a href={back}>{text("Back to these site results", "Quay lại kết quả tìm địa điểm")}</a>
@@ -68,7 +74,7 @@ function SiteReport() {
     <section className="space-y-3" aria-labelledby="site-visibility">
       <h2 id="site-visibility">{t("Visibility hours in the selected window")}</h2>
       <p><TimeRange start={ranking.from} end={ranking.to} /> · {text("end excluded", "không gồm mốc kết thúc")}</p>
-      <p>{text("Ranking priority", "Tiêu chí xếp hạng")} · {t(priorities[priority])}</p>
+      <p>{text("Ranking priority", "Tiêu chí xếp hạng")} · {t(longest ? "Longest joint window" : priorities[priority])}</p>
       <dl className="grid gap-4 sm:grid-cols-3">{metrics.map(([label, hours]) => <div key={label}>
         <dt>{label}</dt><dd className="text-xl font-semibold">{hours} h</dd>
       </div>)}</dl>

@@ -10,7 +10,7 @@ import { getPlannerMissionRanking, getPlannerRanking, getPlannerRun, type Planne
 import { rankSavedMissionWindows, type MissionWindowRanking } from "../../lib/mission-window-ranking";
 import type { TerrainSummary } from "../../lib/api/terrain-summary";
 import { archiveB2Run, rankArchiveB2 } from "../../lib/archive-b2";
-import { getSavedPlannerRanking, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
+import { getSavedPlannerRanking, savedJointWindows, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
 import { useLanguage, LanguageControl } from "../language";
 import MissionDateSearch from "../mission-date-search";
 import SavedLanding from "./saved-landing";
@@ -50,7 +50,14 @@ function missionResult(ranking: MissionWindowRanking, run: PlannerRun, evidence?
   };
 }
 
-function storedResult(from: string, to: string, priority: PlannerPriority, source: Exclude<PlannerSource, "live">, missionHours?: number): SearchResult | null {
+function rankByLongest(result: SearchResult): SearchResult {
+  const rows = result.rows.toSorted((a, b) => (b.longest ?? -1) - (a.longest ?? -1) || a.name.localeCompare(b.name, "en"));
+  const top = rows[0]?.longest;
+  return { ...result, rows, leaders: top !== undefined && top > 0 ? rows.filter(row => row.longest === top).map(row => row.id) : [] };
+}
+
+function storedResult(from: string, to: string, priority: PlannerPriority, source: Exclude<PlannerSource, "live">, longest: boolean, missionHours?: number): SearchResult | null {
+  if (longest && missionHours !== undefined) return null;
   if (missionHours !== undefined) {
     const ranking = rankSavedMissionWindows(source, { from, to, priority, missionHours });
     return ranking && missionResult(ranking, source === "saved-b2" ? archiveB2Run : savedPlannerRun);
@@ -58,14 +65,20 @@ function storedResult(from: string, to: string, priority: PlannerPriority, sourc
   const saved = source === "saved-b2" ? rankArchiveB2({ from, to, priority }) : getSavedPlannerRanking({ from, to, priority });
   const run = source === "saved-b2" ? archiveB2Run : savedPlannerRun;
   // Both archived manifests specify planetocentric latitude and east longitude in MOON_ME.
-  return saved && { ...saved, rows: saved.rows.map(row => {
+  if (!saved) return null;
+  const pair = source === "saved" && longest ? savedJointWindows(saved.from, saved.to) : null;
+  if (source === "saved" && longest && !pair) return null;
+  const chosen = pair ? saved.rows.filter(row => pair.some(site => site.id === row.id)) : saved.rows;
+  const result: SearchResult = { ...saved, scope: pair ? "pair" : saved.scope, rows: chosen.map(row => {
     const site = run.sites.find(s => s.id === row.id);
     const location = site ? { point: { latitude: site.lat_deg, longitude: site.lon_deg } }
       : { reason: "This release supplies no coordinates for this site." };
-    const longest = "longestBothHours" in row && typeof row.longestBothHours === "number" ? row.longestBothHours : undefined;
+    const longest = pair ? pair.find(site => site.id === row.id)?.window?.hours ?? 0 :
+      "longestBothHours" in row && typeof row.longestBothHours === "number" ? row.longestBothHours : undefined;
     return { id: row.id, name: row.name, location, smoothSphere: usesSmoothSphere(site),
       hours: [row.sunHours, row.earthHours, row.bothHours], longest };
   }) };
+  return longest ? rankByLongest(result) : result;
 }
 
 function savedSearchError(source: PlannerSource, duration: string) {
@@ -83,16 +96,21 @@ function catalogInputError(run: PlannerRun, from: string, to: string, duration: 
   return "";
 }
 
-function CatalogSearch({ run, first, last, priority, source, initialSite, runIds, initialDuration }: { initialDuration: string; run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource; initialSite: string | null; runIds: string[] }) {
-  const { t } = useLanguage();
-  const [result, setResult] = useState<SearchResult | null>(() => source === "live" ? null : storedResult(first, last, priority, source, initialDuration ? Number(initialDuration) : undefined));
+function CatalogSearch({ run, first, last, priority, source, initialSite, runIds, initialDuration, initialLongest }: { initialDuration: string; initialLongest: boolean; run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource; initialSite: string | null; runIds: string[] }) {
+  const { t, locale } = useLanguage();
+  const legacyError = locale === "vi" ? "Bản lưu B chỉ có các khoảng liên tục cho Odysseus và Athena trong khoảng ngày đã lưu." : "Run B retains continuous windows only for Odysseus and Athena within its saved dates.";
+  const durationError = locale === "vi" ? "Hãy bỏ trống thời lượng nhiệm vụ để so sánh khoảng liên tục dài nhất trong toàn bộ khoảng ngày." : "Clear the mission duration to compare the longest continuous window across the travel dates.";
+  const [result, setResult] = useState<SearchResult | null>(() => source === "live" ? null : storedResult(first, last, priority, source, initialLongest, initialDuration ? Number(initialDuration) : undefined));
   const [duration, setDuration] = useState(initialDuration);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | Error>(() => source !== "live" && initialDuration && !result
+  const [error, setError] = useState<string | Error>(() => source !== "live" && initialDuration && !result && !initialLongest
     ? catalogInputError(run, midnight(first), midnight(last), initialDuration) || savedSearchError(source, initialDuration) : "");
   const wait = useRetryCountdown(error);
   const { prefix, fieldAttributes } = useProblemFields(error);
-  const [metric, setMetric] = useState(priority);
+  const [order, setOrder] = useState<PlannerPriority | "longest">(initialLongest ? "longest" : priority);
+  const longest = order === "longest";
+  const metric = longest ? "joint" : order;
+  const label = t(longest ? "Longest joint window" : criteria[metric]);
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
   function clear() { active.current?.abort(); setPending(false); if (!wait) setError(""); setResult(null); }
@@ -101,12 +119,13 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
   const flatLeaders = best.filter(row => row.smoothSphere && (row.hours?.[column] ?? 0) > 0);
   const pairRange = savedPlannerWindows.pair;
   const presets = savedPlannerWindows.catalog.filter(range => !duration || Date.parse(range.to) - Date.parse(range.from) === Number(duration) * 3600000);
-  const showLongest = source !== "saved" && result?.missionHours === undefined;
+  const showLongest = (source !== "saved" || longest) && result?.missionHours === undefined;
   function detailHref(siteId: string) {
     if (!result) return undefined;
     const mission = result.rows.find(row => row.id === siteId)?.missionWindow;
     if (source !== "live") return plannerLink("/plan/site", {
       source, site: siteId, from: mission?.start ?? result.from.slice(0, 10), to: mission?.end ?? result.to.slice(0, 10), priority: metric,
+      ...(longest ? { order: "longest" } : {}),
       ...(result.missionHours ? { missionHours: String(result.missionHours), searchFrom: result.from.slice(0, 10), searchTo: result.to.slice(0, 10) } : {}),
     }, runIds);
     if (run.stepSeconds !== 3600) return undefined;
@@ -126,11 +145,12 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
       clear();
       const invalid = catalogInputError(run, from, to, duration);
       if (invalid) { setError(invalid); return; }
+      if (longest && duration) return;
       const missionHours = duration ? Number(duration) : undefined;
       if (source !== "live") {
-        const next = storedResult(from, to, metric, source, missionHours);
+        const next = storedResult(from, to, metric, source, longest, missionHours);
         setResult(next);
-        if (!next) setError(savedSearchError(source, duration));
+        if (!next && !longest) setError(savedSearchError(source, duration));
         return;
       }
       const controller = new AbortController(); active.current = controller; setPending(true);
@@ -141,14 +161,16 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
           return;
         }
         const { ranking, evidence, recommendedIds } = await getPlannerRanking(run, { from, to, priority: metric }, controller.signal);
-        if (!controller.signal.aborted) setResult({ from: ranking.range.start, to: ranking.range.end, scope: "live", leaders: recommendedIds,
+        if (controller.signal.aborted) return;
+        const next: SearchResult = { from: ranking.range.start, to: ranking.range.end, scope: "live", leaders: recommendedIds,
           rows: ranking.ranking.map(row => {
             const site = evidence.sites.find(s => s.id === row.site_id)!;
             const m = site.coverage === "complete" && site.coverage_in_range === "complete" ? site.metrics : null;
             return { ...pairLocation(row, run.sites, evidence.sites, evidence.conventions),
               trackingPower: m ? row.mean_power_tracking : undefined,
               smoothSphere: usesSmoothSphere(run.sites.find(s => s.id === row.site_id)), hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
-          }) });
+          }) };
+        setResult(longest ? rankByLongest(next) : next);
       } catch (cause) {
         if (!controller.signal.aborted) setError(cause instanceof Error ? cause : "The request could not be completed. Retry or check the connection.");
       } finally { if (!controller.signal.aborted) setPending(false); }
@@ -157,28 +179,31 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
       <label className="field">{t("End date (UTC, exclusive)")}<input name="to" {...fieldAttributes("end")} type="date" required min={day(Date.parse(run.start) + DAY)} max={run.end.slice(0,10)} defaultValue={last} /></label>
       <label className="field"><span id="catalog-duration-label">{t("Mission duration in hours (optional)")}</span><input aria-labelledby="catalog-duration-label" name="missionHours" type="number" min="1" step="1" value={duration} onChange={e => setDuration(e.target.value)} aria-describedby="catalog-duration-help" />
         <small id="catalog-duration-help">{t("Leave empty to rank the entire date range.")}</small></label>
-      <label className="field">{t("Rank sites by")}<select name="priority" value={metric} onChange={e => setMetric(e.target.value as PlannerPriority)}>
+      <label className="field">{t("Rank sites by")}<select name="priority" value={order} onChange={e => setOrder(e.target.value as typeof order)}>
         {Object.entries(criteria).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
+        <option value="longest">{t("Longest joint window")}</option>
       </select></label>
-      <button className="button primary" disabled={pending || wait > 0}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Find sites")}</button>
+      <button className="button primary" disabled={pending || wait > 0 || (longest && Boolean(duration))}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Find sites")}</button>
     </form>
     {pending && <p role="status">{t("Checking visibility for the catalog…")}</p>}
+    {longest && duration && <p role="status">{durationError}</p>}
+    {source === "saved" && longest && !duration && <p>{legacyError}</p>}
     {error && <p role="alert"><ApiProblemText error={error} fieldPrefix={prefix} /></p>}
-    {source === "saved" && duration && <p><a href={plannerLink("/plan", {mode:"sites",source:"saved",from:pairRange.from.slice(0,10),to:pairRange.to.slice(0,10),priority:metric,missionHours:duration}, runIds)}>
+    {source === "saved" && (duration || longest) && <p><a href={plannerLink("/plan", {mode:"sites",source:"saved",from:pairRange.from.slice(0,10),to:pairRange.to.slice(0,10),priority:metric,...(duration ? {missionHours:duration} : {}),...(longest ? {order:"longest"} : {})}, runIds)}>
       {t("Search the saved range for Odysseus and Athena")} · <TimeRange start={pairRange.from} end={pairRange.to} />
     </a></p>}
-    {source === "saved" && presets.length > 0 && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{presets.map(w => <a key={w.from} href={plannerLink("/plan", {mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric,...(duration ? { missionHours: duration } : {})}, runIds)}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
+    {source === "saved" && !longest && presets.length > 0 && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{presets.map(w => <a key={w.from} href={plannerLink("/plan", {mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric,...(duration ? { missionHours: duration } : {})}, runIds)}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
     {result && <section aria-label={t("Site search results")} className="plan-results">
       <h3>{t("Site search results")}</h3>
-      <p><TimeRange start={result.from} end={result.to} /> · {t(criteria[metric])}</p>
+      <p><TimeRange start={result.from} end={result.to} /> · {label}</p>
       {result.missionHours && <p>{t("Each site is ranked by hours of {priority} in its best {hours}-hour mission. The table shows the earliest window when scores tie.", { priority: t(criteria[metric]), hours: result.missionHours })}</p>}
       <p><strong>{result.scope === "pair" ? t("Saved observations: Odysseus and Athena only.") : result.scope === "catalog" ? t("Saved ranking: all 23 sites.") : t("Live catalog: {count} sites.", {count: run.sites.length})}</strong></p>
       {!!result.excludedSites?.length && <p>{t("Incomplete coverage excluded these sites: {sites}.", {sites: result.excludedSites.join(" · ")})}</p>}
       <p className="data-notice">{!result.rows.some(row => row.hours) ? t("No site has enough coverage for a recommendation.") : best.some(r => (r.hours?.[column] ?? 0) > 0)
-        ? t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
+        ? longest ? <>{label} · {best[0].longest} h · {best.map(r => r.name).join(" · ")}</> : t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
         : t("No evaluated site meets this visibility priority for any hour in this window.")}
         {flatLeaders.length > 0 && <span className="block">{t("Local terrain shadows are omitted for {sites}.", { sites: flatLeaders.map(r => r.name).join(" · ") })}</span>}</p>
-      <SiteMap sites={result.rows} leaders={result.leaders} column={column} criterion={t(criteria[metric])} initialSite={initialSite} detailHref={detailHref} />
+      <SiteMap sites={result.rows} leaders={result.leaders} column={longest ? "longest" : column} criterion={label} initialSite={initialSite} detailHref={detailHref} />
       <div className="table-scroll"><table><caption>{t(result.missionHours ? "Visibility hours in each site’s best mission window" : "Visibility hours in the selected window")}</caption>
         <thead><tr><th scope="col">{t("Site")}</th>{result.missionHours && <th scope="col">{t("Earliest best mission window (UTC, end exclusive)")}</th>}{["Sun visible","Earth visible","Both visible",...(showLongest ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
         <tbody>{result.rows.map(row => {
@@ -268,7 +293,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
         if (!savedLanding && input.form) capture(input.form);
       }
     }}>
-    {mode === "sites" ? <CatalogSearch key={source + "/" + run.runId} initialSite={seed.get("site")} runIds={pins} initialDuration={seed.get("missionHours") ?? ""} run={run} first={first} last={last} priority={priority} source={source} /> :
+    {mode === "sites" ? <CatalogSearch key={source + "/" + run.runId} initialSite={seed.get("site")} runIds={pins} initialDuration={seed.get("missionHours") ?? ""} initialLongest={seed.get("order") === "longest" && priority === "joint"} run={run} first={first} last={last} priority={priority} source={source} /> :
       source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialEarliest={landingClock(seed, "earliest")} initialLatest={landingClock(seed, "latest")}
