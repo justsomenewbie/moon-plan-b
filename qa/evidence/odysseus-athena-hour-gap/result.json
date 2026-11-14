@@ -120,6 +120,24 @@
           "visible": "Primary: 07 Jan 2026, 01:00 UTC · Alternative: 07 Jan 2026, 01:00 UTC",
           "accessible": "1 hours elapsed. Primary 07 Jan 2026, 01:00 UTC. Alternative 07 Jan 2026, 01:00 UTC"
         }
+      },
+      "roles": {
+        "primary": "im2_athena",
+        "alternative": "im1_odysseus"
+      },
+      "roundTrip": {
+        "start": {
+          "visible": "Primary: 07 Jan 2026, 01:00 UTC · Alternative: 07 Jan 2026, 01:00 UTC",
+          "accessible": "1 hours elapsed. Primary 07 Jan 2026, 01:00 UTC. Alternative 07 Jan 2026, 01:00 UTC"
+        },
+        "right": {
+          "visible": "Primary: 07 Jan 2026, 03:00 UTC · Alternative: 07 Jan 2026, 03:00 UTC",
+          "accessible": "3 hours elapsed. Primary 07 Jan 2026, 03:00 UTC. Alternative 07 Jan 2026, 03:00 UTC"
+        },
+        "left": {
+          "visible": "Primary: 07 Jan 2026, 01:00 UTC · Alternative: 07 Jan 2026, 01:00 UTC",
+          "accessible": "1 hours elapsed. Primary 07 Jan 2026, 01:00 UTC. Alternative 07 Jan 2026, 01:00 UTC"
+        }
       }
     },
     "odysseus-restored": {

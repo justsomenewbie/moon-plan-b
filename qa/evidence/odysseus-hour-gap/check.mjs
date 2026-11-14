@@ -135,15 +135,13 @@ try {
         await slider.press("ArrowLeft");
         const after = await readAt(1);
         observed[name].arrowLeft = { before, after };
-        if (!athenaPrimary) {
-          observed[name].roles = { primary: scenarios[0].siteId, alternative: scenarios[1].siteId };
-          await slider.press("ArrowRight");
-          const right = await readAt(3);
-          await slider.press("ArrowLeft");
-          const left = await readAt(1);
-          assert.deepEqual(left, after);
-          observed[name].roundTrip = { start: after, right, left };
-        }
+        observed[name].roles = { primary: scenarios[0].siteId, alternative: scenarios[1].siteId };
+        await slider.press("ArrowRight");
+        const right = await readAt(3);
+        await slider.press("ArrowLeft");
+        const left = await readAt(1);
+        assert.deepEqual(left, after);
+        observed[name].roundTrip = { start: after, right, left };
       }
     }
   }
