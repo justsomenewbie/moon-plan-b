@@ -4,7 +4,7 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 
 | ID | Procedure | Expected result | Status |
 | --- | --- | --- | --- |
-| UI-01 | Throttle initial data loading; change selection during pending load | Visible loading; no old data labeled as new; controls recover | NOT RUN |
+| UI-01 | Throttle initial data loading; change selection during pending load | Visible loading; no old data labeled as new; controls recover | [PASS in Chromium](#ui-01-pending-windows) |
 | UI-02 | Import invalid JSON, each invalid fixture, wrong schema, >5 MiB and empty file | Accessible error, no crash or partial acceptance; prior valid dataset remains recoverable | [PASS in Chromium](#ui-02-import-retest) |
 | UI-03 | Inject HTTP 404/500, network disconnect, timeout and truncated body on actual data route | Error/retry with bounded attempts; live mode must not silently show mocks | [PASS in Chromium](#ui-03-live-api-failures) |
 | UI-04 | Import partial and missing fixtures | Unknown text and null metrics, broken lines across missing samples; no zero-filled darkness | [PASS in Chromium](#ui-04-and-ui-05-plot-retest) |
@@ -14,6 +14,14 @@ The table records browser evidence. Minh’s original QA run exercised the impor
 | UI-08 | If a WebGL renderer is introduced, deny WebGL and fire context-loss/recovery separately | Failure isolated from comparison/charts/table; retry or supported fallback | CONDITIONAL — current globe is Canvas 2D |
 | UI-09 | Keyboard-only import/select/retry; zoom; 320px width; reduced motion | Visible focus, usable controls/labels, readable data; log actual screen-reader speech separately | NOT RUN |
 | UI-10 | Use malformed/old-version share links, absent site and mismatched windows | Clear incompatibility; no nearest-time substitution or invented result | NOT RUN |
+
+## UI-01 pending windows
+
+On 14 November 2026 at 08:37 UTC, Chromium 158.0.8127.18 (1280 × 720, UTC) tested the [history fix](https://github.com/justsomenewbie/moon-plan-b/commit/974175e76d599e72e1ce1843d2bfb8604be738ac) at `/` on a local production build configured for the live API. Playwright intercepted the dataset GET and held the January 1 response. The loading heading remained visible, both load and import were disabled, and the saved-results selector still switched to Athena. Both cards showed Athena’s saved results. The live workspace displayed no result during loading.
+
+Browser Back first undid the saved selection, then opened January 2 at 02:00 UTC with Athena pinned. January 2 completed before January 1. Neither a late successful response nor a late 404 for January 1 replaced the selected run, UTC, range or URL. Back to January 3 then returned a current 404. Before the fix, January 2’s terrain plot and table reappeared under the January 3 address. After the fix, the error appeared without the previous live result. One manual retry rendered January 3 at 00:00 UTC and re-enabled the controls. Each replay made four dataset requests.
+
+The intercepted fixtures are synthetic. SHA-256 of the January 1, 2 and 3 JSON responses, respectively: `05392b6ce87f76f9db8a655f0cbe0bb9ec887ba847527f604bc3de5ab1ae2c1e`, `23e936ec82f5ee5286615ae2dff25afa41655de8c1e805d679ed7d06c1488cce`, `f398e4c0f6998606e4578ef3bf44bd13a36e877c97a35da80518d03a9f9ccffb`. OpenAI Codex wrote the [regression](../check_pending_windows.mjs) and the fix. Replay with `node qa/check_pending_windows.mjs <live-mode-frontend-origin>`.
 
 ## UI-03 live API failures
 
