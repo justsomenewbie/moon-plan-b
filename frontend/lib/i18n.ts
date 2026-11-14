@@ -90,7 +90,7 @@ export const vietnamese: Record<string, string> = {
   "For individual observations, open the timeline and move the slider to a UTC sample.": "Để xem từng lần quan trắc, mở trục thời gian rồi kéo thanh trượt đến một mốc UTC.",
   "Open the observation workspace": "Mở công cụ xem từng lần quan trắc",
   "Star map": "Bản đồ sao",
-  "Pause star motion": "Dừng chuyển động của sao",
+  "Pause sky motion": "Dừng chuyển động của nền trời",
   "Project feedback": "Góp ý cho dự án",
   "Quick guide": "Hướng dẫn nhanh",
   "Compare dates at one site, or compare sites over the same UTC window.": "So sánh các ngày tại cùng một địa điểm, hoặc so sánh các địa điểm trong cùng một khoảng thời gian UTC.",

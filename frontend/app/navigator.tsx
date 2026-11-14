@@ -286,6 +286,7 @@ export default function Navigator() {
   }
 
   return <div className="app-shell" ref={reportShell}>
+    <div className="sky-clouds" aria-hidden="true">{[0, 1, 2, 3].map(i => <span key={i}>☁︎</span>)}</div>
     <a className="skip-link" href={comparisonHref}>{t("Skip to comparison")}</a>
     <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
       <nav aria-label={t("Main")}>
@@ -381,8 +382,8 @@ export default function Navigator() {
     </div></section>
     <AstronautGuide savedResult={savedResult} />
     <footer className="app-footer"><p>{t("Visibility alone does not measure solar power or radio signal strength.")}</p><p>{t("Frontend draft · AI-assisted implementation ·")}{" "}<a href="https://github.com/justsomenewbie/moon-plan-b" target="_blank" rel="noreferrer">{t("Project repository")}</a> · <a href="https://github.com/justsomenewbie/moon-plan-b/issues" target="_blank" rel="noreferrer">{t("Project feedback")}</a></p>
-      <div className="night-credit"><a href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noreferrer">{t("Star map")} · NASA/Goddard SVS · ESA/Gaia/DPAC</a>
-        <label><input type="checkbox" id="pause-star-drift" />{t("Pause star motion")}</label>
+      <div className="sky-appearance"><a className="night-credit" href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noreferrer">{t("Star map")} · NASA/Goddard SVS · ESA/Gaia/DPAC</a>
+        <label><input type="checkbox" id="pause-sky-drift" />{t("Pause sky motion")}</label>
       </div>
     </footer>
   </div>;

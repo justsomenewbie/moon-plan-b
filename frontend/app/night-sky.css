@@ -1,27 +1,56 @@
-/* The chart and timeline use site data. This background stays fixed to the viewport. */
-.night-credit { display: none; }
+/* Decorative theme layers stay fixed as the observation tables scroll. */
+.sky-appearance, .sky-clouds { display: none; }
 
 @media screen {
-  :root[data-theme="dark"] body { isolation: isolate; }
-  :root[data-theme="dark"] body::before {
+  body { isolation: isolate; }
+  :root[data-theme] body::before {
     content: "";
     position: fixed;
     inset: -14px;
+    z-index: -2;
+    pointer-events: none;
+  }
+  :root[data-theme="dark"] body::before {
+    background: linear-gradient(170deg, #10131b 4%, #182442 94%), url("/images/star-map-2020.jpg") center / cover;
+    background-blend-mode: screen;
+    opacity: .55;
+  }
+  :root[data-theme="light"] body::before {
+    background: linear-gradient(170deg, #a5cee8, #ebf3f6 70%, #f3f5f4);
+  }
+  .sky-clouds {
+    position: fixed;
+    inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: var(--bg) url("/images/star-map-2020.jpg") center / cover no-repeat;
-    background-blend-mode: screen;
-    opacity: .26;
+    overflow: hidden;
+    display: block;
+    color: #fff;
   }
-  :root[data-theme="dark"] .night-credit { display: block; }
-  .night-credit label { display: none; }
+  .sky-clouds span {
+    position: absolute;
+    font: clamp(5rem, 10vw, 9rem)/1 Georgia, serif;
+    opacity: .6;
+    filter: blur(4px);
+  }
+  :root[data-theme="dark"] .sky-clouds { color: #71819b; }
+  :root[data-theme="dark"] .sky-clouds span { opacity: .12; }
+  .sky-clouds span:nth-child(1) { left: -1%; top: 20%; }
+  .sky-clouds span:nth-child(2) { right: 7%; top: 9%; font-size: clamp(3rem, 6vw, 6rem); }
+  .sky-clouds span:nth-child(3) { right: -1%; top: 62%; }
+  .sky-clouds span:nth-child(4) { left: 19%; bottom: 2%; font-size: clamp(3rem, 7vw, 7rem); }
+  .sky-appearance { display: block; }
+  .sky-appearance label, .night-credit { display: none; }
+  :root[data-theme="dark"] .night-credit { display: inline; }
 }
 @media screen and (prefers-reduced-motion: no-preference) {
-  :root[data-theme="dark"] body::before { animation: star-drift 90s ease-in-out infinite alternate; }
-  :root[data-theme="dark"] body:has(#pause-star-drift:checked)::before { animation-play-state: paused; }
-  .night-credit label { display: inline-flex; align-items: center; min-height: 44px; gap: .4rem; margin-inline-start: .75rem; }
+  :root[data-theme="dark"] body::before { animation: sky-drift 90s ease-in-out infinite alternate; }
+  .sky-clouds span { animation: sky-drift 54s ease-in-out infinite alternate; }
+  .sky-clouds span:nth-child(even) { animation-direction: alternate-reverse; animation-duration: 72s; }
+  :root body:has(#pause-sky-drift:checked)::before, body:has(#pause-sky-drift:checked) .sky-clouds span { animation-play-state: paused; }
+  .sky-appearance label { display: inline-flex; align-items: center; min-height: 44px; gap: .4rem; margin-inline-start: .75rem; }
 }
-@keyframes star-drift {
+@keyframes sky-drift {
   from { transform: translate(-12px, -4px); }
   to { transform: translate(12px, 4px); }
 }
