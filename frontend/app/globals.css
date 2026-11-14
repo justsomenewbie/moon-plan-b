@@ -74,7 +74,6 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .home-guide ol { list-style: decimal; padding-inline-start: 1.5em; margin-top: 6px; color: var(--muted); }
 .home-guide li + li { margin-top: 4px; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
-.hero-actions .primary { gap: .35em; }
 .hero-actions a { text-decoration: none; }
 .workspace-notice { padding-top: 18px; border-top: 1px solid var(--line); }
 .lunar-figure { margin: 0; min-width: 0; }

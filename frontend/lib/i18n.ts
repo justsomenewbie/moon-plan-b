@@ -259,7 +259,6 @@ export const vietnamese: Record<string, string> = {
   "Find a clearer window": "Tìm thời điểm quan trắc phù hợp",
   "Compare the Sun and Earth above the lunar horizon.": "So sánh Mặt Trời và Trái Đất phía trên đường chân trời Mặt Trăng.",
   "Near the lunar south pole, the Sun stays low. Compare landing sites and dates to see how many hours both the Sun and Earth are in view.": "Gần cực nam Mặt Trăng, khi Mặt Trời xuất hiện, nó ở thấp gần đường chân trời. So sánh địa điểm và ngày hạ cánh để xem có bao nhiêu giờ nhìn thấy đồng thời Mặt Trời và Trái Đất.",
-  "Compare Athena and Odysseus": "So sánh Athena và Odysseus",
   "How to use Moon Plan B": "Cách dùng Moon Plan B",
   "Open the example below. It compares two landing sites over the same week.": "Mở ví dụ bên dưới để xem hai địa điểm hạ cánh trong cùng một tuần.",
   "Compare the hours in bold. More hours means a longer time with both the Sun and Earth in view.": "So sánh hai số giờ in đậm. Số lớn hơn cho biết địa điểm đó nhìn thấy đồng thời Mặt Trời và Trái Đất lâu hơn.",

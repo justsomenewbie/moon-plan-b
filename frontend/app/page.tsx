@@ -36,7 +36,7 @@ export default function Home() {
           <h1 id="home-title" tabIndex={-1}>{t("Find a clearer window")}</h1>
           <p className="lead">{t("Near the lunar south pole, the Sun stays low. Compare landing sites and dates to see how many hours both the Sun and Earth are in view.")}</p>
           <div className="hero-actions">
-            <a className="button primary" href={exampleHref}>{t("Compare Athena and Odysseus")}</a>
+            <a className="button outline" href="/compare">{t("Compare")}</a>
             <a className="button outline" href="#home-guide">{t("How to use Moon Plan B")}</a>
           </div>
         </div>

@@ -26,8 +26,7 @@ export function SiteHeader({ comparisonHref, showSources = false }: {
           menuButton.current.focus();
         }
       }}>
-        <a href={comparisonHref ?? "/compare"} className={comparisonHref ? "active-link" : undefined} aria-current={comparisonHref ? "page" : undefined}>{t("Compare")}</a>
-        {!comparisonHref && <>
+        {comparisonHref ? <a href={comparisonHref} className="active-link" aria-current="page">{t("Compare")}</a> : <>
           <a href="#about" onClick={() => setMenuOpen(false)}>{t("About the project")}</a>
           <a href="/compare#saved-model-source">{t("Sources & method")}</a>
           <a href="#team" onClick={() => setMenuOpen(false)}>{t("Team members")}</a>
