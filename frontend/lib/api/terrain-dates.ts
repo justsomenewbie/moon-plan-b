@@ -20,10 +20,12 @@ export async function getTerrainDateSites(runId: string, signal?: AbortSignal) {
   const ids = new Set<string>();
   return data.sites.map(site => {
     if (!site || typeof site.id !== "string" || !siteIdPattern.test(site.id) || ids.has(site.id)
-        || typeof site.name !== "string" || !site.name.trim())
+        || typeof site.name !== "string" || !site.name.trim()
+        || typeof site.dem_source !== "string" || !site.dem_source.trim()
+        || typeof site.horizon_method !== "string" || !site.horizon_method.trim())
       throw new ApiError("The model returned an invalid site list.", 502);
     ids.add(site.id);
-    return { id: site.id, name: site.name };
+    return { id: site.id, name: site.name, demSource: site.dem_source, horizonMethod: site.horizon_method };
   });
 }
 

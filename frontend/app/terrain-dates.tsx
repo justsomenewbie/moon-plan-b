@@ -39,6 +39,7 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
   const sites = available.some(site => site.id === inputs.site) ? available : [
     { id: inputs.site, name: completed?.first.sites.find(site => site.id === inputs.site)?.name ?? inputs.site }, ...available,
   ];
+  const comparedSite = catalog.data?.find(site => site.id === completed?.request.siteId);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const active = useRef<AbortController | null>(null);
@@ -114,6 +115,12 @@ export default function TerrainDates({ result, baseWindow, initialRequest, onCom
         <p className="muted text-sm">{t("Model")} · {completed.first.model.label}<br />
           {t("Run ID")} · <code className="break-all">{completed.first.run.run_id}</code></p>
         <p className="muted text-sm">{completed.first.attribution}</p>
+        {comparedSite
+          ? <p className="muted text-sm break-words">{t("Site horizon method")} · {comparedSite.horizonMethod}<br />
+              {t("Terrain elevation model")} · {comparedSite.demSource}
+              {comparedSite.demSource.startsWith("none:outside-") && <><br />{t("Outside elevation-map coverage. This site uses a smooth-sphere horizon and omits local terrain shadows.")}</>}
+            </p>
+          : <p className="muted text-sm">{t("Site horizon details are unavailable.")}</p>}
         <div className="week-sites">{(["first", "second"] as const).map(key => {
           const response = completed[key], request = completed.request[key];
           const adjusted = Date.parse(request.from) !== Date.parse(response.range.requested_start) || Date.parse(request.to) !== Date.parse(response.range.requested_end);

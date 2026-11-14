@@ -39,7 +39,7 @@ function example(range: typeof request.first, visible: boolean) {
 }
 
 test("loads the selected run catalog and rejects duplicate sites, invalid IDs or a different run", async t => {
-  const site = { id: "apollo11", name: "Apollo 11" };
+  const site = { id: "apollo11", name: "Apollo 11", dem_source: "none:outside-pgda-coverage", horizon_method: "flat" };
   let reply: unknown = { run_id: "test-run", sites: [site] };
   t.mock.method(globalThis, "fetch", async (req: Request) => {
     const url = new URL(req.url);
@@ -49,9 +49,9 @@ test("loads the selected run catalog and rejects duplicate sites, invalid IDs or
     assert.equal(url.searchParams.get("format"), "json");
     return Response.json(reply);
   });
-  assert.deepEqual(await getTerrainDateSites("test-run"), [site]);
+  assert.deepEqual(await getTerrainDateSites("test-run"), [{ id: site.id, name: site.name, demSource: site.dem_source, horizonMethod: site.horizon_method }]);
   for (reply of [
-    { run_id: "different", sites: [site] }, { run_id: "test-run", sites: [site, site] },
+    { run_id: "different", sites: [site] }, { run_id: "test-run", sites: [site, site] }, { run_id: "test-run", sites: [{ ...site, dem_source: null }] },
     { run_id: "test-run", sites: [{ ...site, id: "a,b" }] }, { run_id: "test-run", sites: [{ ...site, name: " " }] },
   ]) await assert.rejects(getTerrainDateSites("test-run"), (e: unknown) => e instanceof ApiError && e.status === 502);
 });
