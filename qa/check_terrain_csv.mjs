@@ -62,6 +62,8 @@ async function attachLiveFixtures(page) {
 async function checkCard(page, card, site, day) {
   const range = bounds(day);
   assert.equal(await links(card).count(), 2);
+  const record = card.getByRole("link", { name: "Open site record (full run, JSON)" });
+  assert.equal(await record.getAttribute("href"), "/api/v1/sites/" + encodeURIComponent(site) + "?" + new URLSearchParams({ run_id: run }));
   for (const kind of ["series", "windows"]) {
     const anchor = card.locator(`a[href*="/export/${kind}.csv"]`);
     const url = new URL(await anchor.getAttribute("href"), page.url());
@@ -108,6 +110,7 @@ async function checkLive() {
   });
   await page.waitForFunction(expected => document.querySelector("#terrain-sample-utc")?.dateTime === expected, bounds(3).start);
   assert.equal(await links(page).count(), 0);
+  assert.equal(await page.getByRole("link", { name: "Open site record (full run, JSON)" }).count(), 0);
   assert.equal(await runLinks(page, runPath).count(), 0);
   assert.equal(await runLinks(page, manifestPath).count(), 0);
   assert.ok(await page.locator("#sources").getByText(manifestPath, { exact: true }).isVisible());

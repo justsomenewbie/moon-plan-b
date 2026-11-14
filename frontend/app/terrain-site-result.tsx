@@ -16,17 +16,21 @@ const criterionLabels = {
 
 type ExportRange = Pick<TerrainSummary["range"], "start" | "end">;
 
-export function SiteCsvLinks({ siteId, runId, range }: { siteId: string; runId: string; range: ExportRange }) {
+export function SiteSourceLinks({ siteId, runId, range }: { siteId: string; runId: string; range: ExportRange }) {
   const { t } = useLanguage();
   const bounds = { run_id: runId, start: range.start, end: range.end };
   const series = {
     ...bounds, fields: "sun_az_deg,sun_el_deg,sun_visible,earth_az_deg,earth_el_deg,earth_visible,both_visible",
   } satisfies NonNullable<operations["exportSiteSeriesCsv"]["parameters"]["query"]>;
   const windows = { ...bounds, kinds: "sun,earth,both" } satisfies NonNullable<operations["exportSiteWindowsCsv"]["parameters"]["query"]>;
-  const path = "/api/v1/sites/" + encodeURIComponent(siteId) + "/export/";
+  if (siteId === "." || siteId === "..") return null;
+  const path = "/api/v1/sites/" + encodeURIComponent(siteId);
+  const siteQuery = { run_id: runId } satisfies NonNullable<operations["getSite"]["parameters"]["query"]>;
   return <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 print:hidden">
-    <a href={path + "series.csv?" + new URLSearchParams(series)} target="_blank" rel="noreferrer">{t("Download observations (CSV)")}</a>
-    <a href={path + "windows.csv?" + new URLSearchParams(windows)} target="_blank" rel="noreferrer">{t("Download visibility windows (CSV)")}</a>
+    <a href={path + "?" + new URLSearchParams(siteQuery)}
+      target="_blank" rel="noreferrer">{t("Open site record (full run, JSON)")}</a>
+    <a href={path + "/export/series.csv?" + new URLSearchParams(series)} target="_blank" rel="noreferrer">{t("Download observations (CSV)")}</a>
+    <a href={path + "/export/windows.csv?" + new URLSearchParams(windows)} target="_blank" rel="noreferrer">{t("Download visibility windows (CSV)")}</a>
   </div>;
 }
 
@@ -49,7 +53,8 @@ export function SiteHorizonSource({ method, source }: { method: string; source: 
   </p>;
 }
 
-export function SiteResult({ site, liveResult }: {
+export function SiteResult({ site, source, liveResult }: {
+  source: Pick<TerrainSummary, "run" | "conventions">;
   site: TerrainSummary["sites"][number];
   liveResult?: Pick<TerrainSummary, "run" | "range">;
 }) {
@@ -62,6 +67,18 @@ export function SiteResult({ site, liveResult }: {
     <h3>{site.name}</h3>
     <p className="muted text-sm">{t("Requested coverage")} · {t(site.coverage)}<br />
       {t("Evaluated coverage")} · {t(site.coverage_in_range)}</p>
+    {(site.lat_deg !== null || site.lon_deg !== null || site.surface_height_m !== null) && <details className="my-2">
+      <summary>{t("Site location")}</summary>
+      <dl className="metadata">
+        {site.lat_deg !== null && <div><dt>{t("Planetocentric latitude")}</dt><dd>{site.lat_deg}°</dd></div>}
+        {site.lon_deg !== null && <div><dt>{t("East longitude")}</dt><dd>{site.lon_deg}°</dd></div>}
+        {site.surface_height_m !== null && <div><dt>{t("Model surface height")}</dt><dd>{site.surface_height_m} m</dd></div>}
+        <div><dt>{t("Observer height above surface")}</dt><dd>{source.run.observer_height_m} m</dd></div>
+      </dl>
+      {source.conventions.longitude && <p className="muted text-sm">{source.conventions.longitude}</p>}
+      {source.conventions.latitude && <p className="muted text-sm">{source.conventions.latitude}</p>}
+      {source.conventions.height && <p className="muted text-sm">{source.conventions.height}</p>}
+    </details>}
     {site.horizon && <SiteHorizonSource method={site.horizon.method} source={site.horizon.dem_source} />}
     {metrics ? <dl className="metadata mt-4">
       <div><dt>{t("Total time with both visible")}</dt><dd><strong>{metrics.both_hours} h</strong> / {metrics.duration_h} h</dd></div>
@@ -87,6 +104,6 @@ export function SiteResult({ site, liveResult }: {
         {window.clipped_end && <p className="muted">{t("End clipped. The overlap may have continued later.")}</p>}
       </li>)}
     </ol> : <p className="muted">{t(complete ? "No simultaneous visibility in the evaluated range." : "No overlap intervals were supplied for the available coverage.")}</p>}
-    {liveResult && <SiteCsvLinks siteId={site.id} runId={liveResult.run.run_id} range={liveResult.range} />}
+    {liveResult && <SiteSourceLinks siteId={site.id} runId={liveResult.run.run_id} range={liveResult.range} />}
   </article>;
 }

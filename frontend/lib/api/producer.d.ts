@@ -245,6 +245,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sites/{site_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Site card: record, catalog extra, metrics over the full run, rank/score
+         * @description metrics = windows.json metrics and rank/score = summary.csv of the run, verbatim.
+         */
+        get: operations["getSite"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2885,6 +2905,198 @@ export interface components {
                 }[];
             };
         };
+        /**
+         * @example {
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "step_s": 3600,
+         *       "precision_h": 1,
+         *       "site": {
+         *         "dem_source": "pgda:bands[LDEM_80S_20MPP_ADJ<15km,LDEM_60S_120MPP_ADJ<60km,LDEM_60S_240MPP_ADJ<R]",
+         *         "group": "reference",
+         *         "height_m_input": null,
+         *         "horizon_max_el_deg": -0.002513,
+         *         "horizon_method": "raymarch",
+         *         "horizon_min_el_deg": -2.829026,
+         *         "horizon_radius_km": 150,
+         *         "id": "ref_connecting_ridge_c1",
+         *         "lat_deg": -89.4505,
+         *         "lon_deg": 222.84,
+         *         "name": "Shackleton-de Gerlache connecting ridge, point C1",
+         *         "note": "Mazarico et al. (2011) 'Site 1' (89.45 S, 222.69 E; 89.0% on a 240 m DEM) is the same ridge point. Published illumination depends strongly on DEM resolution, period and observer height (same point: 76% at 20 m/px vs 89% at 240 m/px); compare with tolerance ~10 percentage points.",
+         *         "observer_height_above_sphere_m": 1959.291,
+         *         "observer_height_m": 2,
+         *         "origin": "catalog",
+         *         "source": "Glaser, P. et al. (2018) Illumination conditions at the lunar poles: implications for future exploration, Planet. Space Sci. 162, 170-178, Table 1 (Connecting Ridge C1, surface level, 2017-2037): 76.0%",
+         *         "surface_height_m": 1957.291
+         *       },
+         *       "extra": {
+         *         "kind": "high_illumination_reference",
+         *         "source_url": "https://ntrs.nasa.gov/citations/20170007365",
+         *         "secondary_urls": [
+         *           "https://ntrs.nasa.gov/citations/20205009660",
+         *           "https://pgda.gsfc.nasa.gov/products/69"
+         *         ],
+         *         "frame": "MOON_ME (LOLA south polar stereographic, R=1737.4 km), converted to planetocentric lat/east lon",
+         *         "accuracy": {
+         *           "kind": "reference_point",
+         *           "horizontal_m": 20,
+         *           "description": "Point of maximum average illumination in a 20 m/px LOLA DTM (one pixel)."
+         *         },
+         *         "reference_illumination_pct": 76,
+         *         "reference_illumination": [
+         *           {
+         *             "pct": 76,
+         *             "lat": -89.4505,
+         *             "lon": 222.84,
+         *             "observer_height_m": 0,
+         *             "period": "2017-01-01/2037-01-01, hourly",
+         *             "dem": "LOLA 20 m/px",
+         *             "solar_visibility_pct": 81.3,
+         *             "max_shadow_h": 268,
+         *             "source": "Glaser et al. 2018 Table 1 (this study)"
+         *           },
+         *           {
+         *             "pct": 89,
+         *             "lat": -89.45,
+         *             "lon": 222.69,
+         *             "observer_height_m": 0,
+         *             "period": "18.6 yr, hourly",
+         *             "dem": "LOLA 240 m/px",
+         *             "solar_visibility_pct": 92.7,
+         *             "source": "Mazarico et al. 2011 (Icarus 211, 1066) Site 1, as tabulated in Glaser et al. 2018 Table 1"
+         *           },
+         *           {
+         *             "pct": 64.2,
+         *             "lat": -89.418,
+         *             "lon": 221.3,
+         *             "observer_height_m": 0,
+         *             "period": "1 yr",
+         *             "dem": "LROC WAC images 100 m/px",
+         *             "max_shadow_h": 308,
+         *             "source": "Speyerer & Robinson 2013 (Icarus 222, 122), as tabulated in Glaser et al. 2018 Table 1"
+         *           },
+         *           {
+         *             "pct": 88,
+         *             "lat": -89.4398,
+         *             "lon": 222.83,
+         *             "observer_height_m": 2,
+         *             "period": "2017-01-01/2037-01-01, hourly",
+         *             "dem": "LOLA 20 m/px",
+         *             "solar_visibility_pct": 92.1,
+         *             "source": "Glaser et al. 2018 Table 2 (2 m above ground; different pixel ~1 km from the surface-level point)"
+         *           }
+         *         ],
+         *         "barker2021_site": "Site 1 (Barker et al. 2021, PSS 203, 105119: ridge RoI centroids at X=-11.6..-10.2 km, Y=-12.6..-11.6 km)",
+         *         "pgda_avg_illumination_at_point": {
+         *           "pgda:AVGVISIB_85S_060M_201608": {
+         *             "pixel_pct": 86.4,
+         *             "max3x3_pct": 86.4
+         *           }
+         *         }
+         *       },
+         *       "map": {
+         *         "projection": "south_polar_stereographic_R1737.4km",
+         *         "x_km": -11.33,
+         *         "y_km": -12.218
+         *       },
+         *       "range": {
+         *         "start": "2026-01-01T00:00:00Z",
+         *         "end": "2026-04-01T00:00:00Z",
+         *         "step_s": 3600,
+         *         "n_samples": 2160
+         *       },
+         *       "metrics": {
+         *         "duration_h": 2160,
+         *         "longest_comms_gap_h": 326,
+         *         "longest_comms_gap_truncated": false,
+         *         "longest_dark_h": 26,
+         *         "longest_dark_truncated": false,
+         *         "longest_earth_h": 334,
+         *         "longest_earth_truncated": false,
+         *         "longest_sun_h": 2088,
+         *         "longest_sun_truncated": true,
+         *         "mean_power_horizontal": 0.009032,
+         *         "mean_power_tracking": 0.971631,
+         *         "mean_sun_el_lit_deg": 0.340818,
+         *         "n_comms_gaps": 4,
+         *         "n_dark_windows": 2,
+         *         "n_earth_windows": 4,
+         *         "n_sun_windows": 3,
+         *         "pct_both": 52.175926,
+         *         "pct_earth": 53.611111,
+         *         "pct_sun": 98.564815,
+         *         "pct_sun_no_earth": 46.388889
+         *       },
+         *       "rank": 1,
+         *       "score": 71.162037,
+         *       "warnings": []
+         *     }
+         */
+        SiteDetail: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            /**
+             * @description = step_s / 3600. Every boundary and "hours until" value is accurate to +- this many hours.
+             * @example 1
+             */
+            precision_h: number;
+            site: components["schemas"]["SiteRecord"];
+            /** @description Free-form catalog metadata (accuracy, source_url, region_corners_latlon [[lat, lon_east], ...], ...); null for custom sites */
+            extra: {
+                [key: string]: unknown;
+            } | null;
+            map: components["schemas"]["MapPoint"] | null;
+            /** @description Range of the metrics (= full run) */
+            range: components["schemas"]["TimeRange"];
+            metrics: components["schemas"]["Metrics"];
+            rank: number;
+            score: number;
+            /** @description Caveats to show next to the numbers (e.g. smooth-sphere horizon) */
+            warnings: string[];
+        };
+        /** @description sites.json record of the run (docs/OUTPUT_SPEC.md 3.2), without file paths */
+        SiteRecord: {
+            /**
+             * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+             * @example ref_connecting_ridge_c1
+             */
+            id: string;
+            name: string;
+            /** @description Planetocentric latitude, deg [-90, 90] */
+            lat_deg: number;
+            /** @description EAST longitude, deg [0, 360) */
+            lon_deg: number;
+            /**
+             * @description catalog = lunarnav/catalog/sites.json; custom = user coordinates (POST /jobs)
+             * @enum {string}
+             */
+            origin: "catalog" | "custom";
+            group: string;
+            /** @description Literature / catalog source of the coordinates */
+            source: string | null;
+            note: string | null;
+            /** @description null = surface height read from the DEM */
+            height_m_input: number | null;
+            /** @description m above the 1737.4 km sphere */
+            surface_height_m: number;
+            /** @description Mast height above the surface, m */
+            observer_height_m: number;
+            observer_height_above_sphere_m: number;
+            horizon_method: string;
+            dem_source: string;
+            /** @description null = unbounded */
+            horizon_radius_km: number | null;
+            horizon_min_el_deg: number;
+            horizon_max_el_deg: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -4102,6 +4314,90 @@ export interface operations {
             };
             /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getSite: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Run to read; default = the run flagged is_default (GET /api/v1/runs)
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+                 * @example ref_connecting_ridge_c1
+                 */
+                site_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDetail"];
+                };
+            };
+            /** @description Not Modified: the ETag sent in If-None-Match is current (empty body) */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

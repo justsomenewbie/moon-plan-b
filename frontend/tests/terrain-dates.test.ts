@@ -25,7 +25,7 @@ function example(range: typeof request.first, visible: boolean) {
       run_timestamp_utc: range.from, observer_height_m: 2, min_earth_clearance_deg: 0, git_commit: null,
       manifest_sha256: "a".repeat(64), manifest_url: "/api/v1/runs/test-run/files/manifest.json" },
     range: { start: range.from, end: range.to, requested_start: range.from, requested_end: range.to, step_s: 3600, n_samples: duration },
-    sites: [{ id: request.siteId, name: "Catalog site", coverage: "complete", coverage_in_range: "complete",
+    sites: [{ id: request.siteId, name: "Catalog site", lat_deg: -85, lon_deg: 300, surface_height_m: 0, coverage: "complete", coverage_in_range: "complete",
       criteria: thresholds.map(minimum_hours => ({
         minimum_hours, metric: "longest_both_h", value_h: hours, value_clipped: visible,
         result: hours >= minimum_hours ? "meets" : "below", reason: "Invented boundary-exact test case.",
@@ -132,6 +132,9 @@ test("preserves partial coverage and rejects a stale site, run, manifest or UTC 
     [{ ...second, include: ["windows", "metrics"] }, /requested dataset section/],
     [{ ...second, criteria_hours: [24], sites: [{ ...second.sites[0], criteria: second.sites[0].criteria.slice(0, 1) }] }, /returned duration thresholds/],
     [{ ...second, run: { ...second.run, manifest_sha256: "b".repeat(64) } }, /source manifests/],
+    [{ ...second, sites: [{ ...second.sites[0], lon_deg: 299 }] }, /coordinates or heights/],
+    [{ ...second, sites: [{ ...second.sites[0], surface_height_m: -2 }] }, /coordinates or heights/],
+    [{ ...second, run: { ...second.run, observer_height_m: 1 } }, /coordinates or heights/],
     [{ ...second, range: first.range }, /different requested UTC range/],
     [{ ...second, range: { ...second.range, step_s: 7200, n_samples: 36 } }, /sampling steps/],
   ] as const) {

@@ -27,7 +27,7 @@ export default function TerrainResult({ result, view, onSelect, onPrint, liveWin
     <p>{t("Evaluated UTC range")} · <TimeRange start={range.start} end={range.end} /></p>
     {clippedRange && <p>{t("Requested UTC range on the model grid")} · <TimeRange start={range.requested_start} end={range.requested_end} /></p>}
     <p className="muted text-sm">{t("Times use an exclusive end. The model evaluated {count} samples at {step} s intervals.", { count: range.n_samples, step: range.step_s })}</p>
-    {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} liveResult={liveWindow ? result : undefined} />)}</div>
+    {result.sites.length ? <div className="week-sites">{result.sites.map(site => <SiteResult key={site.id} site={site} source={result} liveResult={liveWindow ? result : undefined} />)}</div>
       : <p className="data-notice my-4">{t("The dataset contains no site results for this range.")}</p>}
 
     {liveWindow && <TerrainPair onDisplayedPair={onDisplayedPair} key={JSON.stringify([result.dataset_id, run.run_id, range.start, range.end])} result={result} />}

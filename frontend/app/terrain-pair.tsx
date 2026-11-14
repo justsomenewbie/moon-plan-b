@@ -7,7 +7,7 @@ import { pairGuideContext, type GuideContext } from "../lib/api/guide-chat";
 import { getTerrainDateSites } from "../lib/api/terrain-dates";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
-import { SiteCsvLinks, TimeRange } from "./terrain-site-result";
+import { SiteSourceLinks, TimeRange } from "./terrain-site-result";
 import PairCatalogRanking from "./catalog-ranking";
 
 const weightLabels = [
@@ -123,7 +123,7 @@ export default function TerrainPair({ result, onDisplayedPair }: {
           </dl> : <p>{t("Visibility percentages are unknown for the full window.")}</p>}
           {warnings.length > 0 && <><h4>{t("Model warnings")}</h4>
             <ul className="list-disc pl-5">{warnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul></>}
-          <SiteCsvLinks siteId={row.site_id} runId={comparison.run_id} range={comparison.range} />
+          <SiteSourceLinks siteId={row.site_id} runId={comparison.run_id} range={comparison.range} />
         </article>;
       })}</div>
       {opened && completePair && <PairCatalogRanking comparison={comparison} catalogSites={catalog.data} />}
