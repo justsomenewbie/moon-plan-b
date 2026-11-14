@@ -295,6 +295,10 @@ The catalog form accepted the same two windows and reopened the result link. Bro
 
 The live date selector listed the 23 sites returned for run B. At Apollo 11, two three-hour windows on November 15 and 16 starting at 00:00 UTC returned one and three hours of joint visibility. Chromium reopened the pinned dates, retained Apollo 11 after a simulated catalog failure, and restored the full catalog on retry. The Vietnamese report fit a 320 CSS pixel viewport.
 
+Chromium also used the run B catalog to rank Apollo 11 and Haworth in a single UTC window. Opening the form and changing the site choices performed no POST. An explicit comparison matched the producer’s pair-local ranks, weights, percentages and Apollo’s smooth-sphere warning. The 320 CSS pixel Vietnamese view retained the result. In a separate replay with missing Haworth windows, the viewer hid both ranks and showed Haworth’s percentages as unavailable.
+
+Pinned offline recovery rejected six incompatible exports, retained the retry URL, and opened the matching file at the selected UTC sample. Ordinary local import still opened a different valid export. The combined frontend passed 92 unit tests, both production builds and nine Chromium checks, including Minh’s keyboard recovery at 200% zoom.
+
 ## Alternative landing dates
 
 Chromium submitted the [November and December Athena searches](BACKEND_RECONCILIATION.md#alternative-landing-dates) to the team service. The form issued one POST per submission and none on opening or editing. Opening the first candidate returned its three-hour interval through a pinned GET. The December search displayed overlapping rejection counts and zero candidates. A separate intercepted replay exercised site-switch cancellation and the Vietnamese interface at 320 CSS pixels. Native Safari 26.6.2 confirmed the two November starts, retained the result after switching to Vietnamese, opened the first three-hour mission in a separate tab and closed the isolated test session.
