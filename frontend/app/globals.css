@@ -48,6 +48,8 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .import-dialog ol { list-style: decimal; padding-left: 1.4em; }
 .import-dialog ul { list-style: disc; padding-left: 1.2em; }
 .import-dialog li { margin: 8px 0; }
+.import-dialog details { margin-block: .75rem; }
+.import-dialog summary { padding-block: .5rem; }
 .import-dialog code { font-size: .85em; overflow-wrap: anywhere; }
 .import-actions { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .import-picker { position: relative; }
@@ -72,7 +74,12 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .home-guide a { display: inline-block; margin-top: 12px; }
 .home-guide-links { display: flex; flex-wrap: wrap; gap: 0 20px; }
 .home-guide ol { list-style: decimal; padding-inline-start: 1.5em; margin-top: 6px; color: var(--muted); }
-.home-guide li + li { margin-top: 4px; }
+.home-walkthrough { margin-top: 1rem; }
+.home-walkthrough summary { font-weight: 600; padding-block: .6rem; }
+.home-walkthrough li + li { margin-top: 1.25rem; }
+.home-walkthrough li strong { color: var(--text); }
+.home-walkthrough img { display: block; width: 100%; max-width: 24rem; height: auto; margin-top: .5rem; border-radius: 4px; }
+.week-reading { margin-block: .75rem; font-weight: 600; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
 .hero-actions a { text-decoration: none; }
 .workspace-notice { padding-top: 18px; border-top: 1px solid var(--line); }

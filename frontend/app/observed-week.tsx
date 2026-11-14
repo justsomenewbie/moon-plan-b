@@ -27,6 +27,8 @@ function weekLabel(week: typeof weeks[number]) {
 export default function ObservedWeek({ selection, onSelect, onPrint, children }: { selection: string; onSelect: (value: string) => void; onPrint: () => void; children: React.ReactNode }) {
   const { t, locale } = useLanguage();
   const selectedWeek = weeks.find(week => week.startUtc === selection);
+  const readings = (selectedWeek ? [selectedWeek] : weeks).flatMap(week =>
+    week.sites.filter(site => selectedWeek || site.id === selection).map(site => ({ site, week })));
   const sourceDetails = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
@@ -43,8 +45,8 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
   return <section id="observed-week" className="observed-week saved-comparison" aria-labelledby="observed-week-title" tabIndex={-1}>
     <div>
       <h2 id="observed-week-title">{t("Odysseus and Athena · Sun and Earth visibility")}</h2>
-      <p className="muted">{t("Earlier model · run B")} · {t("Interval boundaries ±{hours} h", { hours: precisionHours })}</p>
-      <p>{t("Choose a week to compare two sites. Choose a site to compare two weeks there.")}</p>
+      <p>{t("Imagine standing at the landing site. The hours below count the time when you could see both the Sun and Earth above the local terrain.")}</p>
+      <p className="muted">{t("Earlier model · run B")} · {t("Start and end times are approximate (±{hours} h).", { hours: precisionHours })}</p>
       <label className="field week-selection">{t("Compare saved results")}
         <select value={selection} onChange={event => onSelect(event.target.value)}>
           <optgroup label={t("Two sites in one week")}>{weeks.map(week =>
@@ -53,13 +55,19 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
             <option key={site.id} value={site.id}>{site.name}</option>)}</optgroup>
         </select>
       </label>
+      <p className="week-reading" aria-live="polite" aria-atomic="true">{selectedWeek
+        ? t("In this week, both are visible for {firstHours} h at {firstSite} and {secondHours} h at {secondSite}.", {
+            firstSite: readings[0].site.name, firstHours: readings[0].site.overlap.duration_h,
+            secondSite: readings[1].site.name, secondHours: readings[1].site.overlap.duration_h })
+        : t("At {site}, both are visible for {firstHours} h in the first week shown and {secondHours} h in the second.", {
+            site: readings[0].site.name, firstHours: readings[0].site.overlap.duration_h, secondHours: readings[1].site.overlap.duration_h })}</p>
       <div className="week-actions">
         <button className="button outline" type="button" onClick={onPrint}>{t("Print saved result")}</button>
         <a href="#lunar-reference">{t("View lunar globe")}</a>
         <a href={`?saved=${encodeURIComponent(selection)}#observed-week`} target="_blank" rel="noreferrer">{t("Open this saved result in a new tab")} ↗</a>
       </div>
-      <div className="week-sites" aria-live="polite">
-        {(selectedWeek ? [selectedWeek] : weeks).map(week => week.sites.filter(site => selectedWeek || site.id === selection).map(site => {
+      <div className="week-sites">
+        {readings.map(({ week, site }) => {
           const interval = site.overlap;
           const start = Date.parse(week.startUtc);
           const span = Date.parse(week.endUtc) - start;
@@ -74,7 +82,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
             <p className="muted">{t("Sun visible")} · {site.sunHours} h · {t("Earth visible")} · {site.earthHours} h</p>
             <p className="muted text-sm">{t(interval.clipped_start ? "Visible throughout the queried week." : "Still visible at the end of the queried week.")}</p>
           </article>;
-        }))}
+        })}
       </div>
       <details ref={sourceDetails}>
         <summary>{t("How the team obtained these hours")}</summary>

@@ -47,6 +47,8 @@ try {
   await instructions.getByRole("heading", { name: "Import a comparison dataset" }).waitFor();
   assert.ok(await instructions.getByRole("heading").evaluate(el => document.activeElement === el));
   assert.match(await instructions.innerText(), /5 MiB/);
+  assert.equal(await instructions.locator("details").getAttribute("open"), null);
+  await instructions.locator("details summary").press("Enter");
   assert.match(await instructions.innerText(), /frontend-draft-2/);
   assert.match(await instructions.innerText(), /lunarnav-dataset-1/);
   assert.equal(await instructions.getByRole("link").getAttribute("href"), "/data/demo.json");

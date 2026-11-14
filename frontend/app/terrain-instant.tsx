@@ -65,6 +65,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
         <div><dt>{t("Model sample (UTC)")}</dt><dd><time dateTime={value.sample_utc}>{value.sample_utc}</time></dd></div>
       </dl>
       <p className="muted text-sm">{t("Angles and visibility come from the model sample. Each sample covers {step} seconds.", { step: value.step_s })}</p>
+      <p className="muted text-sm">{t("Azimuth tells you which way to look: 0° is north, 90° is east. Elevation is the angle above the horizontal. A negative value points below it.")}</p>
       <div className="week-sites">{(["sun", "earth"] as const).map(body => <div key={body}>
         <h5>{t(body === "sun" ? "Sun" : "Earth")}</h5>
         <dl className="metadata">

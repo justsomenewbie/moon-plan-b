@@ -12,7 +12,7 @@ const exampleHref = "/compare?saved=2026-11-14T00%3A00%3A00Z#observed-week";
 const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   useEffect(() => {
     function restoreComparisonLink() {
       const { search, hash } = window.location;
@@ -71,12 +71,25 @@ export default function Home() {
       </section>
       <section className="home-guide" id="home-guide" aria-labelledby="home-guide-title" tabIndex={-1}>
         <h2 id="home-guide-title">{t("Quick guide")}</h2>
-        <ol>
-          <li>{t("Open the example below. It compares two landing sites over the same week.")}</li>
-          <li>{t("Compare the hours in bold. More hours means a longer time with both the Sun and Earth in view.")}</li>
-          <li>{t("To try a different comparison, choose another week or select a site to compare its two weeks.")}</li>
-        </ol>
+        <p>{t("Start with Athena and Odysseus. Which site can see both the Sun and Earth for longer in the same week?")}</p>
         <a href={exampleHref}>{t("Try the saved example")}</a>
+        <details className="home-walkthrough">
+          <summary>{t("How do I find a site for my own dates? See the steps with pictures.")}</summary>
+          <p>{t("Try the week of November 14–20, 2026 (UTC). You can then change the dates.")}</p>
+          <a href="/plan?mode=sites&source=saved-b2&from=2026-11-14&to=2026-11-21&priority=joint">{t("Open this planner example")}</a>
+          <ol>
+            {[
+              ["Choose your dates", "Select “I have dates”. Start on November 14 and end on November 21. The last day counted is November 20."],
+              ["Choose what to compare", "Select “Sun and Earth together” and press “Find sites” to rank sites by the hours when both are visible."],
+              ["Read the map and table", "The gold diamond marks the top site. In this example, Vikram has 162 hours out of 168. Select another dot to read that site's hours."],
+            ].map(([title, instruction], index) => <li key={title}>
+              <strong>{t(title)}</strong>
+              <p>{t(instruction)}</p>
+              <img src={`/images/guide/plan-step-${index + 1}-${locale}.webp`} width={640}
+                height={(locale === "vi" ? [594, 340, 734] : [510, 340, 618])[index]} alt="" loading="lazy" />
+            </li>)}
+          </ol>
+        </details>
         <div className="home-guide-links">
           <a href="/plan?mode=sites">{t("Find sites for my dates")}</a>
           <a href="/plan?mode=dates">{t("Find dates for my site")}</a>
