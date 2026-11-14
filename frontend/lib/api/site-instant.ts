@@ -5,9 +5,11 @@ import type { components } from "./producer";
 type RetainedVisibility = Pick<components["schemas"]["DatasetSeries"], "t" | "sun_visible" | "earth_visible" | "both_visible">;
 type Instant = components["schemas"]["InstantResponse"];
 type Body = Pick<Instant["sun"], "az_deg" | "el_deg" | "horizon_el_deg" | "clearance_deg" | "visible">;
+type NextEvents = NonNullable<Instant["next_events"]>;
 export type SiteInstant = Pick<Instant, "run_id" | "site_id" | "t" | "sample_utc" | "sample_index" | "step_s" | "precision_h" | "both_visible"> & {
   sun: Body & Partial<Pick<Instant["sun"], "fraction" | "irradiance_tracking_wm2">>;
   earth: Body;
+  next_events: Partial<NextEvents>;
 };
 
 function wholeSecond(utc: string, status: number): number {
@@ -62,6 +64,23 @@ export async function getSiteInstant(
     if (index >= 0) check(sun.visible === series.sun_visible[index] && earth.visible === series.earth_visible[index] &&
       data.both_visible === series.both_visible[index]);
   }
+  const next_events: Partial<NextEvents> = {};
+  for (const key of ["sunset", "sunrise", "earthset", "earthrise"] as const) {
+    const event = data.next_events?.[key], visible = key.startsWith("sun") ? sun.visible : earth.visible;
+    if (!event || event.state_now !== visible || typeof event.lower_bound !== "boolean" ||
+        !Number.isFinite(event.hours) || event.hours < 0) continue;
+    const already = visible === key.endsWith("rise");
+    if (event.lower_bound) {
+      if (already || event.at !== null || event.hours === 0) continue;
+    } else {
+      let at: number;
+      try { at = utcMillis(event.at); } catch { continue; }
+      // The producer rounds elapsed hours to six decimals.
+      if (at < requested || Math.abs((at - requested) / 3_600_000 - event.hours) > 0.000001 ||
+          (already ? at !== requested || event.hours !== 0 : at === requested || event.hours === 0)) continue;
+    }
+    next_events[key] = event;
+  }
   return { run_id: runId, site_id: siteId, t, sample_utc: data.sample_utc, sample_index: data.sample_index,
-    step_s: stepSeconds, precision_h: data.precision_h, both_visible: data.both_visible, sun, earth };
+    step_s: stepSeconds, precision_h: data.precision_h, both_visible: data.both_visible, sun, earth, next_events };
 }

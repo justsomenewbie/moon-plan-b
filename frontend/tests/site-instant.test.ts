@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiError } from "../lib/api/client.ts";
 import { getSiteInstant } from "../lib/api/site-instant.ts";
+import { instantEventText } from "../lib/instant-events.ts";
 
 const run = "unit", site = "custom:-89.4500:222.6900";
 const time = "2026-11-19T15:00:00Z", inside = "2026-11-19T15:59:59Z";
@@ -9,6 +10,32 @@ const sun = { az_deg: 0, el_deg: 0, horizon_el_deg: 0.2, clearance_deg: -0.2, vi
 const earth = { az_deg: 359.9, el_deg: 3, horizon_el_deg: 2, clearance_deg: 1, visible: true };
 const sample = { run_id: run, site_id: site, t: inside, sample_utc: time, sample_index: 45,
   step_s: 3600, precision_h: 1, sun: { ...sun, fraction: 0.08, power_tracking: 0.08 }, earth, both_visible: true };
+
+test("shows UTC-relative modeled events, coverage limits and current states in both languages", async t => {
+  // Replayed event fields from the public B2 Odysseus instant at 2026-01-07T00:30:00Z.
+  const at = "2026-01-07T00:30:00Z", start = "2026-01-07T00:00:00Z", sunsetAt = "2026-01-11T00:00:00Z";
+  const now = { hours: 0, at, state_now: true, lower_bound: false };
+  const next = { sunset: { hours: 95.5, at: sunsetAt, state_now: true, lower_bound: false }, sunrise: now,
+    earthset: { hours: 43679.5, at: null, state_now: true, lower_bound: true }, earthrise: now };
+  let events: unknown = next;
+  t.mock.method(globalThis, "fetch", async () => Response.json({ ...sample, t: at, sample_utc: start,
+    next_events: events, hours_until: { sunset: 96, sunrise: 0, earthset: null, earthrise: 0 } }));
+  const read = () => getSiteInstant(run, site, at, 3600, start);
+  const value = await read();
+  assert.deepEqual(instantEventText("en", "sunset", value), { label: "Sunset", text: "In 95.5 h (±1 h)", at: sunsetAt });
+  assert.match(instantEventText("vi", "sunset", value).text, /95,5 giờ \(±1 giờ\)/);
+  assert.deepEqual(instantEventText("en", "earthset", value), { label: "Earthset", text: "At least 43,679.5 h · no event before model coverage ends", at: null });
+  assert.equal(instantEventText("vi", "sunrise", value).text, "Đang nhìn thấy");
+  for (const bad of [undefined, null, { ...next.sunset, state_now: false }, { ...next.sunset, hours: 96 },
+    { ...next.sunset, at: "2026-02-30T00:00:00Z" }, { ...next.sunset, lower_bound: true }, now]) {
+    events = { ...next, sunset: bad };
+    const partial = await read();
+    assert.deepEqual(instantEventText("vi", "sunset", partial), { label: "Mặt Trời lặn", text: "Chưa có dữ liệu", at: null });
+    assert.deepEqual(partial.next_events.earthset, next.earthset);
+  }
+  events = undefined;
+  assert.equal(instantEventText("en", "sunset", await read()).text, "Unavailable");
+});
 
 test("reads the containing model sample with pinned IDs and preserves visibility for a solar limb above the horizon", async t => {
   const calls: Request[] = [];
