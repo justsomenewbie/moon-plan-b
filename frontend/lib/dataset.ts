@@ -182,7 +182,7 @@ export function validateDataset(input: unknown): Dataset {
 
 export const durationHours = (s: Scenario) => (Date.parse(s.endUtc) - Date.parse(s.startUtc)) / 3600000;
 export type Mode = "dates" | "sites";
-export type Selection = { mode: Mode; a: string; b: string; h: number };
+export type Selection = { mode: Mode; a: string; b: string; h: number; tick: number };
 export function publishedWindows(scenarios: Scenario[]): Scenario[][] {
   const groups = new Map<string, Scenario[]>();
   for (const scenario of scenarios) {
@@ -201,7 +201,7 @@ export function alternatives(d: Dataset, a: Scenario, mode: Mode): Scenario[] {
 }
 export function initialSelection(d: Dataset): Selection | null {
   const a = d.scenarios[0];
-  return a ? { mode: "dates", a: a.id, b: alternatives(d, a, "dates")[0]?.id ?? "", h: d.criteriaHours[0] } : null;
+  return a ? { mode: "dates", a: a.id, b: alternatives(d, a, "dates")[0]?.id ?? "", h: d.criteriaHours[0], tick: 0 } : null;
 }
 export function laterMatch(d: Dataset, a: Scenario, h: number): { candidate?: Scenario; unresolvedBefore: boolean } {
   let unresolvedBefore = false;
@@ -215,22 +215,29 @@ export function laterMatch(d: Dataset, a: Scenario, h: number): { candidate?: Sc
 }
 export function readSelection(params: URLSearchParams, d: Dataset): Selection | null {
   const keys = ["v", "mode", "a", "b", "duration", "h"];
-  if (!keys.some((k) => params.has(k))) return initialSelection(d);
-  requireValue(keys.every((k) => params.getAll(k).length === 1), "The shared selection is incomplete or contains duplicate fields.");
+  if (!params.has("sample") && !keys.some((k) => params.has(k))) return initialSelection(d);
+  requireValue(keys.every((k) => params.getAll(k).length === 1) && params.getAll("sample").length <= 1, "The shared selection is incomplete or contains duplicate fields.");
   requireValue(params.get("v") === d.datasetId, "This link needs a different dataset version. Import that exact release before reopening it.");
   const mode = params.get("mode");
   requireValue(mode === "dates" || mode === "sites", "The comparison mode in this link is invalid.");
   const a = d.scenarios.find((s) => s.id === params.get("a"));
   requireValue(a && durationHours(a) === Number(params.get("duration")), "The primary scenario or duration is not available in this release.");
-  const b = params.get("b") ?? "";
-  requireValue(alternatives(d, a, mode).some((s) => s.id === b), "The comparison pair in this link is incompatible or unavailable.");
+  const b = alternatives(d, a, mode).find(s => s.id === params.get("b"));
+  requireValue(b, "The comparison pair in this link is incompatible or unavailable.");
   const h = Number(params.get("h"));
   requireValue(d.criteriaHours.includes(h), "This criterion is not available in this release.");
-  return { mode, a: a.id, b, h };
+  const sample = params.get("sample");
+  const tick = sample === null ? 0 : commonOffsets(a, b).indexOf(utcMillis(sample) - Date.parse(a.startUtc));
+  requireValue(tick >= 0, "The selected UTC sample is unavailable for this comparison.");
+  return { mode, a: a.id, b: b.id, h, tick };
 }
 export function selectionParams(d: Dataset, s: Selection): URLSearchParams {
   const a = d.scenarios.find((v) => v.id === s.a)!;
-  return new URLSearchParams({ v: d.datasetId, mode: s.mode, a: s.a, b: s.b, duration: String(durationHours(a)), h: String(s.h) });
+  const params = new URLSearchParams({ v: d.datasetId, mode: s.mode, a: s.a, b: s.b, duration: String(durationHours(a)), h: String(s.h) });
+  const b = d.scenarios.find(scenario => scenario.id === s.b);
+  const offset = commonOffsets(a, b)[s.tick];
+  if (offset !== undefined) params.set("sample", sampleAt(a, offset)!.utc);
+  return params;
 }
 
 export function commonOffsets(a: Scenario, b?: Scenario): number[] {

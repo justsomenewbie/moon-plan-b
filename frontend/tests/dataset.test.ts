@@ -120,6 +120,26 @@ test("sharing round-trips exact release and controls; malformed links never sile
   assert.throws(() => readSelection(new URLSearchParams("mode=dates"), d), /incomplete/);
 });
 
+test("shared UTC belongs to the primary date and must exist at the same elapsed offset in both windows", () => {
+  const d = fixture(), selection = { ...initialSelection(d)!, tick: 2 };
+  const [a, b] = d.scenarios;
+  const params = selectionParams(d, selection);
+  assert.equal(params.get("sample"), a.samples[2].utc);
+  assert.notEqual(params.get("sample"), b.samples[2].utc);
+  assert.deepEqual(readSelection(params, d), selection);
+  b.samples.splice(2, 1);
+  assert.throws(() => readSelection(params, d), /sample is unavailable/);
+  params.delete("sample");
+  assert.equal(readSelection(params, d)?.tick, 0);
+  params.set("sample", "not-utc");
+  assert.throws(() => readSelection(params, d), /timestamp/);
+  params.append("sample", a.samples[0].utc);
+  assert.throws(() => readSelection(params, d), /duplicate/);
+  assert.throws(() => readSelection(new URLSearchParams({ sample: a.samples[0].utc }), d), /incomplete/);
+  b.samples = [];
+  assert.equal(selectionParams(d, { ...selection, tick: 0 }).has("sample"), false);
+});
+
 test("charts break paths on nulls; cursor uses actual shared samples only", () => {
   const d = fixture(), partial = d.scenarios[4];
   assert.equal((chartPath(partial, "sun").match(/M/g) ?? []).length, 2);
