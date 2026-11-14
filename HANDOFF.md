@@ -16,7 +16,7 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Saved-week globes show [dated sunlight](docs/GLOBE_SUNLIGHT.md). Sky markers select body readings. Mobile checks covered contacts, imports, selection, UTC, clearance and API status.
 
-Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Reports link site coordinates and heights. UTC lookup shows requested and native samples. Fractional ends retain coverage. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Pair links restore sites and ranks. Reports link coordinates and heights. UTC lookup shows requested and native samples. Backend accepts 1 ns ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gaps at 320px and 200% zoom. Globe focus is visible. Reload reopens sources. [Homepage navigation](qa/check_home_navigation.mjs) reaches members and saved methods by keyboard.
 
@@ -26,4 +26,4 @@ The astronaut offers help, labels modeled readings, pauses its wave and opens pa
 
 ## Pending
 
-Backend sub-millisecond end handling, release licensing, science sign-off, three usability sessions and spoken screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Named stashes retain backend-QA and pre-sync work.
+Release licensing, science sign-off, three usability sessions and screen-reader testing remain. See the [freeze checklist](qa/docs/RUNBOOK.md). Stashes retain backend-QA and pre-sync work.
