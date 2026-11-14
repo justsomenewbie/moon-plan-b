@@ -265,6 +265,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sites/{site_id}/instant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Readout at one instant (timeline slider): az/el, flags, time until sunset / sunrise / earthset / earthrise
+         * @description Reads the sample k containing t (sample_utc <= t < sample_utc + step_s). `hours_until` = the precomputed columns of that sample (lunarnav.windows.hours_until_state, measured from sample_utc); `next_events` = the same events measured from t (lunarnav.windows.time_until_sunset / next_sunrise / time_until_earthset / next_earthrise). t outside the run -> 422 OUT_OF_RANGE.
+         */
+        get: operations["getSiteInstant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3097,6 +3117,152 @@ export interface components {
             horizon_min_el_deg: number;
             horizon_max_el_deg: number;
         };
+        /**
+         * @example {
+         *       "run_id": "pf_21c3f3f6dc56b1e1",
+         *       "step_s": 3600,
+         *       "precision_h": 1,
+         *       "site_id": "ref_connecting_ridge_c1",
+         *       "t": "2026-01-01T05:30:00Z",
+         *       "sample_utc": "2026-01-01T05:00:00Z",
+         *       "sun": {
+         *         "az_deg": 167.155201,
+         *         "el_deg": 0.806605,
+         *         "horizon_el_deg": -1.168915,
+         *         "clearance_deg": 1.97552,
+         *         "fraction": 1,
+         *         "visible": true,
+         *         "power_horizontal": 0.014077,
+         *         "power_tracking": 1,
+         *         "irradiance_tracking_wm2": 1401.675,
+         *         "dist_km": 147411325.721
+         *       },
+         *       "earth": {
+         *         "az_deg": 136.312733,
+         *         "el_deg": 5.903113,
+         *         "horizon_el_deg": -1.338637,
+         *         "clearance_deg": 7.24175,
+         *         "fraction": 1,
+         *         "visible": true,
+         *         "dist_km": 360550.664
+         *       },
+         *       "both_visible": true,
+         *       "hours_until": {
+         *         "sunset": 2083,
+         *         "sunrise": 0,
+         *         "earthset": 153,
+         *         "earthrise": 0
+         *       },
+         *       "sample_index": 5,
+         *       "next_events": {
+         *         "sunset": {
+         *           "hours": 2082.5,
+         *           "at": "2026-03-29T00:00:00Z",
+         *           "state_now": true,
+         *           "lower_bound": false
+         *         },
+         *         "sunrise": {
+         *           "hours": 0,
+         *           "at": "2026-01-01T05:30:00Z",
+         *           "state_now": true,
+         *           "lower_bound": false
+         *         },
+         *         "earthset": {
+         *           "hours": 152.5,
+         *           "at": "2026-01-07T14:00:00Z",
+         *           "state_now": true,
+         *           "lower_bound": false
+         *         },
+         *         "earthrise": {
+         *           "hours": 0,
+         *           "at": "2026-01-01T05:30:00Z",
+         *           "state_now": true,
+         *           "lower_bound": false
+         *         }
+         *       }
+         *     }
+         */
+        InstantResponse: {
+            /**
+             * @description Run id: `pf_<params_fingerprint>` for imported precompute runs, `job_<job_id>` for custom jobs
+             * @example pf_21c3f3f6dc56b1e1
+             */
+            run_id: string;
+            /**
+             * @description Sample step of the run, seconds
+             * @example 3600
+             */
+            step_s: number;
+            /**
+             * @description = step_s / 3600. Every boundary and "hours until" value is accurate to +- this many hours.
+             * @example 1
+             */
+            precision_h: number;
+            /**
+             * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+             * @example ref_connecting_ridge_c1
+             */
+            site_id: string;
+            /**
+             * @description Requested instant (normalised to whole seconds)
+             * @example 2026-01-01T00:00:00Z
+             */
+            t: string;
+            /**
+             * @description Start of the sample that was read (<= t)
+             * @example 2026-01-01T00:00:00Z
+             */
+            sample_utc: string;
+            /** @description k = floor((t - run start) / step_s). Always present in real responses. */
+            sample_index?: number;
+            sun: {
+                az_deg: number;
+                el_deg: number;
+                horizon_el_deg: number;
+                clearance_deg: number;
+                fraction: number;
+                visible: boolean;
+                power_horizontal: number;
+                power_tracking: number;
+                irradiance_tracking_wm2: number;
+                dist_km: number;
+            };
+            earth: {
+                az_deg: number;
+                el_deg: number;
+                horizon_el_deg: number;
+                clearance_deg: number;
+                fraction: number;
+                visible: boolean;
+                dist_km: number;
+            };
+            both_visible: boolean;
+            /** @description The precomputed hours_until_* columns of sample k = lunarnav.windows.hours_until_state(...)[k]: hours from sample_utc (+- precision_h); 0 = already in that state; null = no such event before run end */
+            hours_until: {
+                sunset: number | null;
+                sunrise: number | null;
+                earthset: number | null;
+                earthrise: number | null;
+            };
+            /** @description Same events measured from t itself (Python NextEvent semantics, incl. lower_bound). Always present in real responses. */
+            next_events?: {
+                sunset: components["schemas"]["NextEvent"];
+                sunrise: components["schemas"]["NextEvent"];
+                earthset: components["schemas"]["NextEvent"];
+                earthrise: components["schemas"]["NextEvent"];
+            };
+        };
+        /** @description = lunarnav.windows.time_until_sunset / next_sunrise / time_until_earthset / next_earthrise(...).to_dict() */
+        NextEvent: {
+            /** @description Hours from t (the requested instant, NOT sample_utc) until the event; 0 = condition already holds */
+            hours: number;
+            /** @description Instant of the event (= t when it already holds); null when it does not happen before the run end */
+            at: string | null;
+            /** @description Flag value at t */
+            state_now: boolean;
+            /** @description true -> no event before the run end: hours = time to the run end (a lower bound) */
+            lower_bound: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -4398,6 +4564,103 @@ export interface operations {
             };
             /** @description Internal error (INTERNAL) */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getSiteInstant: {
+        parameters: {
+            query: {
+                /**
+                 * @description Run to read; default = the run flagged is_default (GET /api/v1/runs)
+                 * @example pf_21c3f3f6dc56b1e1
+                 */
+                run_id?: string;
+                /** @description Instant to read; the sample k = floor((t - t0) / step) containing it is used */
+                t: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Site id: catalog id (`a3_haworth`) or canonical custom id (`custom:-89.4500:222.6900`). Contains ":" -> always encodeURIComponent() it in paths.
+                 * @example ref_connecting_ridge_c1
+                 */
+                site_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstantResponse"];
+                };
+            };
+            /** @description Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Semantically invalid (OUT_OF_RANGE, BAD_MISSION_LENGTH, CAPABILITY_UNAVAILABLE, JOB_TOO_LARGE) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED) */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Internal error (INTERNAL) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up) */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
