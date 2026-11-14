@@ -1,5 +1,5 @@
 import { ApiError, apiError, producer } from "./client.ts";
-import { rankingMetrics, type SiteComparison } from "./compare-sites.ts";
+import { rankingInOrder, rankingMetrics, type SiteComparison } from "./compare-sites.ts";
 import { getTerrainDateSites } from "./terrain-dates.ts";
 import type { components } from "./producer";
 
@@ -30,20 +30,6 @@ function checkRow(row: Row, rank: number, duration: number, weights: CatalogRank
     close(row.score, rankingMetrics.reduce((score, field) => score + row[field] * (weights[field] ?? 0), 0)));
 }
 
-// For the comparison weights (tenths), whole hourly/sample counts distinguish a true score tie
-// from different full-precision scores that happened to round to the same public value.
-function weightedSamples(row: Row, n: number, weights: CatalogRanking["weights"]) {
-  if (100 / n <= epsilon) return undefined;
-  let sum = 0;
-  for (const field of rankingMetrics) {
-    const weight = (weights[field] ?? 0) * 10;
-    const count = Math.round(row[field] * n / 100);
-    if (!Number.isInteger(weight) || !close(row[field], 100 * count / n)) return undefined;
-    sum += weight * count;
-  }
-  return Number.isSafeInteger(sum) ? sum : undefined;
-}
-
 export async function getCatalogRanking(
   comparison: SiteComparison, signal?: AbortSignal, catalogSites?: readonly { id: string }[],
 ): Promise<CatalogRanking> {
@@ -65,22 +51,10 @@ export async function getCatalogRanking(
     Array.isArray(data.ranking) && data.ranking.length >= comparison.ranking.length);
   const duration = range.n_samples * range.step_s / 3600;
   const byId = new Map<string, Row>();
-  let previousCount: number | undefined;
   for (const [i, row] of data.ranking.entries()) {
     checkRow(row, i + 1, duration, weights);
     check(!byId.has(row.site_id));
-    const count = weightedSamples(row, range.n_samples, weights);
-    if (i > 0) {
-      const prior = data.ranking[i - 1];
-      check(row.score <= prior.score);
-      if (count !== undefined && previousCount !== undefined) {
-        check(previousCount >= count);
-        if (previousCount === count)
-          check(prior.longest_dark_h < row.longest_dark_h ||
-            (prior.longest_dark_h === row.longest_dark_h && prior.site_id < row.site_id));
-      }
-    }
-    previousCount = count;
+    if (i > 0) check(rankingInOrder(data.ranking[i - 1], row, weights, range.n_samples));
     byId.set(row.site_id, row);
   }
   let previousRank = 0;

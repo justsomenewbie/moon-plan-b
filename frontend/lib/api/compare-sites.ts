@@ -18,6 +18,17 @@ function check(condition: unknown): asserts condition {
 function close(a: number, b: number) {
   return Number.isFinite(a) && Math.abs(a - b) <= 0.000002;
 }
+// Different visibility percentages can produce the same six-decimal score in the response.
+export function rankingInOrder(first: Schemas["RankingRow"], next: Schemas["RankingRow"],
+    scoreWeights: Record<string, number>, samples: number, complete = true) {
+  if (first.score !== next.score) return first.score > next.score;
+  if (!complete || 100 / samples <= 0.000002) return true;
+  const sameInputs = rankingMetrics.every(field => !scoreWeights[field] || (
+    first[field] === next[field] && close(first[field], 100 * Math.round(first[field] * samples / 100) / samples)
+  ));
+  return !sameInputs || first.longest_dark_h < next.longest_dark_h ||
+    (first.longest_dark_h === next.longest_dark_h && first.site_id < next.site_id);
+}
 function within(value: number, max: number) {
   return Number.isFinite(value) && value >= 0 && value <= max;
 }
@@ -79,21 +90,19 @@ function checkSite(site: Schemas["CompareSite"], rank: Schemas["RankingRow"], st
     time = next;
     spans.forEach((list, i) => { if (list[cursor[i]]?.end === time) cursor[i]++; });
   }
-  let weightedSamples = 0, longestDark = 0;
   if (coverage === "complete") {
     for (const [i, kind] of kinds.entries()) {
       const visible = spans[i].reduce((sum, w) => w.state ? sum + (w.end - w.start) : sum, 0);
       check(close(metrics[`pct_${kind}`], 100 * visible / (end - start)));
-      weightedSamples += (visible / step) * (10 * weights[`pct_${kind}`]);
     }
-    let dark = 0;
+    let dark = 0, longestDark = 0;
     for (const w of spans[0]) {
       dark = w.state ? 0 : dark + (w.end - w.start);
       longestDark = Math.max(longestDark, dark);
     }
     check(close(metrics.longest_dark_h, longestDark / HOUR));
   }
-  return { coverage, weightedSamples, longestDark };
+  return coverage;
 }
 
 export async function compareSites(request: SiteComparisonRequest, signal?: AbortSignal): Promise<SiteComparison> {
@@ -121,24 +130,16 @@ export async function compareSites(request: SiteComparisonRequest, signal?: Abor
     data.sites && Object.keys(data.sites).length === 2 && siteIds.every(id => Object.hasOwn(data.sites, id)) &&
     Array.isArray(data.ranking) && data.ranking.length === 2);
   const coverageBySite: Record<string, Coverage> = Object.create(null);
-  let previous: ReturnType<typeof checkSite> | undefined;
   for (const [i, row] of data.ranking.entries()) {
     check(row && row.rank === i + 1 && siteIds.includes(row.site_id) && !Object.hasOwn(coverageBySite, row.site_id) &&
       typeof row.name === "string" && row.name.length && typeof row.group === "string" && strings(row.reasons));
-    const observed = checkSite(data.sites[row.site_id], row, start, end, step);
-    coverageBySite[row.site_id] = observed.coverage;
+    coverageBySite[row.site_id] = checkSite(data.sites[row.site_id], row, start, end, step);
     check(close(row.score, rankingMetrics.reduce((sum, f) => sum + weights[f] * row[f], 0)));
-    if (previous) {
+    if (i > 0) {
       const prior = data.ranking[i - 1];
-      check(row.score <= prior.score + 0.000002);
-      // Rounded scores alone cannot establish a tie. Complete sample states give the exact weighted counts.
-      if (observed.coverage === "complete" && previous.coverage === "complete" &&
-          row.score === prior.score && observed.weightedSamples === previous.weightedSamples) {
-        check(previous.longestDark < observed.longestDark ||
-          (previous.longestDark === observed.longestDark && prior.site_id < row.site_id));
-      }
+      check(rankingInOrder(prior, row, weights, data.range.n_samples,
+        coverageBySite[prior.site_id] === "complete" && coverageBySite[row.site_id] === "complete"));
     }
-    previous = observed;
   }
   return { ...data, coverageBySite };
 }
