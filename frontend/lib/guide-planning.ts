@@ -32,6 +32,13 @@ function calendarDays(text: string) {
   return [...text.matchAll(new RegExp("\\b" + day + "\\s+(" + monthPattern + "),?\\s+" + year + "\\b", "g"))].map(m => utcDay(m[3], monthNumber(m[2]), m[1]));
 }
 
+// Common mission lengths in either UI language. Other amounts can be entered as digits.
+const numberWords: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+  seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, một: 1, hai: 2, ba: 3, bốn: 4, năm: 5,
+  sáu: 6, bảy: 7, tám: 8, chín: 9, mười: 10 };
+const amount = "[−-]?\\d+(?:[.,]\\d+)?|" + Object.keys(numberWords).join("|");
+const durationPattern = new RegExp("(?<![\\p{L}\\d.,])(" + amount + ")\\s*[- ]?\\s*(hours?|hrs?|h|days?|weeks?|giờ|tiếng|ngày|tuần)(?![\\p{L}\\d])", "gu");
+
 export function planningIntent(question: string, previous?: PlanningIntent): PlanningIntent | null {
   const q = question.trim().toLowerCase().normalize("NFC");
   const dates = calendarDays(q);
@@ -40,7 +47,8 @@ export function planningIntent(question: string, previous?: PlanningIntent): Pla
   const when = /\bwhen\b|best (?:date|time|window)|khi nào|lúc nào|bao giờ|thời điểm nào|ngày nào|thời gian nào/.test(q);
   const where = /\b(?:best site|best place|best destination)\b|\bwhere\b|\bwhich (?:lunar |landing )?(?:site|place|location|destination)s?\b|địa điểm nào|nơi nào|ở đâu|đi đâu|chỗ nào|điểm nào/.test(q);
   const visiting = /\b(go|visit|trip|travel|land|mission|choose|recommend)\b|muốn đi|muon di|nên đi|hạ cánh|ghé|lựa chọn|nên chọn|gợi ý/.test(q);
-  const duration = q.match(/\b(\d+(?:\.\d+)?)\s*[- ]?\s*(hours?|hrs?|h\b|days?|giờ|ngày)/);
+  const durations = [...q.matchAll(durationPattern)];
+  const duration = durations[0];
   const miss = /an toàn|\bsafe(?:st|ty)?\b|\bfuel\b|\bradiation\b|nhiên liệu|bức xạ/.test(q);
   const informational = /\bwhen (?:was|were|did|is (?:the )?(?:sun|earth)|does (?:the )?(?:sun|earth))\b|\bwhen did\b|phóng (?:vào )?khi nào|hạ cánh vào năm nào/.test(q);
   const aboutSource = /\b(?:source|provenance|who computed|how was|where did)\b|nguồn|tính bằng cách nào/.test(q);
@@ -63,7 +71,15 @@ export function planningIntent(question: string, previous?: PlanningIntent): Pla
   }
   const sun = /sun(?:light)?|solar|mặt trời|ánh sáng|nắng/.test(q);
   const earth = /earth|radio|trái đất|liên lạc/.test(q);
-  const missionHours = duration ? Number(duration[1]) * (/^(?:day|ngày)/.test(duration[2]) ? 24 : 1) : followup ? previous.missionHours : null;
+  let missionHours = followup ? previous.missionHours : null;
+  if (duration) {
+    const unit = duration[2], count = numberWords[duration[1]] ?? Number(duration[1].replace(",", ".").replace("−", "-"));
+    const multiplier = /^(week|tuần)/.test(unit) ? 168 : /^(day|ngày)/.test(unit) ? 24 : 1;
+    // A range or compound duration needs clarification before the planner can score visits.
+    const before = q.slice(0, duration.index).trimEnd();
+    const ambiguous = durations.length > 1 || /(?:[\d\p{L}]\s*[-–—]$|\d\s+(?:to|hoặc|đến|tới|or)$|(?:twenty|thirty|forty|fifty|mươi|mười)$)/u.test(before);
+    missionHours = ambiguous ? 0 : count * multiplier;
+  }
   return { mode, from, to, dateProblem, missionHours, priority: sun || earth ? (sun && earth ? "joint" : sun ? "sun" : "earth") : followup ? previous.priority : "joint",
     siteText: followup ? [previous.siteText, question].join(" ").slice(-1000) : question };
 }

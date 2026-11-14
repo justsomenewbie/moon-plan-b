@@ -30,6 +30,12 @@ A production call to `POST /alt-dates` for a five-hour mission at Athena on Nove
 
 **Open backend message issue.** On the public proxy, a one-day Haworth dataset returned HTTP 200 for `max_points=10000` and HTTP 400 for `10001`. The rejected response's `detail` and field error give the correct maximum of 10,000. Its `hint` gives the 5,000-point limit and the field-count guidance for the separate series route. The aggregate contract permits 10,000. Both requests used `site_ids=a3_haworth`, `include=series`, and November 15 00:00 through November 16 00:00 UTC. The closed export filename report above concerns a different endpoint.
 
+### Fixed-duration visits within travel dates
+
+On run B2, November 14–21, 2026 UTC contains 168 hourly samples and 145 admissible starts for a 24-hour visit. Whole-week ranking by joint visibility gives Vikram 162 of 168 hours. For a visit lasting 24 hours, 15 of 23 sites tie at 24 of 24 hours. Vikram’s earliest such visit starts November 14 at 06:00 UTC (139 tied starts). Athena’s starts November 15 at 05:00 (116), and Odysseus’s starts November 19 at 01:00 (24). Nobile Rim 1 peaks at 18 of 24 hours, first starting November 19 at 15:00 UTC. Shackleton crater floor has zero hours for every start.
+
+These values were independently counted from the public producer aggregate windows and each site's original windows file. All 23 individual file hashes match the producer manifest. The app ranks complete site windows for the requested duration. The score counts visible time within one contiguous visit. Visibility may be interrupted during that visit. The earlier B archive identifies the sites it can evaluate for the selected range. [Native B2 archive](B2_VISIBILITY_ARCHIVE.md)
+
 ## Aggregate update on 14 November
 
 At 14:05 Hanoi the team service documented 25 paths. SHA-256 of the retrieved OpenAPI document was `f77527a4f7d0df597dc12f9054ba0b08bb2e9ae6173a8310c490d675de698754`. A parameterless GET exceeded the default run’s 50,000-point limit and returned the documented HTTP 422. A bounded request returned HTTP 200. The frontend requests the following bounded comparison through its same-origin proxy. Changing the requested spacing affects the displayed series. Full visibility intervals still come from the source grid.

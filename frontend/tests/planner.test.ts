@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getPlannerRun, getPlannerRanking, type PlannerRun } from "../lib/api/planner.ts";
+import { getPlannerRun, getPlannerRanking, getPlannerMissionRanking, type PlannerRun } from "../lib/api/planner.ts";
 
 const start = "2026-03-01T00:00:00Z", end = "2026-03-02T00:00:00Z";
 const ids = ["alpha", "beta", "unknown"];
@@ -124,4 +124,22 @@ test("rejects dates beyond either inclusive start or exclusive end, reversal and
     await assert.rejects(getPlannerRanking(run, { ...request, ...bounds }), /inside the model run/);
   await assert.rejects(getPlannerRanking(run, request, AbortSignal.abort()), { name: "AbortError" });
   assert.equal(calls, 0);
+});
+
+test("fixed mission search reads only aggregate windows for all sites and checks the mission before a request", async t => {
+  const calls: string[] = [];
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    const url = new URL(req.url);
+    calls.push(url.pathname);
+    assert.equal(url.searchParams.get("run_id"), run.runId);
+    assert.equal(url.searchParams.get("site_ids"), ids.join(","));
+    assert.ok(!url.searchParams.get("include")?.includes("series"));
+    return Response.json(replies().aggregate);
+  });
+  const request = { from: start, to: end, priority: "joint" as const, missionHours: 6 };
+  for (const missionHours of [0, 25, 0.5]) await assert.rejects(getPlannerMissionRanking(run, { ...request, missionHours }), /duration/);
+  const { ranking } = await getPlannerMissionRanking(run, request);
+  assert.deepEqual(calls, ["/api/v1/dataset"]);
+  assert.deepEqual(ranking.excludedIds, ["unknown"]);
+  assert.ok(ranking.rows.every(row => row.bothHours <= 6));
 });

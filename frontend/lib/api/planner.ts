@@ -2,6 +2,7 @@ import { ApiError, apiError, getTerrainAggregate, producer } from "./client.ts";
 import { readCatalogRanking, type CatalogRanking } from "./catalog-ranking.ts";
 import { terrainUtcNanos, type TerrainSummary } from "./terrain-summary.ts";
 import type { components } from "./producer";
+import { rankLiveMissionWindows } from "../mission-window-ranking.ts";
 import { getTerrainDateSites } from "./terrain-dates.ts";
 
 export type PlannerRun = {
@@ -47,14 +48,12 @@ export async function getPlannerRun(signal?: AbortSignal, pinnedRunId?: string):
   return { runId: run.run_id, start: run.start_utc, end: run.end_utc, stepSeconds: run.step_s, sites };
 }
 
-export async function getPlannerRanking(run: PlannerRun, request: PlannerDateRequest, signal?: AbortSignal): Promise<PlannerRanking> {
+async function getCatalogEvidence(run: PlannerRun, request: PlannerDateRequest, signal?: AbortSignal) {
   const from = terrainUtcNanos(request.from, "Start UTC"), to = terrainUtcNanos(request.to, "End UTC");
   const runStart = terrainUtcNanos(run.start);
   if (from < runStart || to > terrainUtcNanos(run.end) || to <= from)
     throw new ApiError("Choose an increasing UTC window inside the model run.", 422);
-  const fields = { joint: "pct_both", sun: "pct_sun", earth: "pct_earth" } as const;
-  if (!Object.hasOwn(fields, request.priority)) throw new ApiError("Choose a visibility priority.", 422);
-  const metric = fields[request.priority];
+  if (!["joint", "sun", "earth"].includes(request.priority)) throw new ApiError("Choose a visibility priority.", 422);
   signal?.throwIfAborted();
   // The aggregate supplies full-resolution intervals with coverage for every site, without time series.
   const evidence = await getTerrainAggregate({ from: request.from, to: request.to, resolutionSeconds: run.stepSeconds },
@@ -62,6 +61,24 @@ export async function getPlannerRanking(run: PlannerRun, request: PlannerDateReq
   const stepNanos = BigInt(run.stepSeconds) * 1_000_000_000n;
   requireMatch(evidence.range.step_s === run.stepSeconds && evidence.range.start === evidence.range.requested_start &&
     evidence.range.end === evidence.range.requested_end && (terrainUtcNanos(evidence.range.start) - runStart) % stepNanos === 0n);
+  requireMatch(evidence.sites.every((site, i) => site.name === run.sites[i].name));
+  return evidence;
+}
+
+export async function getPlannerMissionRanking(run: PlannerRun, request: PlannerDateRequest & { missionHours: number }, signal?: AbortSignal) {
+  const hours = request.missionHours;
+  if (!Number.isSafeInteger(hours) || hours < 1 || (hours * 3600) % run.stepSeconds !== 0 ||
+      BigInt(hours) * 3_600_000_000_000n > terrainUtcNanos(request.to) - terrainUtcNanos(request.from))
+    throw new ApiError("Choose a mission duration that fits the travel window and model step.", 422);
+  const evidence = await getCatalogEvidence(run, request, signal);
+  const ranking = rankLiveMissionWindows(evidence, request);
+  requireMatch(ranking);
+  return { evidence, ranking };
+}
+
+export async function getPlannerRanking(run: PlannerRun, request: PlannerDateRequest, signal?: AbortSignal): Promise<PlannerRanking> {
+  const evidence = await getCatalogEvidence(run, request, signal);
+  const metric = ({ joint: "pct_both", sun: "pct_sun", earth: "pct_earth" } as const)[request.priority];
   const ranking = await readCatalogRanking({ run_id: run.runId, range: evidence.range, step_s: run.stepSeconds,
     precision_h: run.stepSeconds / 3600, weights: { [metric]: 1 } }, signal, run.sites);
   const byId = new Map(evidence.sites.map(site => [site.id, site]));

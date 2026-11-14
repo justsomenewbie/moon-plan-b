@@ -22,9 +22,7 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 [Astronaut guide configuration](frontend/README.md#ask-the-astronaut).
 
-**Plan and data** — B2 covers 23 sites and 43,824 hourly samples each. Saved B2 reports include original coordinate sources and EN/VI notes for all 23 sites. Switching sources retains the requested dates, site and priority. The explorer lists 13 relay operations. All 17 upstream operations match production. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The map highlights leaders and ties.
-
-Planner results flag five smooth-sphere sites and withhold zero-visibility recommendations. Live landing searches support continuous sunlight, continuous Earth visibility and minimum solar elevation. [Checks and open dataset limit hint](docs/BACKEND_RECONCILIATION.md#planner-and-dataset-checks-november-15-2026).
+**Plan and data** — B2 covers 23 sites and 43,824 hours per site, with EN/VI coordinate notes. The planner and astronaut rank fixed-duration visits inside travel dates. For November 14–21, 15 sites tie at 24/24 hours, while Vikram leads the whole week at 162/168. Smooth-sphere sites carry terrain caveats. Zero visibility yields no recommendation. [Evidence and backend hint](docs/BACKEND_RECONCILIATION.md#fixed-duration-visits-within-travel-dates) · [Archive](docs/B2_VISIBILITY_ARCHIVE.md).
 
 ## Pending
 

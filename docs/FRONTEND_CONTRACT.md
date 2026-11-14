@@ -106,6 +106,6 @@ Selection links use `v`, `mode`, `a`, `b`, `duration`, `h`, plus bounded request
 
 Later-match navigation searches only later same-site/same-duration candidates in the current release, using producer assessments. An earlier unknown/borderline candidate blocks a “first match” claim. No claim applies to dates outside the published candidate set.
 
-## Handoff to the producer
+## Current producer handoff
 
-Review the draft endpoints, request limits, release envelope, job payload/state contract, model and error examples with Chung. Replace or reconcile the OpenAPI **before** real integration, regenerate types and rerun acceptance checks. Supply a reviewed Colab release with provenance and complete/empty/partial/missing/failure examples. Confirm time/frame/units, interval boundaries, thresholds and hosting/proxy behavior. Do not copy credentials into this repository or a browser environment variable.
+The production contract is maintained in [the shared backend directory](../lunar-navigator/backend/contract/openapi.json). To review a contract change, compare its operations against the frontend extract, regenerate client types, and rerun the production build and affected integration checks. The original flat-horizon release format above remains available for compatible imports. Colab execution belongs to the data team. [Production integration record](BACKEND_RECONCILIATION.md)

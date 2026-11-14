@@ -17,7 +17,7 @@ const site = (id: string, name: string) => ({ id, name, demSource: "test", lat_d
 const run: PlannerRun = { runId: "fixture-run", start: "2026-01-01T00:00:00Z", end: "2028-01-01T00:00:00Z", stepSeconds: 3600,
   sites: [site("im2_athena", "IM-2 Athena"), site("apollo11", "Apollo 11 LM Eagle (Tranquility Base)"), site("apollo15", "Apollo 15 LM Falcon (Hadley-Apennine)")] };
 const unintended = async () => { throw Error("Unexpected lookup"); };
-const api = { online: true, run: async () => run, ranking: unintended, observation: unintended, dates: unintended };
+const api = { online: true, run: async () => run, ranking: unintended, missionRanking: unintended, observation: unintended, dates: unintended };
 
 test("an explicit EN or VI travel window never uses last week's displayed rows", async () => {
   for (const locale of ["en", "vi"] as const) {
@@ -151,4 +151,50 @@ test("retains the planner's live model when answering a ranking question or offe
     assert.equal(url.searchParams.get("run_id"), run.runId);
     assert.equal(url.searchParams.has("source"), false);
   }
+});
+
+test("the astronaut ranks fixed visits within the week, retains duration in its link and distinguishes ties", async () => {
+  const plans = {
+    en: "Where should I go for a 24-hour mission from November 14 to 21, 2026?",
+    vi: "Tôi muốn đi 24 giờ từ 14 đến 21 tháng 11 năm 2026, địa điểm nào tốt nhất?",
+  };
+  for (const locale of ["en", "vi"] as const) {
+    const request = planningIntent(plans[locale])!;
+    const result = await answerPlanning(request, locale, signal, api, "saved-b2");
+    assert.match(result.answer, /24\/24 h/);
+    assert.match(result.answer, /23\/23/);
+    assert.match(result.answer, /Vikram[^\n]*2026-11-14T06:00:00Z → 2026-11-15T06:00:00Z/);
+    assert.match(result.answer, /Athena[^\n]*2026-11-15T05:00:00Z/);
+    assert.match(result.answer, /Odysseus[^\n]*2026-11-19T01:00:00Z/);
+    assert.doesNotMatch(result.answer, /162 h/);
+    assert.equal(result.answer.split(" → ").length - 2, 15);
+    const url = new URL(result.href, "https://example.org");
+    assert.equal(url.searchParams.get("mode"), "sites");
+    assert.equal(url.searchParams.get("source"), "saved-b2");
+    assert.equal(url.searchParams.get("missionHours"), "24");
+  }
+  const q = planningIntent(plans.en)!;
+  const old = await answerPlanning(q, "en", signal, api, "saved");
+  assert.match(old.answer, /Odysseus and Athena/);
+  assert.doesNotMatch(old.answer, /Vikram/);
+  for (const phrase of ["six-hour", "6-hour", "two-day", "1,5 ngày", "sáu tiếng", "một tuần", "6–12 hours", "1 day and 4 hours"]) {
+    const parsed = planningIntent("Where should I go for a " + phrase + " mission from 2026-11-14 to 2026-11-21?")!;
+    assert.equal(parsed.missionHours, ({ "six-hour":6, "6-hour":6, "two-day":48, "1,5 ngày":36, "sáu tiếng":6, "một tuần":168, "6–12 hours":0, "1 day and 4 hours":0 } as Record<string, number>)[phrase]);
+  }
+  const invalid = await answerPlanning({ ...q, missionHours: 169 }, "vi", signal, api, "saved-b2");
+  assert.match(invalid.answer, /số giờ nguyên/);
+});
+
+test("a saved run explains its UTC coverage and an explicit UTC clock never becomes an all-day ranking", async () => {
+  const q = planningIntent("Where should I land for 24 hours from 2032-01-01 to 2032-01-03?")!;
+  for (const source of ["saved", "saved-b2"] as const) {
+    const answer = await answerPlanning(q, "en", signal, api, source);
+    assert.match(answer.answer, /outside the model run/);
+    assert.match(answer.answer, /2031-01-01T00:00:00Z/);
+    assert.doesNotMatch(answer.answer, /retry/i);
+  }
+  const clock = planningIntent("Where should I land from 2026-11-14 08:00 to 2026-11-15 14:00?")!;
+  const answer = await answerPlanning(clock, "vi", signal, api, "saved-b2");
+  assert.match(answer.answer, /giờ bắt đầu UTC/);
+  assert.doesNotMatch(answer.answer, /24 h/);
 });
