@@ -1,6 +1,9 @@
 # Moon Plan B
 
-Shared repository for the team's NASA Space Apps 2026 project. The Next.js + Tailwind frontend supports site/date comparison, Sun/Earth tracks and visibility bands, dataset import, bounded API requests, job progress, source inspection, shareable selections and printing. **The default demo uses synthetic data. With a team backend configured, the frontend requests terrain-model results from `GET /api/v1/dataset`.** The home page also displays two saved weeks of terrain-model results for Odysseus and Athena. Select a UTC week to compare sites or a site to compare weeks. Each saved choice has a direct link that reopens its UTC intervals and source queries. Use **Print saved result** or print from that link for the sourced report. **Print report** in the workspace prints its current selection. The live comparison requests Odysseus and Athena for one UTC range and shows their supplied joint intervals, coverage and source run. You can also import a producer JSON export containing windows and metrics. See [backend status](docs/BACKEND_RECONCILIATION.md).
+Compare lunar landing sites by UTC dates, or find landing times for a chosen site and mission duration. The planner uses visibility of the Sun, Earth or both above the modeled horizon. [Open the planner](https://moon-plan-b.vercel.app/plan) · [Browse the data](https://moon-plan-b.vercel.app/data).
+
+The public frontend requests data from the team’s [production API](https://api.lunavigator.com/docs). The [verified B2 archive](docs/B2_VISIBILITY_ARCHIVE.md) also supports offline visibility searches for all 23 sites across 43,824 hourly samples per site, from 1 January 2026 through 31 December 2030 UTC. Use `/compare` for observations, intervals, JSON imports, shareable links and printed reports. Historical B links retain their original run. [Backend verification](docs/BACKEND_RECONCILIATION.md).
+
 
 ## Run the frontend
 
@@ -19,7 +22,7 @@ Open `http://127.0.0.1:3014`. For development use `npm run dev`. The scripts bin
 
 Tests/development/build explicitly generate API types and prepare local MSW/Swagger assets. `--ignore-scripts` prevents dependency lifecycle telemetry; no dependency scripts are required by the checked commands. Use `/api-docs` for the interactive Swagger explorer. Its files are local and its online validator is disabled.
 
-Use **/plan** to choose UTC dates, a site, a mission duration and the visibility to maximize. Open **/data** to download the source manifest or site catalog and to see exactly which windows work offline. The [saved run B archive](docs/SAVED_PLANNER.md) contains genuine team model results: five-year summaries for 23 sites, two additional catalog windows, and hour-by-hour visibility for Odysseus and Athena over 14 days. The UTC end of a travel window is exclusive. The 94 original run files are inventoried, not all bundled. A public frontend cannot reach a private LAN producer.
+Open **/data** for the producer’s manifest, file catalog and compact hourly visibility archive. The legacy [saved B comparisons](docs/SAVED_PLANNER.md) remain available alongside B2. Travel windows use an exclusive UTC end.
 
 The default `NEXT_PUBLIC_API_BASE_URL=mock` runs the synthetic API. To use an agreed backend, set this one variable to its HTTP(S) origin, for example `http://127.0.0.1:8000`, then rebuild/restart. Never put credentials in it. Browser requests use same-origin `/api/*`. In LAN mode, Next.js rewrites forward them to the configured backend. `NEXT_PUBLIC_*` values are embedded at build time. Backend errors do not trigger a synthetic fallback. Mock jobs simulate progress and return fixture data; they do not calculate entered coordinates.
 
@@ -61,7 +64,7 @@ Start with [AGENTS.md](AGENTS.md) and [HANDOFF.md](HANDOFF.md). English remains 
 
 ## Collaboration
 
-One repository holds the frontend, backend/data scripts, tests and product documentation. Frontend direction: Next.js + Tailwind CSS, reported by Sơn from Chung. The team service exposed its version 1.0.0 API on the local network. Read-only site and visibility responses were verified. The aggregate route returned sourced results for both verified weeks. The public preview uses the saved run until a publicly reachable producer is configured. Do not guess an endpoint or copy private credentials into this repository.
+One repository holds the frontend, backend/data scripts, tests and product documentation. Frontend direction: Next.js + Tailwind CSS, reported by Sơn from Chung. The team service exposed its version 1.0.0 API on the local network. Read-only site and visibility responses were verified. The aggregate route returned sourced results for both verified weeks. The public preview connects to the production service with a server-side key. Do not guess an endpoint or copy private credentials into this repository.
 
 This repository is public. Anyone may fork it and propose changes through a pull request. Named collaborators need to accept their invitations before direct push access works. Use one editor per checkout; independent reviewers read without writing. Frontend files live under `frontend/`, the proposed shared contract under `contracts/`; backend/data implementation remains with its assigned owner. Edit and agree the OpenAPI before real integration, regenerate types and run the checks. The draft's arbitrary endpoints and limits must not be presented as Chung's existing API.
 

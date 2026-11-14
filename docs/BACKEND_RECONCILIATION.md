@@ -1,5 +1,12 @@
 # Evolving backend plan and frontend handoff
 
+## Production B2 check, November 14, 2026
+
+The public producer at `https://api.lunavigator.com/api/v1` selected `B2_spice_pgda_bruteforce_2026_2030_fix676af9d`. Next.js forwards the frontend key on the server. Swagger documentation has separate access. The run covers 23 sites from 2026-01-01 to 2031-01-01 UTC with 43,824 hourly samples per site. Its [original catalog and manifest](../frontend/public/data/run-b2) accompany the [reproducible archive](B2_VISIBILITY_ARCHIVE.md).
+
+A production check compared all 336 hourly rows for Odysseus and Athena with the joint windows for [2026-11-14, 2026-11-21) UTC. Joint visibility began November 19 at 01:00 for Odysseus (47 h) and November 15 at 05:00 for Athena (139 h), continuing to the window end. The older B result for Odysseus was 33 h. For November 14 alone the 23 ranking rows agreed with the aggregate and Chandrayaan-3 Vikram led at 18 of 24 h. The separate end-rounding and series-point-limit error checks passed. The browser verified both planning directions through the authenticated proxy. The public preview exposes catalog observations and planning queries. Custom-coordinate jobs remain available through the team interface.
+
+
 Status on 14 November 2026: the team has selected the backend contract and a single aggregate GET for frontend integration. The live aggregate is available, with a scoped [producer contract](../contracts/openapi.dataset.json) for the frontend. The user supplied Chung's `WEB_BACKEND_PLAN.md` and confirmed that it may grow as more resources are discovered. It is a snapshot, not a feature ceiling or evidence of a deployed service. Its first paragraph says implementation has not started; its response numbers are illustrative. Source SHA-256: `d9062845466b1d093640026cf5b547965197a958e55f5dd0c34a3b9501e615c9`. The original internal document is not redistributed here.
 
 Chung owns the production OpenAPI. The FE requests one aggregate per UTC range and can import the producer JSON export. A separate team member owns Colab execution and testing.

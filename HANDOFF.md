@@ -24,7 +24,7 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 The astronaut waves, greets on opening and glances sideways while answering. Pause and reduced motion use still expressions. Its open guide refreshes at modeled sample boundaries. About links to the six team members; the footer includes the school’s Facebook page. [Local Ollama](README.md#ask-the-astronaut).
 
-**Plan and data:** /plan ranks sites using grid-aligned observations or finds site-specific landing hours. /data distinguishes 94 original files from verified [saved observations](docs/SAVED_PLANNER.md). Five-year summaries cover 23 sites and 43,824 hours per site; offline event timing covers two sites for 14 days. The astronaut uses the requested dates. Printed reports preserve the selected pair and date details; validated comparisons can be downloaded and reimported. Globe wheel, pinch and keyboard zoom retain NASA attribution.
+**Plan and data:** The public FE relays queries to the team API. B2 covers 23 sites and 43,824 hourly samples per site. [Archive](docs/B2_VISIBILITY_ARCHIVE.md), source catalog and manifests are available via /data. Live and offline /plan use the reported run. On November 14–21 Odysseus saw both bodies for 47 h on B2 and 33 h on historical B; Athena saw both for 139 h on each. Chrome verified live and archived searches. Download, import, print and NASA globe controls retain their evidence.
 
 ## Pending
 
