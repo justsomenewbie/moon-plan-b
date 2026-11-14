@@ -276,7 +276,7 @@ export const vietnamese: Record<string, string> = {
   "hours": "giờ",
   "from the dataset": "từ bộ dữ liệu",
   "Joint-window criterion": "Tiêu chí khoảng thời gian đồng thời",
-  "Find a later published match": "Tìm khoảng phù hợp đã công bố sau đó",
+  "Find a later published match": "Tìm khoảng phù hợp tiếp theo trong dữ liệu đã công bố",
   "Share comparison": "Chia sẻ kết quả so sánh",
   "Print report": "In báo cáo",
   "Selection link": "Liên kết đến kết quả đang xem",
