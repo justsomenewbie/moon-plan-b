@@ -9,7 +9,7 @@ import { useLanguage } from "../language";
 
 const MoonGlobe = dynamic(() => import("../moon-globe"));
 
-type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null; earthWindows?: EarthWindow[]; longest?: number; trackingPower?: number };
+type MapSite = PairLocation & { smoothSphere: boolean; hours: number[] | null; earthWindows?: EarthWindow[]; missionWindow?: EarthWindow; longest?: number; trackingPower?: number };
 
 // Each bin is a quarter of unobstructed sunlight on a Sun-facing panel.
 const sunlightBins = [
@@ -82,8 +82,8 @@ function SurfaceCloseUp({ point, name }: { point: MapPoint | null; name: string 
   </figure>;
 }
 
-export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref, startUtc, evaluatedHours }: {
-  startUtc: string; evaluatedHours: number; sites: MapSite[]; leaders: string[]; column: number | "longest"; criterion: string; initialSite: string | null;
+export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref, startUtc, endUtc, stepSeconds, evaluatedHours }: {
+  startUtc: string; endUtc: string; stepSeconds: number; evaluatedHours: number; sites: MapSite[]; leaders: string[]; column: number | "longest"; criterion: string; initialSite: string | null;
   detailHref: (siteId: string) => string | undefined;
 }) {
   const { t, locale } = useLanguage();
@@ -211,7 +211,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           {point ? <p>{point.latitude}° {t("latitude")} · {point.longitude}° {t("east longitude")}</p> :
             "reason" in selected.location && <p>{t(selected.location.reason)}</p>}
         </div>
-        <EarthSightTimes windows={selected.earthWindows} />
+        <EarthSightTimes range={{ start: selected.missionWindow?.start ?? startUtc, end: selected.missionWindow?.end ?? endUtc, step_s: stepSeconds }} windows={selected.earthWindows} />
         {details && <a href={details}>{t("Site details")}</a>}
         {point && <>
           {!imageFailed && view === "flat" && <div className="plan-map-zoom">

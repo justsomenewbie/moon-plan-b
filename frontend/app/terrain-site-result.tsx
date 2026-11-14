@@ -12,7 +12,21 @@ export function TimeRange({ start, end }: { start: string; end: string }) {
   return <><UtcTime value={start} /> → <UtcTime value={end} /></>;
 }
 
-export function EarthSightTimes({ windows, hours }: { windows?: readonly EarthWindow[]; hours?: number }) {
+type VisibilityRange = Pick<TerrainSummary["range"], "start" | "end" | "step_s">;
+type VisibilityWindow = EarthWindow & { clipped_start?: boolean; clipped_end?: boolean };
+
+export function VisibilityPrecision({ series, range }: { series: readonly (readonly VisibilityWindow[])[]; range: VisibilityRange }) {
+  const { t } = useLanguage();
+  const start = Date.parse(range.start), end = Date.parse(range.end);
+  // Adjacent spans describe uninterrupted visibility. The requested edges can clip it without a transition.
+  const hasTransition = series.some(windows => windows.some((window, i) =>
+    (!window.clipped_start && Date.parse(window.start) > start && windows[i - 1]?.end !== window.start) ||
+    (!window.clipped_end && Date.parse(window.end) < end && windows[i + 1]?.start !== window.end)));
+  if (!hasTransition) return null;
+  return <p className="muted text-sm">{t("Visibility changes inside the evaluated period are approximate (±{hours} h).", { hours: range.step_s / 3600 })}</p>;
+}
+
+export function EarthSightTimes({ windows, range, hours }: { windows?: readonly EarthWindow[]; range: VisibilityRange; hours?: number }) {
   const { t } = useLanguage();
   return <details className="earth-sight-times my-3">
     <summary>{hours === undefined ? t("When is Earth in direct view?") : t("{hours} h · Show times", { hours })}</summary>
@@ -20,6 +34,7 @@ export function EarthSightTimes({ windows, hours }: { windows?: readonly EarthWi
       : windows.length === 0 ? <p>{t("The model shows no direct view of Earth’s centre during this period.")}</p>
       : <>
         <p>{t("These are the UTC intervals when the model shows a direct view of Earth’s centre. Each interval includes its start and ends just before the time on the right.")}</p>
+        <VisibilityPrecision series={[windows]} range={range} />
         <ol className="interval-list list-decimal space-y-2">{windows.map(window => <li key={window.start}>
           <TimeRange start={window.start} end={window.end} />
         </li>)}</ol>
@@ -113,8 +128,9 @@ export function SiteResult({ site, source, liveResult }: {
         </details>
       </li>)}</ul>
     </section>}
-    {source.summaryOnly && <EarthSightTimes windows={complete ? clipEarthWindows(site.windows.earth, source.range.start, source.range.end) : undefined} />}
+    {source.summaryOnly && <EarthSightTimes range={source.range} windows={complete ? clipEarthWindows(site.windows.earth, source.range.start, source.range.end) : undefined} />}
     <h4 className="font-semibold">{t("Sun and Earth overlap intervals")}</h4>
+    <VisibilityPrecision series={[intervals]} range={source.range} />
     {intervals.length ? <ol className="interval-list list-decimal space-y-2">
       {intervals.map(window => <li key={window.start} className="break-inside-avoid">
         <TimeRange start={window.start} end={window.end} /> · <b>{window.duration_h} h</b>

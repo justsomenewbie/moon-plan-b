@@ -78,7 +78,7 @@ function SiteReport() {
       <dl className="grid gap-4 sm:grid-cols-3">{metrics.map(([label, hours]) => <div key={label}>
         <dt>{label}</dt><dd className="text-xl font-semibold">{typeof hours === "number" ? `${hours} h` : hours}</dd>
       </div>)}</dl>
-      <EarthSightTimes windows={(source === "saved-b2" ? savedB2EarthWindows : savedEarthWindows)(row.id, ranking.from, ranking.to)} />
+      <EarthSightTimes range={{ start: ranking.from, end: ranking.to, step_s: ranking.stepSeconds }} windows={(source === "saved-b2" ? savedB2EarthWindows : savedEarthWindows)(row.id, ranking.from, ranking.to)} />
     </section>
     <section className="space-y-3" aria-labelledby="site-location">
       <h2 id="site-location">{text("Reported coordinates", "Tọa độ trong danh mục")}</h2>

@@ -211,7 +211,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
         ? longest ? <>{label} · {best[0].longest} h · {best.map(r => r.name).join(" · ")}</> : t("Most hours meeting your priority: {sites}.", { sites: best.map(r => r.name).join(" · ") })
         : t("No evaluated site meets this visibility priority for any hour in this window.")}
         {flatLeaders.length > 0 && <span className="block">{t("Local terrain shadows are omitted for {sites}.", { sites: flatLeaders.map(r => r.name).join(" · ") })}</span>}</p>
-      <SiteMap startUtc={result.from} evaluatedHours={result.missionHours ?? (Date.parse(result.to) - Date.parse(result.from)) / 3600000} sites={result.rows} leaders={result.leaders} column={longest ? "longest" : column} criterion={label} initialSite={initialSite} detailHref={detailHref} />
+      <SiteMap startUtc={result.from} endUtc={result.to} stepSeconds={run.stepSeconds} evaluatedHours={result.missionHours ?? (Date.parse(result.to) - Date.parse(result.from)) / 3600000} sites={result.rows} leaders={result.leaders} column={longest ? "longest" : column} criterion={label} initialSite={initialSite} detailHref={detailHref} />
       <div className="table-scroll"><table><caption>{t(result.missionHours ? "Visibility hours in each site’s best mission window" : "Visibility hours in the selected window")}</caption>
         <thead><tr><th scope="col">{t("Site")}</th>{result.missionHours && <th scope="col">{t("Earliest best mission window (UTC, end exclusive)")}</th>}{["Sun visible","Earth visible","Both visible",...(showLongest ? ["Longest joint window"] : [])].map(label => <th key={label} scope="col">{t(label)} (h)</th>)}</tr></thead>
         <tbody>{result.rows.map(row => {

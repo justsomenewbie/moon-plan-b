@@ -102,7 +102,7 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
     {submitted && result && <section aria-label={t("Landing search results")} className="plan-results">
       <h3>{result.name}</h3>
       <p><TimeRange start={result.from} end={result.to} /> · {submitted.missionHours} h · {labels[submitted.priority]}</p>
-      <EarthSightTimes windows={(b2 ? savedB2EarthWindows : savedEarthWindows)(submitted.siteId, result.from, result.to)} />
+      <EarthSightTimes range={{ start: result.from, end: result.to, step_s: result.stepSeconds }} windows={(b2 ? savedB2EarthWindows : savedEarthWindows)(submitted.siteId, result.from, result.to)} />
       {(submitted.earliest || submitted.latest) && <p>{vi ? "Giờ hạ cánh được xét (UTC, gồm cả hai mốc)" : "Landing hours evaluated (UTC, inclusive)"} · <TimeRange start={result.first} end={result.last} /></p>}
       {result.best > 0 ? <>
         <p role="status">{vi
@@ -111,7 +111,7 @@ export default function SavedLanding({ siteId, from, to, missionHours, priority,
         <div className="table-scroll"><table><thead><tr><th scope="col">{vi ? "Chuyến đi (UTC)" : "Mission window (UTC)"}</th>
           <th scope="col">{labels.sun}</th><th scope="col">{labels.earth}</th><th scope="col">{labels.joint}</th></tr></thead>
           <tbody>{result.rows.slice(0, 5).map(row => <tr key={row.start}><th scope="row"><TimeRange start={row.start} end={row.end} /></th>
-            <td>{row.sunHours} h</td><td><EarthSightTimes hours={row.earthHours} windows={(b2 ? savedB2EarthWindows : savedEarthWindows)(submitted.siteId, row.start, row.end)} /></td><td>{row.bothHours} h</td></tr>)}</tbody></table></div>
+            <td>{row.sunHours} h</td><td><EarthSightTimes range={{ start: row.start, end: row.end, step_s: result.stepSeconds }} hours={row.earthHours} windows={(b2 ? savedB2EarthWindows : savedEarthWindows)(submitted.siteId, row.start, row.end)} /></td><td>{row.bothHours} h</td></tr>)}</tbody></table></div>
       </> : <p role="status">{vi
         ? `Cả ${result.nEvaluated} giờ hạ cánh đều cho 0 giờ theo ưu tiên này. Chưa có giờ hạ cánh phù hợp.`
         : `All ${result.nEvaluated} landing times have 0 hours of the selected visibility. No landing time is recommended.`}</p>}
