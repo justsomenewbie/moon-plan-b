@@ -281,6 +281,7 @@ export const vietnamese: Record<string, string> = {
   "Local sky in 3D": "Bầu trời 3D tại điểm quan sát",
   "Explore the 3D sky": "Khám phá bầu trời 3D",
   "Both observations": "Cả hai lần quan sát",
+  "Selected marker": "Điểm đã chọn",
   "View from": "Góc nhìn từ",
   "Rotate sky view": "Xoay góc nhìn bầu trời",
   "Below horizon": "Dưới chân trời",

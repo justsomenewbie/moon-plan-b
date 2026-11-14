@@ -7,7 +7,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright")
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined,
   chromiumSandbox: true, ignoreDefaultArgs: ["--enable-unsafe-swiftshader"] });
 try {
-  const page = await browser.newPage({ timezoneId: "UTC", reducedMotion: "reduce" });
+  const page = await browser.newPage({ timezoneId: "UTC", reducedMotion: "reduce", hasTouch: true });
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(new URL("/compare", origin).href);
@@ -99,11 +99,26 @@ try {
   await stateMatches("comms-only");
   assert.equal(await view.inputValue(), "A");
   assert.equal(await markers.count(), 2);
+  const picked = page.locator("#sky-body-readings [data-selected]");
+  const pressed = markers.and(page.locator('[aria-pressed="true"]'));
+  const singleSun = markers.and(page.locator('[data-sky-body="sun"]'));
+  await singleSun.click();
+  assert.equal(await pressed.count(), 1);
+  assert.match(await singleSun.getAttribute("aria-label"), /ridge.*Sun.*2026-11-14T00:00:00Z.*100°.*0.2°/);
+  assert.match(await picked.innerText(), /Sun · Selected marker[\s\S]*Az 100° · El 0.2°/);
+  await markers.and(page.locator('[data-sky-body="earth"]')).press("Space");
+  assert.equal(await singleSun.getAttribute("aria-pressed"), "false");
+  assert.match(await picked.innerText(), /Earth · Selected marker[\s\S]*Az 180° · El 1°/);
   await view.selectOption("both");
+  assert.equal(await pressed.count(), 0);
   assert.equal(await markers.count(), 4);
   const alternativeEarth = page.locator('.sky-ray[data-site="B"] [data-sky-body="earth"]');
   await alternativeEarth.press("Enter");
   assert.equal(await alternativeEarth.getAttribute("aria-pressed"), "true");
+  assert.equal(await pressed.count(), 1);
+  assert.match(await picked.innerText(), /Earth · Selected marker[\s\S]*Az 180° · El 1°/);
+  assert.match(await page.locator(".sky-info strong").innerText(), /B · Synthetic south-pole basin/);
+  assert.equal(await page.locator(".sky-info time").getAttribute("datetime"), "2026-11-14T00:00:00Z");
   await view.selectOption("B");
   assert.equal(await markers.count(), 2);
   assert.match(await hud.nth(1).innerText(), /200°.*1°/);
@@ -140,6 +155,14 @@ try {
   assert.equal(await limit.inputValue(), "100");
   assert.equal(await mask.inputValue(), "2");
   await page.setViewportSize({ width: 320, height: 720 });
+  await singleSun.tap();
+  assert.match(await picked.innerText(), /Mặt Trời · Điểm đã chọn/);
+  assert.match(await picked.innerText(), /200°.*1°/);
+  assert.equal(await singleSun.getAttribute("aria-pressed"), "true");
+  assert.equal(await page.locator(".sky-stage svg").isVisible(), true);
+  await page.emulateMedia({ media: "print" });
+  assert.equal(await page.locator(".sky-stage").isVisible(), false);
+  await page.emulateMedia({ media: "screen" });
   assert.match(await caption.innerText(), /không phải địa hình địa phương/);
   assert.ok(await caption.evaluate(p => p.scrollWidth <= p.clientWidth && p.scrollHeight <= p.clientHeight));
   await mask.press("ArrowLeft");
@@ -155,6 +178,7 @@ try {
   await mask.press("Home");
 
   await importFixture("partial");
+  assert.equal(await picked.count(), 0);
   await page.getByRole("button", { name: "Compare dates", exact: true }).click();
   await slider.press("Home");
   await slider.press("ArrowRight");
@@ -175,6 +199,8 @@ try {
   await checkRibbon(rows.nth(1), ["golden", "unavailable", "golden"], spans);
 
   await importFixture("missing");
+  assert.equal(await picked.count(), 0);
+  assert.equal(await markers.count(), 0);
   await page.getByRole("button", { name: "Compare sites", exact: true }).click();
   assert.equal(await rows.count(), 2);
   for (const row of await rows.all()) await checkRibbon(row, ["unavailable"], [["0%", "100%"]]);
