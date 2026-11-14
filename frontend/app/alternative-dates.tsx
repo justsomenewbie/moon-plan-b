@@ -123,6 +123,7 @@ export default function AlternativeDates({ result, site }: { result: TerrainSumm
           const link = candidateLink(candidate, search);
           return <li key={candidate.rank} value={candidate.rank} className="break-inside-avoid">
             <TimeRange start={candidate.landing_utc} end={candidate.mission_end_utc} />
+            <p className="muted text-sm">{t("{hours} h after the earliest landing time", { hours: candidate.slip_h })}</p>
             <p>{t("Sun visible")} {candidate.sun_pct}% · {t("Earth visible")} {candidate.earth_pct}% · {t("Both visible")} {candidate.both_pct}%</p>
             {link && <a className="print:hidden" href={link} target="_blank" rel="noreferrer">{t("Inspect this mission window")}</a>}
           </li>;

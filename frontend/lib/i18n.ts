@@ -56,6 +56,7 @@ export const vietnamese: Record<string, string> = {
   "{feasible} of {evaluated} landing times meet the constraints. Showing {count}.": "{feasible} trong số {evaluated} thời điểm hạ cánh đáp ứng điều kiện. Đang hiển thị {count} đề xuất.",
   "Landing search window": "Khoảng thời gian tìm thời điểm hạ cánh",
   "Boundary precision": "Độ chính xác của mốc thời gian",
+  "{hours} h after the earliest landing time": "Sau thời điểm hạ cánh sớm nhất {hours} h",
   "Inspect this mission window": "Xem dữ liệu của khoảng thời gian nhiệm vụ này",
   "Why landing times were rejected": "Lý do loại các thời điểm hạ cánh",
   "One landing time can fail more than one constraint.": "Một thời điểm hạ cánh có thể không đáp ứng nhiều điều kiện.",
