@@ -1,0 +1,2 @@
+rank,site_id,name,group,lat_deg,lon_deg,surface_height_m,score,pct_sun,pct_earth,pct_both,pct_sun_no_earth,longest_dark_h,longest_dark_truncated,longest_comms_gap_h,longest_comms_gap_truncated,longest_sun_h,longest_earth_h,n_sun_windows,n_dark_windows,n_earth_windows,n_comms_gaps,mean_sun_el_lit_deg,mean_power_horizontal,mean_power_tracking,horizon_min_el_deg,horizon_max_el_deg
+1,custom:-89.6000:215.0000,Custom site 89.6000S 215.0000E,,-89.6,215,0,15.403226,0,51.344086,0,0,744,1,362,0,0,224,0,1,2,1,,0,0,-0.086937,-0.086937

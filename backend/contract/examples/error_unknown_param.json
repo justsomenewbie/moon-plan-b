@@ -1,0 +1,16 @@
+{
+  "type": "https://lunarnav.example/errors/validation-error",
+  "title": "Invalid request",
+  "status": 400,
+  "code": "VALIDATION_ERROR",
+  "detail": "querystring validation failed: (root): Unrecognized key: \"kind\"",
+  "instance": "/api/v1/sites/ref_connecting_ridge_c1/windows",
+  "errors": [
+    {
+      "path": "",
+      "in": "querystring",
+      "message": "Unrecognized key: \"kind\"",
+      "code": "unrecognized_keys"
+    }
+  ]
+}

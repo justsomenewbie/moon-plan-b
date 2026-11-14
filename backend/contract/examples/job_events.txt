@@ -1,0 +1,3 @@
+event: job
+data: {"job_id":"j_289fibj8v5zz","type":"custom_site","status":"cancelled","site_id":"custom:-89.4500:222.6900","params":{"type":"custom_site","site_id":"custom:-89.4500:222.6900","lat_deg":-89.45,"lon_deg":222.69,"start":"2026-01-01T00:00:00Z","end":"2026-02-01T00:00:00Z","step_min":60,"provider":"spice","dem":"pgda","horizon_method":"raymarch","observer_height_m":2,"name":"My ridge"},"progress":{"stage":"done","pct":5,"lines":[]},"result":null,"error":null,"clients":0,"created_at":"2026-11-14T06:05:18Z","started_at":"2026-11-14T06:05:18Z","finished_at":"2026-11-14T06:05:18Z","expires_at":"2026-11-15T06:05:18Z"}
+

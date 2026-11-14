@@ -1,0 +1,6 @@
+# Scripts and configs run on Linux: keep LF even with core.autocrlf=true on Windows.
+*.sh        text eol=lf
+Caddyfile   text eol=lf
+*.conf      text eol=lf
+*.example   text eol=lf
+*.cjs       text eol=lf

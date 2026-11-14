@@ -121,7 +121,7 @@ Scripts `package.json` (dự kiến):
 | `dev` | `node --watch src/server.ts` (Node 24 type stripping; tsconfig `rewriteRelativeImportExtensions`, `erasableSyntaxOnly`, import có đuôi `.ts`) |
 | `build` | `tsc -p tsconfig.build.json` → `dist/` |
 | `start` | `node dist/server.js` |
-| `import` | `node src/import/importRun.ts` |
+| `import` | `node --env-file-if-exists=.env scripts/import-run.ts` |
 | `openapi:export` | `node scripts/export-openapi.ts` → `contract/openapi.json` |
 | `test` | `vitest run` |
 | `mock` | `npx @stoplight/prism-cli@5.15.11 mock contract/openapi.json` |
@@ -406,6 +406,7 @@ Sau đó FE gọi **chính các endpoint 5–11 với `run_id=job_j_…`** → k
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | zod/query sai (kèm `errors[]`) |
 | 400 | `TOO_MANY_POINTS` | vượt max_points / fields |
+| 401 | `UNAUTHORIZED` | thiếu / sai API key (`X-API-Key`), hoặc thiếu HTTP Basic của `/docs` (thêm 14/11) |
 | 404 | `SITE_NOT_FOUND`, `RUN_NOT_FOUND`, `JOB_NOT_FOUND` | |
 | 409 | `RUN_NOT_READY` | run đang import |
 | 422 | `OUT_OF_RANGE`, `BAD_MISSION_LENGTH` | ngữ nghĩa sai |

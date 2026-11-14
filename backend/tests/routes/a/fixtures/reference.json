@@ -1,0 +1,1021 @@
+{
+ "ranges": [
+  {
+   "end": "2026-04-01T00:00:00Z",
+   "metrics": {
+    "a3_de_gerlache_rim_2": {
+     "duration_h": 2160.0,
+     "longest_comms_gap_h": 352.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 430.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 304.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 324.0,
+     "longest_sun_truncated": false,
+     "mean_power_horizontal": 0.012993,
+     "mean_power_tracking": 0.401216,
+     "mean_sun_el_lit_deg": 1.804288,
+     "n_comms_gaps": 4,
+     "n_dark_windows": 6,
+     "n_earth_windows": 4,
+     "n_sun_windows": 6,
+     "pct_both": 12.268519,
+     "pct_earth": 49.027778,
+     "pct_sun": 41.851852,
+     "pct_sun_no_earth": 29.583333
+    },
+    "a3_haworth": {
+     "duration_h": 2160.0,
+     "longest_comms_gap_h": 445.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 479.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 220.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 252.0,
+     "longest_sun_truncated": false,
+     "mean_power_horizontal": 0.009677,
+     "mean_power_tracking": 0.322023,
+     "mean_sun_el_lit_deg": 1.479417,
+     "n_comms_gaps": 4,
+     "n_dark_windows": 4,
+     "n_earth_windows": 4,
+     "n_sun_windows": 3,
+     "pct_both": 0.0,
+     "pct_earth": 35.046296,
+     "pct_sun": 32.87037,
+     "pct_sun_no_earth": 32.87037
+    },
+    "apollo11": {
+     "duration_h": 2160.0,
+     "longest_comms_gap_h": 0.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 354.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 2160.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 357.0,
+     "longest_sun_truncated": false,
+     "mean_power_horizontal": 0.328234,
+     "mean_power_tracking": 0.508127,
+     "mean_sun_el_lit_deg": 45.906382,
+     "n_comms_gaps": 0,
+     "n_dark_windows": 3,
+     "n_earth_windows": 1,
+     "n_sun_windows": 4,
+     "pct_both": 50.972222,
+     "pct_earth": 100.0,
+     "pct_sun": 50.972222,
+     "pct_sun_no_earth": 0.0
+    },
+    "change6": {
+     "duration_h": 2160.0,
+     "longest_comms_gap_h": 2160.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 353.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 0.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 361.0,
+     "longest_sun_truncated": false,
+     "mean_power_horizontal": 0.236118,
+     "mean_power_tracking": 0.494577,
+     "mean_sun_el_lit_deg": 29.417333,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 4,
+     "n_earth_windows": 0,
+     "n_sun_windows": 3,
+     "pct_both": 0.0,
+     "pct_earth": 0.0,
+     "pct_sun": 49.722222,
+     "pct_sun_no_earth": 49.722222
+    },
+    "ref_connecting_ridge_c1": {
+     "duration_h": 2160.0,
+     "longest_comms_gap_h": 326.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 26.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 334.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 2088.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.009032,
+     "mean_power_tracking": 0.971631,
+     "mean_sun_el_lit_deg": 0.340818,
+     "n_comms_gaps": 4,
+     "n_dark_windows": 2,
+     "n_earth_windows": 4,
+     "n_sun_windows": 3,
+     "pct_both": 52.175926,
+     "pct_earth": 53.611111,
+     "pct_sun": 98.564815,
+     "pct_sun_no_earth": 46.388889
+    },
+    "ref_shackleton_rim": {
+     "duration_h": 2160.0,
+     "longest_comms_gap_h": 334.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 29.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 322.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 1019.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.008464,
+     "mean_power_tracking": 0.956751,
+     "mean_sun_el_lit_deg": 0.339977,
+     "n_comms_gaps": 4,
+     "n_dark_windows": 4,
+     "n_earth_windows": 4,
+     "n_sun_windows": 5,
+     "pct_both": 51.990741,
+     "pct_earth": 52.268519,
+     "pct_sun": 97.268519,
+     "pct_sun_no_earth": 45.277778
+    }
+   },
+   "rankings": [
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 71.162037,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 70.185186,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 3,
+       "score": 65.680555,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 4,
+       "score": 35.12963,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 5,
+       "score": 23.662037,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 19.888889,
+       "site_id": "change6"
+      }
+     ],
+     "weights": {
+      "pct_both": 0.3,
+      "pct_earth": 0.3,
+      "pct_sun": 0.4
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 98.564815,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 97.268519,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 3,
+       "score": 50.972222,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 4,
+       "score": 49.722222,
+       "site_id": "change6"
+      },
+      {
+       "rank": 5,
+       "score": 41.851852,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 6,
+       "score": 32.87037,
+       "site_id": "a3_haworth"
+      }
+     ],
+     "weights": {
+      "pct_sun": 1.0
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 50.0,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 50.0,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 3,
+       "score": 48.773148,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 4,
+       "score": 39.305555,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 5,
+       "score": 33.958333,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 24.861111,
+       "site_id": "change6"
+      }
+     ],
+     "weights": {
+      "pct_earth": 0.5,
+      "pct_sun_no_earth": 0.5
+     }
+    }
+   ],
+   "start": "2026-01-01T00:00:00Z"
+  },
+  {
+   "end": "2026-03-01T00:00:00Z",
+   "metrics": {
+    "a3_de_gerlache_rim_2": {
+     "duration_h": 672.0,
+     "longest_comms_gap_h": 352.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 391.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 259.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 281.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.013808,
+     "mean_power_tracking": 0.415482,
+     "mean_sun_el_lit_deg": 1.900349,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 1,
+     "n_earth_windows": 2,
+     "n_sun_windows": 1,
+     "pct_both": 9.077381,
+     "pct_earth": 47.619048,
+     "pct_sun": 41.815476,
+     "pct_sun_no_earth": 32.738095
+    },
+    "a3_haworth": {
+     "duration_h": 672.0,
+     "longest_comms_gap_h": 437.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 342.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 212.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 236.0,
+     "longest_sun_truncated": false,
+     "mean_power_horizontal": 0.010369,
+     "mean_power_tracking": 0.344773,
+     "mean_sun_el_lit_deg": 1.509295,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 2,
+     "n_earth_windows": 2,
+     "n_sun_windows": 1,
+     "pct_both": 0.0,
+     "pct_earth": 34.970238,
+     "pct_sun": 35.119048,
+     "pct_sun_no_earth": 35.119048
+    },
+    "apollo11": {
+     "duration_h": 672.0,
+     "longest_comms_gap_h": 0.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 353.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 672.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 164.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.28052,
+     "mean_power_tracking": 0.472915,
+     "mean_sun_el_lit_deg": 40.016056,
+     "n_comms_gaps": 0,
+     "n_dark_windows": 1,
+     "n_earth_windows": 1,
+     "n_sun_windows": 2,
+     "pct_both": 47.470238,
+     "pct_earth": 100.0,
+     "pct_sun": 47.470238,
+     "pct_sun_no_earth": 0.0
+    },
+    "change6": {
+     "duration_h": 672.0,
+     "longest_comms_gap_h": 672.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 158.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 0.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 358.0,
+     "longest_sun_truncated": false,
+     "mean_power_horizontal": 0.253221,
+     "mean_power_tracking": 0.530203,
+     "mean_sun_el_lit_deg": 29.446754,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 2,
+     "n_earth_windows": 0,
+     "n_sun_windows": 1,
+     "pct_both": 0.0,
+     "pct_earth": 0.0,
+     "pct_sun": 53.27381,
+     "pct_sun_no_earth": 53.27381
+    },
+    "ref_connecting_ridge_c1": {
+     "duration_h": 672.0,
+     "longest_comms_gap_h": 323.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 0.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 277.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 672.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.00826,
+     "mean_power_tracking": 1.0,
+     "mean_sun_el_lit_deg": 0.388707,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 0,
+     "n_earth_windows": 2,
+     "n_sun_windows": 1,
+     "pct_both": 51.934524,
+     "pct_earth": 51.934524,
+     "pct_sun": 100.0,
+     "pct_sun_no_earth": 48.065476
+    },
+    "ref_shackleton_rim": {
+     "duration_h": 672.0,
+     "longest_comms_gap_h": 334.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 10.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 267.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 387.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.006568,
+     "mean_power_tracking": 0.973795,
+     "mean_sun_el_lit_deg": 0.367761,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 1,
+     "n_earth_windows": 2,
+     "n_sun_windows": 2,
+     "pct_both": 50.297619,
+     "pct_earth": 50.297619,
+     "pct_sun": 98.511905,
+     "pct_sun_no_earth": 48.214286
+    }
+   },
+   "rankings": [
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 71.160714,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 69.583333,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 3,
+       "score": 63.229167,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 4,
+       "score": 33.735119,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 5,
+       "score": 24.538691,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 21.309524,
+       "site_id": "change6"
+      }
+     ],
+     "weights": {
+      "pct_both": 0.3,
+      "pct_earth": 0.3,
+      "pct_sun": 0.4
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 100.0,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 98.511905,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 3,
+       "score": 53.27381,
+       "site_id": "change6"
+      },
+      {
+       "rank": 4,
+       "score": 47.470238,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 5,
+       "score": 41.815476,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 6,
+       "score": 35.119048,
+       "site_id": "a3_haworth"
+      }
+     ],
+     "weights": {
+      "pct_sun": 1.0
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 50.0,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 50.0,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 3,
+       "score": 49.255952,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 4,
+       "score": 40.178572,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 5,
+       "score": 35.044643,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 26.636905,
+       "site_id": "change6"
+      }
+     ],
+     "weights": {
+      "pct_earth": 0.5,
+      "pct_sun_no_earth": 0.5
+     }
+    }
+   ],
+   "start": "2026-02-01T00:00:00Z"
+  },
+  {
+   "end": "2026-01-24T17:00:00Z",
+   "metrics": {
+    "a3_de_gerlache_rim_2": {
+     "duration_h": 348.0,
+     "longest_comms_gap_h": 282.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 251.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 66.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 97.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.011982,
+     "mean_power_tracking": 0.275027,
+     "mean_sun_el_lit_deg": 2.489336,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 1,
+     "n_earth_windows": 1,
+     "n_sun_windows": 1,
+     "pct_both": 0.0,
+     "pct_earth": 18.965517,
+     "pct_sun": 27.873563,
+     "pct_sun_no_earth": 27.873563
+    },
+    "a3_haworth": {
+     "duration_h": 348.0,
+     "longest_comms_gap_h": 333.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 194.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 15.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 154.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.008485,
+     "mean_power_tracking": 0.428381,
+     "mean_sun_el_lit_deg": 0.928716,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 1,
+     "n_earth_windows": 1,
+     "n_sun_windows": 1,
+     "pct_both": 0.0,
+     "pct_earth": 4.310345,
+     "pct_sun": 44.252874,
+     "pct_sun_no_earth": 44.252874
+    },
+    "apollo11": {
+     "duration_h": 348.0,
+     "longest_comms_gap_h": 0.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 330.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 348.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 18.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.003998,
+     "mean_power_tracking": 0.051566,
+     "mean_sun_el_lit_deg": 4.437783,
+     "n_comms_gaps": 0,
+     "n_dark_windows": 1,
+     "n_earth_windows": 1,
+     "n_sun_windows": 1,
+     "pct_both": 5.172414,
+     "pct_earth": 100.0,
+     "pct_sun": 5.172414,
+     "pct_sun_no_earth": 0.0
+    },
+    "change6": {
+     "duration_h": 348.0,
+     "longest_comms_gap_h": 348.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 20.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 0.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 328.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.488431,
+     "mean_power_tracking": 0.940058,
+     "mean_sun_el_lit_deg": 32.222711,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 1,
+     "n_earth_windows": 0,
+     "n_sun_windows": 1,
+     "pct_both": 0.0,
+     "pct_earth": 0.0,
+     "pct_sun": 94.252874,
+     "pct_sun_no_earth": 94.252874
+    },
+    "ref_connecting_ridge_c1": {
+     "duration_h": 348.0,
+     "longest_comms_gap_h": 263.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 0.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 85.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 348.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.0243,
+     "mean_power_tracking": 1.0,
+     "mean_sun_el_lit_deg": 1.392453,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 0,
+     "n_earth_windows": 1,
+     "n_sun_windows": 1,
+     "pct_both": 24.425287,
+     "pct_earth": 24.425287,
+     "pct_sun": 100.0,
+     "pct_sun_no_earth": 75.574713
+    },
+    "ref_shackleton_rim": {
+     "duration_h": 348.0,
+     "longest_comms_gap_h": 273.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 0.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 75.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 348.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.021307,
+     "mean_power_tracking": 1.0,
+     "mean_sun_el_lit_deg": 1.220906,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 0,
+     "n_earth_windows": 1,
+     "n_sun_windows": 1,
+     "pct_both": 21.551724,
+     "pct_earth": 21.551724,
+     "pct_sun": 100.0,
+     "pct_sun_no_earth": 78.448276
+    }
+   },
+   "rankings": [
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 54.655172,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 52.931034,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 3,
+       "score": 37.70115,
+       "site_id": "change6"
+      },
+      {
+       "rank": 4,
+       "score": 33.62069,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 5,
+       "score": 18.994253,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 16.83908,
+       "site_id": "a3_de_gerlache_rim_2"
+      }
+     ],
+     "weights": {
+      "pct_both": 0.3,
+      "pct_earth": 0.3,
+      "pct_sun": 0.4
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 100.0,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 100.0,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 3,
+       "score": 94.252874,
+       "site_id": "change6"
+      },
+      {
+       "rank": 4,
+       "score": 44.252874,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 5,
+       "score": 27.873563,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 6,
+       "score": 5.172414,
+       "site_id": "apollo11"
+      }
+     ],
+     "weights": {
+      "pct_sun": 1.0
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 50.0,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 50.0,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 3,
+       "score": 50.0,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 4,
+       "score": 47.126437,
+       "site_id": "change6"
+      },
+      {
+       "rank": 5,
+       "score": 24.281609,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 23.41954,
+       "site_id": "a3_de_gerlache_rim_2"
+      }
+     ],
+     "weights": {
+      "pct_earth": 0.5,
+      "pct_sun_no_earth": 0.5
+     }
+    }
+   ],
+   "start": "2026-01-10T05:00:00Z"
+  },
+  {
+   "end": "2026-04-01T00:00:00Z",
+   "metrics": {
+    "a3_de_gerlache_rim_2": {
+     "duration_h": 408.0,
+     "longest_comms_gap_h": 61.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 408.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 302.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 0.0,
+     "longest_sun_truncated": false,
+     "mean_power_horizontal": 0.0,
+     "mean_power_tracking": 0.0,
+     "mean_sun_el_lit_deg": null,
+     "n_comms_gaps": 2,
+     "n_dark_windows": 1,
+     "n_earth_windows": 1,
+     "n_sun_windows": 0,
+     "pct_both": 0.0,
+     "pct_earth": 74.019608,
+     "pct_sun": 0.0,
+     "pct_sun_no_earth": 0.0
+    },
+    "a3_haworth": {
+     "duration_h": 408.0,
+     "longest_comms_gap_h": 109.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 385.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 215.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 23.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.0,
+     "mean_power_tracking": 0.049864,
+     "mean_sun_el_lit_deg": -1.90484,
+     "n_comms_gaps": 2,
+     "n_dark_windows": 1,
+     "n_earth_windows": 1,
+     "n_sun_windows": 1,
+     "pct_both": 0.0,
+     "pct_earth": 52.696078,
+     "pct_sun": 5.637255,
+     "pct_sun_no_earth": 5.637255
+    },
+    "apollo11": {
+     "duration_h": 408.0,
+     "longest_comms_gap_h": 0.0,
+     "longest_comms_gap_truncated": false,
+     "longest_dark_h": 218.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 408.0,
+     "longest_earth_truncated": true,
+     "longest_sun_h": 190.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.305256,
+     "mean_power_tracking": 0.46352,
+     "mean_sun_el_lit_deg": 47.339611,
+     "n_comms_gaps": 0,
+     "n_dark_windows": 1,
+     "n_earth_windows": 1,
+     "n_sun_windows": 1,
+     "pct_both": 46.568627,
+     "pct_earth": 100.0,
+     "pct_sun": 46.568627,
+     "pct_sun_no_earth": 0.0
+    },
+    "change6": {
+     "duration_h": 408.0,
+     "longest_comms_gap_h": 408.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 194.0,
+     "longest_dark_truncated": true,
+     "longest_earth_h": 0.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 214.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.269918,
+     "mean_power_tracking": 0.522519,
+     "mean_sun_el_lit_deg": 32.105679,
+     "n_comms_gaps": 1,
+     "n_dark_windows": 1,
+     "n_earth_windows": 0,
+     "n_sun_windows": 1,
+     "pct_both": 0.0,
+     "pct_earth": 0.0,
+     "pct_sun": 52.45098,
+     "pct_sun_no_earth": 52.45098
+    },
+    "ref_connecting_ridge_c1": {
+     "duration_h": 408.0,
+     "longest_comms_gap_h": 42.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 26.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 334.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 336.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.000235,
+     "mean_power_tracking": 0.850043,
+     "mean_sun_el_lit_deg": -0.635557,
+     "n_comms_gaps": 2,
+     "n_dark_windows": 2,
+     "n_earth_windows": 1,
+     "n_sun_windows": 3,
+     "pct_both": 74.264706,
+     "pct_earth": 81.862745,
+     "pct_sun": 92.401961,
+     "pct_sun_no_earth": 18.137255
+    },
+    "ref_shackleton_rim": {
+     "duration_h": 408.0,
+     "longest_comms_gap_h": 51.0,
+     "longest_comms_gap_truncated": true,
+     "longest_dark_h": 12.0,
+     "longest_dark_truncated": false,
+     "longest_earth_h": 322.0,
+     "longest_earth_truncated": false,
+     "longest_sun_h": 367.0,
+     "longest_sun_truncated": true,
+     "mean_power_horizontal": 0.0,
+     "mean_power_tracking": 0.893584,
+     "mean_sun_el_lit_deg": -0.593559,
+     "n_comms_gaps": 2,
+     "n_dark_windows": 2,
+     "n_earth_windows": 1,
+     "n_sun_windows": 3,
+     "pct_both": 77.45098,
+     "pct_earth": 78.921569,
+     "pct_sun": 95.098039,
+     "pct_sun_no_earth": 17.647059
+    }
+   },
+   "rankings": [
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 84.95098,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 2,
+       "score": 83.79902,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 3,
+       "score": 62.598039,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 4,
+       "score": 22.205882,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 5,
+       "score": 20.980392,
+       "site_id": "change6"
+      },
+      {
+       "rank": 6,
+       "score": 18.063725,
+       "site_id": "a3_haworth"
+      }
+     ],
+     "weights": {
+      "pct_both": 0.3,
+      "pct_earth": 0.3,
+      "pct_sun": 0.4
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 95.098039,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 2,
+       "score": 92.401961,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 3,
+       "score": 52.45098,
+       "site_id": "change6"
+      },
+      {
+       "rank": 4,
+       "score": 46.568627,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 5,
+       "score": 5.637255,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 0.0,
+       "site_id": "a3_de_gerlache_rim_2"
+      }
+     ],
+     "weights": {
+      "pct_sun": 1.0
+     }
+    },
+    {
+     "rows": [
+      {
+       "rank": 1,
+       "score": 50.0,
+       "site_id": "ref_connecting_ridge_c1"
+      },
+      {
+       "rank": 2,
+       "score": 50.0,
+       "site_id": "apollo11"
+      },
+      {
+       "rank": 3,
+       "score": 48.284314,
+       "site_id": "ref_shackleton_rim"
+      },
+      {
+       "rank": 4,
+       "score": 37.009804,
+       "site_id": "a3_de_gerlache_rim_2"
+      },
+      {
+       "rank": 5,
+       "score": 29.166666,
+       "site_id": "a3_haworth"
+      },
+      {
+       "rank": 6,
+       "score": 26.22549,
+       "site_id": "change6"
+      }
+     ],
+     "weights": {
+      "pct_earth": 0.5,
+      "pct_sun_no_earth": 0.5
+     }
+    }
+   ],
+   "start": "2026-03-15T00:00:00Z"
+  }
+ ],
+ "run_dir": "sample_2026Q1_spice_pgda"
+}

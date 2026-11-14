@@ -1,0 +1,9 @@
+{
+  "type": "https://lunarnav.example/errors/site-not-found",
+  "title": "Site not found",
+  "status": 404,
+  "code": "SITE_NOT_FOUND",
+  "detail": "site \"custom:-89.4500:222.6900\" is not in this run",
+  "instance": "/api/v1/sites/custom%3A-89.4500%3A222.6900",
+  "hint": "GET /api/v1/sites lists the site ids of a run; encodeURIComponent() ids that contain \":\""
+}

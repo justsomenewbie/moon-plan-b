@@ -1,0 +1,16 @@
+{
+  "type": "https://lunarnav.example/errors/validation-error",
+  "title": "Invalid request",
+  "status": 400,
+  "code": "VALIDATION_ERROR",
+  "detail": "body validation failed: site_ids: Too small: expected array to have >=2 items",
+  "instance": "/api/v1/compare",
+  "errors": [
+    {
+      "path": "site_ids",
+      "in": "body",
+      "message": "Too small: expected array to have >=2 items",
+      "code": "too_small"
+    }
+  ]
+}

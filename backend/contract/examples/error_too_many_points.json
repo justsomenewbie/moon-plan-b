@@ -1,0 +1,17 @@
+{
+  "type": "https://lunarnav.example/errors/too-many-points",
+  "title": "Too many points or fields requested",
+  "status": 400,
+  "code": "TOO_MANY_POINTS",
+  "detail": "querystring validation failed: max_points: Too big: expected number to be <=5000",
+  "instance": "/api/v1/sites/ref_connecting_ridge_c1/series",
+  "errors": [
+    {
+      "path": "max_points",
+      "in": "querystring",
+      "message": "Too big: expected number to be <=5000",
+      "code": "too_big"
+    }
+  ],
+  "hint": "Use max_points <= 5000 and at most 8 fields (see GET /api/v1/meta limits)"
+}

@@ -1,0 +1,119 @@
+{
+ "both": [
+  {
+   "duration_h": 230.0,
+   "end": "2027-01-10T14:00:00Z",
+   "end_index": 230,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 106.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-10T14:00:00Z",
+   "start_index": 230,
+   "state": true,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ],
+ "data_sources": [
+  {
+   "name": "Synthetic toy geometry (tests only, NOT physical-grade)",
+   "sha256": null,
+   "url": null
+  }
+ ],
+ "earth": [
+  {
+   "duration_h": 336.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": true,
+   "truncated_end": true,
+   "truncated_start": true
+  }
+ ],
+ "metrics": {
+  "duration_h": 336.0,
+  "longest_comms_gap_h": 0.0,
+  "longest_comms_gap_truncated": false,
+  "longest_dark_h": 230.0,
+  "longest_dark_truncated": true,
+  "longest_earth_h": 336.0,
+  "longest_earth_truncated": true,
+  "longest_sun_h": 106.0,
+  "longest_sun_truncated": true,
+  "mean_power_horizontal": 0.136108,
+  "mean_power_tracking": 0.31413,
+  "mean_sun_el_lit_deg": 26.59706,
+  "n_comms_gaps": 0,
+  "n_dark_windows": 1,
+  "n_earth_windows": 1,
+  "n_sun_windows": 1,
+  "pct_both": 31.547619,
+  "pct_earth": 100.0,
+  "pct_sun": 31.547619,
+  "pct_sun_no_earth": 0.0
+ },
+ "min_earth_clearance_deg": 0.0,
+ "n_samples": 336,
+ "params_fingerprint": "4f3cc38f60e01d0e",
+ "range_end_utc": "2027-01-15T00:00:00Z",
+ "range_start_utc": "2027-01-01T00:00:00Z",
+ "site_id": "apollo11",
+ "site_record": {
+  "dem_source": "none",
+  "files": {
+   "ephemeris": "sites/apollo11/ephemeris_synthetic.csv.gz",
+   "horizon": "sites/apollo11/horizon_flat.csv",
+   "visibility": "sites/apollo11/visibility.csv.gz",
+   "windows": "sites/apollo11/windows.json"
+  },
+  "group": "apollo",
+  "height_m_input": null,
+  "horizon_max_el_deg": -0.086937,
+  "horizon_method": "flat",
+  "horizon_min_el_deg": -0.086937,
+  "horizon_radius_km": 2.636,
+  "id": "apollo11",
+  "lat_deg": 0.67416,
+  "lon_deg": 23.47314,
+  "name": "Apollo 11 LM Eagle (Tranquility Base)",
+  "note": "Landed point; landing time 1969-07-20T20:17:40 UTC (NSSDCA).",
+  "observer_height_above_sphere_m": 2.0,
+  "observer_height_m": 2.0,
+  "origin": "catalog",
+  "source": "NASA NSSDCA Master Catalog 1969-059C (LM landing site from LRO images, DE421 mean Earth/polar axis frame)",
+  "surface_height_m": 0.0
+ },
+ "step_s": 3600,
+ "sun": [
+  {
+   "duration_h": 230.0,
+   "end": "2027-01-10T14:00:00Z",
+   "end_index": 230,
+   "start": "2027-01-01T00:00:00Z",
+   "start_index": 0,
+   "state": false,
+   "truncated_end": false,
+   "truncated_start": true
+  },
+  {
+   "duration_h": 106.0,
+   "end": "2027-01-15T00:00:00Z",
+   "end_index": 336,
+   "start": "2027-01-10T14:00:00Z",
+   "start_index": 230,
+   "state": true,
+   "truncated_end": true,
+   "truncated_start": false
+  }
+ ]
+}
