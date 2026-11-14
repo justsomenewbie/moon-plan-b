@@ -24,7 +24,7 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 **Plan and data** — B2 covers 23 sites and 43,824 hourly samples each. Long catalog links include downloadable visibility summaries. Switching sources retains the requested dates, site and priority. The explorer lists 13 relay operations. All 17 upstream operations match production. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The map highlights leaders and ties.
 
-The [original CSV URLs passed](docs/BACKEND_RECONCILIATION.md). Planner forms respect server waits. Downloaded source files identify their site.
+Planner results flag five smooth-sphere sites and withhold zero-visibility recommendations. [Checks and open dataset limit hint](docs/BACKEND_RECONCILIATION.md#planner-and-dataset-checks-november-15-2026).
 
 ## Pending
 
