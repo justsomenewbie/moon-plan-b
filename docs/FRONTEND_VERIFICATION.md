@@ -354,3 +354,10 @@ The date-first planner maps the sites in the returned ranking on the credited [N
 Chromium checked the B2 joint-visibility ranking for November 14–21, 2026 UTC (Vikram, 162 h), November 15–16 (Apollo 17 and Vikram, 24 h each), and November 13–14 (all 23 at 0 h). The [map regression check](../qa/check_planner_map.mjs) replays those windows. English and Vietnamese browser checks also covered missing and inconsistent coordinates, incomplete coverage, unsupported frames, image failure, and narrow screens. The live response edge cases used controlled API responses.
 
 The homepage links directly to the saved comparison and an illustrated three-step B2 guide with localized screenshots and a reproducible UTC example. The three reference cards appear on the homepage. Mobile and desktop Chromium checks covered keyboard navigation and the softer daytime cloud layers, including pause and reduced motion.
+
+
+### Planner globe and site details
+
+Selecting a name in the compact rankings centers its marker on the globe. The selected site owns the touch target where polar markers overlap, including when ranked below its neighbours. Each marker displays Sun, Earth and simultaneous visibility hours below the globe. On narrow screens the scrollable site list sits above the globe. A flat NASA map takes over if canvas is unavailable. Both views keep the selected site and its local imagery link.
+
+The [planner browser regression](../qa/check_planner_map.mjs) exercises the run B2 dates above, matching the selected marker, zoom and saved site details. The archived detail page preserves run, site, dates, priority and original source links. The live hourly detail link opens the comparison workspace for that specific site and UTC range. Desktop and mobile Chromium exercised both real archives and a live-transport replay. No live instrument data is implied by the ranking.

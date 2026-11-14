@@ -77,11 +77,11 @@ export default function Home() {
           {[
             ["Choose your dates", "In the planner, open “I have dates”. Set the start to November 14 and the end to November 21. The end date is excluded."],
             ["Choose what to compare", "Under “Rank sites by”, select “Sun and Earth together”, then press “Find sites”. This counts the hours when both are visible from each site."],
-            ["Read the map and table", "A gold diamond marks each site with the most hours. Choose a name under “Inspect a site” to see its coordinates. In this example, Vikram leads with 162 h. The table shows the hours for all 23 sites."],
+            ["Read the map and table", "Select a name in the table to find its dot on the globe. Gold diamonds mark the top sites. Select a dot to see its hours, then open “Site details”. In this example, Vikram leads with 162 h."],
           ].map(([title, instruction], i) => <li key={title}>
             <h3><span aria-hidden="true">{i + 1}</span> {t(title)}</h3>
             <p>{t(instruction)}</p>
-            <img src={`/images/guide/plan-step-${i + 1}-${locale}.webp`} width={640} height={(locale === "vi" ? [594, 340, 734] : [510, 340, 618])[i]} alt="" loading="lazy" />
+            <img src={`/images/guide/plan-step-${i + 1}-${locale}.webp`} width={640} height={(locale === "vi" ? [594, 340, 776] : [510, 340, 718])[i]} alt="" loading="lazy" />
           </li>)}
         </ol>
         <div className="home-guide-links">
