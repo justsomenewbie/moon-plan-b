@@ -126,7 +126,7 @@ export default function TerrainPair({ result, onDisplayedPair }: {
           <SiteCsvLinks siteId={row.site_id} runId={comparison.run_id} range={comparison.range} />
         </article>;
       })}</div>
-      {opened && completePair && <PairCatalogRanking comparison={comparison} />}
+      {opened && completePair && <PairCatalogRanking comparison={comparison} catalogSites={catalog.data} />}
     </section>}
   </details>;
 }

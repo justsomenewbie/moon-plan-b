@@ -1,5 +1,6 @@
 import { ApiError, apiError, producer } from "./client.ts";
 import { rankingMetrics, type SiteComparison } from "./compare-sites.ts";
+import { getTerrainDateSites } from "./terrain-dates.ts";
 import type { components } from "./producer";
 
 export type CatalogRanking = components["schemas"]["RankingResponse"];
@@ -43,7 +44,9 @@ function weightedSamples(row: Row, n: number, weights: CatalogRanking["weights"]
   return Number.isSafeInteger(sum) ? sum : undefined;
 }
 
-export async function getCatalogRanking(comparison: SiteComparison, signal?: AbortSignal): Promise<CatalogRanking> {
+export async function getCatalogRanking(
+  comparison: SiteComparison, signal?: AbortSignal, catalogSites?: readonly { id: string }[],
+): Promise<CatalogRanking> {
   if (!comparison.ranking.every(row => comparison.coverageBySite[row.site_id] === "complete"))
     throw new ApiError("The catalog ranking requires complete coverage for both selected sites.", 422);
   const { run_id, range, weights } = comparison;
@@ -90,5 +93,8 @@ export async function getCatalogRanking(comparison: SiteComparison, signal?: Abo
       check(close(catalog[field], selected[field]));
     previousRank = catalog.rank;
   }
+  const sites = catalogSites ?? await getTerrainDateSites(run_id, signal);
+  signal?.throwIfAborted();
+  check(byId.size === sites.length && sites.every(site => byId.has(site.id)));
   return data;
 }

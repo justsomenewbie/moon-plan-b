@@ -10,13 +10,13 @@ Minh’s clearance checkpoint passed 82 frontend tests, route generation, TypeSc
 
 ## Current product, backend and QA state
 
-The frontend supports guided imports, saved links, EN/VI, printing and source inspection. Local sky initially shows one observation; View from switches or overlays both. Athena had two three-hour November proposals and none in December’s control. The date search distinguishes requested and grid times. Pinned imports check run, UTC, site, cadence and observation. Custom jobs preserve UTC and unknown progress. Science owns physical validation; data owns Colab. [Backend findings](docs/BACKEND_RECONCILIATION.md).
+Features include guided imports, saved links, EN/VI, printing and source inspection. Local sky initially shows one observation; View from switches or overlays both. Athena had two three-hour November proposals and none in December’s control. The date search distinguishes requested and grid times. Pinned imports check run, UTC, site, cadence and observation. Custom jobs preserve UTC and unknown progress. Science owns physical validation; data owns Colab. [Backend findings](docs/BACKEND_RECONCILIATION.md).
 
 Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) verified slow-load history; [UI-02](qa/docs/UI_RESILIENCE.md#ui-02-import-retest) import rejection and recovery; [UI-03](qa/docs/UI_RESILIENCE.md#ui-03-live-api-failures) pinned recovery after API faults; [UI-04 and UI-05](qa/docs/UI_RESILIENCE.md#ui-04-and-ui-05-plot-retest) missing data, 0° and north crossings; [UI-06](qa/docs/UI_RESILIENCE.md#ui-06-sharing-a-sample) exact shared UTC and provenance in both languages; and [UI-07](qa/docs/UI_RESILIENCE.md#ui-07-browser-retest) globe failures and comparison-preserving retry. [UI-10](qa/docs/UI_RESILIENCE.md#ui-10-invalid-workspace-links) covers malformed links, matching-file recovery and pinned retries.
 
 Vietnamese mobile QA covered home, comparison, import errors, site selectors, UTC samples, clearance and API status capitalization.
 
-Run B listed 23 sites. Apollo 11 date comparisons recovered after a catalog failure. Six CSV downloads matched source bytes and scoped UTC ranges. The fractional-end issue was reported to backend; FE preserves the final sample. [Pair checks](frontend/tests/compare-sites.test.ts) validate observed visibility, dark intervals and tie order. [Confirmed routes and schema checks](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B ranked all 23 catalog IDs. Apollo 11 date comparisons recovered after a catalog failure. Six CSV downloads matched source bytes and scoped UTC ranges. The fractional-end issue was reported to backend; FE preserves the final sample. [Pair checks](frontend/tests/compare-sites.test.ts) validate observed visibility, dark intervals and tie order. [Confirmed routes and schema checks](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) passed keyboard-only import, recovery, site selection and gap navigation at 320px and 200% Chromium zoom.
 

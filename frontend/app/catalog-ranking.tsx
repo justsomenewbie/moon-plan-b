@@ -14,7 +14,9 @@ const actions = {
   ready: "Hide catalog ranks",
 } as const;
 
-export default function PairCatalogRanking({ comparison }: { comparison: SiteComparison }) {
+export default function PairCatalogRanking({ comparison, catalogSites }: {
+  comparison: SiteComparison; catalogSites?: readonly { id: string }[];
+}) {
   const { t } = useLanguage();
   const [lookup, setLookup] = useState<Lookup>({ status: "closed" });
   const active = useRef<AbortController | null>(null);
@@ -30,7 +32,7 @@ export default function PairCatalogRanking({ comparison }: { comparison: SiteCom
     active.current = controller;
     setLookup({ status: "pending" });
     try {
-      const result = await getCatalogRanking(comparison, controller.signal);
+      const result = await getCatalogRanking(comparison, controller.signal, catalogSites);
       if (!controller.signal.aborted) setLookup({ status: "ready", result });
     } catch (error) {
       if (!controller.signal.aborted) setLookup({ status: "error", message: error instanceof Error ? error.message : "The request could not be completed. Retry or check the connection." });

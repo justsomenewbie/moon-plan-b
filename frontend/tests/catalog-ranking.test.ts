@@ -24,6 +24,7 @@ function example(): { catalog: CatalogRanking; pair: SiteComparison } {
 
 test("gets the whole catalog once with pinned dates and matching explicit weights; catalog positions differ from pair positions", async t => {
   const { catalog, pair } = example();
+  const sites = catalog.ranking.map(row => ({ id: row.site_id }));
   let calls = 0;
   t.mock.method(globalThis, "fetch", async (req: Request) => {
     calls++;
@@ -33,14 +34,14 @@ test("gets the whole catalog once with pinned dates and matching explicit weight
       weights: "pct_sun:0.4,pct_earth:0.3,pct_both:0.3,pct_sun_no_earth:0" });
     return Response.json(catalog);
   });
-  const response = await getCatalogRanking(pair);
+  const response = await getCatalogRanking(pair, undefined, sites);
   assert.equal(calls, 1);
   assert.equal(response.ranking.length, 4);
   assert.equal(response.ranking.find(r => r.site_id === "b-east")?.rank, 3);
   assert.equal(pair.ranking[0].rank, 1);
   assert.equal(response.source, "computed");
   catalog.source = "summary";
-  assert.equal((await getCatalogRanking(pair)).source, "summary");
+  assert.equal((await getCatalogRanking(pair, undefined, sites)).source, "summary");
 });
 
 test("rejects incompatible identity, range, weight, order, counts or selected row evidence", async t => {
@@ -75,4 +76,36 @@ test("withholds requests when coverage is incomplete or a request has been cance
   pair.coverageBySite.dark = "complete";
   await assert.rejects(getCatalogRanking(pair), (e: unknown) => e instanceof ApiError && e.status === 404 && e.message === "No run");
   assert.equal(calls, 1);
+});
+
+test("ties the ranking denominator and membership to the pinned run's site list", async t => {
+  const { pair, catalog } = example();
+  const sites = catalog.ranking.map(row => ({ id: row.site_id }));
+  let reply = structuredClone(catalog);
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async () => { calls++; return Response.json(reply); });
+  assert.equal((await getCatalogRanking(pair, undefined, sites)).ranking.length, sites.length);
+  reply.ranking = structuredClone(catalog.ranking.slice(1)).map((row, i) => ({ ...row, rank: i + 1 }));
+  await assert.rejects(getCatalogRanking(pair, undefined, sites), (e: unknown) => e instanceof ApiError && e.status === 502);
+  reply = structuredClone(catalog);
+  reply.ranking[0].site_id = "unknown";
+  await assert.rejects(getCatalogRanking(pair, undefined, sites), (e: unknown) => e instanceof ApiError && e.status === 502);
+  assert.equal(calls, 3);
+});
+
+test("recovers the full run catalog on demand when it was unavailable in the pair selector", async t => {
+  const { pair, catalog } = example();
+  const paths: string[] = [];
+  t.mock.method(globalThis, "fetch", async (req: Request) => {
+    const url = new URL(req.url);
+    paths.push(url.pathname);
+    assert.equal(url.searchParams.get("run_id"), pair.run_id);
+    if (url.pathname === "/api/v1/ranking") return Response.json(catalog);
+    assert.equal(url.searchParams.has("group"), false);
+    return Response.json({ run_id: pair.run_id, sites: catalog.ranking.map(row => ({
+      id: row.site_id, name: row.name, dem_source: "test", horizon_method: "test",
+    })) });
+  });
+  assert.equal((await getCatalogRanking(pair)).ranking.length, 4);
+  assert.deepEqual(paths, ["/api/v1/ranking", "/api/v1/sites"]);
 });
