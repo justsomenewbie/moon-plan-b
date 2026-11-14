@@ -397,6 +397,7 @@ export const vietnamese: Record<string, string> = {
   "Planetocentric latitude · degrees": "Vĩ độ tính từ tâm Mặt Trăng · độ",
   "Observer height above surface · m": "Độ cao điểm quan sát so với bề mặt · m",
   "The backend reused a matching job.": "Backend đã dùng lại tác vụ có cùng tham số.",
+  "Checking job status…": "Đang kiểm tra trạng thái tác vụ…",
   "Progress percentage unavailable.": "Chưa có tiến độ theo phần trăm.",
   "Cancelled": "Đã hủy",
 };
