@@ -72,3 +72,20 @@ test("magnification keeps a site centered and clips zoomed points outside the ci
   assert.equal(close.data[3], 255);
   assert.deepEqual(close.data.slice(96, 100), full.data.slice(96, 100));
 });
+
+test("dated sunlight maps the projected surface normal into the east-positive lunar frame", () => {
+  const white = { width: 1, height: 1, data: new Uint8ClampedArray([255, 255, 255, 255]) };
+  const lit = (longitude: number, latitude: number, sunLongitude: number, sunLatitude: number, col = 2, row = 2) => {
+    const view = frame(5);
+    drawGlobe(white, view, longitude, latitude, 1, { longitude: sunLongitude, latitude: sunLatitude });
+    return view.data[4 * (row * 5 + col)];
+  };
+  for (const [lon, lat] of [[126.617658, -1.557279], [41.450414, -1.541521], [-179, 60], [90, -90]]) {
+    assert.equal(lit(lon, lat, lon, lat), 255);
+    assert.equal(lit(lon + 180, -lat, lon, lat), 33);
+  }
+  assert.equal(lit(0, 0, 90, 0), 33); // Solar terminator crosses the central meridian.
+  assert.ok(lit(0, 0, 90, 0, 4, 2) > lit(0, 0, 90, 0, 0, 2));
+  assert.ok(lit(0, 0, 0, 90, 2, 0) > lit(0, 0, 0, 90, 2, 4));
+  assert.equal(lit(150, 0, -180, 0), lit(150, 0, 180, 0));
+});

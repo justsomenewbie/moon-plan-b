@@ -1,3 +1,5 @@
+import type { MapPoint } from "./globe-sites";
+
 type Raster = { width: number; height: number; data: Uint8ClampedArray };
 
 export function globeCenter(longitude: number, latitude: number) {
@@ -5,9 +7,18 @@ export function globeCenter(longitude: number, latitude: number) {
 }
 
 // Inverse orthographic projection of a north-up, zero-meridian-centered color map.
-export function drawGlobe(texture: Raster, frame: Raster, longitude: number, latitude: number, zoom = 1) {
+export function drawGlobe(texture: Raster, frame: Raster, longitude: number, latitude: number, zoom = 1, subsolar?: MapPoint) {
   const lon = longitude * Math.PI / 180, lat = latitude * Math.PI / 180;
   const sinLat = Math.sin(lat), cosLat = Math.cos(lat);
+  // Transform the subsolar normal to camera east, north and forward axes once per frame.
+  let sunX = 0, sunY = 0, sunZ = 0;
+  if (subsolar) {
+    const phi = subsolar.latitude * Math.PI / 180, delta = subsolar.longitude * Math.PI / 180 - lon;
+    const projected = Math.cos(phi) * Math.cos(delta);
+    sunX = Math.cos(phi) * Math.sin(delta);
+    sunY = Math.sin(phi) * cosLat - projected * sinLat;
+    sunZ = Math.sin(phi) * sinLat + projected * cosLat;
+  }
   const { width: w, height: h, data: pixels } = texture;
   const radius = zoom * Math.min(frame.width, frame.height) / 2;
   for (let row = 0; row < frame.height; row++) {
@@ -25,8 +36,8 @@ export function drawGlobe(texture: Raster, frame: Raster, longitude: number, lat
       const x0 = (Math.floor(tx) + w) % w, x1 = (x0 + 1) % w;
       const y0 = Math.floor(ty), y1 = Math.min(y0 + 1, h - 1);
       const fx = tx - Math.floor(tx), fy = ty - y0;
-      // Fixed studio shading describes curvature. It carries no observation-time data.
-      const shade = 0.64 + 0.36 * z;
+      // The small map floor keeps the night side legible; it does not represent measured irradiance.
+      const shade = subsolar ? 0.13 + 0.87 * Math.max(0, x * sunX + y * sunY + z * sunZ) : 0.64 + 0.36 * z;
       for (let channel = 0; channel < 3; channel++) {
         const top = pixels[4 * (y0 * w + x0) + channel] * (1 - fx) + pixels[4 * (y0 * w + x1) + channel] * fx;
         const bottom = pixels[4 * (y1 * w + x0) + channel] * (1 - fx) + pixels[4 * (y1 * w + x1) + channel] * fx;
