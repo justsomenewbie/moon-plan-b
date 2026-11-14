@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { comparisonLocation, diskPosition, missionSites } from "../lib/globe-sites.ts";
+import { comparisonLocation, diskPosition, missionSites, pairLocation, pairCenter } from "../lib/globe-sites.ts";
 import type { GlobeSite } from "../lib/globe-sites.ts";
 import { drawGlobe, globeCenter } from "../lib/moon-globe.ts";
 
@@ -88,4 +88,36 @@ test("dated sunlight maps the projected surface normal into the east-positive lu
   assert.ok(lit(0, 0, 90, 0, 4, 2) > lit(0, 0, 90, 0, 0, 2));
   assert.ok(lit(0, 0, 0, 90, 2, 0) > lit(0, 0, 0, 90, 2, 4));
   assert.equal(lit(150, 0, -180, 0), lit(150, 0, 180, 0));
+});
+
+test("terrain pair pins use exact site IDs, agreeing coordinates and the run's lunar convention", () => {
+  const conventions = { latitude: "deg planetocentric, [-90, 90]", longitude: "deg EAST, [0, 360), planetocentric, MOON_ME frame" };
+  const sites = [{ id: "a", lat_deg: 0, lon_deg: 0 }, { id: "b", lat_deg: -86.752966, lon_deg: 336.328186 }];
+  for (const order of [sites, sites.toReversed()]) {
+    for (const site of order) {
+      const row = { site_id: site.id, name: "Same display name" };
+      const expected = { point: { latitude: site.lat_deg, longitude: site.lon_deg } };
+      assert.deepEqual(pairLocation(row, sites, sites.toReversed(), conventions).location, expected);
+      assert.deepEqual(pairLocation(row, sites, [], conventions).location, expected);
+      assert.deepEqual(pairLocation(row, [], sites, conventions).location, expected);
+      const foreign = pairLocation(row, sites, [], { ...conventions, longitude: "west-positive PA coordinates" });
+      assert.ok("reason" in foreign.location);
+      assert.deepEqual(foreign.reported, expected.point);
+    }
+  }
+  const row = { site_id: "a", name: "A" };
+  assert.ok("reason" in pairLocation(row, [], [], conventions).location);
+  assert.ok("reason" in pairLocation(row, [{ ...sites[0], lon_deg: null }], [], conventions).location);
+  assert.equal(pairLocation(row, [{ ...sites[0], lon_deg: 1 }], sites, conventions).reported, undefined);
+  assert.equal(pairLocation(row, [{ ...sites[0], lon_deg: 1, lat_deg: null }], sites, conventions).reported, undefined);
+});
+
+test("the initial pair view shows both sides of the longitude seam and falls back at antipodes", () => {
+  const a = { latitude: 1, longitude: 23 }, b = { latitude: -86.75, longitude: 336.33 };
+  for (const [first, second] of [[a, b], [b, a], [{ latitude: 5, longitude: 179 }, { latitude: 7, longitude: -179 }]]) {
+    const center = pairCenter(first, second);
+    assert.ok(diskPosition(first, center) && diskPosition(second, center));
+  }
+  assert.deepEqual(pairCenter(a), a);
+  assert.deepEqual(pairCenter(a, { latitude: -1, longitude: 203 }), a);
 });

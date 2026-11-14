@@ -1,8 +1,8 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
 import { drawGlobe, globeCenter } from "../lib/moon-globe";
-import { comparisonLocation, diskPosition, missionSites } from "../lib/globe-sites";
-import type { GlobeSite, MapPoint } from "../lib/globe-sites";
+import { comparisonLocation, diskPosition, missionSites, pairCenter } from "../lib/globe-sites";
+import type { GlobeSite, MapPoint, PairLocation } from "../lib/globe-sites";
 import type { Dataset } from "../lib/dataset";
 import { useLanguage } from "./language";
 import saved from "../lib/odysseus-athena-weeks.json";
@@ -24,20 +24,21 @@ type GlobeProps = {
   primary?: GlobeSite;
   alternative?: GlobeSite;
   evidence?: Dataset["evidence"];
-  savedResult: string;
+  savedResult?: string;
+  pairSites?: readonly PairLocation[];
   showSky?: (alternative: boolean) => void;
 };
 
 type Target = {
   key: string;
-  identity: GlobeSite | typeof missionSites[number];
+  identity: GlobeSite | PairLocation | typeof missionSites[number];
   name: string;
   location: { point: MapPoint } | { reason: string };
   source?: string;
   missionId?: string;
 };
 
-export default function MoonGlobe({ home = false, primary, alternative, evidence, savedResult, showSky }: GlobeProps) {
+export default function MoonGlobe({ home = false, primary, alternative, evidence, savedResult, pairSites, showSky }: GlobeProps) {
   const { t } = useLanguage();
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
@@ -55,19 +56,23 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
       if (site) targets.push({ key, identity: site, name: site.name, location: comparisonLocation(site, evidence) });
     }
   }
-  for (const mission of missionSites) {
-    targets.push({ key: mission.name, identity: mission, name: mission.name, location: { point: mission }, source: mission.source, missionId: mission.id });
+  if (pairSites) {
+    for (const site of pairSites) targets.push({ key: site.id, identity: site, name: site.name, location: site.location });
+  } else {
+    for (const mission of missionSites) {
+      targets.push({ key: mission.name, identity: mission, name: mission.name, location: { point: mission }, source: mission.source, missionId: mission.id });
+    }
   }
   const target = targets.find(item => item.key === chosen?.key && item.identity === chosen.identity);
   const point = target && "point" in target.location ? target.location.point : undefined;
   const comparisonPins = targets.filter(item => !item.source && "point" in item.location);
-  const pins = target && !target.source ? comparisonPins : targets.filter(item => item.source);
+  const pins = pairSites ? targets : target && !target.source ? comparisonPins : targets.filter(item => item.source);
   const marker = point && ready ? diskPosition(point, center, zoom) : null;
   const selectedWeek = saved.weeks.find(week => week.startUtc === savedResult);
   const displayedWeeks = selectedWeek ? [selectedWeek] : saved.weeks;
   // The sunlight selector belongs to the saved comparison, separately from any imported observation.
   const savedSite = saved.weeks.some(week => week.sites.some(site => site.id === savedResult));
-  const solarChoices = home || (target && !target.missionId) ? [] : sunlight.samples.filter(sample =>
+  const solarChoices = home || pairSites || (target && !target.missionId) ? [] : sunlight.samples.filter(sample =>
     sample.utc === selectedWeek?.startUtc || (savedSite && !selectedWeek));
   const sun = solarChoices.find(sample => sample.utc === sunUtc);
   const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
@@ -77,11 +82,18 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
 
   useEffect(() => {
     const mission = missionSites.find(item => item.id === savedResult);
-    if (mission) {
+    if (pairSites) {
+      const first = pairSites.find(site => "point" in site.location);
+      const second = pairSites.find(site => site !== first && "point" in site.location);
+      setChosen(first ? { key: first.id, identity: first } : null);
+      setCenter(first && "point" in first.location ? pairCenter(first.location.point,
+        second && "point" in second.location ? second.location.point : undefined) : origin);
+      setRotating(false);
+    } else if (mission) {
       setChosen({ key: mission.name, identity: mission }); setCenter(mission); setRotating(false);
     } else { setChosen(null); setCenter(origin); }
     setZoom(1); setAnnounced(null); setSunUtc("");
-  }, [savedResult]);
+  }, [savedResult, pairSites]);
 
   const currentCenter = useEffectEvent(() => ({ ...center, zoom, sun }));
   useEffect(() => { setEnabled(true); }, []);
@@ -204,7 +216,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
     if (item && "point" in item.location) selectCenter(item.location.point);
   }
 
-  return <figure className="lunar-figure" id="lunar-reference" tabIndex={-1}>
+  return <figure className="lunar-figure" id={pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
     <div className="lunar-frame">
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
@@ -269,13 +281,13 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
             {"point" in item.location && <small>{coordinates(item.location.point, false)}</small>}
           </button>)}
         </div>
-        <label htmlFor="globe-site">{t("Location on the reference globe")}</label>
+        {!pairSites && <><label htmlFor="globe-site">{t("Location on the reference globe")}</label>
         <select id="globe-site" value={target?.key ?? ""} onChange={event => locate(targets.find(item => item.key === event.target.value))}>
           <option value="">{t("Choose a location")}</option>
           {primary && <optgroup label={t("Current comparison")}>{targets.filter(item => !item.source).map(item =>
             <option key={item.key} value={item.key}>{t(item.key)} · {item.name}</option>)}</optgroup>}
           <optgroup label={t("Mission references")}>{missionSites.map(mission => <option key={mission.name}>{mission.name}</option>)}</optgroup>
-        </select>
+        </select></>}
         {target && <div className="globe-place">
           {"reason" in target.location ? <p>{t(target.location.reason)}</p> : <p>{t("Reported location")} · {target.location.point.latitude}° {t("latitude")} · {target.location.point.longitude}° {t("east longitude")}</p>}
           {point && ready && <><button type="button" className="button outline" onClick={() => selectCenter(point)}>{t("Center on site")}</button>
@@ -298,7 +310,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
             <p>{t("Earth visibility describes a line of sight. Radio signal strength is unavailable.")}</p>
             <a href={showSky ? "#saved-model-source" : "/compare#saved-model-source"}>{t("Source and interval checks")}</a>
           </div>}
-          {target.source ? <a href={target.source} target="_blank" rel="noreferrer">{t("Landing site source")} ↗</a> :
+          {pairSites ? null : target.source ? <a href={target.source} target="_blank" rel="noreferrer">{t("Landing site source")} ↗</a> :
             <><a href="#local-sky" onClick={() => showSky?.(target.key === "Alternative")}>{t("Open this observation in 3D")}</a>{" · "}
               <a href="#sources">{t("Sources & method")}</a></>}
         </div>}

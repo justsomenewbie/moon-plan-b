@@ -9,6 +9,8 @@ import { writeTerrainTarget } from "../lib/terrain-target";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { useLanguage } from "./language";
 import { SiteSourceLinks, TimeRange } from "./terrain-site-result";
+import { pairLocation } from "../lib/globe-sites";
+import MoonGlobe from "./moon-globe";
 import PairCatalogRanking from "./catalog-ranking";
 
 const weightLabels = [
@@ -33,6 +35,7 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
   const sites = catalog.data ?? result.sites;
   const [choice, setChoice] = useState<[string, string]>([result.sites[0]?.id ?? "", result.sites[1]?.id ?? ""]);
   const [comparison, setComparison] = useState<SiteComparison>();
+  const [showGlobe, setShowGlobe] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const active = useRef<AbortController | null>(null);
@@ -44,6 +47,9 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
   const rows = useMemo(() => completePair ? comparison?.ranking : comparison?.ranking.toSorted(
     (a, b) => choice.indexOf(a.site_id) - choice.indexOf(b.site_id)), [choice, comparison, completePair]);
 
+  const placements = useMemo(() => rows?.map(row => ({
+    ...row, ...pairLocation(row, catalog.data ?? [], result.sites, result.conventions),
+  })), [rows, catalog.data, result]);
   useLayoutEffect(() => {
     if (!opened || !comparison || !rows) return;
     onDisplayedPair({ terrain: result, context: pairGuideContext(comparison, rows) });
@@ -52,7 +58,7 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
 
   function choose(index: number, value: string) {
     active.current?.abort();
-    setPending(false);
+    setShowGlobe(false); setPending(false);
     setComparison(undefined);
     setError("");
     setChoice(index === 0 ? [value, choice[1]] : [choice[0], value]);
@@ -63,7 +69,7 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
     const controller = new AbortController();
     active.current?.abort();
     active.current = controller;
-    setPending(true);
+    setShowGlobe(false); setPending(true);
     setComparison(undefined);
     setError("");
     try {
@@ -118,11 +124,16 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
         .filter(([key]) => comparison.weights[key] !== undefined)
         .map(([key, label]) => t(label) + " " + comparison.weights[key]).join(" · ")}</p>
       {!completePair && <p className="data-notice">{t("Coverage is incomplete for this pair. Its scores and ranking are unavailable for the full window.")}</p>}
-      <div className="week-sites">{rows?.map(row => {
+      <div className="week-sites">{placements?.map(row => {
         const coverage = comparison.coverageBySite[row.site_id];
         const warnings = comparison.sites[row.site_id].warnings;
         return <article key={row.site_id} className="min-w-0">
           <h3>{row.name}</h3>
+          {row.reported && <p>{t("Reported location")} · {row.reported.latitude}° {t("latitude")} · {row.reported.longitude}° {t("point" in row.location ? "east longitude" : "longitude")}</p>}
+          {/* The run-pinned Haworth site record identifies this point as the centre of a region. */}
+          {row.id === "a3_haworth" && runId === "B_spice_pgda_bruteforce_2026_2030" &&
+            <p className="muted text-sm">{t("This run uses a representative point for the Haworth region.")}</p>}
+          {"reason" in row.location && <p>{t(row.location.reason)}</p>}
           <p>{t("Coverage")} · {t(coverage)}</p>
           {completePair && <p><strong>{t("Rank {rank} of 2", { rank: row.rank })}</strong> · {t("Weighted score")} {row.score}</p>}
           {coverage === "complete" ? <dl className="metadata">
@@ -135,6 +146,11 @@ export default function TerrainPair({ result, onDisplayedPair, replay, resolutio
           <SiteSourceLinks siteId={row.site_id} runId={comparison.run_id} range={comparison.range} />
         </article>;
       })}</div>
+      {placements?.some(site => "point" in site.location) && <div className="my-4 print:hidden">
+        <button type="button" className="button outline" aria-expanded={showGlobe}
+          onClick={() => setShowGlobe(open => !open)}>{t(showGlobe ? "Hide the pair globe" : "Show this pair on the globe")}</button>
+        {showGlobe && <MoonGlobe pairSites={placements} />}
+      </div>}
       <a className="print:hidden" href={pairHref()} target="_blank" rel="noreferrer">{t("Open this ranked pair in a new tab")}</a>
       {opened && completePair && <PairCatalogRanking comparison={comparison} catalogSites={catalog.data} />}
     </section>}

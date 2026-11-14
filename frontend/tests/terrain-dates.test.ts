@@ -49,8 +49,12 @@ test("loads the selected run catalog and rejects duplicate sites, invalid IDs or
     assert.equal(url.searchParams.get("format"), "json");
     return Response.json(reply);
   });
-  assert.deepEqual(await getTerrainDateSites("test-run"), [{ id: site.id, name: site.name, demSource: site.dem_source, horizonMethod: site.horizon_method }]);
+  assert.deepEqual(await getTerrainDateSites("test-run"), [{ id: site.id, name: site.name, demSource: site.dem_source, horizonMethod: site.horizon_method, lat_deg: null, lon_deg: null }]);
+  reply = { run_id: "test-run", sites: [{ ...site, lat_deg: 0, lon_deg: 0 }] };
+  const [located] = await getTerrainDateSites("test-run");
+  assert.deepEqual([located.lat_deg, located.lon_deg], [0, 0]);
   for (reply of [
+    { run_id: "test-run", sites: [{ ...site, lat_deg: 91 }] }, { run_id: "test-run", sites: [{ ...site, lon_deg: 360 }] },
     { run_id: "different", sites: [site] }, { run_id: "test-run", sites: [site, site] }, { run_id: "test-run", sites: [{ ...site, dem_source: null }] },
     { run_id: "test-run", sites: [{ ...site, id: "a,b" }] }, { run_id: "test-run", sites: [{ ...site, name: " " }] },
   ]) await assert.rejects(getTerrainDateSites("test-run"), (e: unknown) => e instanceof ApiError && e.status === 502);

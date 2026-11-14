@@ -32,6 +32,22 @@ try {
   await panel.getByRole("button", { name: "Compare this pair" }).click();
   const link = ranks(entry).getByRole("link", { name: "Open this ranked pair in a new tab" });
   await link.waitFor();
+  const pairMap = entry.locator("#pair-lunar-reference");
+  const cards = ranks(entry).locator("article");
+  assert.match(await cards.nth(0).innerText(), /0\.67416° latitude · 23\.47314° east longitude/);
+  assert.match(await cards.nth(1).innerText(), /-86\.752966° latitude · 336\.328186° east longitude/);
+  assert.match(await cards.nth(1).innerText(), /representative point/);
+  await ranks(entry).getByRole("button", { name: "Show this pair on the globe" }).click();
+  await pairMap.locator("canvas:visible").waitFor();
+  assert.equal(await pairMap.locator(".site-pin button").count(), 2);
+  for (const [label, latitude] of [[/Apollo 11/, /0\.67416°/], [/Haworth/, /-86\.752966°/]]) {
+    await pairMap.locator(".site-pin-key button").filter({ hasText: label }).click();
+    assert.match(await pairMap.locator(".globe-place").innerText(), latitude);
+  }
+  await pairMap.getByRole("button", { name: "Zoom in" }).click();
+  assert.match(await pairMap.locator(".globe-center").innerText(), /2×/);
+  assert.equal(await pairMap.locator(".globe-sunlight, .site-week-readings").count(), 0);
+  assert.match(await entry.locator("#lunar-reference .site-pin-key").innerText(), /Odysseus/);
   const headings = await ranks(entry).locator("article h3").allTextContents();
   assert.equal(headings.length, 2);
   assert.match(headings[0], /Apollo 11/);
@@ -90,6 +106,12 @@ try {
   assert.equal(await shared.locator("#workspace > .week-sites article").count(), 2);
   assert.equal(await shared.locator("#terrain-pair").count(), 0);
   assert.equal(pairs.length, 3);
+
+  // Changing the choice must remove the previous result and both live pins immediately.
+  await panel.locator('[name="pairFirstSite"]').selectOption("im1_odysseus");
+  assert.equal(await pairMap.count(), 0);
+  assert.equal(await ranks(entry).count(), 0);
+  assert.match(await entry.locator("#lunar-reference .site-pin-key").innerText(), /Athena/);
 
   for (const [name, value] of [["site_id", requested[0]], ["site_ids", requested.join(",")], ["site_ids", "apollo11,apollo11"]]) {
     const malformed = new URL(url);
