@@ -252,3 +252,19 @@ The build integrated with the terrain aggregate at `2d5d059` passed 45 frontend 
 Desktop and 320-pixel Chromium screenshots were reviewed. The night texture stays fixed to the viewport, its drift can be paused, and reduced motion holds the map still. Light appearance and print omit the texture. The verified footer destination is the public project issue tracker. Site-wide illumination, radio strength, sponsor affiliation, spoken screen-reader behavior and a physical-device test of this revision remain unverified.
 
 The revised day/night suggestion added four system-rendered cloud silhouettes to a fixed viewport layer. On the follow-up production build Chromium verified the blue daytime gradient, night star texture, a shared pause control, static reduced-motion presentation, print exclusion, 320-pixel layout and no page or console errors in the home flow. The comparison-map, keyboard, astronaut and saved-print checks passed again. The reference screenshots remain private.
+
+### Member feedback status, 14 November 2026
+
+| Item | Verified outcome | Remaining input or limit |
+|---|---|---|
+| I · Appearance | The circular day/night switch, hover tilt, local-time Auto and reduced-motion behavior were already on main before this review. | None for the specified controls. |
+| II · Globe | Rotation was already available. Added 1–4× reference zoom, named coordinate pins and per-site Sun/Earth hours. | Close-up terrain and radio strength need their own data and model. |
+| III · Footer | The project repository was already linked. Added the repository’s verified feedback channel. | The team has not supplied institute, social or sponsor links or confirmed affiliations. |
+| IV · Home and language | The language selector, resources navigation and a guide were already present. Home now introduces the comparison and links separately to the instructions and saved results. | Founder names require confirmation if the team wants them displayed. |
+| V · Typography | The title already had no terminal period and the lead was smaller. The current ellipsis-bearing status messages are standalone labels; no following sentence in those messages starts lowercase. | Recheck new copy when added. |
+| VI · Astronaut | The bilingual guide answers preset questions and reads the selected model result. On opening it reports the last covered UTC sample, with the source run. Outside coverage it offers help. | The model supplies predictions. Live measurements remain unavailable. |
+| VII · Shared sky view | The local horizon plot shows both sites’ Sun/Earth directions. Its markers and labeled buttons open the respective site readings. | Missing samples remain unavailable. |
+| VIII · Day and night backgrounds | Distinct fixed skies with gentle cloud drift, night stars, a pause control and static reduced-motion display shipped in `d19989e`. | Private reference art was not distributed. |
+| IX · Title spacing | Chromium measured two lines and a 16 px gap before the lead in English and Vietnamese at 320, 375, 768, 1024, 1280 and 1600 CSS pixels. | Browser zoom and custom fonts can change wrapping. |
+
+The current-time guide uses each loaded terrain site’s complete evaluated range and Sun/Earth windows at the most recent sampled UTC time. The saved comparison supports joint visibility only, with ±1 h boundary precision. Both preserve exclusive end times. Tests cover reopening after a time change, missing or partial coverage, time outside a selected week and individual body visibility. No hemisphere-wide condition is inferred.

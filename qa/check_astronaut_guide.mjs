@@ -9,12 +9,16 @@ const browser = await chromium.launch({
 });
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await page.clock.setFixedTime(new Date("2026-11-15T05:37:00Z"));
   await page.goto(origin);
   const launcher = page.getByRole("button", { name: "Astronaut guide", exact: true });
   const panel = page.locator("aside[popover]");
   await launcher.focus();
   await page.keyboard.press("Enter");
   await panel.waitFor({ state: "visible" });
+  await panel.getByText("2026-11-15 05:00:00 UTC").waitFor();
+  await panel.getByText("Athena · IM-2 · Sun and Earth visible").waitFor();
+  await panel.getByText("Odysseus · IM-1 · Outside the joint visibility window").waitFor();
   const questions = panel.locator("summary");
   assert.equal(await questions.count(), 4);
   for (const [index, expected] of ["choose a week", "no live feed", "no signal-strength estimate"].entries()) {
@@ -58,12 +62,16 @@ try {
     "Odysseus · IM-1 · 33 h\n" + week1, "Odysseus · IM-1 · 168 h\n" + week2,
   ]);
   await viLauncher.click();
+  await panel.getByText("Odysseus · IM-1 · Ngoài khoảng nhìn thấy đồng thời").waitFor();
+  await page.keyboard.press("Escape");
+  await page.clock.setFixedTime(new Date("2026-11-28T00:00:00Z"));
+  await viLauncher.click();
   await panel.getByText("Bạn muốn tìm hiểu điều gì?").waitFor();
   await questions.first().click();
   const box = await panel.boundingBox();
   assert.ok(box && box.x >= 0 && box.x + box.width <= 320 && box.y >= 0 && box.y + box.height <= 568);
   assert.equal(await viLauncher.locator("span").evaluate(el => getComputedStyle(el).animationName), "none");
-  await panel.getByRole("link").click();
+  await panel.getByRole("link", { name: "Đến phần so sánh kết quả đã lưu" }).click();
   await panel.waitFor({ state: "hidden" });
   assert.equal(new URL(page.url()).hash, "#observed-week");
   assert.equal(await page.evaluate(() => document.activeElement?.id), "observed-week");
