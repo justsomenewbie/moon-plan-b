@@ -1,0 +1,13 @@
+.site-sky { color:#ecf1f5; background:#17212c; border:1px solid #58646d; border-radius:.65rem; padding:clamp(.75rem,2vw,1.4rem); }
+.site-sky h2 { color:#fff4da; font-size:clamp(1.1rem,2.2vw,1.6rem); font-weight:650; }
+.site-sky-title p,.site-sky figcaption,.site-sky dd,.site-sky details p { color:#c6cfd5; font-size:.88rem; line-height:1.45; }
+.site-sky-controls,.site-sky-readings { display:flex; flex-wrap:wrap; gap:.5rem 1rem; margin:.65rem 0; }
+.site-sky-controls button { min-height:44px; padding:.3rem .72rem; border:1px solid #788893; border-radius:.35rem; }
+.site-sky-controls [aria-pressed=true] { color:#18140d; background:#ffd07c; border-color:#ffd07c; }
+.site-sky svg { width:100%; height:auto; display:block; margin:.45rem auto; }
+.site-sky svg text { fill:#edf1f3; font:12px system-ui,sans-serif; }
+.site-sky dt { font-weight:650; color:#fff4da; }
+.site-sky details { border-top:1px solid #58646d; }
+.site-sky summary,.site-sky details a { display:inline-block; min-height:44px; padding:.65rem 0; }
+.site-sky summary { display:list-item; cursor:pointer; }
+.site-sky details a { color:#a7ddff; text-decoration:underline; }
