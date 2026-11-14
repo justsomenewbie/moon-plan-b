@@ -16,13 +16,13 @@ Wi-Fi mock jobs work. [UI-01](qa/docs/UI_RESILIENCE.md#ui-01-pending-windows) ve
 
 Saved-week globes offer [dated sunlight](docs/GLOBE_SUNLIGHT.md). Sky markers select body-specific readings. EN/VI mobile checks covered the team contact footer, imports, site selection, UTC, clearance and API status.
 
-Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched bytewise. Reports link the run and manifest. FE preserves sub-millisecond ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
+Run B returned [23 catalog ranks](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-window). [Validation](frontend/tests/catalog-ranking.test.ts) checks all IDs and both scores. Apollo 11 uses a smooth-sphere horizon. Six CSVs matched. Reports show coordinates, model heights and linked records. FE preserves sub-millisecond ends. [Confirmed routes](docs/FRONTEND_CONTRACT.md#published-route-scope).
 
 [UI-09](qa/docs/UI_RESILIENCE.md#ui-09-keyboard-and-zoom) verified keyboard import, recovery, selection and gap navigation at 320px and 200% Chromium zoom. Home globe focus is visible. Reload reopens linked sources.
 
 [Mac build verified](qa/README.md#supported-runtime-retest). [Four Horizons responses verified](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The EN/VI astronaut opens pair/date controls, answers from the displayed pair or saved link, and supports pausing its wave. Saved joint visibility: Odysseus 33 h, Athena 139 h, with UTC and source. [Local Ollama](README.md#ask-the-astronaut).
+The astronaut opens pair/date controls, answers from the displayed pair or saved link, and supports pausing its wave. Saved joint visibility: Odysseus 33 h, Athena 139 h, with UTC and source. [Local Ollama](README.md#ask-the-astronaut).
 
 ## Pending
 

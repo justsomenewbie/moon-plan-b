@@ -42,6 +42,14 @@ The initial live aggregate omits `run_id`. On November 14 it selected `B_spice_p
 
 For an Odysseus trial, both `GET /api/v1/sites/{site_id}/pointing` and `POST /api/v1/mission/survival` returned 200 through the same-origin production frontend proxy. Response hashes matched direct backend reads. The pointing response distinguishes the requested instant from its hourly sample. The survival response records the test battery capacity, loads, panel and state of charge. These routes are provisional. The frontend uses neither trial output for site ranking.
 
+### Site coordinates and heights
+
+On run B, the aggregate, the site list and the individual site records agreed on the coordinates of Odysseus, Athena, Apollo 11 and the Haworth region point. The aggregate and individual records agreed on all four model surface heights. The run uses the MOON_ME frame, planetocentric latitude and east longitude in [0°, 360°). Model surface height is measured from the 1,737.4 km reference sphere. The observer is 2 m above the modeled surface.
+
+Odysseus is at 80.13° S, 1.44° E. LROC reports an elevation of 2,579 m, while the team model at those coordinates returns 2,592.074 m. The FE labels the latter as model surface height. Athena’s model point matches the landed coordinates of 84.7906° S, 29.1957° E. [LROC Odysseus](https://lroc.im-ldi.com/images/1360) · [LROC Athena](https://lroc.im-ldi.com/images/1408)
+
+For Apollo 11 the producer’s smooth-sphere fallback supplies a model surface height of 0 m. Haworth’s 336.328186° E is a representative point for a region, as described in its site record.
+
 ### Ranking two sites in one window
 
 Run B, November 14 at 00:00 through November 15 at 00:00 UTC: the 24 hourly samples yielded 0% Sun, 100% Earth and 0% joint visibility for Apollo 11, and 0% for all three at Haworth. The weights were 0.4 Sun, 0.3 Earth and 0.3 joint. The comparison ranked Apollo 11 first (30 points) and Haworth second (0 points) within this pair. The same-window catalog ranking placed them 10th and 17th of 23. Apollo 11 lies outside PGDA map coverage, so the producer used a smooth-sphere horizon there. Haworth has a terrain horizon. The ranking describes visibility in this model and UTC window.

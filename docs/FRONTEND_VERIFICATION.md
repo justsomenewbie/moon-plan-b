@@ -309,6 +309,10 @@ Chromium compared Apollo 11 and Haworth for November 14–15 UTC. Opening the fo
 
 For Apollo 11 on November 15 at 00:00–03:00 UTC, the producer reported a flat horizon outside PGDA coverage. Chromium verified the smooth-sphere legend and source notice on the live result and after importing the same response locally. Switching to Vietnamese at 320 CSS pixels preserved them and made no additional API request.
 
+### Site location
+
+Chromium compared four run B site cards to the bounded aggregate and opened each full-run site record explicitly. Coordinates, surface heights and the declared conventions matched. The Vietnamese view retained Apollo 11’s 0 m and Haworth’s east longitude above 180° at 320 CSS pixels. A two-date report showed the pinned site in both cards, and a pair comparison linked each selected site to its own record. A local import retained the supplied location without remote actions. An older import opened with no location fields.
+
 ### Run provenance and custom-job rejections
 
 Chromium opened the run B JSON in a separate tab and downloaded the original manifest. Its bytes matched the digest displayed under **Sources & method**. The workspace, Vietnamese layout at 320 CSS pixels and standalone date report retained the same run and manifest links. Local import retained the path and digest as text. A manifest path for a different run stayed inactive, and a simulated 404 left the source report open. Native Safari 26.6.2 displayed both links in English and Vietnamese and opened the matching run record in a separate tab within the isolated test session.
