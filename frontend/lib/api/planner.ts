@@ -21,7 +21,7 @@ export async function getPlannerRun(signal?: AbortSignal): Promise<PlannerRun> {
   signal?.throwIfAborted();
   const { data, error, response } = await producer.GET("/api/v1/runs", { signal, params: { query: { limit: 1 } } });
   signal?.throwIfAborted();
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   const run = data?.runs?.[0];
   requireRun(run && data?.default_run_id === run.run_id && run.is_default === true && run.status === "ready" &&
     typeof run.run_id === "string" && /^[A-Za-z0-9_.-]{1,64}$/.test(run.run_id) &&

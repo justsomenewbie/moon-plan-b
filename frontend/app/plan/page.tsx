@@ -1,5 +1,7 @@
 "use client";
 
+import { ApiProblemText, useRetryCountdown, useProblemFields } from "../api-problem-text";
+
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { hasLiveOptions, landingClock, liveExtras, plannerFormState, type PlannerSource } from "../../lib/planner-source";
 import { useQuery } from "@tanstack/react-query";
@@ -46,17 +48,20 @@ function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun
   const { t } = useLanguage();
   const [result, setResult] = useState<SearchResult | null>(() => source === "live" ? null : storedResult(first, last, priority, source));
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | Error>("");
+  const wait = useRetryCountdown(error);
+  const { prefix, fieldAttributes } = useProblemFields(error);
   const [metric, setMetric] = useState(priority);
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
-  function clear() { active.current?.abort(); setPending(false); setError(""); setResult(null); }
+  function clear() { active.current?.abort(); setPending(false); if (!wait) setError(""); setResult(null); }
   const best = result?.rows.filter(r => result.leaders.includes(r.id)) ?? [];
   const column = { sun: 0, earth: 1, joint: 2 }[metric];
   return <section aria-labelledby="catalog-question">
     <h2 id="catalog-question">{t("Which site fits my dates?")}</h2>
     <form className="request-fields print:hidden" onChange={clear} onSubmit={async e => {
       e.preventDefault();
+      if (pending || wait) return;
       const form = new FormData(e.currentTarget);
       const from = midnight(String(form.get("from"))), to = midnight(String(form.get("to")));
       clear();
@@ -77,18 +82,18 @@ function CatalogSearch({ run, first, last, priority, source }: { run: PlannerRun
             return { ...pairLocation(row, run.sites, evidence.sites, evidence.conventions), hours: m && [m.sun_hours, m.earth_hours, m.both_hours], longest: m?.longest_both_h, coverage: site.coverage_in_range };
           }) });
       } catch (cause) {
-        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "The request could not be completed. Retry or check the connection.");
+        if (!controller.signal.aborted) setError(cause instanceof Error ? cause : "The request could not be completed. Retry or check the connection.");
       } finally { if (!controller.signal.aborted) setPending(false); }
     }}>
-      <label className="field">{t("Start date (UTC)")}<input name="from" type="date" required min={run.start.slice(0,10)} max={day(Date.parse(run.end) - DAY)} defaultValue={first} /></label>
-      <label className="field">{t("End date (UTC, exclusive)")}<input name="to" type="date" required min={day(Date.parse(run.start) + DAY)} max={run.end.slice(0,10)} defaultValue={last} /></label>
+      <label className="field">{t("Start date (UTC)")}<input name="from" {...fieldAttributes("start")} type="date" required min={run.start.slice(0,10)} max={day(Date.parse(run.end) - DAY)} defaultValue={first} /></label>
+      <label className="field">{t("End date (UTC, exclusive)")}<input name="to" {...fieldAttributes("end")} type="date" required min={day(Date.parse(run.start) + DAY)} max={run.end.slice(0,10)} defaultValue={last} /></label>
       <label className="field">{t("Rank sites by")}<select name="priority" value={metric} onChange={e => setMetric(e.target.value as PlannerPriority)}>
         {Object.entries(criteria).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
       </select></label>
-      <button className="button primary" disabled={pending}>{t("Find sites")}</button>
+      <button className="button primary" disabled={pending || wait > 0}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Find sites")}</button>
     </form>
     {pending && <p role="status">{t("Checking visibility for the catalog…")}</p>}
-    {error && <p role="alert">{t(error)}</p>}
+    {error && <p role="alert"><ApiProblemText error={error} fieldPrefix={prefix} /></p>}
     {source === "saved" && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{savedPlannerWindows.catalog.map(w => <a key={w.from} href={planLink({mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric})}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
     {result && <section aria-label={t("Site search results")} className="plan-results">
       <h3>{t("Site search results")}</h3>
@@ -151,7 +156,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
     <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · <a href={source === "saved" ? "/data#bundled-data" : source === "saved-b2" ? "/data#run-b2" : "/data"}>{t("Browse data and all original files")}</a></p>
-    {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></p>}
+    {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <span className="block"><ApiProblemText error={catalog.error} /></span><button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></p>}
     <div className="flex flex-wrap gap-4 print:hidden">
       {source !== "saved-b2" && <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>}
       {source !== "saved" && <a href={sourceLink("saved")}>{t("Open the earlier run B archive")}</a>}

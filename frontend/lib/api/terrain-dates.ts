@@ -19,7 +19,7 @@ export async function getTerrainDateSites(runId: string, signal?: AbortSignal): 
   const { data, error, response } = await producer.GET("/api/v1/sites", {
     params: { query: { run_id: runId, format: "json" } }, signal,
   });
-  if (!response.ok) throw apiError(error, response.status);
+  if (!response.ok) throw apiError(error, response);
   if (!data || !("sites" in data) || data.run_id !== runId || !Array.isArray(data.sites))
     throw new ApiError("The site list does not match the selected model run.", 502);
   const ids = new Set<string>();

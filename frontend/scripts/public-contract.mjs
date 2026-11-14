@@ -37,6 +37,9 @@ export function publicContract(producer) {
   const windows = paths['/api/v1/sites/{site_id}/export/windows.csv'].get;
   windows.description = 'Windows are clipped to the range, grouped by kind and sorted by start. The download name includes the site, run, requested UTC bounds, and a hash of the kinds when specified.';
 
+  const original = paths['/api/v1/runs/{run_id}/files/{file_path}'].get;
+  original.description = 'Use manifest.json or a file path listed in the run manifest, URL-encoding its path separators. The relay keeps the original bytes and SHA-256 ETag. The local download name identifies the run and file path.';
+
   // Swagger also displays component schemas. Keep the request/response models reached by these operations.
   const used = new Set();
   function collect(value) {

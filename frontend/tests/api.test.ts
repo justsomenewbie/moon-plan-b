@@ -30,7 +30,7 @@ test("typed client, mock contract and problem responses work end to end", async 
   ] as const) {
     server.use(http.get("*/api/v1/jobs/:id", () => HttpResponse.json({ jobId: accepted.jobId, status, progressPct, result, problem })));
     const job = await getJob(accepted.jobId, defaultWindow);
-    assert.equal(job.status, status); assert.equal(jobPollInterval(job), status === "running" ? 1500 : false);
+    assert.equal(job.status, status); assert.equal(jobPollInterval(job), status === "running" ? 2000 : false);
   }
   const outside = { ...defaultWindow, from: "2026-12-01T00:00:00Z", to: "2026-12-02T00:00:00Z" };
   server.use(http.get("*/api/v1/jobs/:id", () => HttpResponse.json({ jobId: accepted.jobId, status: "done", progressPct: 100, result: fixture, problem: null })));
@@ -69,6 +69,40 @@ test("window and job boundaries reject invalid or contradictory data", () => {
   assert.equal(apiError("<html>private stack</html>", 500).message.includes("private"), false);
 });
 
+
+test("server retry delays preserve the absolute UTC time and suppress automatic query retries", t => {
+  const now = Date.parse("2026-11-14T23:59:58Z");
+  t.mock.method(Date, "now", () => now);
+  const problem = { type: "about:blank", title: "Too many requests", status: 429, code: "RATE_LIMITED", retry_after_s: 20 };
+  const response = (status: number, wait?: string) => new Response(null, { status, headers: wait ? { "Retry-After": wait } : {} });
+  assert.equal(apiError(problem, response(429, "5")).retryAt, "2026-11-15T00:00:03.000Z");
+  assert.equal(apiError(problem, response(429)).retryAt, "2026-11-15T00:00:18.000Z");
+  const date = new Date(now + 60000);
+  const unavailable = apiError(null, response(503, date.toUTCString()));
+  assert.equal(unavailable.retryAt, date.toISOString());
+  assert.equal(retryQuery(0, unavailable), false);
+  for (const invalid of ["soon", "-1", "17:00", "1.5", "9".repeat(30)])
+    assert.equal(apiError({}, response(429, invalid)).retryAt, undefined);
+  assert.equal(apiError({ ...problem, status: 422 }, response(429)).retryAt, undefined);
+  assert.equal(apiError(problem, response(422, "5")).retryAt, undefined);
+});
+
+test("only validated producer problems supply bounded recovery hints and actionable field paths", () => {
+  const body = { type: "about:blank", title: "Invalid input", status: 422, code: "BAD_MISSION_LENGTH",
+    detail: "The duration does not match the model step.", hint: "Choose a whole number of hours.",
+    errors: [null, { path: "mission_h", message: "Must be a whole hour" }, { path: {}, message: "invalid" }],
+  };
+  const error = apiError(body, 422);
+  assert.equal(error.title, body.title);
+  assert.equal(error.message, body.detail);
+  assert.equal(error.code, body.code);
+  assert.equal(error.hint, body.hint);
+  assert.deepEqual(error.fields, [body.errors[1]]);
+  const mismatch = apiError(body, 500);
+  assert.equal(mismatch.code, undefined);
+  assert.equal(mismatch.hint, undefined);
+  assert.deepEqual(mismatch.fields, []);
+});
 
 test("terrain chart requests preserve the UTC range, drawing step, and versioned site", async t => {
   const request = { from: "2026-11-14T00:00:00Z", to: "2026-11-21T00:00:00Z", resolutionSeconds: 21600 };

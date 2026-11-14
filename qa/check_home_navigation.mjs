@@ -74,8 +74,9 @@ try {
       }
     }
     await nav.getByRole("link", { name: "Nguồn và phương pháp" }).press("Enter");
-    await page.waitForFunction(() => document.activeElement.id === "saved-model-source" &&
-      document.activeElement.closest("details").open);
+    await page.waitForURL(url => url.pathname === "/compare");
+    await page.waitForFunction(() => document.activeElement?.id === "saved-model-source" &&
+      document.activeElement.closest("details")?.open);
     assert.equal(new URL(page.url()).pathname, "/compare");
     assert.equal(await page.locator("#resources").count(), 0);
     assert.equal(await page.locator('nav a[href="/#resources"]').count(), 1);

@@ -22,9 +22,11 @@ Run B [ranked 23 sites](docs/BACKEND_RECONCILIATION.md#ranking-two-sites-in-one-
 
 [Live API and Horizons replay](qa/README.md#frontend-integration-retest). [Raw checks](qa/docs/JPL_CHECK.md#archived-four-response-check).
 
-The astronaut guide respects reduced motion. About links to the six team members; the footer includes the school’s Facebook page. [OpenAI/Ollama configuration](frontend/README.md#ask-the-astronaut).
+The astronaut guide refreshes at sample boundaries and respects reduced motion. [Guide configuration](frontend/README.md#ask-the-astronaut).
 
-**Plan and data:** B2 covers 23 sites and 43,824 hourly samples each. Long catalog links include downloadable visibility summaries. Switching sources retains the requested dates, site and priority. The public explorer lists 13 relay operations. All 17 upstream operations match the production contract. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The result map highlights positive leaders and ties.
+**Plan and data** — B2 covers 23 sites and 43,824 hourly samples each. Long catalog links include downloadable visibility summaries. Switching sources retains the requested dates, site and priority. The explorer lists 13 relay operations. All 17 upstream operations match production. [Archive](docs/B2_VISIBILITY_ARCHIVE.md) · [Hosted CSV filename and cache retest](docs/BACKEND_RECONCILIATION.md). The map highlights leaders and ties.
+
+The [original CSV URLs passed](docs/BACKEND_RECONCILIATION.md). Planner forms respect server waits. Downloaded source files identify their site.
 
 ## Pending
 
