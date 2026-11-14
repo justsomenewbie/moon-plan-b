@@ -3,7 +3,7 @@
 import { ApiProblemText, useRetryCountdown, useProblemFields } from "../api-problem-text";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { hasLiveOptions, landingClock, liveExtras, plannerFormState, type PlannerSource } from "../../lib/planner-source";
+import { hasLiveOptions, landingClock, liveExtras, plannerFormState, plannerLink, type PlannerSource } from "../../lib/planner-source";
 import { useQuery } from "@tanstack/react-query";
 import { isMock } from "../../lib/api/client";
 import { getPlannerRanking, getPlannerRun, type PlannerRun, type PlannerPriority } from "../../lib/api/planner";
@@ -26,7 +26,6 @@ const criteria = { joint: "Sun and Earth together", sun: "Sunlight", earth: "Ear
 const DAY = 86400000;
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const midnight = (date: string) => date + "T00:00:00Z";
-const planLink = (params: Record<string, string>) => "/plan?" + new URLSearchParams(params);
 type SearchResult = {
   from: string; to: string; scope: "live" | "catalog" | "pair";
   rows: (PairLocation & { smoothSphere: boolean; hours: number[] | null; longest?: number; coverage?: string })[];
@@ -45,7 +44,7 @@ function storedResult(from: string, to: string, priority: PlannerPriority, sourc
   }) };
 }
 
-function CatalogSearch({ run, first, last, priority, source, initialSite }: { run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource; initialSite: string | null }) {
+function CatalogSearch({ run, first, last, priority, source, initialSite, runIds }: { run: PlannerRun; first: string; last: string; priority: PlannerPriority; source: PlannerSource; initialSite: string | null; runIds: string[] }) {
   const { t } = useLanguage();
   const [result, setResult] = useState<SearchResult | null>(() => source === "live" ? null : storedResult(first, last, priority, source));
   const [pending, setPending] = useState(false);
@@ -61,9 +60,9 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
   const flatLeaders = best.filter(row => row.smoothSphere && (row.hours?.[column] ?? 0) > 0);
   function detailHref(siteId: string) {
     if (!result) return undefined;
-    if (source !== "live") return "/plan/site?" + new URLSearchParams({
+    if (source !== "live") return plannerLink("/plan/site", {
       source, site: siteId, from: result.from.slice(0, 10), to: result.to.slice(0, 10), priority: metric,
-    });
+    }, runIds);
     if (run.stepSeconds !== 3600) return undefined;
     const longWindow = Date.parse(result.to) - Date.parse(result.from) > 366 * DAY;
     const params = new URLSearchParams({ run_id: run.runId, site_id: siteId, view_site: siteId,
@@ -108,7 +107,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite }: { ru
     </form>
     {pending && <p role="status">{t("Checking visibility for the catalog…")}</p>}
     {error && <p role="alert"><ApiProblemText error={error} fieldPrefix={prefix} /></p>}
-    {source === "saved" && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{savedPlannerWindows.catalog.map(w => <a key={w.from} href={planLink({mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric})}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
+    {source === "saved" && <div className="plan-presets print:hidden"><span>{t("Saved ranges for all 23 sites:")}</span>{savedPlannerWindows.catalog.map(w => <a key={w.from} href={plannerLink("/plan", {mode:"sites",source:"saved",from:w.from.slice(0,10),to:w.to.slice(0,10),priority:metric}, runIds)}>{w.from.slice(0,10)} → {w.to.slice(0,10)}</a>)}</div>}
     {result && <section aria-label={t("Site search results")} className="plan-results">
       <h3>{t("Site search results")}</h3>
       <p><TimeRange start={result.from} end={result.to} /> · {t(criteria[metric])}</p>
@@ -182,7 +181,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   </section>;
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
-    <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · <a href={source === "saved" ? "/data#bundled-data" : source === "saved-b2" ? "/data#run-b2" : "/data"}>{t("Browse data and all original files")}</a>{source === "live" && pinnedRun && <> · {t("Run ID")} <code>{run.runId}</code></>}</p>
+    <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Live team API")} · <a href={source === "saved" ? "/data#bundled-data" : source === "saved-b2" ? "/data#run-b2" : "/data"}>{t(source === "live" ? "Data catalog" : "Browse data and all original files")}</a>{source === "live" && pinnedRun && <> · {t("Run ID")} <code>{run.runId}</code></>}</p>
     {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <span className="block"><ApiProblemText error={catalog.error} /></span><button type="button" className="text-button" onClick={() => void catalog.refetch()}>{t("Retry site list")}</button></p>}
     <div className="flex flex-wrap gap-4 print:hidden">
       {source !== "saved-b2" && <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>}
@@ -199,7 +198,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
         if (!savedLanding && input.form) capture(input.form);
       }
     }}>
-    {mode === "sites" ? <CatalogSearch key={source + "/" + run.runId} initialSite={seed.get("site")} run={run} first={first} last={last} priority={priority} source={source} /> :
+    {mode === "sites" ? <CatalogSearch key={source + "/" + run.runId} initialSite={seed.get("site")} runIds={pins} run={run} first={first} last={last} priority={priority} source={source} /> :
       source !== "live" ? <SavedLanding key={source} source={source} siteId={seed.get("site") ?? undefined} from={first} to={last} missionHours={mission} priority={priority} earliest={landingClock(seed, "earliest")} latest={landingClock(seed, "latest")} liveOptions={hasLiveOptions(seed)} onFieldsChange={capture} /> :
       <MissionDateSearch runId={run.runId} sites={run.sites} stepSeconds={run.stepSeconds} from={midnight(first)} to={midnight(last)}
         coverageStart={run.start} coverageEnd={run.end} initialSiteId={seed.get("site") ?? undefined} initialMissionHours={mission} initialEarliest={landingClock(seed, "earliest")} initialLatest={landingClock(seed, "latest")}

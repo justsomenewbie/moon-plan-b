@@ -10,6 +10,12 @@ const hour = 3600000;
 const day = 24 * hour;
 const text = (form: FormData, name: string) => String(form.get(name) ?? "");
 
+export function plannerLink(path: "/plan" | "/plan/site", fields: Record<string, string> | URLSearchParams, runIds: string[]) {
+  const query = new URLSearchParams(fields);
+  for (const id of runIds) query.append("run_id", id);
+  return path + "?" + query;
+}
+
 export function liveExtras(seed: URLSearchParams) {
   const extras: Partial<Record<ExtraField, string>> = {};
   for (const [key, fallback] of Object.entries(extraDefaults)) {

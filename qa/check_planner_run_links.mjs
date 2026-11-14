@@ -59,6 +59,24 @@ try {
   await pinned.waitFor();
   assert.equal(calls.filter(call => call.startsWith("/api/v1/runs?")).length, 1);
   assert.ok(calls.filter(call => call === "/api/v1/runs/release-a").length >= 3);
+  for (const source of ["saved-b2", "saved"]) {
+    await page.goto(new URL("/plan?mode=sites&run_id=release-a&from=2026-11-14&to=2026-11-21", origin).href);
+    await pinned.waitFor();
+    await page.getByRole("link", { name: source === "saved" ? "Open the earlier run B archive" : "Open saved run B2" }).click();
+    if (source === "saved") {
+      await page.locator(".plan-presets a").first().click();
+      assert.equal(new URL(page.url()).searchParams.get("run_id"), "release-a");
+    }
+    const siteLink = page.locator(".plan-results tbody a").first();
+    await siteLink.click();
+    await page.getByRole("link", { name: "Back to these site results" }).waitFor();
+    assert.equal(new URL(page.url()).searchParams.get("run_id"), "release-a");
+    assert.equal(new URL(page.url()).searchParams.get("source"), source);
+    await page.getByRole("link", { name: "Back to these site results" }).click();
+    await page.getByRole("link", { name: "Return to the linked live run" }).click();
+    await pinned.waitFor();
+  }
+  assert.equal(calls.filter(call => call.startsWith("/api/v1/runs?")).length, 1);
   await page.goto(new URL("/plan?run_id=retired", origin).href);
   await page.getByRole("alert").filter({ hasText: "The linked model run could not be opened." }).waitFor();
   assert.equal(await page.locator(".plan-source").count(), 0);
