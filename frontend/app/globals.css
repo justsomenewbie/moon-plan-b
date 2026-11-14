@@ -191,7 +191,7 @@ input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--earth);
 .local-sky-heading, .sky-orbit { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
 .local-sky-heading { justify-content: space-between; }
 .local-sky-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; max-width: 100%; font-size: .9rem; }
-.local-sky-picker select { background: var(--bg); border: 1px solid var(--line); padding: 6px; min-height: 44px; max-width: 100%; }
+.local-sky-picker select { background: var(--bg); border: 1px solid var(--line); padding: 6px; min-height: 44px; min-width: 0; max-width: 100%; overflow: clip; text-overflow: ellipsis; }
 .sky-stage { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: center; margin: 12px 0; }
 .sky-stage svg { display: block; width: 100%; max-height: 310px; cursor: grab; touch-action: pan-y; user-select: none; }
 .sky-stage svg:active { cursor: grabbing; }
