@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError, jobReceiptUncertain } from "../lib/api/client";
 import type { WindowRequest } from "../lib/api/client";
 import type { Message } from "../lib/i18n";
-import { createCustomSite, getCustomSiteCapability, getCustomSiteJob } from "../lib/api/custom-site";
+import { cancelCustomSiteJob, createCustomSite, getCustomSiteCapability, getCustomSiteJob } from "../lib/api/custom-site";
 import { useLanguage } from "./language";
 
 type Props = {
@@ -23,8 +23,15 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   const capability = useQuery({ queryKey: ["custom-site-capability"], queryFn: ({ signal }) => getCustomSiteCapability(signal), enabled: opened });
   const create = useMutation({ mutationFn: createCustomSite, retry: false });
   const accepted = create.data;
+  const [stoppedFollowing, setStoppedFollowing] = useState(false);
+  const cancelling = useRef(false);
+  const cancel = useMutation({
+    mutationFn: () => cancelCustomSiteJob(accepted!.job_id, accepted!.site_id, create.variables!),
+    retry: false,
+  });
+  const released = cancel.isSuccess || stoppedFollowing;
   const status = useQuery({
-    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: !!accepted,
+    queryKey: ["custom-site-status", accepted?.job_id, accepted?.site_id, create.submittedAt], enabled: !!accepted && !released && !cancel.isPending,
     queryFn: ({ signal }) => getCustomSiteJob(accepted!.job_id, accepted!.site_id, signal, create.variables),
     refetchInterval: query => {
       const state = query.state.data?.status;
@@ -34,11 +41,22 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
   });
   const job = status.data;
   const missing = status.error instanceof ApiError && status.error.status === 404;
-  const busy = create.isPending || !!accepted && !missing && (!job || job.status === "queued" || job.status === "running");
+  const active = job ? job.status === "queued" || job.status === "running" : accepted?.status === "queued" || accepted?.status === "running";
+  const busy = create.isPending || cancel.isPending || !!accepted && !released && !missing && (!job || active);
   const canSubmit = !!capability.data?.available && !capability.isError && !busy;
+  function cancelRequest() {
+    if (!accepted || !create.variables || released || !active || cancelling.current) return;
+    cancelling.current = true;
+    cancel.mutate(undefined, {
+      onError: () => { void status.refetch(); },
+      onSettled: () => { cancelling.current = false; },
+    });
+  }
   function submit(input: Parameters<typeof createCustomSite>[0]) {
     if (!canSubmit || submitting.current) return;
     setFormError("");
+    cancel.reset();
+    setStoppedFollowing(false);
     submitting.current = true;
     create.mutate(input, { onSettled: () => { submitting.current = false; } });
   }
@@ -75,12 +93,26 @@ export default function CustomSiteJob({ readRequest, onResult }: Props) {
     </div>}
     {accepted && create.variables && <div className="job-status">
       <p><code>{accepted.job_id}</code> · {create.variables.start} → {create.variables.end}</p>
-      {accepted.cached && job && !status.error && <p>{t("The backend reused a matching job.")}</p>}
-      {!status.error && <p role="status">{t(job ? labels[job.status] : "Checking job status…")}</p>}
-      {job?.status === "running" && <p><progress aria-label={t("Job progress")} max={100} value={job.progress.pct ?? undefined} /> {job.progress.pct === null ? t("Progress percentage unavailable.") : `${job.progress.pct}%`}</p>}
-      {status.error && <div role="alert"><p>{t(status.error.message)}</p><button type="button" className="button outline" disabled={status.isFetching} onClick={() => void status.refetch()}>{t("Retry job status")}</button></div>}
-      {job?.status === "failed" && job.error && <p role="alert">{job.error.code} · {job.error.message}</p>}
-      {job?.status === "succeeded" && job.result && !status.error && <button type="button" className="button primary" onClick={() => onResult({ from: create.variables!.start, to: create.variables!.end, resolutionSeconds: 3600 }, job.result!)}>{t("Open job results")}</button>}
+      {released ? <p role="status">{t(stoppedFollowing ? "You stopped following this job."
+        : cancel.data?.status === "cancelled" ? "Your request was cancelled."
+        : "You stopped waiting for this job. It continues for other clients.")}</p> : <>
+        {accepted.cached && job && !status.error && <p>{t("The backend reused a matching job.")}</p>}
+        {!status.error && <p role="status">{t(job ? labels[job.status] : "Checking job status…")}</p>}
+        {job?.status === "running" && <p><progress aria-label={t("Job progress")} max={100} value={job.progress.pct ?? undefined} /> {job.progress.pct === null ? t("Progress percentage unavailable.") : `${job.progress.pct}%`}</p>}
+        {status.error && <div role="alert"><p>{t(status.error.message)}</p><button type="button" className="button outline" disabled={status.isFetching} onClick={() => void status.refetch()}>{t("Retry job status")}</button></div>}
+        {job?.status === "failed" && job.error && <p role="alert">{job.error.code} · {job.error.message}</p>}
+        {job?.status === "succeeded" && job.result && !status.error && <button type="button" className="button primary" onClick={() => onResult({ from: create.variables!.start, to: create.variables!.end, resolutionSeconds: 3600 }, job.result!)}>{t("Open job results")}</button>}
+        {active && !missing && <button type="button" className="button outline" disabled={cancel.isPending || (!!cancel.error && status.isFetching)}
+          onClick={cancelRequest}>{t("Cancel my request")}</button>}
+        {cancel.isPending && <p role="status">{t("Cancelling your request…")}</p>}
+        {cancel.error && <div role="alert"><p>{t(cancel.error.message)}</p>
+          {active && !missing && <div className="flex flex-wrap gap-2">
+            {!status.isError && <button type="button" className="button outline" disabled={status.isFetching}
+              onClick={() => void status.refetch()}>{t("Check job status")}</button>}
+            <button type="button" className="button outline" onClick={() => setStoppedFollowing(true)}>{t("Stop following this job")}</button>
+          </div>}
+        </div>}
+      </>}
     </div>}
   </details>;
 }
