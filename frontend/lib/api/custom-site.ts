@@ -6,6 +6,7 @@ type Schemas = components["schemas"];
 export type CustomSiteInput = Required<Pick<Schemas["CustomSiteJobRequest"], "lat_deg" | "lon_deg" | "observer_height_m" | "start" | "end">>;
 const jobIdPattern = /^j_[A-Za-z0-9]{6,40}$/;
 const siteIdPattern = /^[A-Za-z0-9_.:-]{1,64}$/;
+const customSiteId = /^custom:(-?\d{1,2}\.\d{4}):(\d{1,3}\.\d{4})$/;
 const terminal = ["succeeded", "failed", "cancelled"] as const;
 const stages = ["queued", "precompute", "python", "import", "artifacts", "done"];
 
@@ -50,7 +51,7 @@ export async function createCustomSite(input: CustomSiteInput) {
   const message = "The server returned an invalid custom-site job receipt.";
   valid(data?.type === "custom_site" && typeof data.job_id === "string" && jobIdPattern.test(data.job_id) && typeof data.cached === "boolean" && data.poll === `/api/v1/jobs/${data.job_id}`, message);
   valid((response.status === 202 && (data.status === "queued" || data.status === "running")) || (response.status === 200 && data.cached && data.status === "succeeded"), message);
-  const match = typeof data.site_id === "string" && /^custom:(-?\d{1,2}\.\d{4}):(\d{1,3}\.\d{4})$/.exec(data.site_id);
+  const match = typeof data.site_id === "string" && customSiteId.exec(data.site_id);
   valid(match && typeof data.site_id === "string", message);
   // The producer rounds coordinate IDs to four decimals and wraps east longitude at 360°.
   const longitudeDifference = Math.abs((Number(match[2]) - lon_deg + 540) % 360 - 180);
@@ -64,6 +65,11 @@ export async function getCustomSiteJob(
   if (!jobIdPattern.test(jobId)) throw new ApiError("Invalid custom-site job ID.", 422);
   const { data, error, response } = await producer.GET("/api/v1/jobs/{job_id}", { params: { path: { job_id: jobId } }, signal });
   if (!response.ok) throw apiError(error, response.status);
+  return readCustomSiteJob(data, jobId, acceptedSiteId, submitted);
+}
+
+function readCustomSiteJob(data: Schemas["Job"] | undefined, jobId: string, acceptedSiteId?: string,
+  submitted?: Pick<CustomSiteInput, "start" | "end">) {
   const message = "The server returned an invalid custom-site job status.";
   valid(data?.type === "custom_site" && data.job_id === jobId && typeof data.site_id === "string" && siteIdPattern.test(data.site_id) && (!acceptedSiteId || acceptedSiteId === data.site_id), message);
   valid(data.status === "queued" || data.status === "running" || terminal.some(status => status === data.status), message);
@@ -90,4 +96,18 @@ export async function getCustomSiteJob(
   return { job_id: data.job_id, site_id: data.site_id, status: data.status, start, end,
     progress: { stage: progress.stage, pct: progress.pct }, result: data.result,
     error: data.error && { code: data.error.code, message: data.error.message.split(/[\r\n]/, 1)[0] } };
+}
+
+export async function cancelCustomSiteJob(jobId: string, acceptedSiteId: string,
+  submitted: Pick<CustomSiteInput, "start" | "end">): Promise<{ status: "cancelled" | "queued" | "running"; clients: number }> {
+  if (!jobIdPattern.test(jobId) || !customSiteId.test(acceptedSiteId) || utcMillis(submitted.end) <= utcMillis(submitted.start))
+    throw new ApiError("Invalid custom-site job receipt.", 422);
+  const { data, error, response } = await producer.DELETE("/api/v1/jobs/{job_id}", { params: { path: { job_id: jobId } } });
+  if (!response.ok) throw apiError(error, response.status);
+  const { status } = readCustomSiteJob(data, jobId, acceptedSiteId, submitted);
+  const clients = data?.clients;
+  valid(response.status === 200 && typeof clients === "number" && Number.isSafeInteger(clients) &&
+    ((status === "cancelled" && clients === 0) || ((status === "queued" || status === "running") && clients > 0)),
+    "The server returned an invalid custom-site cancellation receipt.");
+  return { status, clients };
 }

@@ -1,9 +1,9 @@
-import { apiError, jobReceiptUncertain, validateCustomWindow, windowFromInputs } from "../lib/api/client.ts";
+import { ApiError, apiError, jobReceiptUncertain, validateCustomWindow, windowFromInputs } from "../lib/api/client.ts";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
-import { createCustomSite, getCustomSiteCapability, getCustomSiteJob } from "../lib/api/custom-site.ts";
+import { cancelCustomSiteJob, createCustomSite, getCustomSiteCapability, getCustomSiteJob } from "../lib/api/custom-site.ts";
 
 const input = { lat_deg: -89.45, lon_deg: -137.31, observer_height_m: 2, start: "2026-11-14T00:00:00Z", end: "2026-11-15T00:00:00Z" };
 const jobId = "j_demo123", site = "custom:-89.4500:222.6900";
@@ -108,4 +108,42 @@ test("explicit producer rejections and unconfirmed custom job receipts remain di
   }
   assert.equal(jobReceiptUncertain(apiError(new TypeError("failed to fetch"))), true);
   assert.equal(jobReceiptUncertain(apiError(undefined, 504)), true);
+});
+
+test("releases only the submitted custom-site subscription and validates both cancellation outcomes", async t => {
+  let calls = 0, status = 200;
+  let payload: Record<string, unknown> = {};
+  const server = setupServer(http.delete("*/api/v1/jobs/:id", async ({ params, request }) => {
+    calls++;
+    assert.equal(params.id, jobId);
+    assert.equal(await request.text(), "");
+    return HttpResponse.json(payload, { status });
+  }));
+  server.listen({ onUnhandledFrame: "error" }); t.after(() => server.close());
+
+  for (const [id, acceptedSite, range] of [
+    ["bad-id", site, input], [jobId, "", input], [jobId, site, { start: input.end, end: input.start }],
+  ] as const) await assert.rejects(cancelCustomSiteJob(id, acceptedSite, range));
+  assert.equal(calls, 0);
+  const submitted = { start: "2026-11-14T00:10:00Z", end: "2026-11-14T23:59:00Z" };
+  for (const [state, clients] of [["cancelled", 0], ["running", 2], ["queued", 1]] as const) {
+    payload = { ...queued, status: state, clients };
+    assert.deepEqual(await cancelCustomSiteJob(jobId, site, submitted), { status: state, clients });
+  }
+  for (const bad of [
+    { status: "cancelled", clients: 1 }, { status: "queued", clients: 0 }, { clients: 1.5 },
+    { clients: -1 }, { clients: null }, { status: "failed" }, { type: "precompute" }, { job_id: "j_another1" },
+    { site_id: "custom:12.0000:123.0000" }, { params: { ...input, end: "2026-11-16T00:00:00Z" } },
+  ]) {
+    payload = { ...queued, clients: 1, ...bad };
+    await assert.rejects(cancelCustomSiteJob(jobId, site, submitted));
+  }
+  for (const [responseStatus, code] of [[403, "JOB_NOT_YOURS"], [409, "JOB_NOT_CANCELLABLE"]] as const) {
+    status = responseStatus;
+    payload = { type: "about:blank", title: "Cannot cancel this job", status, code };
+    const before: number = calls;
+    await assert.rejects(cancelCustomSiteJob(jobId, site, submitted),
+      (e: unknown) => e instanceof ApiError && e.status === responseStatus && e.code === code);
+    assert.equal(calls, before + 1);
+  }
 });

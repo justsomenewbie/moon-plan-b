@@ -510,6 +510,109 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "cancelJob",
+        "summary": "Cancel a queued/running job (for this client)",
+        "tags": [
+          "jobs"
+        ],
+        "description": "Removes this client from the job. When no other client waits on it (Job.clients = 0 after the call) the job is cancelled (status cancelled, the Python process is killed); when other clients POSTed the same parameters it keeps running for them (status stays queued/running, clients > 0) - treat the job as cancelled in your UI either way. 403 JOB_NOT_YOURS when this client never submitted the job; 409 JOB_NOT_CANCELLABLE when it already finished.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^j_[A-Za-z0-9]{6,40}$"
+            },
+            "example": "j_7f3k2m9q4x1z",
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "description": "Job id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (VALIDATION_ERROR, TOO_MANY_POINTS)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (JOB_NOT_YOURS: only a client that submitted the job may cancel it)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (SITE_NOT_FOUND, RUN_NOT_FOUND, JOB_NOT_FOUND, FILE_NOT_FOUND, NOT_FOUND = no such route or method)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (RUN_NOT_READY, JOB_NOT_CANCELLABLE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (RATE_LIMITED, QUEUE_FULL, TOO_MANY_JOBS, TOO_MANY_STREAMS, QUOTA_EXCEEDED)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error (INTERNAL)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable (SERVICE_UNAVAILABLE: database not connected / shutting down; STORAGE_FULL: job-run storage budget used up)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/alt-dates": {
