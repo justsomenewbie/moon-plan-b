@@ -64,9 +64,10 @@ try {
     await ask(en ? "Which site is best for a 6-hour mission from 2026-01-01 to 2026-01-02?"
       : "Tôi muốn đi 6 giờ từ 2026-01-01 đến 2026-01-02, địa điểm nào tốt nhất?",
       ["IM-2 Athena", "2/2", "6 / 6 / 6 h", utc(4), utc(10), "3/19"]);
-    await ask(en ? "When should I land at Odysseus for 2 hours from 2026-01-01 to 2026-01-02?"
-      : "Khi nào nên đi Odysseus 2 giờ từ 2026-01-01 đến 2026-01-02?",
-      ["IM-1 Odysseus", "2 / 2 / 2 h", utc(15), utc(17), "2/23"]);
+    await ask(en ? "When should I land at Athena or Odysseus for 2 hours from 2026-01-01 to 2026-01-02?"
+      : "Khi nào nên đi Athena hoặc Odysseus 2 giờ từ 2026-01-01 đến 2026-01-02?",
+      [en ? "Which of these retained sites" : "Bạn muốn sử dụng địa điểm nào", "IM-1 Odysseus", "IM-2 Athena"]);
+    await ask("Odysseus", ["IM-1 Odysseus", "2 / 2 / 2 h", utc(15), utc(17), "2/23"]);
     await ask(en ? "Which site is best from 2026-01-02 to 2026-01-03?"
       : "Từ 2026-01-02 đến 2026-01-03, địa điểm nào tốt nhất?",
       [en ? "outside this workspace" : "nằm ngoài dữ liệu", utc(0), utc(24)]);
