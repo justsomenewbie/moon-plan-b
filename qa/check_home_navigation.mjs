@@ -14,8 +14,13 @@ try {
     const nav = page.locator("header nav");
     const mobile = width < 760;
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
-    const primary = page.locator(".hero-actions .primary");
-    assert.equal(await primary.innerText(), "Compare Athena and Odysseus");
+    const compare = page.locator('.hero-actions a[href="/compare"]');
+    assert.equal(await compare.innerText(), "Compare");
+    assert.equal(await nav.locator('a[href="/compare"]').count(), 0);
+    await compare.press("Enter");
+    await page.waitForURL(new URL("/compare", origin).href);
+    await page.getByRole("heading", { name: "Comparison tool", exact: true }).waitFor();
+    await page.goBack();
     const guideLink = page.locator('.hero-actions a[href="#home-guide"]');
     assert.equal(await page.locator(".hero-actions a").count(), 2);
     await guideLink.press("Enter");
@@ -26,7 +31,7 @@ try {
     assert.equal(await page.locator("#home-guide").getByRole("link", { name: "Orbit view" }).getAttribute("href"), "/orbit");
     assert.ok(await page.getByRole("img", { name: /Low sunlight reaches the left rim/ }).isVisible());
     await page.route("**/api/**", route => route.abort());
-    await primary.press("Enter");
+    await page.getByRole("link", { name: "Try the saved example" }).press("Enter");
     await page.waitForURL(url => url.pathname === "/compare" && url.hash === "#observed-week" &&
       url.searchParams.get("saved") === "2026-11-14T00:00:00Z");
     const week = page.locator("#observed-week");
@@ -36,7 +41,7 @@ try {
     }
     await page.unroute("**/api/**");
     await page.goBack();
-    await primary.waitFor();
+    await compare.waitFor();
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
     assert.equal(await page.locator("#globe-site, .site-pin-key").count(), 0);
     assert.equal(await menu.isVisible(), mobile);
@@ -45,16 +50,16 @@ try {
       await menu.focus();
       await page.keyboard.press("Enter");
       await page.keyboard.press("Tab");
-      assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "/compare");
+      assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#about");
       await page.keyboard.press("Escape");
       assert.ok(await menu.evaluate(el => el === document.activeElement));
       await menu.click();
     }
     await nav.getByLabel("Language").selectOption("vi");
-    assert.equal(await primary.innerText(), "So sánh Athena và Odysseus");
+    assert.equal(await compare.innerText(), "So sánh");
     assert.equal(await guideLink.innerText(), "Cách dùng Moon Plan B");
     assert.deepEqual(await nav.getByRole("link").allTextContents(),
-      ["So sánh", "Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);
+      ["Giới thiệu", "Nguồn và phương pháp", "Thành viên", "Dữ liệu và nguồn tham khảo"]);
     for (const id of ["team", "about", "resources"]) {
       await nav.locator('a[href="#' + id + '"]').press("Enter");
       await page.waitForFunction(target => document.activeElement.id === target, id);
@@ -75,5 +80,5 @@ try {
     assert.ok(await referenceGlobe.locator(".globe-place").isVisible());
     await page.close();
   }
-  console.log("Homepage example, saved hours, keyboard navigation and sources passed at 320, 375 and 1280 px.");
+  console.log("Homepage Compare, saved example, keyboard navigation and sources passed at 320, 375 and 1280 px.");
 } finally { await browser.close(); }
