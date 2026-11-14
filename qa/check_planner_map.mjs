@@ -22,6 +22,30 @@ try {
     const globe = map.locator("#planner-lunar-globe");
     await globe.locator("canvas").waitFor();
     const selector = map.getByRole("combobox");
+    const direction = map.locator("#plan-sun-direction");
+    assert.equal(await direction.locator("time").getAttribute("datetime"), "2026-11-" + from + "T00:00:00Z");
+    if (from === "14") {
+      await selector.selectOption("chandrayaan3_vikram");
+      await direction.getByText(/94\.6° clockwise from local north/).waitFor();
+      await selector.selectOption("im2_athena");
+      await direction.getByText(/97\.5° clockwise from local north/).waitFor();
+      await globe.getByRole("button", { name: "Expand globe" }).click();
+      const expanded = globe.getByRole("dialog");
+      assert.equal(await expanded.locator("time").getAttribute("datetime"), "2026-11-14T00:00:00Z");
+      if (!await expanded.locator(".subsolar-marker").count())
+        await expanded.getByRole("button", { name: "Show subsolar point" }).click();
+      await expanded.locator(".subsolar-marker").waitFor();
+      await expanded.getByRole("button", { name: "Back to planner" }).click();
+      if (!await globe.locator(".subsolar-marker").count())
+        await globe.getByRole("button", { name: "Show subsolar point" }).click();
+      await globe.locator(".subsolar-marker").waitFor();
+      await map.getByRole("button", { name: "Flat map", exact: true }).click();
+      const flatMarker = map.locator("svg .plan-subsolar");
+      assert.match(await flatMarker.getAttribute("transform"), /translate\(613\.235316 183\.114558\)/);
+      assert.equal(await selector.inputValue(), "im2_athena");
+      await map.getByRole("button", { name: "3D globe", exact: true }).click();
+      await globe.locator("canvas").waitFor();
+    }
     for (const id of winners) {
       await selector.selectOption(id);
       await globe.locator(`.site-pin[data-site="${id}"][data-leading="true"] button[aria-pressed="true"]`).waitFor();

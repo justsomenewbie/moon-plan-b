@@ -4,13 +4,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { getSiteInstant, type SiteInstant } from "../lib/api/site-instant";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { instantEventText } from "../lib/instant-events";
+import { compassHeading } from "../lib/compass";
 import { useLanguage } from "./language";
-
-// Sector boundaries follow the producer's clockwise 16-point compass.
-const headings = [
-  "north", "north-northeast", "northeast", "east-northeast", "east", "east-southeast", "southeast", "south-southeast",
-  "south", "south-southwest", "southwest", "west-southwest", "west", "west-northwest", "northwest", "north-northwest",
-] as const;
 
 type Lookup = { status: "idle" | "pending" } | { status: "error"; message: Error | string } | { status: "ready"; value: SiteInstant };
 
@@ -85,7 +80,7 @@ export default function TerrainInstant({ runId, site, range, initialUtc }: {
             <path d="M18 2v4" stroke="currentColor" strokeWidth="2" />
             <path d="M18 8l4 7-3 -1v12h-2V14l-3 1z" fill="currentColor" transform={`rotate(${value[body].az_deg} 18 18)`} />
           </svg>
-          <span>{t("Direction from the site")} · <strong>{t(headings[Math.round(value[body].az_deg / 22.5) % 16])}</strong>
+          <span>{t("Direction from the site")} · <strong>{t(compassHeading(value[body].az_deg))}</strong>
             {` (${value[body].az_deg.toLocaleString(locale, { maximumFractionDigits: 2 })}°)`}
           </span>
         </p>

@@ -1,6 +1,8 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { lrocRegionalImageUrl, lrocSiteUrl, type MapPoint, type PairLocation } from "../../lib/globe-sites";
+import { compassHeading } from "../../lib/compass";
+import { plannerSunAt, plannerSunSource, sunBearing } from "../../lib/planner-sunlight";
 import { useLanguage } from "../language";
 
 const MoonGlobe = dynamic(() => import("../moon-globe"));
@@ -78,12 +80,13 @@ function SurfaceCloseUp({ point, name }: { point: MapPoint | null; name: string 
   </figure>;
 }
 
-export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref }: {
-  sites: MapSite[]; leaders: string[]; column: number | "longest"; criterion: string; initialSite: string | null;
+export default function SiteMap({ sites, leaders, column, criterion, initialSite, detailHref, startUtc }: {
+  startUtc: string; sites: MapSite[]; leaders: string[]; column: number | "longest"; criterion: string; initialSite: string | null;
   detailHref: (siteId: string) => string | undefined;
 }) {
   const { t, locale } = useLanguage();
   const solar = sunlightText[locale];
+  const sun = useMemo(() => plannerSunAt(startUtc), [startUtc]);
   const [sunlight, setSunlight] = useState(false);
   const [selectedId, setSelectedId] = useState(initialSite);
   const [zoom, setZoom] = useState(1);
@@ -97,6 +100,8 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   if (!selected) return null;
   const details = detailHref(selected.id);
   const point = "point" in selected.location ? selected.location.point : null;
+  const bearing = point && sun ? sunBearing(point, sun) : undefined;
+  const flatSun = sun ? project(sun) : undefined;
   const focus = point ? project(point) : { x: 360, y: 180 };
   const width = 720 / zoom, height = 360 / zoom;
   const left = Math.max(0, Math.min(720 - width, focus.x - width / 2));
@@ -144,7 +149,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           ? t("Map location · {lat}° latitude, {lon}° east longitude", {
             lat: Number(customPoint.latitude.toFixed(3)), lon: Number(((customPoint.longitude + 360) % 360).toFixed(3)),
           }) : selected.name} /> :
-          view === "globe" && mapped.length > 0 ? <MoonGlobe pairSites={sites} terrainView={{
+          view === "globe" && mapped.length > 0 ? <MoonGlobe plannerSun={sun} pairSites={sites} terrainView={{
           siteId: selected.id, onSelect: setSelectedId, onCloseUp: inspectPoint, markerColors, plannerLeaders: sites.filter(isLeader).map(site => site.id),
         }} /> : imageFailed ? <p role="status">{t("The map image could not load. Select a site to see its coordinates.")}</p> :
           <svg className="plan-map-surface" viewBox={`${left} ${top} ${width} ${height}`} role="group" aria-labelledby="plan-site-map-title">
@@ -156,6 +161,8 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
                 inspectPoint({ longitude: p.x / 2 - 180, latitude: 90 - p.y / 2 });
               }} />
             <path pointerEvents="none" d="M0 180H720 M360 0V360" stroke="white" opacity=".3" fill="none" strokeDasharray="3 5" vectorEffect="non-scaling-stroke" />
+            {flatSun && <g className="plan-subsolar" transform={`translate(${flatSun.x} ${flatSun.y}) scale(${1 / zoom})`}
+              pointerEvents="none" aria-hidden="true"><circle r="9" /><circle r="3" /></g>}
             {ordered.map(site => {
               if (!("point" in site.location)) return null;
               const { x, y } = project(site.location.point);
@@ -183,6 +190,14 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           const site = sites.find(s => s.id === event.target.value);
           if (site) select(site);
         }}>{sites.map(site => <option key={site.id} value={site.id}>{isLeader(site) ? "◆ " : ""}{site.name}</option>)}</select></label>
+        {sun && mapped.length > 0 && view !== "surface" && <div id="plan-sun-direction" className="plan-sun-direction">
+          <strong>{t("Sun direction")} · <time dateTime={startUtc}>{startUtc.slice(0, 10)} 00:00 UTC</time></strong>
+          <p>{t("☉ marks where the Sun appears directly overhead.")} {t("This snapshot shows the start of your date range.")}</p>
+          {point && <p>{t("From {site}", {site: selected.name})} · {bearing === undefined ? t("No unique compass bearing.") :
+            <><span className="plan-bearing-arrow" aria-hidden="true" style={{transform: `rotate(${bearing}deg)`}}>↑</span>{" "}
+              <strong>{t(compassHeading(bearing))}</strong> · {t("{angle}° clockwise from local north", {angle: new Intl.NumberFormat(locale, {maximumFractionDigits: 1}).format(Math.round(bearing * 10) % 3600 / 10)})}</>}</p>}
+          <a href={plannerSunSource} target="_blank" rel="noreferrer">NASA/JPL Horizons ↗</a>
+        </div>}
         <div aria-live="polite">
           <strong>{selected.name}</strong>
           {markerColors && view !== "surface" && <p>{solar.key} · <strong>{selected.trackingPower === undefined ? solar.missing :

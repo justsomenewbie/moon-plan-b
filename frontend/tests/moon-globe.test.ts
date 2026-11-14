@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { comparisonLocation, diskPosition, missionSites, pairLocation, pairCenter } from "../lib/globe-sites.ts";
 import type { GlobeSite } from "../lib/globe-sites.ts";
+import { plannerSunAt, sunBearing } from "../lib/planner-sunlight.ts";
 import { drawGlobe, globeCenter, globePointAt, globeCenterForAnchor } from "../lib/moon-globe.ts";
 
 // Red encodes longitude columns, green latitude rows. Angles are independent of fixture observations.
@@ -166,4 +167,23 @@ test("the initial pair view shows both sides of the longitude seam and falls bac
   }
   assert.deepEqual(pairCenter(a), a);
   assert.deepEqual(pairCenter(a, { latitude: -1, longitude: 203 }), a);
+});
+
+test("planner sunlight uses the exact UTC day, including leap day and published boundaries", () => {
+  for (const [date, longitude, latitude] of [
+    ["2026-01-01", 32.519634, -1.346422], ["2026-11-14", 126.617658, -1.557279],
+    ["2026-11-21", 41.450414, -1.541521], ["2028-02-29", 135.637106, 0.965324],
+    ["2030-12-31", 104.283504, 0.855214],
+  ] as const) assert.deepEqual(plannerSunAt(date + "T00:00:00Z"), { longitude, latitude, utc: date + "T00:00:00Z" });
+  for (const utc of ["2025-12-31T00:00:00Z", "2031-01-01T00:00:00Z", "2026-11-14T12:00:00Z"])
+    assert.equal(plannerSunAt(utc), undefined);
+});
+
+test("solar azimuth uses local east and north, handles west longitude and omits undefined bearings", () => {
+  const sun = plannerSunAt("2026-11-14T00:00:00Z")!;
+  for (const [latitude, longitude, bearing] of [[-69.3734, 32.3198, 94.5704656], [-84.7906, 29.1957, 97.5318605]])
+    assert.ok(Math.abs(sunBearing({ latitude, longitude }, sun)! - bearing) < 0.000001);
+  for (const site of [sun, { latitude: -sun.latitude, longitude: sun.longitude - 180 }, { latitude: 90, longitude: 0 }])
+    assert.equal(sunBearing(site, sun), undefined);
+  assert.equal(sunBearing({ latitude: 0, longitude: -179 }, { latitude: 0, longitude: 179 }), 270);
 });

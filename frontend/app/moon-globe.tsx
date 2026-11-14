@@ -29,6 +29,7 @@ type GlobeProps = {
   evidence?: Dataset["evidence"];
   savedResult?: string;
   pairSites?: readonly PairLocation[];
+  plannerSun?: MapPoint & { utc: string };
   terrainView?: { siteId: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[]; markerColors?: ReadonlyMap<string, string>; onCloseUp?: (point: MapPoint) => void };
   showSky?: (alternative: boolean) => void;
 };
@@ -42,7 +43,7 @@ type Target = {
   missionId?: string;
 };
 
-export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, terrainView, showSky }: GlobeProps) {
+export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, plannerSun, terrainView, showSky }: GlobeProps) {
   const { t } = useLanguage();
   const terrainSiteId = terrainView?.siteId;
   const plannerLeaders = terrainView?.plannerLeaders;
@@ -81,7 +82,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
   const savedSite = saved.weeks.some(week => week.sites.some(site => site.id === savedResult));
   const solarChoices = home || pairSites || (target && !target.missionId) ? [] : sunlight.samples.filter(sample =>
     sample.utc === selectedWeek?.startUtc || (savedSite && !selectedWeek));
-  const sun = orbit ? sunlight.samples.find(sample => sample.utc === orbit.weekUtc) : solarChoices.find(sample => sample.utc === sunUtc);
+  const sun = plannerSun ?? (orbit ? sunlight.samples.find(sample => sample.utc === orbit.weekUtc) : solarChoices.find(sample => sample.utc === sunUtc));
   const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
   const viewer = useRef<HTMLDialogElement>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
@@ -329,7 +330,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
       <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
       {enabled && <canvas ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
         tabIndex={0} onKeyDown={turnWithKeyboard}
-        aria-describedby={expanded ? zoomHelpId + "-expanded" : orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : sun ? "globe-sunlight-description globe-zoom-help" : zoomHelpId} />}
+        aria-describedby={expanded ? zoomHelpId + "-expanded" + (plannerSun ? " expanded-planner-sun" : "") : orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : plannerSun ? "plan-sun-direction " + zoomHelpId : sun ? "globe-sunlight-description globe-zoom-help" : zoomHelpId} />}
       {ready && !orbit && sunMarker && <span className="subsolar-marker" aria-hidden="true"
         style={{ left: `${(1 + sunMarker.x) * 50}%`, top: `${(1 + sunMarker.y) * 50}%` }}>☉</span>}
       {ready && (!home || orbit) && pins.map((item, index) => {
@@ -349,6 +350,10 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         </span>;
       })}
     </div>;
+
+  const centerOnSun = ready && plannerSun && !sunMarker && <button type="button" className="text-button" onClick={() => {
+    setZoom(1); selectCenter(plannerSun);
+  }}>{t("Show subsolar point")}</button>;
 
   function expandGlobe() {
     const dialog = viewer.current;
@@ -391,6 +396,8 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
             <output>{zoom}×</output>
             <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => setZoom(value => clampZoom(value * 2))}>+</button>
           </div>
+          {plannerSun && <p id="expanded-planner-sun">{t("☉ marks where the Sun appears directly overhead.")}{" "}
+            <time dateTime={plannerSun.utc}>{plannerSun.utc.slice(0, 10)} 00:00 UTC</time> {centerOnSun}</p>}
           {closeUpButton}
           <p id={zoomHelpId + "-expanded"}>{t("Tap a location to center it. Drag to rotate, or scroll or pinch over a location to zoom.")}</p>
         </div>
@@ -416,6 +423,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         <button type="button" aria-label={t("Zoom in")} disabled={zoom === 4} onClick={() => { setRotating(false); setZoom(value => clampZoom(value * 2)); }}>+</button>
         <button type="button" onClick={() => { setZoom(1); selectCenter(plannerLeaders ? point ?? origin : origin); }}>{t("Reset view")}</button>
       </div>}
+      {centerOnSun}
       {ready && solarChoices.length > 0 && <div className="globe-sunlight">
         <label>{t("Modeled sunlight")}<select value={sun?.utc ?? ""} onChange={event => {
           const chosen = solarChoices.find(sample => sample.utc === event.target.value);

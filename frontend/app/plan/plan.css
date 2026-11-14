@@ -85,3 +85,9 @@
   position: absolute; left: 0; top: 0; width: 22px; height: 22px;
   transform: translate(-50%, -50%); pointer-events: none;
 }
+
+.plan-subsolar circle { fill: #252016; stroke: #ffe19a; stroke-width: 2; }
+.plan-subsolar circle + circle { fill: #ffe19a; stroke: none; }
+.plan-sun-direction { margin-block: 1rem; }
+.plan-sun-direction p { margin-block: .35rem; }
+.plan-bearing-arrow { display: inline-block; font-size: 1.2em; line-height: 1; }
