@@ -14,6 +14,7 @@ try {
     const nav = page.locator("header nav");
     const mobile = width < 760;
     await page.waitForFunction(() => !document.querySelector(".language-switch select").disabled);
+    assert.equal(await page.locator("#globe-site, .site-pin-key").count(), 0);
     assert.equal(await menu.isVisible(), mobile);
     if (mobile) {
       assert.equal(await nav.isVisible(), false);
@@ -40,6 +41,9 @@ try {
     await page.waitForFunction(() => document.activeElement.id === "saved-model-source" &&
       document.activeElement.closest("details").open);
     assert.equal(new URL(page.url()).pathname, "/compare");
+    assert.equal(await page.locator(".site-pin-key button").count(), 2);
+    await page.locator("#globe-site").selectOption({ index: 1 });
+    assert.ok(await page.locator(".globe-place").isVisible());
     await page.close();
   }
   console.log("Home navigation, keyboard focus and saved sources passed at 320, 375 and 1280 px.");

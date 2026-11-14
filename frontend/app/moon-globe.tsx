@@ -261,7 +261,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
           : sun ? "Drag or use the arrows to rotate the sunlight map."
           : "Reference imagery with fixed lighting. Drag or use the arrows to rotate. This globe does not model terrain or calculate Sun/Earth visibility.")}</span></> :
         <><a href="https://svs.gsfc.nasa.gov/5001/" target="_blank" rel="noreferrer">LRO Moon mosaic · NASA’s Scientific Visualization Studio</a><br />{t("Context image, not current illumination or a selected-site view.")}</>}
-      <div className="globe-locator">
+      {!home && <div className="globe-locator">
         <div className="site-pin-key" role="group" aria-label={t("Locate a site")}>
           {pins.map((item, index) => <button type="button" key={item.key} data-pin={index}
             aria-pressed={target?.key === item.key} onClick={() => locate(item)}>
@@ -279,7 +279,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
         {target && <div className="globe-place">
           {"reason" in target.location ? <p>{t(target.location.reason)}</p> : <p>{t("Reported location")} · {target.location.point.latitude}° {t("latitude")} · {target.location.point.longitude}° {t("east longitude")}</p>}
           {point && ready && <><button type="button" className="button outline" onClick={() => selectCenter(point)}>{t("Center on site")}</button>
-            {!home && <p>{t(marker ? "The marker shows the approximate site location." : "This location is outside the current view.")}</p>}</>}
+            <p>{t(marker ? "The marker shows the approximate site location." : "This location is outside the current view.")}</p></>}
           {target.missionId && <div className="site-week-readings">
             <strong>{t("Saved team model results")}</strong>
             {displayedWeeks.map(week => {
@@ -302,7 +302,7 @@ export default function MoonGlobe({ home = false, primary, alternative, evidence
             <><a href="#local-sky" onClick={() => showSky?.(target.key === "Alternative")}>{t("Open this observation in 3D")}</a>{" · "}
               <a href="#sources">{t("Sources & method")}</a></>}
         </div>}
-      </div>
+      </div>}
     </figcaption>
   </figure>;
 }

@@ -89,6 +89,7 @@ h3 { font-size: 1.12rem; font-weight: 600; line-height: 1.4; }
 .globe-controls button { min-width: 44px; min-height: 44px; padding: 0 8px; font-size: .93rem; border: 1px solid var(--line); border-radius: 4px; }
 .globe-center { margin: 6px auto; font-variant-numeric: tabular-nums; }
 .lunar-figure figcaption { color: var(--muted); text-align: center; font-size: .73rem; margin: 32px auto 0; max-width: 330px; }
+.intro .lunar-figure figcaption { font-size: .875rem; }
 .theme-control { display: grid; gap: 3px; font-size: .68rem; color: var(--muted); }
 .theme-control select { border: 1px solid var(--line); border-radius: 4px; min-height: 44px; max-width: 100%; background: transparent; color: var(--text); padding: 7px 10px; font-size: .82rem; }
 .reference-resources { padding: 28px 0; border-top: 1px solid var(--line); }
