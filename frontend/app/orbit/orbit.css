@@ -24,7 +24,7 @@
 .orbit-detail-link { display:inline-block; color:var(--text); padding:.75rem 0; text-underline-offset:.25rem; }
 .orbit-method { border-top:1px solid var(--line); padding:.85rem 0 1.5rem; color:var(--muted); }
 .orbit-method summary { width:fit-content; min-height:44px; padding:.45rem 0; color:var(--text); }
-.orbit-method p { max-width:72ch; margin:0 0 .65rem; }
+.orbit-method p { max-width:60ch; margin:0 0 .65rem; }
 @media(max-width:740px) {
   .orbit-layout { grid-template-columns:1fr; grid-template-areas:"title" "scene" "panel"; min-height:auto; gap:1rem; padding:1rem 0; }
   .orbit-heading h1 { max-width:24ch; font-size: var(--fs-28); margin:.24rem 0 0; }

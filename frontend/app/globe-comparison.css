@@ -358,3 +358,4 @@ body:has(.globe-view:modal) { overflow: hidden; }
 .globe-full-footer output { align-self: center; min-width: 4ch; font-variant-numeric: tabular-nums; }
 .globe-view:modal button { border-color: #758394; }
 .globe-view:modal .globe-close { min-height: 44px; background: #192331; color: #f2f5fa; white-space: nowrap; }
+@media (max-width: 760px) { .site-pin button::before { content: ""; position: absolute; inset: -9px; } }

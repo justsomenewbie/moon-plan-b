@@ -1,9 +1,11 @@
 @import "tailwindcss";
+/* "outline" is this app's secondary-button class. Tailwind's .outline utility would thin every focus ring to 1px. */
+@source not inline("outline");
 
 @layer components {
 /* Dark is the base palette. .space-viewport re-declares it for an embedded space scene, whose overlaid labels stay light-on-dark in both themes. */
 :root, .space-viewport { color-scheme: dark; --bg: #0B0F1A; --surface: #121826; --surface-2: #1A2233; --text: #E8EAF0; --muted: #B4BBCB; --line: #2A3346; --input-border: #7A88A8; --sun: #F2C46D; --earth: #8FB4FF; --grid: #2A3346; --horizon: #A3ABBD; --below-horizon: #1A2233; --positive: #7FD1A0; --error-bg: #2A1A1F; --error-line: #FFB29F; --accent: #F2C46D; --control-text: #E8EAF0; --sun-fill: #F2C46D; --shadow-card: none; --glass-fill: rgb(14 19 31 / .32); --glass-fill-strong: rgb(14 19 31 / .85); --glass-border: rgb(255 255 255 / .12); --glass-shadow: 0 4px 16px rgb(0 0 0 / .25); --glass-text-shadow: 0 1px 2px rgb(0 0 0 / .45); --button-text: #0B0F1A; --button-hover: #FFD98F; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23E8EAF0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
-:root[data-theme="light"] { color-scheme: light; --bg: #EEF1F6; --surface: #FFFFFF; --surface-2: #E6EAF1; --text: #141A26; --muted: #3F4859; --line: #D5DAE3; --input-border: #5A657B; --sun: #6B4400; --earth: #24489A; --grid: #D5DAE3; --horizon: #3F4859; --below-horizon: #E6EAF1; --positive: #145A33; --error-bg: #FAE8E4; --error-line: #A73825; --accent: #1B2654; --control-text: #1B2654; --sun-fill: #B7791F; --shadow-card: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04); --glass-fill: rgb(255 255 255 / .35); --glass-fill-strong: rgb(255 255 255 / .85); --glass-border: rgb(255 255 255 / .6); --glass-shadow: 0 4px 16px rgb(0 0 0 / .08); --glass-text-shadow: 0 1px 0 rgb(255 255 255 / .4); --button-text: #FFFFFF; --button-hover: #24326E; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23141A26' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
+:root[data-theme="light"] { color-scheme: light; --bg: #EEF1F6; --surface: #FFFFFF; --surface-2: #E6EAF1; --text: #141A26; --muted: #3F4859; --line: #D5DAE3; --input-border: #5A657B; --sun: #6B4400; --earth: #24489A; --grid: #D5DAE3; --horizon: #3F4859; --below-horizon: #E6EAF1; --positive: #145A33; --error-bg: #FAE8E4; --error-line: #A73825; --accent: #1B2654; --control-text: #1B2654; --sun-fill: #B7791F; --shadow-card: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04); --glass-fill: rgb(255 255 255 / .35); --glass-fill-strong: rgb(255 255 255 / .85); --glass-border: rgb(255 255 255 / .6); --glass-shadow: 0 4px 16px rgb(0 0 0 / .08); --glass-text-shadow: 0 1px 0 rgb(255 255 255 / .4); --button-text: #FFFFFF; --button-hover: #0F1736; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23141A26' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
 :root { --page-max: 1320px; --gutter: 24px; --radius-control: 10px; --control-h: 48px; --control-h-compact: 44px; --fs-12: .75rem; --fs-14: .875rem; --fs-16: 1rem; --fs-20: 1.25rem; --fs-28: 1.75rem; --fs-40: 2.5rem; --fs-56: 3.5rem; --radius-sm: 6px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 104px; }
@@ -28,7 +30,8 @@ h1 { margin-bottom: 16px; }
 :where(main, section) :is(h2, h3):first-child, :where(.section-heading, .local-sky-heading, summary) :is(h2, h3) { margin-top: 0; }
 :where(.section-heading, .local-sky-heading, summary) :is(h2, h3) { margin-bottom: 0; }
 p + p { margin-top: 12px; }
-:where(main) p { max-width: 65ch; }
+:where(main) p { max-width: 60ch; }
+.data-main dl dd { max-width: 60ch; }
 h1, h2, h3, .brand { font-family: var(--font-heading), var(--font-body), system-ui, sans-serif; font-weight: 600; text-wrap: balance; }
 h1 { font-size: var(--fs-40); line-height: 1.12; letter-spacing: -.03em; }
 h2 { font-size: var(--fs-28); line-height: 1.2; letter-spacing: -.02em; }
@@ -174,7 +177,7 @@ small, sub, sup { font-size: var(--fs-12); }
 .resource-links strong { color: var(--earth); }
 .resource-links strong, .resource-links span { display: block; }
 .resource-links span { color: var(--muted); font-size: var(--fs-14); margin-top: 8px; }
-.lead { font-size: var(--fs-20); line-height: 1.5; margin: 6px 0 12px; }
+.lead { font-size: var(--fs-20); line-height: 1.5; margin: 6px 0 12px; max-width: 32em; }
 @media screen { .intro .lead { font-size: var(--fs-20); } }
 .data-notice { color: var(--sun); font-weight: 600; line-height: 1.5; }
 .muted { color: var(--muted); }
@@ -185,7 +188,7 @@ small, sub, sup { font-size: var(--fs-12); }
 .controls { padding-right: 24px; border-right: 1px solid var(--line); min-width: 0; }
 /* Segmented toggles and tab groups share one structure; only token values differ per theme.
    A track in surface-2 holds the segments; the selected one is filled with the accent. */
-.mode-switch, .segmented { display: inline-flex; flex-wrap: wrap; gap: 3px; max-width: 100%; padding: 3px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface-2); }
+.mode-switch, .segmented { display: inline-flex; flex-wrap: wrap; gap: 3px; max-width: 100%; padding: 3px; border: 1px solid var(--input-border); border-radius: var(--radius-control); background: var(--surface-2); }
 .mode-switch { margin-bottom: 24px; }
 :is(.mode-switch, .segmented) button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 7px; background: transparent; color: var(--control-text); font-size: var(--fs-14); font-weight: 600; line-height: 1.2; white-space: nowrap; }
 :is(.mode-switch, .segmented) button:hover:not(:disabled, [aria-pressed="true"]) { background: var(--surface); }
@@ -296,7 +299,7 @@ summary { min-height: 32px; font-size: var(--fs-16); font-weight: 600; }
 .sample-table { max-height: 420px; margin-bottom: 16px; }
 .sample-table th, .sample-table td { white-space: nowrap; font-size: var(--fs-12); }
 .sample-table thead { position: sticky; top: 0; background: var(--bg); }
-.interval-list { padding-left: 20px; font-size: var(--fs-14); margin: 10px 0; }
+.interval-list { padding-left: 20px; font-size: var(--fs-14); margin: 10px 0; font-variant-numeric: tabular-nums; }
 .interval-list strong { display: block; color: var(--sun); }
 .sources-section { border-top: 1px solid var(--line); padding: 32px 0; }
 .sources-section h2 { margin-bottom: 12px; }
@@ -308,7 +311,7 @@ summary { min-height: 32px; font-size: var(--fs-16); font-weight: 600; }
 .limitations li { padding: 3px 0; }
 .metadata { font-size: var(--fs-14); margin-bottom: 20px; }
 .metadata div { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding: 7px 0; }
-.metadata dd { overflow-wrap: anywhere; text-align: right; }
+.metadata dd { overflow-wrap: anywhere; text-align: right; font-variant-numeric: tabular-nums; }
 .metadata dt { color: var(--muted); }
 .source-list { padding: 0; list-style: none; }
 .source-list li { padding: 10px 0; }
@@ -453,7 +456,7 @@ summary { min-height: 32px; font-size: var(--fs-16); font-weight: 600; }
 }
 :is(.btn, .button, .nav-menu, .play-button, .orbit-view-switch, .chip, .preset-pill, .site-pin-key button, :is(.globe-controls, .plan-map-zoom, .site-sky-controls, .tab-group) button):hover:not(:disabled, [aria-pressed="true"], .primary, .btn-primary) { background-color: var(--surface-2); border-color: var(--control-text); color: var(--control-text); }
 :is(.btn-primary, .button.primary):hover:not(:disabled) { background-color: var(--button-hover); border-color: var(--button-hover); color: var(--button-text); }
-:is(.btn-ghost, .text-button):hover:not(:disabled) { background-color: var(--surface-2); }
+:is(.btn-ghost, .text-button):hover:not(:disabled) { background-color: var(--surface-2); color: var(--control-text); }
 :is(.chip, .preset-pill, :is(.globe-controls, .plan-map-zoom, .site-sky-controls, .tab-group) button)[aria-pressed="true"] { background-color: var(--accent); border-color: var(--accent); color: var(--button-text); }
 :is(button, .btn, .button):disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: no-preference) {
@@ -488,7 +491,7 @@ select {
 :is(select, textarea, input):disabled { opacity: .5; cursor: not-allowed; }
 /* Header selects: the compact size, one family in both themes. */
 .plan-main section > h2:first-child { margin-top: 24px; }
-@media (min-width: 761px) { .nav-menu { display: none; } }
+@media (min-width: 1000px) { .nav-menu { display: none; } .app-header nav { flex-wrap: nowrap; } }
 
 /* ===== Page container and header =====
    Header, content and footer share one width and gutter, so their edges line up on every page. */
@@ -522,8 +525,8 @@ select {
 /* Selected states are the solid accent fill; other controls keep the normal surface and border. */
 .app-header nav a.active-link { background: var(--accent); color: var(--button-text); text-shadow: none; }
 .header-controls { display: flex; align-items: center; gap: 10px; margin-inline-start: auto; }
-@media (max-width: 760px) {
-  :root { --gutter: 16px; }
+@media (max-width: 760px) { :root { --gutter: 16px; } }
+@media (max-width: 999px) {
   .app-header { position: relative; top: auto; margin-top: 8px; min-height: 60px; padding: 8px 12px; gap: 8px 16px; border-radius: 12px; }
   .brand { gap: 6px; font-size: var(--fs-16); }
   .brand img { width: 28px; height: 28px; }
@@ -558,4 +561,12 @@ select {
 /* Text that sits on the bare glass uses the main text colour with a faint shadow as a legibility aid. */
 .app-header nav a:not(.active-link) { color: var(--text); text-shadow: var(--glass-text-shadow); }
 .app-header .brand { text-shadow: var(--glass-text-shadow); }
-@media (max-width: 760px) { .header-panel nav a:not(.active-link) { text-shadow: none; } }
+@media (max-width: 999px) {
+  .header-panel nav a:not(.active-link) { text-shadow: none; }
+  .app-header { flex-wrap: nowrap; }
+  /* A4: in the menu panel each language segment is a full 44px target. */
+  .app-header .segmented { height: auto; }
+  .app-header .segmented button { min-width: 44px; min-height: 44px; }
+}
+/* A1: the globe's 19px frame ring needs clearance above it at every width, not only on desktop. */
+.saved-comparison .lunar-figure { padding-top: 20px; }

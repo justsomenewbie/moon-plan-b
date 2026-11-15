@@ -133,7 +133,7 @@
   .launcher, .panel { display: none; }
 }
 
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 999px) {
   /* In the header row and scrolling with the page: nothing on a phone is ever under it. */
   /* In the header bar, clear of the widest Menu label ("Danh mục"): it scrolls with the page, so it never covers a control. */
   .launcher { position: absolute; top: 14px; right: 150px; bottom: auto; width: 40px; height: 47px; z-index: 7; }

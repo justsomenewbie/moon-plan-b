@@ -84,3 +84,4 @@
 .plan-sun-direction { margin-block: 1rem; }
 .plan-sun-direction p { margin-block: .35rem; }
 .plan-bearing-arrow { display: inline-block; font-size: var(--fs-20); line-height: 1; }
+@media (max-width: 760px) { #planner-lunar-globe .site-pin button { width: 44px; height: 44px; } }
