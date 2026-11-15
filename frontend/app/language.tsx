@@ -44,12 +44,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
 export const useLanguage = () => useContext(LanguageContext);
 
-const languages = [["en", "English"], ["vi", "Tiếng Việt"]] as const;
-
 export function LanguageControl() {
   const { locale, ready, choose, t } = useLanguage();
-  return <div className="segmented language-switch" role="group" aria-label={t("Language")}>
-    {languages.map(([code, name]) => <button key={code} type="button" lang={code} aria-label={name} aria-pressed={locale === code}
-      disabled={!ready} onClick={() => choose(code)}>{code.toUpperCase()}</button>)}
-  </div>;
+  return <label className="language-switch"><span className="sr-only">{t("Language")}</span>
+    <select aria-label={t("Language")} value={locale} disabled={!ready} onChange={event => choose(event.target.value)}>
+      <option value="en" lang="en">English</option><option value="vi" lang="vi">Tiếng Việt</option>
+    </select></label>;
 }

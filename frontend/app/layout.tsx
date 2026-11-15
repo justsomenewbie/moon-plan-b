@@ -21,8 +21,8 @@ const body = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-body", 
 const heading = Space_Grotesk({ subsets: ["latin", "vietnamese"], weight: ["600"], variable: "--font-heading", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin", "vietnamese"], variable: "--font-mono", display: "swap" });
 
-// Set the stored or device appearance before first paint; theme-control.tsx keeps it in sync afterwards.
-const themeScript = `try{var t=localStorage.getItem("moon-plan-b-theme");document.documentElement.dataset.theme=t==="light"||t==="dark"?t:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}catch(e){}`;
+// Set the appearance before first paint with the same rule as lib/theme.ts: a stored choice, else light from 06:00 to 18:00 local time.
+const themeScript = `(function(){var t=null;try{t=localStorage.getItem("moon-plan-b-theme")}catch(e){}var h=new Date().getHours();document.documentElement.dataset.theme=t==="light"||t==="dark"?t:h>=6&&h<18?"light":"dark"})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="en" className={`${body.variable} ${heading.variable} ${mono.variable}`} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><Providers>{children}</Providers></body></html>;
