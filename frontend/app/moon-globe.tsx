@@ -105,7 +105,9 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
   const sun = plannerSun ?? (orbit ? sunlight.samples.find(sample => sample.utc === orbit.weekUtc) : solarChoices.find(sample => sample.utc === sunUtc));
   const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
   // Marker brightness: the page's period when it has one (planner results, or the saved week), else the 2026–2030 catalog value.
-  const sunlightWeek = orbit ? saved.weeks.find(week => week.startUtc === orbit.weekUtc) : selectedWeek;
+  // The saved week is the run B archive, so it only colours the saved comparison's own globe. Orbit passes
+  // its run B2 values through sunlightPercent, matching the hours it shows.
+  const sunlightWeek = orbit ? undefined : selectedWeek;
   const sunlightPeriod = sunlightPercent || (sunlightWeek && pins.some(item => item.missionId)) ? "period" as const : "average" as const;
   const pinSignature = pins.map(item => item.key + ":" + (item.missionId ?? ("id" in item.identity ? item.identity.id : ""))).join("|");
   // Colours are computed once per data change, never per frame.

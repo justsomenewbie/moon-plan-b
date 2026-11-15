@@ -23,3 +23,15 @@ export function sunlightStyle(percent: number | null | undefined): SunlightStyle
     glow: share > .7,
   };
 }
+
+// Sunlight share per marker for one period, from the same rows whose hours the page shows.
+// keyOf maps a row id to the marker key; rows without a marker are skipped.
+export function periodSunlight(rows: readonly { id: string; sunHours: number }[], periodHours: number,
+  keyOf: (id: string) => string | undefined): Map<string, number | null> {
+  const share = new Map<string, number | null>();
+  for (const row of rows) {
+    const key = keyOf(row.id);
+    if (key !== undefined) share.set(key, periodHours > 0 && Number.isFinite(row.sunHours) ? row.sunHours / periodHours * 100 : null);
+  }
+  return share;
+}

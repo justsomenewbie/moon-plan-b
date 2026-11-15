@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { archiveB2Run, rankArchiveB2 } from "../../lib/archive-b2";
 import { missionSites } from "../../lib/globe-sites";
 import { useLanguage } from "../language";
 import { SiteFooter, SiteHeader, SkyBackground } from "../site-chrome";
 import { runShortLabel } from "../../lib/display-format";
+import { periodSunlight } from "../../lib/sunlight-color";
 import MoonGlobe from "../moon-globe";
 import SiteSky from "./site-sky";
 import "./orbit.css";
@@ -22,6 +23,9 @@ export default function OrbitScene() {
   const [from, to] = weeks[week];
   const rows = results[week]?.rows;
   const reading = rows?.find(row => row.id === site.id);
+  // Marker brightness uses the same run B2 rows and week as the hours shown beside the globe.
+  const sunlightPercent = useMemo(() => periodSunlight(rows ?? [], (Date.parse(to) - Date.parse(from)) / 3600000,
+    id => missionSites.find(mission => mission.id === id)?.name), [rows, from, to]);
   const peer = sites.find(item => item.id !== site.id)!;
   const other = rows?.find(row => row.id === peer.id);
   const name = site.name.split(" · ")[0], otherName = peer.name.split(" · ")[0];
@@ -42,7 +46,7 @@ export default function OrbitScene() {
           {t(surface ? "Return to the Moon" : "See the sky from this site")} <span aria-hidden="true">{surface ? "↑" : "↓"}</span>
         </button>
         <div id="site-view" className="space-viewport">{surface ? <SiteSky siteId={site.id} weekUtc={from + "T00:00:00Z"} />
-          : <MoonGlobe home orbit={{ site, weekUtc: from + "T00:00:00Z", onSite: inspect }} />}</div>
+          : <MoonGlobe home orbit={{ site, weekUtc: from + "T00:00:00Z", onSite: inspect }} sunlightPercent={sunlightPercent} />}</div>
       </div>
       <section className="orbit-panel" aria-label={t("Landing site comparison")}>
         <div className="orbit-tabs tab-group" role="group" aria-label={t("Landing site")}>{sites.map(item =>
