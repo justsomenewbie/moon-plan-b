@@ -4,7 +4,7 @@ import { useState } from "react";
 import { archiveB2Run, rankArchiveB2 } from "../../lib/archive-b2";
 import { missionSites } from "../../lib/globe-sites";
 import { useLanguage } from "../language";
-import { SiteFooter, SiteHeader } from "../site-chrome";
+import { SiteFooter, SiteHeader, SkyBackground } from "../site-chrome";
 import MoonGlobe from "../moon-globe";
 import SiteSky from "./site-sky";
 import "./orbit.css";
@@ -30,6 +30,7 @@ export default function OrbitScene() {
     from: from + "T00:00:00Z", to: to + "T00:00:00Z", resolutionSeconds: "3600" }) + "#terrain-observations";
   const inspect = (id: string) => { const next = sites.find(item => item.id === id); if (next) setSite(next); };
   return <section className="orbit-page" aria-labelledby="orbit-title">
+    <SkyBackground />
     <SiteHeader />
     <div className="orbit-layout">
       <header className="orbit-heading"><p className="orbit-kicker">{t("Lunar south pole")}</p>
@@ -38,7 +39,7 @@ export default function OrbitScene() {
         <button type="button" className="orbit-view-switch" aria-expanded={surface} aria-controls="site-view" onClick={() => setSurface(!surface)}>
           {t(surface ? "Return to the Moon" : "See the sky from this site")} <span aria-hidden="true">{surface ? "↑" : "↓"}</span>
         </button>
-        <div id="site-view">{surface ? <SiteSky siteId={site.id} weekUtc={from + "T00:00:00Z"} />
+        <div id="site-view" className="space-viewport">{surface ? <SiteSky siteId={site.id} weekUtc={from + "T00:00:00Z"} />
           : <MoonGlobe home orbit={{ site, weekUtc: from + "T00:00:00Z", onSite: inspect }} />}</div>
       </div>
       <section className="orbit-panel" aria-label={t("Landing site comparison")}>

@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
 @layer components {
-/* Dark is the base palette; .orbit-page re-declares it so that view stays dark in the light theme. */
-:root, .orbit-page { color-scheme: dark; --bg: #0B0F1A; --surface: #121826; --surface-2: #1A2233; --text: #E8EAF0; --muted: #A3ABBD; --line: #2A3346; --input-border: #5C6884; --sun: #F2C46D; --earth: #8FB4FF; --grid: #2A3346; --horizon: #A3ABBD; --below-horizon: #1A2233; --positive: #7FD1A0; --error-bg: #2A1A1F; --error-line: #FFB29F; --accent: #F2C46D; --control-text: #E8EAF0; --sun-fill: #F2C46D; --shadow-card: none; --header-bg: rgb(18 24 38 / .85); --button-text: #0B0F1A; --button-hover: #FFD98F; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23E8EAF0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
+/* Dark is the base palette. .space-viewport re-declares it for an embedded space scene, whose overlaid labels stay light-on-dark in both themes. */
+:root, .space-viewport { color-scheme: dark; --bg: #0B0F1A; --surface: #121826; --surface-2: #1A2233; --text: #E8EAF0; --muted: #A3ABBD; --line: #2A3346; --input-border: #5C6884; --sun: #F2C46D; --earth: #8FB4FF; --grid: #2A3346; --horizon: #A3ABBD; --below-horizon: #1A2233; --positive: #7FD1A0; --error-bg: #2A1A1F; --error-line: #FFB29F; --accent: #F2C46D; --control-text: #E8EAF0; --sun-fill: #F2C46D; --shadow-card: none; --header-bg: rgb(18 24 38 / .85); --button-text: #0B0F1A; --button-hover: #FFD98F; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23E8EAF0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
 :root[data-theme="light"] { color-scheme: light; --bg: #EEF1F6; --surface: #FFFFFF; --surface-2: #E6EAF1; --text: #141A26; --muted: #4A5468; --line: #D5DAE3; --input-border: #7A8499; --sun: #8A5A00; --earth: #2F5BB7; --grid: #D5DAE3; --horizon: #4A5468; --below-horizon: #E6EAF1; --positive: #1F7A45; --error-bg: #FAE8E4; --error-line: #A73825; --accent: #1B2654; --control-text: #1B2654; --sun-fill: #B7791F; --shadow-card: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04); --header-bg: #FFFFFF; --button-text: #FFFFFF; --button-hover: #24326E; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23141A26' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
-:root[data-theme="light"] .orbit-page { color-scheme: dark; --shadow-card: none; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23E8EAF0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
 :root { --page-max: 1320px; --gutter: 24px; --radius-control: 10px; --control-h: 48px; --control-h-compact: 44px; --fs-12: .75rem; --fs-14: .875rem; --fs-16: 1rem; --fs-20: 1.25rem; --fs-28: 1.75rem; --fs-40: 2.5rem; --fs-56: 3.5rem; --radius-sm: 6px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 104px; }
@@ -46,7 +45,6 @@ small, sub, sup { font-size: var(--fs-12); }
 .app-header nav a:hover { color: var(--text); }
 .nav-menu { display: none; }
 .app-header nav a.active-link { background: var(--accent); color: var(--button-text); }
-.orbit-page .theme-select { display: none; }
 .empty-card { max-width: 40rem; margin-top: 24px; }
 .api-main { padding: 32px 0; }
 .api-frame { display: block; width: 100%; height: 80vh; margin-top: 24px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: #fff; }
