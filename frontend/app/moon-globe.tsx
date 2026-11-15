@@ -59,6 +59,40 @@ type Target = {
 type Painter = { gpu: boolean; draw(view: GlobeView, sun: MapPoint | undefined, size: number): void; dispose(): void };
 
 // Overlays that must move with the globe read the live view, so a drag re-renders only this layer.
+// Orbit name labels: each label hangs from one corner at its dot. Choose the sides that keep every label inside
+// the round frame and off the other label, so no name is clipped or covered; each dot stays at its site's coordinate.
+const labelPlaces = ["nw", "ne", "sw", "se"] as const;
+function placeOrbitLabels(frame: HTMLElement | null | undefined) {
+  if (!frame) return;
+  const radius = frame.clientWidth / 2;
+  const pins = [...frame.querySelectorAll<HTMLElement>(":scope > .site-pin")].flatMap(pin => {
+    const label = pin.querySelector("button");
+    return label ? [{ pin, x: pin.offsetLeft - radius, y: pin.offsetTop - radius, width: label.offsetWidth, height: label.offsetHeight }] : [];
+  });
+  // More than three labels would need a different layout; the orbit view shows two.
+  if (!pins.length || pins.length > 3) return;
+  const box = (item: typeof pins[number], place: string) => {
+    const left = place[1] === "w" ? item.x - item.width : item.x, top = place[0] === "n" ? item.y - item.height : item.y;
+    return { left, top, right: left + item.width, bottom: top + item.height };
+  };
+  let best: string[] = [], bestCost = Infinity;
+  for (let code = 0; code < 4 ** pins.length; code++) {
+    const places = pins.map((_, i) => labelPlaces[Math.floor(code / 4 ** i) % 4]);
+    const boxes = pins.map((item, i) => box(item, places[i]));
+    let cost = 0;
+    boxes.forEach((a, i) => {
+      // Pixels by which the farthest corner passes the frame edge (4px margin) weigh most, then overlap with another label.
+      const far = Math.max(...[a.left, a.right].flatMap(x => [a.top, a.bottom].map(y => Math.hypot(x, y))));
+      cost += 1000 * Math.max(0, far - (radius - 4));
+      for (const b of boxes.slice(i + 1)) cost += 10 * Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      // Otherwise keep the usual sides: the first pin up-left, the second down-right.
+      cost += (pins[i].pin.dataset.pin === "1" ? [3, 2, 1, 0] : [0, 1, 2, 3])[labelPlaces.indexOf(places[i])];
+    });
+    if (cost < bestCost) { bestCost = cost; best = places; }
+  }
+  pins.forEach((item, i) => { item.pin.dataset.place = best[i]; });
+}
+
 function LiveLayer({ store, children }: { store: ViewStore<GlobeView>; children: (view: GlobeView) => ReactNode }) {
   return children(useSyncExternalStore(store.subscribe, store.get, store.get));
 }
@@ -465,7 +499,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         const selectedPin = terrainView && target?.key === item.key;
         const light = pinSunlight.get(item.key) ?? sunlightStyle(null);
         const sunText = light.percent === null ? t("Sunlight: no data") : t("Sunlight {percent}%", { percent: light.percent });
-        return <span key={item.key} className="site-pin" data-pin={index} data-site={item.key} data-leading={plannerLeaders?.includes(item.key)}
+        return <span key={item.key} ref={orbit ? pin => { placeOrbitLabels(pin?.parentElement); } : undefined} className="site-pin" data-pin={index} data-site={item.key} data-leading={plannerLeaders?.includes(item.key)}
           data-sunlight={light.percent ?? "none"} data-glow={light.glow || undefined}
           style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined, "--pin-sun": light.color, "--pin-ink": light.ink } as CSSProperties}>
           {terrainView?.markerColors && <i aria-hidden="true" className="plan-pin-sun-ring" style={{ borderColor: terrainView.markerColors.get(item.key) }} />}

@@ -1,0 +1,70 @@
+/* Phone layout fixes (320–390px wide), loaded once from layout.tsx after globals.css.
+   Page stylesheets load later than this file, so rules that override them carry one extra class of specificity. */
+
+/* ===== Orbit: name labels stay inside the round globe =====
+   moon-globe.tsx sets data-place to the corner side (nw, ne, sw, se) that fits; the dot keeps its coordinate. */
+.orbit-stage .site-pin[data-place] button { inset: auto; }
+.orbit-stage .site-pin[data-place^="n"] button { bottom: 50%; }
+.orbit-stage .site-pin[data-place^="s"] button { top: 50%; }
+.orbit-stage .site-pin[data-place$="w"] button { right: 50%; }
+.orbit-stage .site-pin[data-place$="e"] button { left: 50%; }
+
+/* ===== Collapsible secondary sections (mobile-fold.tsx) ===== */
+@media screen and (min-width: 761px) { .mobile-fold > summary { display: none; } }
+@media print { .mobile-fold > summary { display: none; } }
+
+/* ===== Header: the AI guide button gets its own slot at the end of the bar ===== */
+@media screen and (max-width: 999px) {
+  /* Before, the button sat 150px from the right edge and covered the end of the brand name at 320px. */
+  button[popovertarget][class*="launcher"] { top: 16px; right: calc(var(--gutter) + 13px); width: 44px; height: 44px; }
+  body:has(button[popovertarget][class*="launcher"]) .nav-menu { margin-inline-end: 52px; }
+  .app-header .brand { min-height: 44px; }
+}
+@media screen and (max-width: 380px) {
+  :root { --gutter: 16px; }
+  .app-header { padding-inline: 10px; }
+  button[popovertarget][class*="launcher"] { right: calc(var(--gutter) + 11px); }
+  body:has(button[popovertarget][class*="launcher"]) .nav-menu { margin-inline-end: 50px; }
+  .app-header .brand { gap: 5px; font-size: .9375rem; }
+  .app-header .brand img { width: 24px; height: 24px; }
+  .app-header .nav-menu { gap: .4em; padding: 0 .55rem; }
+}
+
+@media screen and (max-width: 760px) {
+  /* The menu panel never grows past the screen; it scrolls inside. */
+  .header-panel { max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+  .header-panel nav a { min-height: 44px; }
+  .header-controls { flex-wrap: wrap; }
+
+  /* ===== Tap targets: 44px for every stand-alone link, summary and small control ===== */
+  :where(main, section, .app-footer) a:where(:not(.button, .brand, p a, li a, td a, dd a)) { padding-block: 13px; }
+  /* A link that is the only element in its paragraph, list item or cell gets the same reach. */
+  :where(main, section) :is(p, td, dd) > a:only-child:where(:not(.button)) { padding-block: 13px; }
+  /* Lists of links: each row is a full-height target, so neighbouring rows do not share touch area. */
+  .data-main li > a:only-child { display: inline-flex; align-items: center; min-height: 44px; }
+  summary { min-height: 44px; padding-block: 9px; }
+  .app-footer .night-credit { display: inline-flex; align-items: center; min-height: 46px; }
+  .mobile-fold > summary { color: var(--earth); font-size: var(--fs-16); }
+
+  /* The AI guide's suggested questions are full-height targets too. */
+  aside[popover] [class*="chips"] button { min-height: 44px; }
+
+  /* ===== Text and long tokens ===== */
+  /* Explanatory 12px text reads at 14px on a phone; body text stays 16px. */
+  .lunar-figure figcaption, .app-footer, .footer-copyright, .field small, :where(main, section) p.text-xs { font-size: var(--fs-14); }
+  code, .hash, .run-id { overflow-wrap: anywhere; }
+  /* Run IDs wrap on a phone instead of scrolling sideways inside their line. */
+  .run-id { white-space: normal; overflow-x: visible; }
+  .metadata div { flex-wrap: wrap; }
+  .metadata dd { min-width: 0; }
+
+  /* ===== Charts and tables scroll inside their own box ===== */
+  .table-scroll { -webkit-overflow-scrolling: touch; }
+  :where(main) :is(svg, img, canvas, iframe, video) { max-width: 100%; }
+
+  /* ===== Orbit: a larger globe and compact labels, so both site names fit inside the disc ===== */
+  .orbit-page .orbit-stage .lunar-frame { width: min(100%, 265px); }
+  .orbit-page .orbit-stage .site-pin button { min-height: 34px; padding: 0 10px; font-size: .8125rem; }
+  /* The 34px label keeps a 44px touch area. */
+  .orbit-page .orbit-stage .site-pin button::before { inset: -5px; }
+}
