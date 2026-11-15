@@ -11,8 +11,13 @@ const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duratio
 
 // Team photos live in public/team as <file>.webp with a .jpg fallback.
 const team = [
-  ["Nguyen Trong Chung", "nguyen-trong-chung"], ["Nguyen Phuong Thao", "nguyen-phuong-thao"], ["Chu Hoang Lam", "chu-hoang-lam"],
-  ["Man Gia Minh", "man-gia-minh"], ["Nguyen Nhu Son", "nguyen-nhu-son"], ["Nguyen Thuy Trang", "nguyen-thuy-trang"],
+  // Each member's own quote, shown as written (not translated).
+  ["Nguyen Trong Chung", "nguyen-trong-chung", "Even the Moon needs its Earth."],
+  ["Nguyen Phuong Thao", "nguyen-phuong-thao", "Born to be Spider-Man."],
+  ["Chu Hoang Lam", "chu-hoang-lam", "Bring it on."],
+  ["Man Gia Minh", "man-gia-minh", "Beyond the sky, beyond the limits."],
+  ["Nguyen Nhu Son", "nguyen-nhu-son", "The dark isn't empty."],
+  ["Nguyen Thuy Trang", "nguyen-thuy-trang", "I yearn for the mines."],
 ] as const;
 
 export default function Home() {
@@ -105,12 +110,13 @@ export default function Home() {
       </section>
       <section id="team" className="home-team" tabIndex={-1} aria-labelledby="team-title">
         <h2 id="team-title">{t("Team members")}</h2>
-        <ul>{team.map(([name, file]) => <li key={file}>
+        <ul>{team.map(([name, file, quote]) => <li key={file}>
           <div className="team-frame"><picture>
             <source srcSet={`/team/${file}.webp`} type="image/webp" />
             <img src={`/team/${file}.jpg`} width={172} height={172} loading="lazy" alt={`Photo of ${name}`} />
           </picture></div>
           <span>{name}</span>
+          <q className="team-quote" lang="en">{quote}</q>
         </li>)}</ul>
       </section>
       <LunarResources />

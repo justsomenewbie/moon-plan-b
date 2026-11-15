@@ -101,11 +101,14 @@ small, sub, sup { font-size: var(--fs-12); }
 .home-team h2 { text-align: center; }
 /* Circular photos in a thin gradient ring, names below: three across, two on phones. */
 .home-team ul { max-width: 46rem; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 24px; margin: 24px auto 0; padding: 0; }
-.home-team li { text-align: center; font-weight: 600; overflow-wrap: anywhere; }
+.home-team li { text-align: center; font-weight: 600; overflow-wrap: anywhere; display: flex; flex-direction: column; align-items: center; }
+.team-quote { display: block; margin-top: 4px; white-space: nowrap; font-style: italic; font-weight: 400; font-size: var(--fs-14); line-height: 1.45; color: var(--muted); quotes: "\201C" "\201D"; }
 .team-frame { width: min(100%, 180px); aspect-ratio: 1; margin: 0 auto 12px; padding: 4px; border-radius: 50%; background: var(--team-ring); }
 .team-frame picture, .team-frame img { display: block; width: 100%; height: 100%; }
 .team-frame img { object-fit: cover; border-radius: 50%; background: var(--surface-2); }
 @media (max-width: 760px) { .home-team ul { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; } }
+/* One-line quotes need the full width on phones. */
+@media (max-width: 520px) { .home-team ul { grid-template-columns: minmax(0, 1fr); } .team-frame { width: min(100%, 150px); } }
 .home-guide h2 { font-size: var(--fs-20); }
 .home-guide > p { max-width: 60ch; }
 .home-guide a { display: inline-block; margin-top: 12px; }
