@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import "./night-sky.css";
 import Providers from "./providers";
+import ThreeBackdrop from "./three/three-backdrop";
 
 export const metadata: Metadata = {
   title: { default: "Moon Plan B — Sun & Earth comparison", template: "%s — Moon Plan B" },
@@ -30,5 +31,5 @@ const mono = JetBrains_Mono({ subsets: ["latin", "vietnamese"], variable: "--fon
 const themeScript = `(function(){var t=null;try{t=localStorage.getItem("moon-plan-b-theme")}catch(e){}var h=new Date().getHours();document.documentElement.dataset.theme=t==="light"||t==="dark"?t:h>=6&&h<18?"light":"dark"})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" className={`${body.variable} ${heading.variable} ${mono.variable}`} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><Providers>{children}</Providers></body></html>;
+  return <html lang="en" className={`${body.variable} ${heading.variable} ${mono.variable}`} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><Providers>{children}</Providers><ThreeBackdrop /></body></html>;
 }
