@@ -1,7 +1,7 @@
 .launcher, .panel {
   position: fixed;
-  right: max(1rem, env(safe-area-inset-right));
-  bottom: max(1rem, env(safe-area-inset-bottom));
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--line);
@@ -40,8 +40,8 @@
 .panel {
   top: auto;
   left: auto;
-  width: min(22rem, calc(100% - 2rem - env(safe-area-inset-right)));
-  max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
+  width: min(22rem, calc(100% - 48px));
+  max-height: calc(100dvh - 48px);
   margin: 0;
   padding: .8rem 1rem;
   overflow: auto;
@@ -135,6 +135,13 @@
 
 @media screen and (max-width: 760px) {
   /* In the header row and scrolling with the page: nothing on a phone is ever under it. */
-  /* Clear of the widest Menu label ("Danh mục"), between the brand and the Menu button. */
-  .launcher { position: absolute; top: 9px; right: 133px; bottom: auto; width: 40px; height: 47px; }
+  /* In the header bar, clear of the widest Menu label ("Danh mục"): it scrolls with the page, so it never covers a control. */
+  .launcher { position: absolute; top: 14px; right: 150px; bottom: auto; width: 40px; height: 47px; z-index: 7; }
+  /* The open panel keeps 16px from every edge. */
+  .panel {
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: min(22rem, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
+  }
 }
