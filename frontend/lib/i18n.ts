@@ -237,7 +237,7 @@ export const vietnamese: Record<string, string> = {
   "Auto · local time": "Tự động · giờ địa phương",
   "Light": "Sáng",
   "Dark": "Tối",
-  "Auto uses light from 07:00 to 19:00 on your device, and dark otherwise. Observation times remain UTC.": "Tự động dùng giao diện sáng từ 07:00 đến 19:00 theo giờ thiết bị, và tối vào thời gian còn lại. Thời gian quan trắc vẫn theo UTC.",
+  "Auto follows your device's light or dark setting. Observation times remain UTC.": "Tự động theo chế độ sáng hoặc tối của thiết bị. Thời gian quan trắc vẫn theo UTC.",
   "Import data": "Nhập dữ liệu",
   "Lunar observation explorer": "Quan sát bầu trời từ Mặt Trăng",
   "Odysseus and Athena · Sun and Earth visibility": "Odysseus và Athena · Thời gian nhìn thấy Mặt Trời và Trái Đất",

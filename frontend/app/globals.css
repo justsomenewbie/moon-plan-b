@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 @layer components {
-:root { color-scheme: dark; --bg: #10131b; --surface: #171d28; --text: #f3f1e9; --muted: #b0b4c1; --line: #434751; --sun: #eec575; --earth: #a9b9ef; --grid: #343b49; --horizon: #c1c4cf; --below-horizon: #1b2433; --positive: #afd3b3; --error-bg: #271e23; --error-line: #ffb29f; --button-text: #151821; --button-hover: #ffda8e; }
-:root[data-theme="light"] { color-scheme: light; --bg: #f5f3ed; --surface: #fffdf7; --text: #172431; --muted: #53616e; --line: #a9b2b9; --sun: #805000; --earth: #325697; --grid: #d4d9dd; --horizon: #596978; --below-horizon: #e0e5e9; --positive: #286338; --error-bg: #fae8e4; --error-line: #a73825; --button-text: #fffdf7; --button-hover: #654000; }
+/* Dark is the base palette; .orbit-page re-declares it so that view stays dark in the light theme. */
+:root, .orbit-page { color-scheme: dark; --bg: #0B0F1A; --surface: #121826; --surface-2: #1A2233; --text: #E8EAF0; --muted: #A3ABBD; --line: #2A3346; --input-border: #5C6884; --sun: #F2C46D; --earth: #8FB4FF; --grid: #2A3346; --horizon: #A3ABBD; --below-horizon: #1A2233; --positive: #7FD1A0; --error-bg: #2A1A1F; --error-line: #FFB29F; --button-text: #0B0F1A; --button-hover: #FFD98F; }
+:root[data-theme="light"] { color-scheme: light; --bg: #F6F7FA; --surface: #FFFFFF; --surface-2: #EEF0F4; --text: #141A26; --muted: #4A5468; --line: #D5DAE3; --input-border: #7A8499; --sun: #8A5A00; --earth: #2F5BB7; --grid: #D5DAE3; --horizon: #4A5468; --below-horizon: #EEF0F4; --positive: #1F7A45; --error-bg: #FAE8E4; --error-line: #A73825; --button-text: #FFFFFF; --button-hover: #6B4500; }
+:root[data-theme="light"] .orbit-page { color-scheme: dark; }
+:root { --radius-sm: 6px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 24px; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.55; }

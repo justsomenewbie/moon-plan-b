@@ -20,16 +20,16 @@ export default function ThemeControl() {
 
   useEffect(() => {
     if (!mode) return;
+    const preference = window.matchMedia("(prefers-color-scheme: dark)");
     const update = () => {
-      const applied = localTheme(mode, new Date());
+      const applied = localTheme(mode, preference.matches);
       document.documentElement.dataset.theme = applied;
       setAppearance(applied);
     };
     update();
     if (mode !== "auto") return;
-    const timer = window.setInterval(update, 60000);
-    document.addEventListener("visibilitychange", update);
-    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", update); };
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
   }, [mode]);
 
   function choose(value: string) {
@@ -49,6 +49,6 @@ export default function ThemeControl() {
     </button>
     <button type="button" className="theme-auto" disabled={!mode} aria-pressed={mode === "auto"}
       aria-describedby="theme-help" onClick={() => choose(mode === "auto" ? appearance : "auto")}>{t("Auto")}</button>
-    <span className="sr-only" id="theme-help">{t("Auto uses light from 07:00 to 19:00 on your device, and dark otherwise. Observation times remain UTC.")}</span>
+    <span className="sr-only" id="theme-help">{t("Auto follows your device's light or dark setting. Observation times remain UTC.")}</span>
   </div>;
 }
