@@ -1,4 +1,5 @@
-.plan-main { margin: 2.5rem 0; min-height: 55vh; }
+/* A full viewport keeps the footer below the fold while the planner form mounts, so it cannot shift. */
+.plan-main { margin: 2.5rem 0; min-height: 100svh; }
 .plan-main .mode-switch { margin: 1.5rem 0; }
 .plan-coverage, .plan-main .request-fields, .plan-results { margin: 1rem 0; }
 .plan-main .table-scroll { margin: 1rem 0; overflow-x: auto; }

@@ -99,13 +99,13 @@ export type GlobeRenderer = { draw(uniforms: GlobeUniforms, width: number, heigh
  * Returns null when the browser offers no WebGL context (the canvas can still take a 2D context).
  * Throws when a context exists but cannot be used; the caller then needs a fresh canvas.
  */
-export function createGlobeRenderer(canvas: HTMLCanvasElement, map: HTMLImageElement): GlobeRenderer | null {
+export function createGlobeRenderer(canvas: HTMLCanvasElement, map: HTMLImageElement | ImageBitmap): GlobeRenderer | null {
   const options: WebGLContextAttributes = { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false };
   const gl: WebGLRenderingContext | WebGL2RenderingContext | null = canvas.getContext("webgl2", options) ?? canvas.getContext("webgl", options);
   if (!gl) return null;
   if (gl.isContextLost()) throw Error("WebGL context lost");
   const webgl2 = typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext;
-  const width = map.naturalWidth, height = map.naturalHeight;
+  const width = map.width, height = map.height;
   if (Math.max(width, height) > gl.getParameter(gl.MAX_TEXTURE_SIZE)) throw Error("Map exceeds texture size");
 
   function shader(type: number, source: string) {

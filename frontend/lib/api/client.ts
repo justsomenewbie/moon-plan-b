@@ -7,27 +7,14 @@ import { parseTerrainSummary, terrainUtcNanos } from "./terrain-summary.ts";
 import { utcMillis, validateDataset } from "../dataset.ts";
 import { terrainSiteIds, type TerrainTarget } from "../terrain-target.ts";
 import type { Dataset } from "../dataset.ts";
+import { ApiError, isMock, retryQuery } from "./api-error.ts";
 
-export const isMock = (process.env.NEXT_PUBLIC_API_BASE_URL || "mock") === "mock";
+export { ApiError, isMock, retryQuery };
 export const isPublicTeamApi = process.env.NEXT_PUBLIC_LUNARNAV_PROXY === "1";
 let mockReady: Promise<void> | undefined;
 export function ensureMock(): Promise<void> {
   if (!isMock || typeof window === "undefined") return Promise.resolve();
   return mockReady ??= import("./mock-browser").then(async ({ worker }) => { await worker.start({ onUnhandledFrame: "bypass", quiet: true }); }).catch((error) => { mockReady = undefined; throw error; });
-}
-export class ApiError extends Error {
-  status: number;
-  code?: string;
-  title?: string;
-  hint?: string;
-  fields: { path: string; message: string }[] = [];
-  retryAt?: string;
-  constructor(message: string, status = 0, code?: string) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.code = code;
-  }
 }
 export function hasRetryDeadline(error: unknown): error is ApiError {
   return error instanceof ApiError && Boolean(error.retryAt);
@@ -77,7 +64,6 @@ export function jobReceiptUncertain(error: unknown): boolean {
   return !(error.status === 503 && error.code === "STORAGE_FULL") &&
     !(error.status === 501 && error.code === "JOB_TYPE_UNAVAILABLE");
 }
-export const retryQuery = (failureCount: number, error: Error) => failureCount < 2 && error instanceof ApiError && !error.retryAt && (isMock || error.status !== 504) && (error.status === 0 || error.status >= 500);
 const baseUrl = typeof window === "undefined" ? "http://localhost" : "";
 async function boundedFetch(request: Request, retainBytes?: (bytes: Uint8Array<ArrayBuffer>) => void) {
   await ensureMock();

@@ -154,6 +154,10 @@ small, sub, sup { font-size: var(--fs-12); }
 .globe-center { margin: 6px auto; font-variant-numeric: tabular-nums; }
 .lunar-figure figcaption { color: var(--muted); text-align: center; font-size: var(--fs-12); margin: 32px auto 0; max-width: 330px; }
 .intro .lunar-figure figcaption { font-size: var(--fs-14); }
+/* Beside the hero text, hold the caption at its height once the globe is ready, so the centred text and the next section do not move. */
+@media (min-width: 761px) { .intro .lunar-figure figcaption { min-height: 19.75rem; } }
+/* These pages fill in once their scripts run. A viewport-high main keeps the footer below the fold until then, so it cannot shift. */
+.data-main, .api-main, main.terrain-result { min-height: 100svh; }
 .reference-resources { padding: 28px 0; border-top: 1px solid var(--line); }
 .observed-week { padding: 24px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 @media screen and (min-width: 761px) {

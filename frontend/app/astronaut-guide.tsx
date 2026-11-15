@@ -9,8 +9,12 @@ import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
 import type { PlanningSource } from "../lib/api/guide-planning";
 import type { DisplayedPair } from "./terrain-pair";
-import GuideChat, { clearGuideHistory, type GuideActions, type GuideScope } from "./guide-chat";
+import dynamic from "next/dynamic";
+import type { GuideActions, GuideScope } from "./guide-chat";
 import { savedGuideContext, type GuideContext } from "../lib/api/guide-chat";
+
+// The chat and its planning code load when the panel first opens; the launcher is all a page needs before that.
+const GuideChat = dynamic(() => import("./guide-chat"), { ssr: false });
 
 const messages = {
   en: {
@@ -162,7 +166,7 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
     }} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
         <div><h2 id={id + "-title"}>{copy.title}</h2><p>{copy.subtitle}</p></div>
-        <button type="button" className={styles.newChat} onClick={() => { clearGuideHistory(); setChatEpoch(epoch => epoch + 1); }}>{copy.newChat}</button>
+        <button type="button" className={styles.newChat} onClick={() => { void import("./guide-chat").then(chat => { chat.clearGuideHistory(); setChatEpoch(epoch => epoch + 1); }); }}>{copy.newChat}</button>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
       <div className={styles.scroll}>

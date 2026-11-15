@@ -101,6 +101,8 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
   const [customPoint, setCustomPoint] = useState<MapPoint | null>(null);
   const surfaceButton = useRef<HTMLButtonElement>(null);
   const [imageFailed, setImageFailed] = useState(false);
+  // WebP first; a browser that cannot decode it falls back to the JPEG before the text fallback.
+  const [mapImage, setMapImage] = useState("/images/lroc-color-2k.webp");
   const value = (site: MapSite) => column === "longest" ? site.longest : site.hours?.[column];
   const isLeader = (site: MapSite) => leaders.includes(site.id) && (value(site) ?? 0) > 0;
   const selected = sites.find(site => site.id === selectedId) ?? sites.find(isLeader) ?? sites[0];
@@ -169,7 +171,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           siteId: selected.id, reading, onSelect: setSelectedId, onCloseUp: inspectPoint, markerColors, plannerLeaders: sites.filter(isLeader).map(site => site.id),
         }} /> : imageFailed ? <p role="status">{t("The map image could not load. Select a site to see its coordinates.")}</p> :
           <svg className="plan-map-surface" viewBox={`${left} ${top} ${width} ${height}`} role="group" aria-labelledby="plan-site-map-title">
-            <image width="720" height="360" href="/images/lroc-color-2k.jpg" onError={() => setImageFailed(true)}
+            <image width="720" height="360" href={mapImage} onError={() => mapImage.endsWith(".webp") ? setMapImage("/images/lroc-color-2k.jpg") : setImageFailed(true)}
               onClick={event => {
                 const matrix = event.currentTarget.getScreenCTM();
                 if (!matrix) return;

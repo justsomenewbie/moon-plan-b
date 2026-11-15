@@ -56,6 +56,24 @@ type Target = {
   missionId?: string;
 };
 
+// The 2K surface map, shared by every globe on the page. The WebP is about 40% smaller than the JPEG and is decoded
+// off the main thread, so the texture upload does not block input; the JPEG through an <img> is the fallback.
+let surfaceMap: Promise<ImageBitmap | HTMLImageElement> | undefined;
+function loadSurfaceMap() {
+  return surfaceMap ??= (async () => {
+    try {
+      const response = await fetch("/images/lroc-color-2k.webp");
+      if (!response.ok) throw Error("Surface map unavailable");
+      return await createImageBitmap(await response.blob(), { premultiplyAlpha: "none" });
+    } catch {
+      const image = new Image();
+      image.src = "/images/lroc-color-2k.jpg";
+      await image.decode();
+      return image;
+    }
+  })().catch(error => { surfaceMap = undefined; throw error; });
+}
+
 type Painter = { gpu: boolean; draw(view: GlobeView, sun: MapPoint | undefined, size: number): void; dispose(): void };
 
 // Overlays that must move with the globe read the live view, so a drag re-renders only this layer.
@@ -234,7 +252,13 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     if (commitTimer.current === undefined && !drag.current && !pinch.current) commitTimer.current = window.setTimeout(commitView, 250);
   }
 
-  useEffect(() => { setEnabled(true); }, []);
+  // On the home page the photograph is the first paint, and the globe (a 2K texture and WebGL setup) starts once the page has loaded.
+  useEffect(() => {
+    if (!home || document.readyState === "complete") { setEnabled(true); return; }
+    const start = () => setEnabled(true);
+    window.addEventListener("load", start, { once: true });
+    return () => window.removeEventListener("load", start);
+  }, [home]);
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -294,11 +318,9 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     }
     surface?.addEventListener("contextlost", unavailable);
     surface?.addEventListener("webglcontextlost", fallBack);
-    const map = new Image();
-    map.src = "/images/lroc-color-2k.jpg";
     async function load() {
       try {
-        await map.decode();
+        const map = await loadSurfaceMap();
         if (!active) return;
         if (!surface) throw Error("Canvas unavailable");
         if (gpu) {
@@ -314,7 +336,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
           }
         }
         const buffer = document.createElement("canvas");
-        buffer.width = map.naturalWidth; buffer.height = map.naturalHeight;
+        buffer.width = map.width; buffer.height = map.height;
         const source = buffer.getContext("2d", { willReadFrequently: true });
         const context = surface.getContext("2d");
         if (!source || !context) throw Error("Canvas unavailable");
@@ -485,7 +507,10 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
 
   const frame = <div className={terrainView ? "lunar-frame w-full" : "lunar-frame"}
       onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag}>
-      <img src="/images/moon-mosaic.jpg" width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")} fetchPriority="high" />
+      <img src="/images/moon-mosaic.jpg" srcSet="/images/moon-mosaic-640.webp 640w, /images/moon-mosaic.webp 1024w"
+        sizes={home ? "(max-width: 760px) 260px, 380px" : expanded ? "100vw" : "(max-width: 760px) 90vw, 600px"} width="1024" height="1024" alt={ready ? "" : t("Photographic mosaic of the Moon, assembled from Lunar Reconnaissance Orbiter images.")}
+        // Only the home and orbit pages open on this picture; elsewhere it sits further down and must not outrank the page's own content.
+        fetchPriority={home || orbit ? "high" : "auto"} loading={home || orbit ? "eager" : "lazy"} />
       {enabled && <canvas key={gpu ? "webgl" : "cpu"} ref={canvas} width={384} height={384} hidden={!ready} role="img" aria-label={t("Lunar surface globe")}
         tabIndex={0} onKeyDown={turnWithKeyboard}
         aria-describedby={expanded ? zoomHelpId + "-expanded" + (plannerSun ? " expanded-planner-sun" : "") : orbit ? "orbit-help" : home ? "home-globe-instructions globe-zoom-help" : plannerSun ? "plan-sun-direction " + zoomHelpId : sun ? "globe-sunlight-description globe-zoom-help" : zoomHelpId} />}
@@ -559,7 +584,7 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
   return <figure className={terrainView && !plannerLeaders ? "lunar-figure grid items-center gap-6 py-6 md:grid-cols-2" : "lunar-figure"}
     id={plannerLeaders ? "planner-lunar-globe" : terrainView ? "terrain-lunar-reference" : pairSites ? "pair-lunar-reference" : "lunar-reference"} tabIndex={-1}>
     {home ? <>{frame}{pinPicker}</> : <div className="globe-view-slot">
-      <dialog open ref={viewer} className="globe-view" role={expanded ? undefined : "group"} aria-label={t("Lunar surface globe")}
+      <dialog open ref={viewer} className="globe-view" aria-label={t("Lunar surface globe")}
         onCancel={event => { event.preventDefault(); collapseGlobe(); }}>
         <div className="globe-full-bar">
           <div aria-live="polite"><strong>{target?.name ?? t("Lunar surface globe")}</strong>

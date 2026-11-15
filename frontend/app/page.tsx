@@ -7,6 +7,24 @@ import { ComparisonExample, savedResultFromUrl } from "./observed-week";
 import AstronautGuide from "./astronaut-guide";
 import MoonGlobe from "./moon-globe";
 
+// Structured data for search engines; plain constants, so the markup is identical on the server and the client.
+const structuredData = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Moon Plan B",
+  alternateName: "Lunar Navigator",
+  url: "https://lunavigator.com/",
+  image: "https://lunavigator.com/brand/og-image.png",
+  description: "Compare lunar south-pole landing sites and dates by the hours the Sun and Earth are both above the local horizon, using NASA LRO terrain and JPL Horizons data.",
+  applicationCategory: "EducationalApplication",
+  operatingSystem: "Any",
+  browserRequirements: "Requires JavaScript and a modern web browser.",
+  inLanguage: ["en", "vi"],
+  isAccessibleForFree: true,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  creator: { "@type": "Organization", name: "Moon Plan B team", url: "https://lunavigator.com/#team" },
+}).replace(/</g, "\\" + "u003c");
+
 const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
 
 // Team photos live in public/team as <file>.webp with a .jpg fallback.
@@ -37,6 +55,7 @@ export default function Home() {
     return () => window.removeEventListener("hashchange", restoreComparisonLink);
   }, []);
   return <div className="app-shell">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
     <SkyBackground />
     <a className="skip-link" href="#home-title">{t("Skip to content")}</a>
     <SiteHeader />

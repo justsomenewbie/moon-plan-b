@@ -15,6 +15,8 @@
     background-blend-mode: screen;
     opacity: .55;
   }
+  /* The star map (up to 600 kB) joins after the page has loaded (layout.tsx sets data-sky), so it never competes with the first paint. */
+  :root[data-theme="dark"]:not([data-sky]) body::before { background-image: linear-gradient(170deg, #10131b 4%, #182442 94%); }
   :root[data-theme="light"] body::before {
     background: radial-gradient(ellipse at 77% 21%, rgb(255 252 242 / 52%), transparent 68%),
       linear-gradient(177deg, #9bc6e2, #c9e1ed 46%, #edf3f2 79%, #f3f4f0);
@@ -50,6 +52,17 @@
   .sky-clouds span:nth-child(4) {
     left: 15%; bottom: 2%; width: clamp(140px, 20vw, 310px); aspect-ratio: 1280 / 445;
     background-image: url("/images/cloud-trail.webp");
+  }
+  /* Half-size cloud files wherever a cloud is drawn at most 370 px wide: the dark theme at any width, and phones. */
+  :root[data-theme="dark"] .sky-clouds span:nth-child(1) { background-image: url("/images/cloud-cumulus-640.webp"); }
+  :root[data-theme="dark"] .sky-clouds span:nth-child(2) { background-image: url("/images/cloud-wisps-640.webp"); }
+  :root[data-theme="dark"] .sky-clouds span:nth-child(3) { background-image: url("/images/cloud-bank-640.webp"); }
+  :root[data-theme="dark"] .sky-clouds span:nth-child(4) { background-image: url("/images/cloud-trail-640.webp"); }
+  @media (max-width: 760px) {
+    .sky-clouds span:nth-child(1) { background-image: url("/images/cloud-cumulus-640.webp"); }
+    .sky-clouds span:nth-child(2) { background-image: url("/images/cloud-wisps-640.webp"); }
+    .sky-clouds span:nth-child(3) { background-image: url("/images/cloud-bank-640.webp"); }
+    .sky-clouds span:nth-child(4) { background-image: url("/images/cloud-trail-640.webp"); }
   }
   :root[data-theme="light"] .sky-clouds span { filter: contrast(.86) brightness(1.15) saturate(.76); }
   :root[data-theme="light"] .sky-clouds span:nth-child(1) {
