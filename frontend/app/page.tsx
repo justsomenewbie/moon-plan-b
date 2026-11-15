@@ -53,11 +53,11 @@ export default function Home() {
         <figure className="crater-profile">
           <svg viewBox="0 0 400 171" role="img" aria-labelledby="crater-description">
             <title id="crater-description">{t("Low sunlight reaches the left rim. The floor is shadowed. A dotted line connects the rim to Earth above the opposite slope.")}</title>
-            <circle cx="29" cy="55" r="10" fill="var(--sun)" />
+            <circle cx="29" cy="55" r="10" fill="var(--sun-fill)" />
             <text x="17" y="33" fill="var(--sun)">{t("Sun")}</text>
             <circle cx="369" cy="29" r="9" fill="var(--earth)" />
             <text x="387" y="58" textAnchor="end" fill="var(--earth)">{t("Earth")}</text>
-            <path d="M44 57 L129 75" fill="none" stroke="var(--sun)" strokeWidth="2" />
+            <path d="M44 57 L129 75" fill="none" stroke="var(--sun-fill)" strokeWidth="2" />
             <path d="M129 75 L357 31" fill="none" stroke="var(--earth)" strokeWidth="2" strokeDasharray="3 5" />
             <path d="M0 107 L34 101 L74 94 L106 79 L129 75 L150 91 Q184 131 221 133 Q253 134 277 112 L316 84 L334 89 L354 86 L400 99 V171 H0 Z" fill="var(--below-horizon)" />
             <path d="M0 107 L34 101 L74 94 L106 79 L129 75" fill="none" stroke="var(--sun)" strokeWidth="2.5" />

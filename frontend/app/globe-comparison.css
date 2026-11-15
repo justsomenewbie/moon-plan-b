@@ -41,10 +41,10 @@
 .sky-info [data-selected] { border-inline-start: 2px solid currentColor; padding-inline-start: 6px; }
 .sky-selected-label { font-size: var(--fs-12); }
 .sky-ray text { fill: currentColor; font: bold 0.75rem var(--font-mono); paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
-.sky-clearance-ring, .clearance-ring { fill: none; stroke: var(--sun); stroke-width: 1.25; opacity: .85; }
-.clearance-line { stroke: var(--sun); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: .85; }
-.clearance-band { fill: var(--sun); opacity: .1; }
-.clearance-band-ring { fill: none; stroke: var(--sun); opacity: .12; }
+.sky-clearance-ring, .clearance-ring { fill: none; stroke: var(--sun-fill); stroke-width: 1.25; opacity: .85; }
+.clearance-line { stroke: var(--sun-fill); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: .85; }
+.clearance-band { fill: var(--sun-fill); opacity: .1; }
+.clearance-band-ring { fill: none; stroke: var(--sun-fill); opacity: .12; }
 
 .mission-studio {
   margin-top: 16px;
@@ -233,17 +233,17 @@
   display: block;
 }
 .lander-side-svg { display: block; width: 100%; max-width: 180px; margin: 0 auto; }
-.hud-clearance-band { fill: var(--sun); opacity: .12; }
+.hud-clearance-band { fill: var(--sun-fill); opacity: .12; }
 .hud-horizon-line { stroke: var(--horizon); stroke-width: 1.25; stroke-dasharray: 4 3; }
 .hud-side-label { fill: var(--muted); font: 0.75rem var(--font-mono); paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
 .hud-compass-ring { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
 .hud-inner-ring { fill: none; stroke: var(--grid); stroke-width: .9; }
 .hud-shadow-ray { stroke: var(--grid); opacity: .65; }
-.hud-sun-ray { stroke: var(--sun); stroke-width: 1.5; }
-.hud-sun-node { fill: var(--sun); stroke: var(--bg); stroke-width: 1.2; }
+.hud-sun-ray { stroke: var(--sun-fill); stroke-width: 1.5; }
+.hud-sun-node { fill: var(--sun-fill); stroke: var(--bg); stroke-width: 1.2; }
 .hud-earth-ray { stroke: var(--earth); stroke-width: 1.5; }
 .hud-earth-node { fill: var(--earth); stroke: var(--bg); stroke-width: 1.2; }
-.hud-solar-wing { fill: var(--sun); stroke: var(--bg); stroke-width: 1; }
+.hud-solar-wing { fill: var(--sun-fill); stroke: var(--bg); stroke-width: 1; }
 .hud-dish-arc, .hud-dish-boom { stroke: var(--earth); }
 .hud-lander-deck { fill: var(--text); stroke: var(--bg); stroke-width: 1.2; }
 .hud-readouts {

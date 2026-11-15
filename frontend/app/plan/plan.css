@@ -1,5 +1,5 @@
 .plan-main { margin: 2.5rem 0; min-height: 55vh; }
-.plan-main .mode-switch { margin: 1.8rem 0; flex-wrap: wrap; }
+.plan-main .mode-switch { margin: 1.5rem 0; }
 .plan-coverage, .plan-main .request-fields, .plan-results { margin: 1rem 0; }
 .plan-main .table-scroll { margin: 1rem 0; overflow-x: auto; }
 .plan-main table { width: 100%; font-variant-numeric: tabular-nums; }
