@@ -60,6 +60,8 @@ export function publicContract(producer) {
       code: { const: 'UPSTREAM_TIMEOUT' }, detail: { type: 'string' } },
   } };
   for (const [path, methods] of Object.entries(producer.paths)) {
+    // Custom-site job routes are relayed for the planner's own form, not listed in the public explorer.
+    if (/^\/api\/v1\/(jobs|capabilities)(\/|$)/.test(path)) continue;
     const example = path.replaceAll(/\{[^}]+\}/g, 'example');
     for (const [method, operation] of Object.entries(methods)) {
       const match = publicRoute(example, method.toUpperCase());

@@ -48,7 +48,7 @@ export function ApiControls({ request, target, loading, wait, onLoad, onResult, 
       <label className="field">{t(isMock ? "Desired step · seconds" : "Track sampling step · seconds")}<input name="resolution" type="number" min={isMock ? 60 : 3600} max={isMock ? 86400 : 2678400} step="1" required value={inputs.resolution} onChange={(e) => changeInput("resolution", e.target.value)} /></label>
       <button className="button outline" disabled={loading || wait > 0}>{wait ? t("Try again in {seconds} s", { seconds: wait }) : t("Load windows")}</button>
     </form>{error ? <p role="alert">{t(error)}</p> : null}
-  </details>{isPublicTeamApi ? <p className="muted">{t("Creating, tracking and cancelling custom-site jobs are unavailable on this public frontend.")}</p> : isMock ? <JobForm readRequest={readRequest} onResult={onResult} /> : <CustomSiteJob readRequest={() => windowFromInputs(inputs.from, inputs.to, "3600", validateCustomWindow)} onResult={onTerrainResult} />}</>;
+  </details>{isMock ? <JobForm readRequest={readRequest} onResult={onResult} /> : <CustomSiteJob readRequest={() => windowFromInputs(inputs.from, inputs.to, "3600", validateCustomWindow)} onResult={onTerrainResult} />}</>;
 }
 
 function JobForm({ readRequest, onResult }: { readRequest: () => WindowRequest; onResult: ResultHandler }) {

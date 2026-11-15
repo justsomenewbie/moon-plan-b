@@ -14,4 +14,4 @@ function forward(request: Request) {
   return rateLimit(request, source) ?? proxyLunarnav(request, process.env.LUNARNAV_API_KEY);
 }
 
-export { forward as GET, forward as POST };
+export { forward as GET, forward as POST, forward as DELETE };

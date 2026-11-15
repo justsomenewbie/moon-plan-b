@@ -90,6 +90,12 @@ export async function proxyLunarnav(request: Request, key: string | undefined, s
   if (url.search.length > 8192 || [...url.searchParams.keys()].some(k => !(match.query as string[]).includes(k) || url.searchParams.getAll(k).length !== 1))
     return problem(400, "Unsupported or repeated query parameter.");
   if (!key) return problem(503, "The public team API is not configured on this server.");
+  // DELETE carries no body, so check the browser's same-origin signals here (cross-site DELETE also fails preflight).
+  if (request.method === "DELETE") {
+    const origin = request.headers.get("origin");
+    if (request.headers.get("sec-fetch-site") === "cross-site" || (origin !== null && origin !== url.origin))
+      return problem(403, "Same-origin request required.");
+  }
   const headers = new Headers({ "X-API-Key": key, accept: "*/*" });
   const conditional = request.method === "GET" ? validators(request.headers.get("if-none-match")) : [];
   if (conditional.length) headers.set("if-none-match", conditional.join(", "));
@@ -108,6 +114,8 @@ export async function proxyLunarnav(request: Request, key: string | undefined, s
       const input = await readBoundedJson(request, 16384, uploadDeadline);
       if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).some(k => !match.body!.includes(k)))
         return problem(400, "Unsupported query body.");
+      if (match.path === "jobs" && (input as Record<string, unknown>).type !== "custom_site")
+        return problem(400, "Only custom-site calculations are available here.");
       body = JSON.stringify(input);
     } catch (error) {
       request.signal.throwIfAborted();

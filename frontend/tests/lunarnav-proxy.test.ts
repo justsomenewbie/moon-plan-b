@@ -126,10 +126,12 @@ test("only the two read-only JSON submissions go upstream", async () => {
   }
 });
 
-test("unavailable routes, job operations and disallowed input never reach the authenticated service", async () => {
+test("unavailable routes, other job types and disallowed input never reach the authenticated service", async () => {
   for (const [req, status] of [
-    [request("jobs", post({ type: "custom_site" })), 404], [request("jobs/j_fixture"), 404],
-    [request("jobs/j_fixture", { method: "DELETE" }), 404], [request("admin"), 404],
+    [request("jobs", post({ type: "precompute" })), 400], [request("jobs", post({ type: "custom_site", secret: 1 })), 400],
+    [request("jobs/j_fixture", { method: "DELETE", headers: { "sec-fetch-site": "cross-site" } }), 403],
+    [request("jobs/j_fixture", { method: "DELETE", headers: { origin: "https://foreign.example" } }), 403],
+    [request("jobs?limit=1"), 404], [request("admin"), 404],
     [request("openapi.json"), 404], [request("runs/A/files/sites%2F..%2Fprivate"), 404],
     [request("runs/A/files/%252e%252e%252fmissing"), 404], [request("runs/A/files/a%5Cb"), 404],
     [request("runs/A%2Ffiles%2Fmanifest.json"), 404],
@@ -175,6 +177,8 @@ test("public Swagger operations match the relay and retain producer parameter de
   // An accepted route stops at the missing-key check before forwarding anything.
   const forward = async (req: Request) => (await proxyLunarnav(req, undefined)).status === 503;
   for (const [path, methods] of Object.entries(producer.paths)) {
+    // Custom-site job routes are relayed for the planner form only; the explorer does not list them.
+    if (/^\/api\/v1\/(jobs|capabilities)(\/|$)/.test(path)) continue;
     const concrete = path.replaceAll(/\{[^}]+\}/g, "sample");
     for (const [method, operation] of Object.entries(methods as Record<string, {
       parameters?: { in: string; name: string }[];
@@ -438,4 +442,26 @@ test("only tagged successful reads receive private, capped freshness; upstream a
     assert.equal(await policy("sites", "max-age=60", extra), "private, no-cache");
   assert.equal(await policy("export/summary.csv", "no-store"), "no-store");
   for (const status of [401, 403, 302, 422, 429, 503]) assert.equal(await policy("sites", "public, max-age=60", {}, status), "no-store");
+});
+
+test("custom-site calculations go upstream: create, poll, cancel and capability check", async () => {
+  const body = { type: "custom_site", lat_deg: -85.3, lon_deg: 31.2, observer_height_m: 2, start: "2026-11-14T00:00:00Z",
+    end: "2026-11-21T00:00:00Z", step_min: 60, provider: "spice", dem: "pgda", horizon_method: "raymarch" };
+  for (const [req, method, path] of [
+    [request("jobs", post(body)), "POST", "jobs"],
+    [request("jobs/j_fixture"), "GET", "jobs/j_fixture"],
+    [request("jobs/j_fixture", { method: "DELETE", headers: { origin: frontend } }), "DELETE", "jobs/j_fixture"],
+    [request("capabilities"), "GET", "capabilities"],
+  ] as const) {
+    let calls = 0;
+    const response = await proxyLunarnav(req, freshKey(), async (url, init) => {
+      calls++;
+      assert.equal(new URL(String(url)).pathname, "/api/v1/" + path);
+      assert.equal(init?.method, method);
+      if (method === "POST") assert.deepEqual(JSON.parse(String(init?.body)), body);
+      return Response.json({ ok: true }, { status: method === "POST" ? 202 : 200 });
+    });
+    assert.equal(calls, 1, req.url);
+    assert.ok(response.status < 300, req.url);
+  }
 });

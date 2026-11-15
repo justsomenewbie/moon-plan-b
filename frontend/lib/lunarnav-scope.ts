@@ -12,10 +12,15 @@ const reads: [RegExp, string[]][] = [
   [/^runs$/, ["kind", "status", "limit", "offset"]],
   [new RegExp("^runs/" + id + "$"), []],
   [/^export\/summary\.csv$/, ["run_id"]],
+  // Custom-site calculations: capability check and job status (job ids are opaque server ids).
+  [/^capabilities$/, []],
+  [new RegExp("^jobs/" + id + "$"), []],
 ];
 const postFields = {
   compare: ["run_id", "site_ids", "start", "end", "weights", "include"],
   "alt-dates": ["run_id", "site_id", "earliest", "latest", "mission_h", "max_results", "constraints"],
+  // Only the custom_site job type is relayed; the proxy also checks body.type.
+  jobs: ["type", "lat_deg", "lon_deg", "observer_height_m", "start", "end", "step_min", "provider", "dem", "horizon_method"],
 };
 
 export function publicRoute(pathname: string, method: string) {
@@ -33,7 +38,9 @@ export function publicRoute(pathname: string, method: string) {
   }
   if (!decoded.every(safe)) return null;
   const path = decoded.join("/");
-  if (method === "POST" && (path === "compare" || path === "alt-dates")) return { path, query: [], body: postFields[path] };
+  if (method === "POST" && (path === "compare" || path === "alt-dates" || path === "jobs")) return { path, query: [], body: postFields[path] };
+  // A visitor may cancel a custom-site job it started (the producer refuses other job types and finished jobs).
+  if (method === "DELETE" && new RegExp("^jobs/" + id + "$").test(path)) return { path: decoded.map(encodeURIComponent).join("/"), query: [], body: undefined };
   const read = method === "GET" && reads.find(([pattern]) => pattern.test(path));
   return read ? { path: decoded.map(encodeURIComponent).join("/"), query: read[1], body: undefined } : null;
 }
