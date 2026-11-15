@@ -475,8 +475,6 @@ select {
 :is(select, textarea, input):hover:not(:disabled) { border-color: var(--text); }
 :is(select, textarea, input):disabled { opacity: .5; cursor: not-allowed; }
 /* Header selects: the compact size, one family in both themes. */
-.app-header :is(.language-switch, .theme-select) { display: inline-flex; flex-shrink: 0; }
-.app-header select { min-height: var(--control-h-compact); font-size: var(--fs-14); font-weight: 600; }
 .plan-main section > h2:first-child { margin-top: 24px; }
 @media (min-width: 761px) { .nav-menu { display: none; } }
 
@@ -513,25 +511,18 @@ select {
   .app-header nav { width: auto; padding: 0; gap: 4px; }
   .header-controls { margin-inline-start: 0; }
 }
-/* Language menu button: flag and code, the same height, radius and chevron as the theme dropdown. */
-.language-switch { position: relative; }
-.language-button {
-  display: inline-flex; align-items: center; gap: 8px; min-height: var(--control-h-compact); padding: 0 34px 0 12px;
-  border: 1px solid var(--input-border); border-radius: var(--radius-control);
-  background: var(--surface) var(--chevron) right 14px center / 12px 12px no-repeat;
-  color: var(--text); font-size: var(--fs-14); font-weight: 600; white-space: nowrap; cursor: pointer;
+/* Header controls: the language toggle, the theme button and Auto share the 44px height and control radius. */
+.app-header .segmented { flex-shrink: 0; flex-wrap: nowrap; height: var(--control-h-compact); }
+.app-header .segmented button { min-width: 40px; min-height: 0; height: 100%; padding: 0 10px; }
+.appearance-switch { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.theme-disc, .theme-auto {
+  display: inline-flex; align-items: center; justify-content: center; height: var(--control-h-compact);
+  border: 1px solid var(--input-border); border-radius: var(--radius-control); background-color: var(--surface);
+  color: var(--control-text); font-size: var(--fs-14); font-weight: 600; white-space: nowrap; cursor: pointer;
+  transition: background-color 150ms, border-color 150ms, color 150ms;
 }
-.language-button:hover:not(:disabled) { border-color: var(--text); }
-.flag { display: block; flex-shrink: 0; width: 20px; height: 14px; border-radius: 2px; box-shadow: 0 0 0 1px var(--input-border); }
-.language-list {
-  position: absolute; z-index: 20; top: calc(100% + 6px); right: 0; min-width: 184px; margin: 0; padding: 4px; list-style: none;
-  border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--text);
-  box-shadow: 0 8px 24px rgb(0 0 0 / .18);
-}
-.language-list:focus-visible { outline-offset: 2px; }
-.language-list li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 7px; font-size: var(--fs-14); cursor: pointer; }
-.language-list li[data-active] { background: var(--surface-2); }
-.language-list li[aria-selected="true"] { font-weight: 600; }
-.language-list li[aria-selected="true"]::after { content: "✓"; margin-inline-start: auto; color: var(--control-text); }
-@media (max-width: 760px) { .language-list { right: auto; left: 0; } }
+.theme-disc { width: var(--control-h-compact); padding: 0; }
+.theme-auto { padding: 0 14px; }
+:is(.theme-disc, .theme-auto):hover:not(:disabled, .theme-auto[aria-pressed="true"]) { background-color: var(--surface-2); border-color: var(--control-text); }
+.theme-auto[aria-pressed="true"] { background-color: var(--accent); border-color: var(--accent); color: var(--button-text); }
 @media print { .app-header { position: static; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; } .header-panel { display: none; } }

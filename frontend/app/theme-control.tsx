@@ -10,6 +10,7 @@ const STORAGE_KEY = "moon-plan-b-theme";
 export default function ThemeControl() {
   const { t } = useLanguage();
   const [mode, setMode] = useState<ThemeMode | null>(null);
+  const [appearance, setAppearance] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     try { setMode(savedTheme(localStorage.getItem(STORAGE_KEY))); }
@@ -21,7 +22,9 @@ export default function ThemeControl() {
     let timer = 0;
     const update = () => {
       const now = new Date();
-      document.documentElement.dataset.theme = localTheme(mode, now);
+      const applied = localTheme(mode, now);
+      document.documentElement.dataset.theme = applied;
+      setAppearance(applied);
       if (mode !== "auto") return;
       // Wake at the next local 06:00 or 18:00; one second late so the clock has passed the boundary.
       window.clearTimeout(timer);
@@ -40,14 +43,18 @@ export default function ThemeControl() {
     try { localStorage.setItem(STORAGE_KEY, next); } catch { /* Appearance still works when storage is unavailable. */ }
   }
 
-  return <label className="theme-select">
-    <span className="sr-only">{t("Appearance")}</span>
-    <select aria-label={t("Appearance")} aria-describedby="theme-help" value={mode ?? "auto"} disabled={!mode}
-      onChange={event => choose(event.target.value)}>
-      <option value="auto">{t("Auto")}</option>
-      <option value="light">{t("Light")}</option>
-      <option value="dark">{t("Dark")}</option>
-    </select>
+  // The icon button sets an explicit appearance; Auto returns to the clock.
+  const action = appearance === "light" ? "Switch to dark appearance" : "Switch to light appearance";
+  return <div className="appearance-switch">
+    <button className="theme-disc" type="button" disabled={!mode} title={t(action)} aria-label={t("Dark")} aria-pressed={appearance === "dark"}
+      onClick={() => choose(appearance === "light" ? "dark" : "light")}>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+        {appearance === "light" ? <path d="M20 14.25A8.5 8.5 0 0 1 9.75 4a8.5 8.5 0 1 0 10.25 10.25Z"/> :
+          <><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4m0-14.2-1.4 1.4M6.3 17.7l-1.4 1.4"/></>}
+      </svg>
+    </button>
+    <button type="button" className="theme-auto" disabled={!mode} aria-pressed={mode === "auto"}
+      aria-describedby="theme-help" onClick={() => choose("auto")}>{t("Auto")}</button>
     <span className="sr-only" id="theme-help">{t("Auto uses light from 06:00 to 18:00 on your device clock, and dark otherwise. Observation times remain UTC.")}</span>
-  </label>;
+  </div>;
 }
