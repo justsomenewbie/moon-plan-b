@@ -85,3 +85,14 @@
 .plan-sun-direction p { margin-block: .35rem; }
 .plan-bearing-arrow { display: inline-block; font-size: var(--fs-20); line-height: 1; }
 @media (max-width: 760px) { #planner-lunar-globe .site-pin button { width: 44px; height: 44px; } }
+
+/* Sunlight brightness on the planner globe dots and the flat map markers; the selected site keeps its ring. */
+#planner-lunar-globe .site-pin[data-sunlight] button { background: transparent; border: 0; filter: none; outline: 0; }
+#planner-lunar-globe .site-pin[data-sunlight] button::after { background: var(--pin-sun); border: 1px solid var(--pin-outline); }
+#planner-lunar-globe .site-pin[data-sunlight="none"] button::after { border-style: dashed; }
+#planner-lunar-globe .site-pin[data-glow] button::after { filter: drop-shadow(0 0 4px var(--pin-sun)); }
+#planner-lunar-globe .site-pin[data-sunlight] button[aria-pressed="true"] { border: 2px solid var(--pin-outline); border-radius: 50%; }
+.plan-map-point[data-sunlight] :is(.map-leader, .map-other) { fill: var(--pin-sun); stroke: var(--pin-outline); stroke-width: 1; }
+.plan-map-point[data-sunlight="none"] :is(.map-leader, .map-other) { stroke-dasharray: 2 2; }
+.plan-map-point[data-glow] :is(.map-leader, .map-other) { filter: drop-shadow(0 0 3px var(--pin-sun)); }
+.plan-map-point[aria-pressed="true"] > circle:first-of-type { stroke: var(--pin-outline); stroke-width: 1.5; }

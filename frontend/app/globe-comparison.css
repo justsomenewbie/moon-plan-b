@@ -359,3 +359,18 @@ body:has(.globe-view:modal) { overflow: hidden; }
 .globe-view:modal button { border-color: #758394; }
 .globe-view:modal .globe-close { min-height: 44px; background: #192331; color: #f2f5fa; white-space: nowrap; }
 @media (max-width: 760px) { .site-pin button::before { content: ""; position: absolute; inset: -9px; } }
+
+/* Marker brightness shows the share of time in sunlight (lib/sunlight-color.ts). The outline keeps a 0% pin
+   visible on the lunar surface; selection is a ring, never a colour change. */
+.site-pin, .plan-map-point { --pin-outline: #FFFFFF; }
+:root[data-theme="light"] :is(.site-pin, .plan-map-point) { --pin-outline: #1B2654; }
+:root[data-theme="light"] .space-viewport .site-pin { --pin-outline: #FFFFFF; }
+.site-pin[data-sunlight] button { background: var(--pin-sun); color: var(--pin-ink); border: 1px solid var(--pin-outline); }
+.site-pin[data-sunlight="none"] button { border-style: dashed; }
+.site-pin[data-glow] button { filter: drop-shadow(0 0 5px var(--pin-sun)); }
+.site-pin[data-sunlight] button[aria-pressed="true"] { outline: 2px solid var(--pin-outline); outline-offset: 2px; }
+.site-pin[data-sunlight] button:hover { outline: 1px solid var(--pin-outline); outline-offset: 2px; }
+.sunlight-legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; margin: 8px 0; color: var(--muted); font-size: var(--fs-12); }
+.sunlight-legend i { width: 88px; height: 10px; border: 1px solid var(--input-border); border-radius: 5px; background: linear-gradient(to right, oklch(0.35 0.02 90), oklch(0.635 0.095 90), oklch(0.92 0.17 90)); background: linear-gradient(to right in oklch, oklch(0.35 0.02 90), oklch(0.92 0.17 90)); }
+.sunlight-legend-missing { display: inline-flex; align-items: center; gap: 6px; }
+.sunlight-legend b { width: 12px; height: 12px; border: 1px dashed var(--input-border); border-radius: 50%; background: oklch(0.62 0 0); }

@@ -1,4 +1,5 @@
-import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { CSSProperties } from "react";
 import type { KeyboardEvent, PointerEvent, ReactNode } from "react";
 import { drawGlobe, globeCenter, globePointAt, globeCenterForAnchor } from "../lib/moon-globe";
 import { canvasPixels, createGlobeRenderer, frameScheduler, globeUniforms, viewStore } from "../lib/moon-globe-gl";
@@ -10,6 +11,10 @@ import { useLanguage } from "./language";
 import { SitePinPicker, sitesAtPointer } from "./site-pin-picker";
 import saved from "../lib/odysseus-athena-weeks.json";
 import sunlight from "../lib/horizons-weekly-sunlight.json";
+import catalog from "../public/data/run-b2/catalog.json";
+import { sunlightStyle } from "../lib/sunlight-color";
+import type { SunlightStyle } from "../lib/sunlight-color";
+import SunlightLegend from "./sunlight-legend";
 import "./globe-comparison.css";
 
 function clampZoom(value: number) { return Math.max(1, Math.min(4, Math.round(value * 100) / 100)); }
@@ -35,7 +40,12 @@ type GlobeProps = {
   plannerSun?: MapPoint & { utc: string };
   terrainView?: { siteId: string; reading?: string; onSelect: (id: string) => void; plannerLeaders?: readonly string[]; markerColors?: ReadonlyMap<string, string>; onCloseUp?: (point: MapPoint) => void };
   showSky?: (alternative: boolean) => void;
+  // Sunlight share (0–100) per pin key for the period the page is showing; null marks a site with no value.
+  sunlightPercent?: ReadonlyMap<string, number | null>;
 };
+
+// Share of 2026–2030 hours with the Sun above each catalog site's horizon (run B2).
+const catalogSunlight = new Map<string, number>(catalog.sites.map(site => [site.id, site.pct_sun]));
 
 type Target = {
   key: string;
@@ -53,7 +63,7 @@ function LiveLayer({ store, children }: { store: ViewStore<GlobeView>; children:
   return children(useSyncExternalStore(store.subscribe, store.get, store.get));
 }
 
-export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, plannerSun, terrainView, showSky }: GlobeProps) {
+export default function MoonGlobe({ home = false, orbit, primary, alternative, evidence, savedResult, pairSites, plannerSun, terrainView, showSky, sunlightPercent }: GlobeProps) {
   const { t } = useLanguage();
   const terrainSiteId = terrainView?.siteId;
   const plannerLeaders = terrainView?.plannerLeaders;
@@ -94,6 +104,20 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
     sample.utc === selectedWeek?.startUtc || (savedSite && !selectedWeek));
   const sun = plannerSun ?? (orbit ? sunlight.samples.find(sample => sample.utc === orbit.weekUtc) : solarChoices.find(sample => sample.utc === sunUtc));
   const sunMarker = sun ? diskPosition(sun, center, zoom) : null;
+  // Marker brightness: the page's period when it has one (planner results, or the saved week), else the 2026–2030 catalog value.
+  const sunlightWeek = orbit ? saved.weeks.find(week => week.startUtc === orbit.weekUtc) : selectedWeek;
+  const sunlightPeriod = sunlightPercent || (sunlightWeek && pins.some(item => item.missionId)) ? "period" as const : "average" as const;
+  const pinSignature = pins.map(item => item.key + ":" + (item.missionId ?? ("id" in item.identity ? item.identity.id : ""))).join("|");
+  // Colours are computed once per data change, never per frame.
+  const pinSunlight = useMemo(() => new Map<string, SunlightStyle>(pinSignature.split("|").filter(Boolean).map(entry => {
+    const split = entry.lastIndexOf(":"), key = entry.slice(0, split), id = entry.slice(split + 1);
+    const weekSite = sunlightWeek?.sites.find(site => site.id === id);
+    const percent = sunlightPercent ? sunlightPercent.get(key) ?? null
+      : weekSite ? weekSite.sunHours / ((Date.parse(sunlightWeek!.endUtc) - Date.parse(sunlightWeek!.startUtc)) / 3600000) * 100
+      : catalogSunlight.get(id) ?? null;
+    return [key, sunlightStyle(percent)];
+  })), [pinSignature, sunlightPercent, sunlightWeek]);
+  const showPins = (!home || Boolean(orbit)) && pins.some(item => "point" in item.location);
   const viewer = useRef<HTMLDialogElement>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -439,9 +463,13 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
         const position = diskPosition(item.location.point, view.center, view.zoom);
         if (!position) return null;
         const selectedPin = terrainView && target?.key === item.key;
-        return <span key={item.key} className="site-pin" data-pin={index} data-site={item.key} data-leading={plannerLeaders?.includes(item.key)} style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined }}>
+        const light = pinSunlight.get(item.key) ?? sunlightStyle(null);
+        const sunText = light.percent === null ? t("Sunlight: no data") : t("Sunlight {percent}%", { percent: light.percent });
+        return <span key={item.key} className="site-pin" data-pin={index} data-site={item.key} data-leading={plannerLeaders?.includes(item.key)}
+          data-sunlight={light.percent ?? "none"} data-glow={light.glow || undefined}
+          style={{ left: `${(1 + position.x) * 50}%`, top: `${(1 + position.y) * 50}%`, zIndex: selectedPin ? 1 : undefined, "--pin-sun": light.color, "--pin-ink": light.ink } as CSSProperties}>
           {terrainView?.markerColors && <i aria-hidden="true" className="plan-pin-sun-ring" style={{ borderColor: terrainView.markerColors.get(item.key) }} />}
-          <button type="button" title={item.name} aria-label={t("Inspect {site}", {site: item.name})}
+          <button type="button" title={item.name + " · " + sunText} aria-label={t("Inspect {site}", {site: item.name}) + " · " + sunText}
             aria-pressed={orbit ? orbit.site.id === item.missionId : target?.key === item.key}
             onClick={event => {
               if (event.detail && pinGesture.current) return;
@@ -526,7 +554,9 @@ export default function MoonGlobe({ home = false, orbit, primary, alternative, e
       {failed && <button type="button" onClick={() => { setFailed(false); setGpu(true); setEnabled(true); }}>{t("Retry globe")}</button>}
       {ready && <><button type="button" onClick={() => { selectCenter(orbit.site); setZoom(1); }}>{t("Center on site")}</button>
         <span className="sr-only" role="status">{t("View center")} · {coordinates(center)} · {zoom}×</span></>}
+      {showPins && <SunlightLegend period={sunlightPeriod} missing={[...pinSunlight.values()].some(light => light.percent === null)} />}
     </figcaption> : <figcaption>
+      {showPins && <SunlightLegend period={sunlightPeriod} missing={[...pinSunlight.values()].some(light => light.percent === null)} />}
       {(!plannerLeaders || failed) && <button type="button" className="button outline" aria-expanded={enabled} onClick={() => {
         commitView(); setRotating(false);
         setCenter(point ?? origin); setZoom(1); setAnnounced(null); setSunUtc(""); setReady(false); setFailed(false); setGpu(true); setEnabled(!enabled);

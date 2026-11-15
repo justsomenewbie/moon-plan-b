@@ -7,6 +7,9 @@ import { EarthSightTimes } from "../terrain-site-result";
 import type { EarthWindow } from "../../lib/earth-windows";
 import { useLanguage } from "../language";
 import { SitePinPicker, sitesAtPointer } from "../site-pin-picker";
+import { sunlightStyle } from "../../lib/sunlight-color";
+import SunlightLegend from "../sunlight-legend";
+import type { CSSProperties } from "react";
 
 const MoonGlobe = dynamic(() => import("../moon-globe"));
 
@@ -127,6 +130,11 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
     if (!("point" in site.location)) setZoom(1);
   }
   const mapped = sites.filter(site => "point" in site.location);
+  // Marker brightness: the share of the selected window with the Sun above each site's horizon.
+  const sunShare = useMemo(() => new Map(sites.map(site =>
+    [site.id, site.hours && evaluatedHours > 0 ? site.hours[0] / evaluatedHours * 100 : null] as const)), [sites, evaluatedHours]);
+  const sunLight = useMemo(() => new Map([...sunShare].map(([id, percent]) => [id, sunlightStyle(percent)] as const)), [sunShare]);
+  const sunMissing = mapped.some(site => sunLight.get(site.id)?.percent == null);
   const hasSunlight = mapped.some(site => site.trackingPower !== undefined);
   const markerColors = sunlight && hasSunlight ? new Map(mapped.flatMap(site =>
     site.trackingPower === undefined ? [] : [[site.id, sunlightColor(site.trackingPower)] as const])) : undefined;
@@ -157,7 +165,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
           ? t("Map location · {lat}° latitude, {lon}° east longitude", {
             lat: Number(customPoint.latitude.toFixed(3)), lon: Number(((customPoint.longitude + 360) % 360).toFixed(3)),
           }) : selected.name} /> :
-          view === "globe" && mapped.length > 0 ? <MoonGlobe plannerSun={sun} pairSites={sites} terrainView={{
+          view === "globe" && mapped.length > 0 ? <MoonGlobe plannerSun={sun} pairSites={sites} sunlightPercent={sunShare} terrainView={{
           siteId: selected.id, reading, onSelect: setSelectedId, onCloseUp: inspectPoint, markerColors, plannerLeaders: sites.filter(isLeader).map(site => site.id),
         }} /> : imageFailed ? <p role="status">{t("The map image could not load. Select a site to see its coordinates.")}</p> :
           <svg className="plan-map-surface" viewBox={`${left} ${top} ${width} ${height}`} role="group" aria-labelledby="plan-site-map-title">
@@ -175,8 +183,11 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
               if (!("point" in site.location)) return null;
               const { x, y } = project(site.location.point);
               const leader = isLeader(site);
+              const light = sunLight.get(site.id) ?? sunlightStyle(null);
+              const sunText = light.percent === null ? t("Sunlight: no data") : t("Sunlight {percent}%", { percent: light.percent });
               return <g key={site.id} className="plan-map-point" data-site={site.id} transform={`translate(${x} ${y}) scale(${1 / zoom})`}
-                role="button" aria-label={t("Inspect {site}", {site: site.name})} aria-pressed={site.id === selected.id}
+                data-sunlight={light.percent ?? "none"} data-glow={light.glow || undefined} style={{ "--pin-sun": light.color } as CSSProperties}
+                role="button" aria-label={t("Inspect {site}", {site: site.name}) + " · " + sunText} aria-pressed={site.id === selected.id}
                 onClick={event => {
                   const hits = sitesAtPointer(event);
                   if (hits.length > 1) { event.currentTarget.focus({ preventScroll: true }); setOverlap(hits); }
@@ -184,7 +195,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
                 }} tabIndex={-1} onKeyDown={event => {
                   if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(site); }
                 }}>
-                <title>{site.name}</title>
+                <title>{site.name + " · " + sunText}</title>
                 <circle r="11" fill="transparent" />
                 {markerColors && <circle r="9.5" fill="none" stroke={markerColors.get(site.id) ?? "#a7abb4"} strokeWidth="3"
                   strokeDasharray={markerColors.has(site.id) ? undefined : "2 2"} pointerEvents="none" />}
@@ -200,6 +211,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
         {view === "flat" && !imageFailed && mapped.length > 0 && <p>{t("Tap the map for a close-up, or choose a site and open Surface close-up.")}</p>}
         {mapped.length < sites.length && <p>{t("Verified map positions: {mapped} of {count}.", {mapped: mapped.length, count: sites.length})}</p>}
         {view !== "surface" && <div className="map-legend"><span><b aria-hidden="true">◆</b> {t("Top for this window")}</span><span><b aria-hidden="true">●</b> {t("Other sites")}</span></div>}
+        {view !== "surface" && view !== "globe" && <SunlightLegend period="period" missing={sunMissing} />}
       </div>
       <div className="plan-map-inspector">
         <label className="field">{t("Inspect a site")}<select value={selected.id} onChange={event => {
