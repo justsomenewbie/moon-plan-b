@@ -84,6 +84,7 @@ export function SiteFooter() {
       <div className="sky-appearance"><a className="night-credit" href="https://svs.gsfc.nasa.gov/4851/" target="_blank" rel="noreferrer">{t("Star map")} · NASA/Goddard SVS · ESA/Gaia/DPAC</a>
         <label><input type="checkbox" id="pause-sky-drift" />{t("Pause sky and astronaut motion")}</label>
       </div>
+      <p className="footer-copyright">{t("Music: Orbital Atlas · original AI-assisted music by the team (ACE-Step 1.5)")}</p>
       {/* Owner-supplied wording, the same in every language. Only lunar-navigator/ is MIT; see docs/CREDITS.md. */}
       <p className="footer-copyright" translate="no">© 2026 chungtrong.sae · Backend code under <a href="https://github.com/justsomenewbie/moon-plan-b/blob/main/lunar-navigator/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></p>
     </footer>;
