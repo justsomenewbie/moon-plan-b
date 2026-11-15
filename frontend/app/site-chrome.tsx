@@ -1,6 +1,5 @@
 "use client";
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LanguageControl, useLanguage } from "./language";
 import ThemeControl from "./theme-control";
@@ -33,7 +32,7 @@ export function SiteHeader(_: {
     }}>
       {/* The wordmark names the link; the team logo beside it is decorative. */}
       <a className="brand" href="/" aria-current={pathname === "/" ? "page" : undefined}>
-        <Image src="/brand/logo-256.png" width={40} height={40} alt="" priority />
+        <img src="/brand/logo-96.webp" width={40} height={40} alt="" decoding="async" />
         <span>Moon Plan B</span>
       </a>
       <button className="nav-menu" ref={menuButton} type="button"

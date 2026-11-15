@@ -12,6 +12,12 @@ const publicTeamApi = origin === 'https://api.lunavigator.com';
 export default {
   ...(origin && !publicTeamApi ? { experimental: { proxyTimeout: producerTimeoutMs } } : {}),
   env: { NEXT_PUBLIC_LUNARNAV_PROXY: publicTeamApi ? '1' : '0' },
+  poweredByHeader: false,
+  // Pictures in public/ are not fingerprinted: cache them for 30 days and give a changed picture a new file name.
+  // (/_next/static is already immutable for a year.) deploy-notes/nginx-perf.conf sets the same policy at the proxy.
+  async headers() {
+    return [{ source: '/:folder(images|brand|team)/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=86400' }] }];
+  },
   async rewrites() {
     if (publicTeamApi) return { beforeFiles: [{ source: '/api/v1/openapi.json', destination: '/api-contract/lunarnav.json' }] };
     return { beforeFiles: origin ? [{ source: '/api/:path*', destination: `${origin}/api/:path*` }] : [] };
