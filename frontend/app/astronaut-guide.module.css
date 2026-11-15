@@ -1,147 +1,93 @@
-.launcher, .panel {
+/* The AI guide: a round accent button and a solid panel that scrolls inside. */
+.launcher {
   position: fixed;
+  z-index: 5;
   right: max(24px, env(safe-area-inset-right));
   bottom: max(24px, env(safe-area-inset-bottom));
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--line);
-}
-
-.launcher {
-  z-index: 5;
-  /* 48px wide keeps the 6:7 sprite frame and a full-size touch target. */
-  width: 48px;
+  display: grid;
+  place-items: center;
+  width: 56px;
   height: 56px;
   padding: 0;
   border: 0;
-  border-radius: .5rem;
-  background: transparent;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--button-text);
+  box-shadow: 0 4px 14px rgb(0 0 0 / .22);
+  cursor: pointer;
+  transition: background-color 150ms, transform 150ms;
 }
-.launcher picture, .launcher img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-.launcher img {
-  object-fit: cover;
-  object-position: left center;
-  filter: drop-shadow(0 1px 2px #17233380);
-}
-
-.helpLabel {
-  display: inline-block;
-  padding: .3rem;
-  border: 1px solid var(--line);
-  border-radius: .4rem;
-  background: var(--surface);
-  font-weight: 600;
+.launcher:hover { background: var(--button-hover); }
+.launcher:focus-visible { outline: 2px solid var(--earth); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) {
+  .launcher:hover { transform: translateY(-1px); }
 }
 
 .panel {
-  top: auto;
-  left: auto;
-  width: min(22rem, calc(100% - 48px));
-  max-height: calc(100dvh - 48px);
+  position: fixed;
+  inset: auto max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) auto;
+  width: min(26rem, calc(100% - 48px));
+  max-height: calc(100dvh - 32px);
   margin: 0;
-  padding: .8rem 1rem;
-  overflow: auto;
-  border-radius: .65rem;
-  box-shadow: 0 .5rem 2rem #0003;
-  line-height: 1.45;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 40px rgb(0 0 0 / .28);
+  font-size: var(--fs-16);
+  line-height: 1.5;
 }
+/* Set the layout only while open, so the closed popover stays hidden. */
+.panel:popover-open { display: flex; flex-direction: column; }
 
-/* Keep the face in view while the visitor uses the chat form lower in the panel. */
 .header {
-  position: sticky;
-  top: -.8rem;
-  z-index: 1;
   display: flex;
   align-items: center;
-  gap: .5rem;
-  background: var(--surface);
+  gap: 12px;
+  padding: 12px 8px 12px 16px;
+  border-bottom: 1px solid var(--line);
 }
-.header h2 { flex: 1; font-size: var(--fs-20); }
-.portrait {
-  position: relative;
-  flex: 0 0 60px;
-  height: 70px;
-  background: url("/images/guide-visor-rest.webp") left center / 100% 100% no-repeat;
+.header div { flex: 1; min-width: 0; }
+.header h2 { margin: 0; font-size: var(--fs-20); line-height: 1.2; }
+.header p { margin: 2px 0 0; color: var(--muted); font-size: var(--fs-12); }
+.close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-control);
+  color: var(--muted);
+  font-size: var(--fs-28);
+  line-height: 1;
 }
-.portrait::before, .portrait::after {
-  position: absolute;
-  inset: 0;
-  background: left center / auto 100% no-repeat;
-}
-.portrait::before {
-  content: "";
-  background-image: url("/images/guide-greet-still.webp");
-}
-.panel:has([data-guide-pending]) .portrait::before { visibility: hidden; }
-.panel:has([data-guide-pending]) .portrait::after {
-  content: "";
-  background-image: url("/images/guide-think-still.webp");
-}
-.close { min-width: 2.75rem; min-height: 2.75rem; color: var(--muted); font-size: var(--fs-28); }
-.greeting { margin-bottom: .65rem; color: var(--muted); }
-.sample { margin-bottom: .65rem; }
-.sample time, .sample small { display: block; color: var(--muted); overflow-wrap: anywhere; }
-.sample ul { margin-block: .45rem; }
-.sample a { text-decoration: underline; }
-.panel details { border-top: 1px solid var(--line); }
-.panel summary, .jump { padding: .65rem 0; min-height: 2.75rem; }
-.panel summary { font-weight: 600; }
-.panel details[name] > summary { scroll-margin-block-start: 5.5rem; }
-.panel details p { margin-bottom: .85rem; }
-.results { list-style: none; margin-bottom: .85rem; }
-.results li + li { margin-top: .5rem; }
-.results span { display: block; color: var(--muted); }
-.jump { display: inline-block; color: var(--earth); text-decoration: underline; }
+.close:hover { background: var(--surface-2); color: var(--text); }
 
-@media screen and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .launcher:not(:has(+ .panel:popover-open)) .animated {
-    animation: wave 9s infinite;
-  }
-  :global(body:has(#pause-sky-drift:checked)) .launcher .animated {
-    animation: none;
-    object-position: left center;
-  }
-  /* A hidden greeting finishes underneath the thinking pose, so it only plays on opening. */
-  :global(body:not(:has(#pause-sky-drift:checked))) .portrait::before {
-    background-image: url("/images/guide-greet-strip.webp");
-    animation: eyeFrames .88s steps(11, end) both;
-  }
-  :global(body:not(:has(#pause-sky-drift:checked))) .panel:has([data-guide-pending]) .portrait::after {
-    background-image: url("/images/guide-think-strip.webp");
-    animation: eyeFrames 2.76s steps(23, end) infinite;
-  }
-  @keyframes eyeFrames {
-    from { background-position-x: 0%; }
-    to { background-position-x: 100%; }
-  }
-  /* The first 2.27 seconds play the 34 rendered poses. The last pose is the resting figure. */
-  @keyframes wave {
-    0% { object-position: 0% center; animation-timing-function: steps(33, end); }
-    25.2%, 100% { object-position: 100% center; }
+.scroll { display: grid; gap: 12px; padding: 16px; overflow: auto; overscroll-behavior: contain; }
+.greeting { margin: 0; }
+
+.more { border-top: 1px solid var(--line); }
+.more > summary { min-height: 44px; padding: 10px 0; color: var(--muted); font-size: var(--fs-14); font-weight: 600; }
+.more p, .more ul { margin: 0 0 8px; font-size: var(--fs-14); }
+.more a { color: var(--earth); text-decoration: underline; }
+.sample ul, .results { list-style: none; padding: 0; }
+.sample small { display: block; color: var(--muted); font-size: var(--fs-12); overflow-wrap: anywhere; }
+.results li + li { margin-top: 8px; }
+.results span { display: block; color: var(--muted); }
+
+@media screen and (max-width: 999px) {
+  /* In the header bar, clear of the widest Menu label ("Danh mục"): it scrolls with the page, so it never covers a control. */
+  .launcher { position: absolute; top: 18px; right: 150px; bottom: auto; width: 40px; height: 40px; z-index: 7; box-shadow: none; }
+  .launcher svg { width: 20px; height: 20px; }
+  /* The open panel keeps 16px from every edge. */
+  .panel {
+    inset: auto max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) auto;
+    width: min(26rem, calc(100% - 32px));
   }
 }
 @media (forced-colors: active) {
-  .launcher { border: 1px solid ButtonText; background: ButtonFace; }
-  .launcher img { forced-color-adjust: none; }
+  .launcher { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
 }
-
 @media print {
   .launcher, .panel { display: none; }
-}
-
-@media screen and (max-width: 999px) {
-  /* In the header row and scrolling with the page: nothing on a phone is ever under it. */
-  /* In the header bar, clear of the widest Menu label ("Danh mục"): it scrolls with the page, so it never covers a control. */
-  .launcher { position: absolute; top: 14px; right: 150px; bottom: auto; width: 40px; height: 47px; z-index: 7; }
-  /* The open panel keeps 16px from every edge. */
-  .panel {
-    right: max(16px, env(safe-area-inset-right));
-    bottom: max(16px, env(safe-area-inset-bottom));
-    width: min(22rem, calc(100% - 32px));
-    max-height: calc(100dvh - 32px);
-  }
 }

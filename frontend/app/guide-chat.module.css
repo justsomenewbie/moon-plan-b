@@ -1,18 +1,40 @@
-.chat { overflow-wrap: anywhere; }
-.body { padding-bottom: .7rem; }
-.label, .body form label { display: block; margin-bottom: .4rem; font-weight: 600; }
-.label select, .body textarea { display: block; margin-block: .3rem .55rem; width: 100%; }
-.body textarea { resize: vertical; }
-.body .scope { border: 0; }
-.scope summary, .notice, .turn, .body [role=status] { font-size: var(--fs-14); }
-.scope ul { list-style: none; padding: 0; margin: 0 0 .65rem; }
-.scope li + li { margin-top: .4rem; }
-.turn { padding: .4rem 0; border-bottom: 1px solid var(--line); }
-.body .turn p { margin: .25rem 0; white-space: pre-line; }
-.turn a, .turn button { color: var(--earth); text-decoration: underline; }
-.body form { margin-top: .6rem; }
-.body .notice { color: var(--muted); margin: .35rem 0; }
-.buttons { display: flex; gap: .4rem; flex-wrap: wrap; }
-.buttons button { min-height: var(--control-h-compact); padding: 0 14px; border: 1px solid var(--input-border); border-radius: var(--radius-control); background-color: var(--surface); font-size: var(--fs-14); font-weight: 600; }
-.buttons button:hover:not(:disabled) { background-color: var(--surface-2); border-color: var(--text); }
-.buttons button:disabled { opacity: .5; }
+.chat, .body { display: grid; gap: 12px; overflow-wrap: anywhere; }
+.label { display: grid; gap: 4px; font-size: var(--fs-14); font-weight: 600; }
+.label select { width: 100%; min-height: 44px; }
+.notice { margin: 0; color: var(--muted); font-size: var(--fs-12); }
+.chat .notice + .notice { margin-top: 0; }
+
+/* Suggested questions: small chips that may wrap onto two lines. */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips button { min-height: 36px; height: auto; padding: 7px 14px; border-radius: 18px; text-align: start; white-space: normal; line-height: 1.35; }
+
+/* Messages: the visitor on the right in the accent colour, the guide on the left. */
+.log { display: grid; gap: 12px; max-width: 75ch; }
+.log:empty { display: none; }
+.user, .guide, .typing, .error { max-width: 88%; margin: 0; padding: 10px 14px; border-radius: 16px; }
+.log > * + * { margin-top: 0; }
+.user { justify-self: end; border-bottom-right-radius: 4px; background: var(--accent); color: var(--button-text); white-space: pre-line; }
+.guide { justify-self: start; border-bottom-left-radius: 4px; background: var(--surface-2); color: var(--text); }
+.guide p { margin: 0; white-space: pre-line; }
+.guide a, .guide button { display: inline-block; margin-top: 6px; margin-inline-end: 12px; color: var(--earth); font-size: var(--fs-14); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.meta { display: block; margin-top: 6px; color: var(--muted); font-size: var(--fs-12); }
+.typing { justify-self: start; display: inline-flex; align-items: center; gap: 5px; background: var(--surface-2); color: var(--muted); font-size: var(--fs-14); }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.typing span { margin-inline-start: 4px; }
+.error { justify-self: start; border: 1px solid var(--error-line); background: var(--error-bg); color: var(--text); font-size: var(--fs-14); }
+@media (prefers-reduced-motion: no-preference) {
+  .typing i { animation: typing 1.2s ease-in-out infinite; }
+  .typing i:nth-child(2) { animation-delay: .15s; }
+  .typing i:nth-child(3) { animation-delay: .3s; }
+}
+@keyframes typing { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
+
+/* One input row: the field grows to four lines, then scrolls. */
+.inputRow { display: flex; align-items: flex-end; gap: 8px; }
+.inputRow textarea { flex: 1; min-width: 0; min-height: 44px; max-height: 118px; padding: 9px 12px; line-height: 1.5; resize: none; }
+.inputRow button { flex-shrink: 0; }
+.tools { display: flex; flex-wrap: wrap; gap: 4px 8px; }
+
+.scope summary { min-height: 44px; padding: 10px 0; color: var(--muted); font-size: var(--fs-12); }
+.scope ul { list-style: none; margin: 8px 0 0; padding: 0; color: var(--muted); font-size: var(--fs-12); }
+.scope li + li { margin-top: 6px; }

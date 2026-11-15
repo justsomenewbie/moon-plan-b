@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { type KeyboardEvent, useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
 import { guideObservation, nextGuideUpdate, selectedModelSample } from "../lib/guide-observation";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
@@ -14,9 +14,11 @@ import { savedGuideContext, type GuideContext } from "../lib/api/guide-chat";
 
 const messages = {
   en: {
-    title: "Astronaut guide",
-    help: "Help",
-    close: "Close astronaut guide",
+    title: "AI guide",
+    subtitle: "Answers from the selected model data",
+    open: "Open AI guide",
+    close: "Close AI guide",
+    liveQuestion: "Which site has the most hours with both Sun and Earth this week?",
     greeting: "What can I help you explore?",
     suggested: "Browse suggested questions",
     measurementNote: "I don’t have live measurements from the Moon.",
@@ -36,9 +38,11 @@ const messages = {
     resultIntro: "The saved model gives these hours when both bodies are visible in each UTC week.",
   },
   vi: {
-    title: "Hướng dẫn của phi hành gia",
-    help: "Trợ giúp",
-    close: "Đóng hướng dẫn của phi hành gia",
+    title: "Trợ lý AI",
+    subtitle: "Trả lời dựa trên dữ liệu mô hình đang chọn",
+    open: "Mở trợ lý AI",
+    close: "Đóng trợ lý AI",
+    liveQuestion: "Tuần này địa điểm nào có nhiều giờ cùng thấy Mặt Trời và Trái Đất nhất?",
     greeting: "Bạn muốn mình giúp tìm hiểu điều gì?",
     suggested: "Xem câu hỏi gợi ý",
     measurementNote: "Mình chưa có số liệu đo trực tiếp từ Mặt Trăng.",
@@ -77,18 +81,12 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
   const { locale } = useLanguage();
   const copy = messages[locale];
   const id = useId();
-  const firstQuestion = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     // The native launcher can already have opened the popover while the page scripts were loading.
     if (document.getElementById(id)?.matches(":popover-open")) setOpen(true);
   }, [id]);
-  const [imageMode, setImageMode] = useState<"motion" | "still" | "text">("motion");
   const [now, setNow] = useState<number | null>(null);
-  function recoverImage(image: HTMLImageElement) {
-    if (image.currentSrc.endsWith("/guide-visor-wave.webp")) setImageMode("still");
-    else if (image.currentSrc.endsWith("/guide-visor-rest.webp")) setImageMode("text");
-  }
   const [guideChoice, setGuideChoice] = useState<GuideScope | null>(null);
   const onSavedRoute = useSyncExternalStore(subscribeToLocation, savedRoute, () => false);
   const defaultScope = onSavedRoute ? "saved" : pair ? "pair" : workspace ? "workspace" : "saved";
@@ -142,66 +140,50 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
       panel.hidePopover();
     }
   }
+  // Two answers are written by the team; the last question goes to the language model.
+  const suggestions = [...copy.questions.map(([question, answer]) => ({ question, answer })), { question: copy.liveQuestion }];
   return <>
-    <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.title} title={copy.title}
+    <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.open} title={copy.open}
       onKeyDown={dismissOnEscape}>
-      {imageMode === "text" ? <span className={styles.helpLabel}>{copy.help}</span> : <picture>
-        {imageMode === "motion" && <source media="screen and (prefers-reduced-motion: no-preference) and (forced-colors: none)"
-          srcSet="/images/guide-visor-wave.webp" />}
-        <img className={imageMode === "motion" ? styles.animated : undefined} src="/images/guide-visor-rest.webp"
-          alt="" width="60" height="70" onError={event => recoverImage(event.currentTarget)}
-          ref={image => {
-            // The browser can finish a failed image request before hydration attaches onError.
-            if (image?.complete && !image.naturalWidth) recoverImage(image);
-          }} />
-      </picture>}
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="currentColor">
+        <path d="M10 3.5l1.7 4.6a2 2 0 0 0 1.2 1.2L17.5 11l-4.6 1.7a2 2 0 0 0-1.2 1.2L10 18.5l-1.7-4.6a2 2 0 0 0-1.2-1.2L2.5 11l4.6-1.7a2 2 0 0 0 1.2-1.2z" />
+        <path d="M18.5 14.5l.8 2.2a1 1 0 0 0 .6.6l2.1.7-2.1.8a1 1 0 0 0-.6.6l-.8 2.1-.8-2.1a1 1 0 0 0-.6-.6l-2.1-.8 2.1-.7a1 1 0 0 0 .6-.6z" />
+      </svg>
     </button>
     <aside id={id} popover="auto" onKeyDown={dismissOnEscape} onToggle={event => {
       const opening = event.newState === "open";
-      if (opening) event.currentTarget.scrollTop = 0;
       setOpen(opening);
     }} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
-        {open && <span className={styles.portrait} aria-hidden="true" />}
-        <h2 id={id + "-title"}>{copy.title}</h2>
+        <div><h2 id={id + "-title"}>{copy.title}</h2><p>{copy.subtitle}</p></div>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
-      <p className={styles.greeting}>{copy.greeting}<br />{copy.measurementNote}</p>
-      {open && <button type="button" className={styles.jump} onClick={() => {
-        firstQuestion.current?.focus({ preventScroll: true });
-        firstQuestion.current?.scrollIntoView({ block: "start" });
-      }}>{copy.suggested}</button>}
-      {open && <details open={Boolean(reading)}>
-        <summary>{copy.currentQuestion}</summary>
-        {reading ? <section className={styles.sample}>
-          <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
-          <time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time>
-          <ul>{siteStatuses.slice(0, 2)}</ul>
-          {siteStatuses.length > 2 && <details>
-            <summary>{copy.otherSites} ({siteStatuses.length - 2})</summary>
-            <ul>{siteStatuses.slice(2)}</ul>
-          </details>}
-          <a href={comparisonPath + sourceAnchor} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a>
-          <small>{reading.source}</small>
-        </section> : <p>{copy.unavailable}</p>}
-      </details>}
-      {open && <GuideChat planningSource={planningSource} scope={scope} savedPlanning={scope === "saved" && (guideChoice === "saved" || onSavedRoute)} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} />}
-      {copy.questions.map(([question, answer], index) =>
-        <details key={index} name={id}>
-          <summary ref={index === 0 ? firstQuestion : undefined}>{question}</summary>
-          <p>{answer}</p>
-        </details>
-      )}
-      {rows.length > 0 && <details name={id}>
-        <summary>{copy.resultQuestion}</summary>
-        <p>{copy.resultIntro}</p>
-        <ul className={styles.results}>{rows.map(({ week, site }) =>
-          <li key={week.startUtc + site.id}><strong>{site.name} · {site.overlap.duration_h} h</strong>
-            <span>{week.startUtc.slice(0, 10)} → {new Date(Date.parse(week.endUtc) - 1).toISOString().slice(0, 10)} UTC</span>
-          </li>
-        )}</ul>
-      </details>}
-      <a className={styles.jump} href={comparisonPath + "#observed-week"} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.saved}</a>
+      <div className={styles.scroll}>
+        <p className={styles.greeting}>{copy.greeting} {copy.measurementNote}</p>
+        {open && <GuideChat planningSource={planningSource} scope={scope} savedPlanning={scope === "saved" && (guideChoice === "saved" || onSavedRoute)} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} suggestions={suggestions} />}
+        {open && <details className={styles.more}>
+          <summary>{copy.currentQuestion}</summary>
+          {reading ? <section className={styles.sample}>
+            <p>{reading.saved ? copy.savedSample : copy.terrainSample}</p>
+            <ul>{siteStatuses.slice(0, 2)}</ul>
+            {siteStatuses.length > 2 && <details>
+              <summary>{copy.otherSites} ({siteStatuses.length - 2})</summary>
+              <ul>{siteStatuses.slice(2)}</ul>
+            </details>}
+            <small><time dateTime={new Date(reading.time).toISOString()}>{new Date(reading.time).toISOString().slice(0, 19).replace("T", " ")} UTC</time> · {reading.source} · <a href={comparisonPath + sourceAnchor} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.source}</a></small>
+          </section> : <p>{copy.unavailable}</p>}
+        </details>}
+        {rows.length > 0 && <details className={styles.more}>
+          <summary>{copy.resultQuestion}</summary>
+          <p>{copy.resultIntro}</p>
+          <ul className={styles.results}>{rows.map(({ week, site }) =>
+            <li key={week.startUtc + site.id}><strong>{site.name} · {site.overlap.duration_h} h</strong>
+              <span>{week.startUtc.slice(0, 10)} → {new Date(Date.parse(week.endUtc) - 1).toISOString().slice(0, 10)} UTC</span>
+            </li>
+          )}</ul>
+          <a href={comparisonPath + "#observed-week"} onClick={event => event.currentTarget.closest("aside")?.hidePopover()}>{copy.saved}</a>
+        </details>}
+      </div>
     </aside>
   </>;
 }
