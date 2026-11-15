@@ -5,6 +5,7 @@ import "./night-sky.css";
 import "./mobile.css";
 import Providers from "./providers";
 import { pageMetadata, siteDescription, siteName, siteUrl } from "../lib/seo";
+import ThreeBackdrop from "./three/three-backdrop";
 
 export const metadata: Metadata = {
   title: { default: "Moon Plan B — Sun & Earth comparison", template: "%s — Moon Plan B" },
@@ -40,5 +41,5 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", displ
 const themeScript = `(function(){var t=null;try{t=localStorage.getItem("moon-plan-b-theme")}catch(e){}var h=new Date().getHours();document.documentElement.dataset.theme=t==="light"||t==="dark"?t:h>=6&&h<18?"light":"dark";addEventListener("load",function(){document.documentElement.dataset.sky="1"})})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" className={`${body.variable} ${heading.variable} ${mono.variable}`} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><Providers>{children}</Providers></body></html>;
+  return <html lang="en" className={`${body.variable} ${heading.variable} ${mono.variable}`} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><Providers>{children}</Providers><ThreeBackdrop /></body></html>;
 }
