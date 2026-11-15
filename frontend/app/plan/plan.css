@@ -10,7 +10,7 @@
 @media screen {
   .request-fields.catalog-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
   .catalog-fields .field, .catalog-fields button { margin-bottom: 0; }
-  .catalog-fields .field input, .catalog-fields .field select { height: 46px; min-width: 0; }
+  .catalog-fields .field input, .catalog-fields .field select { min-width: 0; }
 }
 @media screen and (min-width: 620px) {
   .request-fields.catalog-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: .35rem; }
@@ -39,8 +39,6 @@
 .map-legend span + span b { color: var(--earth); }
 .plan-map-inspector { display: grid; align-content: start; gap: .6rem; min-width: 0; overflow-wrap: anywhere; }
 .plan-map-inspector select { width: 100%; min-width: 0; }
-.plan-map-zoom button { min-height: 44px; min-width: 44px; border: 1px solid var(--input-border); border-radius: var(--radius-sm); }
-.plan-map-zoom button:disabled { opacity: .45; }
 @media (max-width: 700px) { .plan-map-layout { grid-template-columns: minmax(0, 1fr); gap: .75rem; } }
 
 .plan-regional-view { max-width: 32rem; margin-inline: auto; }
@@ -67,7 +65,6 @@
 
 .plan-sun-layer { margin-block: .6rem .9rem; }
 .plan-sun-layer label { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; cursor: pointer; }
-.plan-sun-layer input { width: 1.1rem; height: 1.1rem; }
 .plan-sun-legend { font-size: var(--fs-14); }
 .plan-sun-legend ul { display: flex; flex-wrap: wrap; gap: .4rem .85rem; margin-top: .3rem; }
 .plan-sun-legend li { display: inline-flex; align-items: center; gap: .35rem; }

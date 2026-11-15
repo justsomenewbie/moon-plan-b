@@ -132,3 +132,8 @@
 @media print {
   .launcher, .panel { display: none; }
 }
+
+@media screen and (max-width: 760px) {
+  /* In the header row and scrolling with the page: nothing on a phone is ever under it. */
+  .launcher { position: absolute; top: 4px; right: 148px; bottom: auto; }
+}
