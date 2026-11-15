@@ -9,7 +9,9 @@ const rateLimit = createRelayRateLimit();
 function forward(request: Request) {
   if (process.env.NEXT_PUBLIC_LUNARNAV_PROXY !== "1") return new Response(null, { status: 404 });
   const onVercel = process.env.VERCEL === "1" && (process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview");
-  return rateLimit(request, onVercel) ?? proxyLunarnav(request, process.env.LUNARNAV_API_KEY);
+  // Self-hosted behind nginx: RELAY_CLIENT_IP_HEADER=x-real-ip gives each visitor its own budget.
+  const source = onVercel || (process.env.RELAY_CLIENT_IP_HEADER?.trim().toLowerCase() ?? false);
+  return rateLimit(request, source) ?? proxyLunarnav(request, process.env.LUNARNAV_API_KEY);
 }
 
 export { forward as GET, forward as POST };

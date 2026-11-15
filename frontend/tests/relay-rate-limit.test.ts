@@ -13,7 +13,7 @@ function request(method: "GET" | "POST", address?: string, extra: Record<string,
   headers.set("content-type", "application/json");
   return new Request(publicOrigin + "/api/v1/compare", { method, headers, body: "{}" });
 }
-function allowN(limit: ReturnType<typeof createRelayRateLimit>, req: Request, n: number, vercel = true) {
+function allowN(limit: ReturnType<typeof createRelayRateLimit>, req: Request, n: number, vercel: boolean | string = true) {
   for (let i = 0; i < n; i++) assert.equal(limit(req, vercel), undefined);
 }
 
@@ -90,4 +90,13 @@ test("route rejects before upstream; outside hosted Vercel request headers canno
   assert.equal((await POST(request("POST", "192.0.2.13"))).status, 200);
   assert.equal((await GET(request("GET", "192.0.2.13"))).status, 200);
   assert.equal(calls, 12);
+});
+
+test("a self-hosted proxy header gives each visitor its own budget and ignores the Vercel header", () => {
+  const limit = createRelayRateLimit();
+  const viaNginx = (ip: string) => request("POST", undefined, { "x-real-ip": ip, "x-vercel-forwarded-for": "198.51.100.9" });
+  allowN(limit, viaNginx("203.0.113.20"), 10, "x-real-ip");
+  assert.equal(limit(viaNginx("203.0.113.20"), "x-real-ip")?.status, 429);
+  assert.equal(limit(viaNginx("203.0.113.21"), "x-real-ip"), undefined);
+  assert.equal(limit(request("POST", undefined, { "x-real-ip": "not-an-ip" }), "x-real-ip"), undefined); // shared fallback
 });

@@ -7,11 +7,12 @@ const maxPosts = 10;
 const maxClients = 4096;
 type Budget = { expires: number; requests: number; posts: number };
 
-// Vercel supplies this header on hosted requests. Other hosts and local development
-// have no trusted client identity and use a single shared budget.
-function clientAddress(headers: Headers, onVercel: boolean) {
-  if (!onVercel) return null;
-  const value = headers.get("x-vercel-forwarded-for");
+// Vercel supplies x-vercel-forwarded-for on hosted requests. A self-hosted server behind a
+// reverse proxy that overwrites one header with the client address (for example nginx setting
+// X-Real-IP) passes that header name instead. Without either, requests share a single budget.
+function clientAddress(headers: Headers, source: boolean | string) {
+  if (source === false || source === "") return null;
+  const value = headers.get(source === true ? "x-vercel-forwarded-for" : source);
   if (!value || value.length > 45 || value.includes("%")) return null;
   const version = isIP(value);
   if (version === 4) return value;
@@ -25,7 +26,7 @@ export function createRelayRateLimit(now: () => number = Date.now, capacity = ma
   let overflow: Budget | undefined;
   const fresh = (time: number): Budget => ({ expires: time + windowMs, requests: 0, posts: 0 });
 
-  return function limit(request: Request, onVercel: boolean): Response | undefined {
+  return function limit(request: Request, onVercel: boolean | string): Response | undefined {
     const time = now();
     // A window's expiry never changes, so insertion order is also expiration order.
     for (const [id, budget] of clients) {
