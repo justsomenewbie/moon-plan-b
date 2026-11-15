@@ -574,6 +574,8 @@ select {
 .theme-auto[aria-pressed="true"] { background-color: var(--accent); border-color: var(--accent); color: var(--button-text); }
 @media print { .app-header { position: static; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; } .header-panel { display: none; } }
 @media print { .app-header::before, .header-panel::before { display: none; } }
+/* Printed/PDF reports: drop action buttons (the JSON download is a session-only blob: link). Keep the plain HTTPS link to the observation. */
+@media print { .terrain-print .button, .terrain-print button, .control-actions, .share-comparison { display: none !important; } }
 /* Text that sits on the bare glass uses the main text colour with a faint shadow as a legibility aid. */
 .app-header nav a:not(.active-link) { color: var(--text); text-shadow: var(--glass-text-shadow); }
 .app-header .brand { text-shadow: var(--glass-text-shadow); }
