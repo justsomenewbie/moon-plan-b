@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { askGuide, GuideRequestError, type GuideErrorKey, type GuideAction, type GuideContext, type GuideReply } from "../lib/api/guide-chat";
 import { planningIntent, type PlanningIntent } from "../lib/guide-planning";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
@@ -16,8 +16,8 @@ const copy = {
     kinds: { saved: "Saved team model", terrain: "Terrain model", scenario: "Supplied scenario", synthetic: "Simulated example", unavailable: "No shareable observation summary" },
     summary: "See UTC ranges and hours", sourceId: "Source", privacy: "Planning questions about the current workspace, displayed pair and saved archives use data on your device. The live planner requests model data from the team API. For other questions, this site's server receives your question, the previous question if any, and the selected summary. When this server uses OpenAI, it sends your question, the previous question and the site names and dates to OpenAI. Your file stays on your device.",
     hours: "Hours visible · Sun / Earth / both", unknown: "unknown", invalid: "Edit the question and send it again.", prompt: "Your question", send: "Send", cancel: "Cancel", reset: "Clear chat", retry: "Try again",
-    waiting: "The AI guide is typing…", failed: "The guide couldn’t answer. You can try again or use the questions below.",
-    offline: "The language model is unavailable. You can still enter your travel dates and ask which site has the most hours with both the Sun and Earth visible.", slow: "The guide timed out. Try again.", limited: "The guide is busy. Please try again shortly.",
+    waiting: "The AI guide is typing…", failed: "The guide couldn’t answer just now.",
+    offline: "The language model is unavailable. You can still enter your travel dates and ask which site has the most hours with both the Sun and Earth visible.", slow: "The guide timed out. Try again.", limited: "Too many questions. Wait a few seconds, then try again.",
     openSummary: "Open visibility summary", openObservations: "Open site observations", openPlanner: "Open planner",
     you: "You", guide: "AI guide", actions: { workspace: "Open workspace", saved: "Open saved result", sources: "View sources", compareSites: "Compare sites", compareDates: "Compare dates" },
   },
@@ -26,8 +26,8 @@ const copy = {
     kinds: { saved: "Kết quả mô hình đã lưu", terrain: "Mô hình địa hình", scenario: "Kịch bản đã tải", synthetic: "Dữ liệu mô phỏng", unavailable: "Chưa có dữ liệu quan sát phù hợp để gửi" },
     summary: "Xem khoảng thời gian UTC và số giờ", sourceId: "Nguồn", privacy: "Câu hỏi lập kế hoạch về dữ liệu đang xem, cặp địa điểm đang so sánh và các bản đã lưu dùng dữ liệu trên thiết bị của bạn. Công cụ lập kế hoạch trực tuyến truy vấn API của nhóm. Với các câu hỏi khác, máy chủ của trang nhận câu hỏi hiện tại, câu hỏi ngay trước đó (nếu có) và phần dữ liệu tóm tắt đã chọn. Khi dùng OpenAI, máy chủ gửi cho OpenAI câu hỏi hiện tại, câu hỏi trước đó, tên địa điểm và khoảng ngày. Tệp gốc vẫn nằm trên thiết bị của bạn.",
     hours: "Số giờ nhìn thấy · Mặt Trời / Trái Đất / cả hai", unknown: "chưa xác định", invalid: "Hãy sửa câu hỏi rồi gửi lại.", prompt: "Câu hỏi của bạn", send: "Gửi", cancel: "Hủy", reset: "Xóa cuộc trò chuyện", retry: "Thử lại",
-    waiting: "Trợ lý AI đang trả lời…", failed: "Chưa có câu trả lời. Bạn có thể thử lại hoặc chọn một câu hỏi bên dưới.",
-    offline: "Mô hình ngôn ngữ hiện chưa hoạt động. Bạn vẫn có thể nhập khoảng ngày và hỏi địa điểm nào có nhiều giờ cùng thấy Mặt Trời và Trái Đất nhất.", slow: "Đã hết thời gian chờ. Hãy thử lại.", limited: "Phi hành gia đang bận. Bạn vui lòng thử lại sau.",
+    waiting: "Trợ lý AI đang trả lời…", failed: "Trợ lý chưa trả lời được lúc này.",
+    offline: "Mô hình ngôn ngữ hiện chưa hoạt động. Bạn vẫn có thể nhập khoảng ngày và hỏi địa điểm nào có nhiều giờ cùng thấy Mặt Trời và Trái Đất nhất.", slow: "Đã hết thời gian chờ. Hãy thử lại.", limited: "Bạn hỏi hơi nhanh. Hãy đợi vài giây rồi thử lại.",
     openSummary: "Mở tóm tắt thời gian quan sát", openObservations: "Mở kết quả quan sát địa điểm", openPlanner: "Mở công cụ lập kế hoạch",
     you: "Bạn", guide: "Trợ lý AI", actions: { workspace: "Mở phần quan sát", saved: "Mở kết quả đã lưu", sources: "Xem nguồn dữ liệu", compareSites: "So sánh hai địa điểm", compareDates: "So sánh hai khoảng thời gian" },
   },
@@ -37,10 +37,39 @@ export type GuideDestination = string | (() => void);
 export type GuideActions = Partial<Record<GuideAction, GuideDestination>>;
 export type GuideScope = "saved" | "workspace" | "pair";
 export type GuideSuggestion = { question: string; answer?: string };
-type Props = { suggestions?: GuideSuggestion[]; planningSource?: PlanningSource; scope: GuideScope; savedPlanning: boolean; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; workspaceEvidence?: TerrainSummary | null; pair?: DisplayedPair; savedActions: GuideActions; workspaceActions?: GuideActions };
+
+// The last conversation stays in this tab's sessionStorage, so it survives page navigation until "New chat".
+const HISTORY_KEY = "moon-plan-b-guide-chat";
+export function clearGuideHistory() {
+  try { sessionStorage.removeItem(HISTORY_KEY); } catch { /* The chat still clears when storage is unavailable. */ }
+}
+function storedTurns(): Turn[] {
+  try {
+    const value: unknown = JSON.parse(sessionStorage.getItem(HISTORY_KEY) ?? "[]");
+    if (!Array.isArray(value)) return [];
+    return value.filter((turn): turn is Turn => typeof turn === "object" && turn !== null &&
+      typeof (turn as Turn).question === "string" && typeof (turn as Turn).answer === "string").slice(-4)
+      .map(turn => ({ question: turn.question, answer: turn.answer, action: null, href: typeof turn.href === "string" && turn.href.startsWith("/") ? turn.href : undefined, canned: turn.canned === true }));
+  } catch { return []; }
+}
+
+// Presentation only: one paragraph per line, site names and figures in bold, timestamps shortened,
+// and the per-row source ids dropped because one "Source" line follows the answer.
+function formatAnswer(text: string, sites: string[]): ReactNode {
+  const names = [...new Set(sites.flatMap(site => [site, site.split(" · ")[0]]))].filter(Boolean)
+    .sort((a, b) => b.length - a.length).map(name => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const strong = new RegExp(`(${[...names, "\\d+(?:[.,]\\d+)?\\s?(?:h|giờ|%|°)(?![\\p{L}\\d])"].join("|")})`, "gu");
+  return text.split("\n").map(line => line
+      .replace(/\s*·\s*(?:Source|Nguồn)\s*·\s*[\w.-]+/g, "")
+      .replace(/(\d{4}-\d{2}-\d{2})T00:00:00Z/g, "$1")
+      .replace(/(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}):00Z/g, "$1 $2 UTC").trim())
+    .filter(Boolean).map((line, i) => <p key={i}>{line.split(strong).map((part, j) => j % 2 ? <strong key={j}>{part}</strong> : part)}</p>);
+}
+
+type Props = { suggestions?: GuideSuggestion[]; epoch?: number; planningSource?: PlanningSource; scope: GuideScope; savedPlanning: boolean; onChoice: (choice: GuideScope) => void; saved: GuideContext; workspace?: GuideContext; workspaceEvidence?: TerrainSummary | null; pair?: DisplayedPair; savedActions: GuideActions; workspaceActions?: GuideActions };
 type Turn = GuideReply & { question: string; plan?: PlanningIntent; href?: string; canned?: boolean } & Pick<PlanningAnswer, "siteChoices" | "choiceSource">;
 
-export default function GuideChat({ suggestions = [], planningSource, scope, savedPlanning, onChoice, saved, workspace, workspaceEvidence, pair, savedActions, workspaceActions }: Props) {
+export default function GuideChat({ suggestions = [], epoch = 0, planningSource, scope, savedPlanning, onChoice, saved, workspace, workspaceEvidence, pair, savedActions, workspaceActions }: Props) {
   const { locale } = useLanguage();
   const labels = copy[locale];
   const context = (scope === "pair" ? pair?.context : scope === "workspace" ? workspace : saved) ?? saved;
@@ -50,7 +79,7 @@ export default function GuideChat({ suggestions = [], planningSource, scope, sav
   // A replacement export can retain the same run, totals and site names with different windows.
   if (lastEvidence.evidence !== evidence) setLastEvidence({ evidence, revision: lastEvidence.revision + 1 });
   const source = planningSource ?? (savedPlanning ? "saved" : undefined);
-  const conversationKey = [locale, scope, lastEvidence.revision, JSON.stringify(context), typeof source === "object" ? source.runId : source].join("|");
+  const conversationKey = [epoch, locale, scope, lastEvidence.revision, JSON.stringify(context), typeof source === "object" ? source.runId : source].join("|");
   const actions = scope === "saved" ? savedActions : scope === "pair" ? { ...workspaceActions, workspace: "#terrain-pair" } : workspaceActions ?? {};
   return <section className={styles.chat} aria-label={labels.title}>
       {typeof source === "string" && <p className={styles.notice}>{locale === "en" ? "Travel planning uses saved run " : "Câu hỏi lập kế hoạch dùng lần chạy đã lưu "}{source === "saved" ? "B" : "B2"}.</p>}
@@ -77,7 +106,9 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
   const { locale } = useLanguage();
   const labels = copy[locale];
   const input = useId();
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurns] = useState<Turn[]>(storedTurns);
+  // The question being sent, or the one that failed and can be retried.
+  const [pending, setPending] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [error, setError] = useState<GuideErrorKey | null>(null);
   const [busy, setBusy] = useState(false);
@@ -85,6 +116,12 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
   const field = useRef<HTMLTextAreaElement>(null);
   const log = useRef<HTMLDivElement>(null);
   useEffect(() => () => request.current?.abort(), []);
+  // On a desktop the field is ready to type in as soon as the panel opens; a phone keeps its keyboard down.
+  useEffect(() => { if (window.matchMedia("(min-width: 1000px)").matches) field.current?.focus({ preventScroll: true }); }, []);
+  useEffect(() => {
+    try { sessionStorage.setItem(HISTORY_KEY, JSON.stringify(turns.map(({ question, answer, href, canned }) => ({ question, answer, href, canned })))); }
+    catch { /* The chat works without storage. */ }
+  }, [turns]);
   // Keep the newest message in view, and let the field grow to four lines.
   useEffect(() => { log.current?.lastElementChild?.scrollIntoView({ block: "nearest" }); }, [turns, busy, error]);
   useEffect(() => {
@@ -98,6 +135,7 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
     request.current?.abort();
     request.current = null;
     setBusy(false);
+    setPending(null);
   }
   async function send(override?: string) {
     const text = (override ?? question).trim();
@@ -106,6 +144,7 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
     request.current = controller;
     setBusy(true);
     setError(null);
+    setPending(text);
     try {
       const previous = turns.at(-1);
       const plan = planningIntent(text, previous?.plan, previous?.siteChoices);
@@ -115,6 +154,7 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
       else reply = await askGuide({ locale, question: text, previousQuestion: previous?.question, context }, controller.signal);
       if (request.current !== controller || controller.signal.aborted) return;
       setTurns(old => [...old.slice(-3), { question: text, ...reply }]);
+      setPending(null);
       setQuestion("");
     } catch (cause) {
       if (request.current === controller && !controller.signal.aborted) setError(cause instanceof GuideRequestError ? cause.reason : "failed");
@@ -122,9 +162,9 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   }
-  const sourceLine = context.rows.length > 0 ? `${labels.sourceId} · ${context.rows[0].source} · ${context.rows[0].from} → ${context.rows[0].to} UTC` : "";
+  const sourceLine = context.rows.length > 0 ? `${labels.sourceId}: ${context.rows[0].source}` : "";
   return <div className={styles.body} data-guide-pending={busy || undefined}>
-    {turns.length === 0 && suggestions.length > 0 && <div className={styles.chips} role="group" aria-label={labels.suggested}>
+    {turns.length === 0 && !pending && suggestions.length > 0 && <div className={styles.chips} role="group" aria-label={labels.suggested}>
       {suggestions.map(item => <button type="button" className="chip" key={item.question} disabled={busy} onClick={() => {
         if (item.answer) { setError(null); setTurns([{ question: item.question, answer: item.answer, action: null, canned: true }]); }
         else void send(item.question);
@@ -134,7 +174,7 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
       const dest = turn.action && actions[turn.action];
       return <Fragment key={i}>
         <p className={styles.user}><span className="sr-only">{labels.you}: </span>{turn.question}</p>
-        <div className={styles.guide}><p><span className="sr-only">{labels.guide}: </span>{turn.answer}</p>
+        <div className={styles.guide}><span className="sr-only">{labels.guide}: </span>{formatAnswer(turn.answer, context.rows.map(row => row.site))}
           {turn.href && <a href={turn.href}>{turn.href.endsWith("#workspace") ? labels.openSummary : turn.href.startsWith("/compare?") ? labels.openObservations : labels.openPlanner}</a>}
           {turn.action && dest && (typeof dest === "string" ? <a href={dest} onClick={e => e.currentTarget.closest("aside")?.hidePopover()}>{labels.actions[turn.action]}</a>
             : <button type="button" onClick={e => { e.currentTarget.closest("aside")?.hidePopover(); dest(); }}>{labels.actions[turn.action]}</button>)}
@@ -142,8 +182,11 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
         </div>
       </Fragment>;
     })}
+      {pending && <p className={styles.user}><span className="sr-only">{labels.you}: </span>{pending}</p>}
       {busy && <p className={styles.typing}><i /><i /><i /><span>{labels.waiting}</span></p>}
-      {!busy && error && <p className={styles.error}>{labels[error]}</p>}
+      {!busy && error && <div className={styles.error}><p>{labels[error]}</p>
+        {pending && error !== "invalid" && <button type="button" onClick={() => void send(pending)}>{labels.retry}</button>}
+      </div>}
     </div>
     <form className={styles.inputRow} onSubmit={e => { e.preventDefault(); void send(); }}>
       <label className="sr-only" htmlFor={input}>{labels.prompt}</label>
@@ -154,12 +197,9 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
           // Enter sends; Shift+Enter adds a line. Leave the key alone while an input method is composing.
           if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send(); }
         }} />
-      <button type="submit" className="btn btn-primary btn-compact" disabled={busy || !question.trim()}>{error ? labels.retry : labels.send}</button>
+      <button type="submit" className="btn btn-primary btn-compact" disabled={busy || !question.trim()}>{labels.send}</button>
     </form>
-    {(busy || turns.length > 0) && <div className={styles.tools}>
-      {busy && <button type="button" className="btn-ghost" onClick={cancel}>{labels.cancel}</button>}
-      {turns.length > 0 && <button type="button" className="btn-ghost" onClick={() => { cancel(); setTurns([]); setQuestion(""); setError(null); }}>{labels.reset}</button>}
-    </div>}
+    {busy && <div className={styles.tools}><button type="button" className="btn-ghost" onClick={cancel}>{labels.cancel}</button></div>}
     <p role="status" className="sr-only">{busy ? labels.waiting : error ? labels[error] : ""}</p>
     <details className={styles.scope}><summary>{labels.about}</summary>
       <p className={styles.notice} id={input + "-notice"}>{labels.privacy}</p>

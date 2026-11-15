@@ -9,7 +9,7 @@ import { useLanguage } from "./language";
 import styles from "./astronaut-guide.module.css";
 import type { PlanningSource } from "../lib/api/guide-planning";
 import type { DisplayedPair } from "./terrain-pair";
-import GuideChat, { type GuideActions, type GuideScope } from "./guide-chat";
+import GuideChat, { clearGuideHistory, type GuideActions, type GuideScope } from "./guide-chat";
 import { savedGuideContext, type GuideContext } from "../lib/api/guide-chat";
 
 const messages = {
@@ -18,6 +18,7 @@ const messages = {
     subtitle: "Answers from the selected model data",
     open: "Open AI guide",
     close: "Close AI guide",
+    newChat: "New chat",
     liveQuestion: "Which site has the most hours with both Sun and Earth this week?",
     greeting: "What can I help you explore?",
     suggested: "Browse suggested questions",
@@ -42,6 +43,7 @@ const messages = {
     subtitle: "Trả lời dựa trên dữ liệu mô hình đang chọn",
     open: "Mở trợ lý AI",
     close: "Đóng trợ lý AI",
+    newChat: "Trò chuyện mới",
     liveQuestion: "Tuần này địa điểm nào có nhiều giờ cùng thấy Mặt Trời và Trái Đất nhất?",
     greeting: "Bạn muốn mình giúp tìm hiểu điều gì?",
     suggested: "Xem câu hỏi gợi ý",
@@ -87,6 +89,8 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
     if (document.getElementById(id)?.matches(":popover-open")) setOpen(true);
   }, [id]);
   const [now, setNow] = useState<number | null>(null);
+  // Changing the epoch remounts the conversation, which is how "New chat" clears it.
+  const [chatEpoch, setChatEpoch] = useState(0);
   const [guideChoice, setGuideChoice] = useState<GuideScope | null>(null);
   const onSavedRoute = useSyncExternalStore(subscribeToLocation, savedRoute, () => false);
   const defaultScope = onSavedRoute ? "saved" : pair ? "pair" : workspace ? "workspace" : "saved";
@@ -156,11 +160,12 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
     }} className={styles.panel} aria-labelledby={id + "-title"}>
       <header className={styles.header}>
         <div><h2 id={id + "-title"}>{copy.title}</h2><p>{copy.subtitle}</p></div>
+        <button type="button" className={styles.newChat} onClick={() => { clearGuideHistory(); setChatEpoch(epoch => epoch + 1); }}>{copy.newChat}</button>
         <button type="button" className={styles.close} popoverTarget={id} popoverTargetAction="hide" aria-label={copy.close}>×</button>
       </header>
       <div className={styles.scroll}>
-        <p className={styles.greeting}>{copy.greeting} {copy.measurementNote}</p>
-        {open && <GuideChat planningSource={planningSource} scope={scope} savedPlanning={scope === "saved" && (guideChoice === "saved" || onSavedRoute)} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} suggestions={suggestions} />}
+        <p className={styles.greeting}>{copy.greeting}</p>
+        {open && <GuideChat planningSource={planningSource} scope={scope} savedPlanning={scope === "saved" && (guideChoice === "saved" || onSavedRoute)} onChoice={setGuideChoice} saved={savedGuideContext(savedResult)} workspace={workspace} workspaceEvidence={workspaceEvidence} pair={pair} savedActions={savedActions} workspaceActions={workspaceActions} suggestions={suggestions} epoch={chatEpoch} />}
         {open && <details className={styles.more}>
           <summary>{copy.currentQuestion}</summary>
           {reading ? <section className={styles.sample}>

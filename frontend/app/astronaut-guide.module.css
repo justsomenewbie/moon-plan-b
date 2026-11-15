@@ -52,6 +52,8 @@
 .header div { flex: 1; min-width: 0; }
 .header h2 { margin: 0; font-size: var(--fs-20); line-height: 1.2; }
 .header p { margin: 2px 0 0; color: var(--muted); font-size: var(--fs-12); }
+.newChat { flex-shrink: 0; min-height: 44px; padding: 0 8px; border-radius: var(--radius-control); color: var(--earth); font-size: var(--fs-14); font-weight: 600; white-space: nowrap; }
+.newChat:hover { background: var(--surface-2); }
 .close {
   flex-shrink: 0;
   width: 44px;
@@ -80,10 +82,11 @@
   .launcher { position: absolute; top: 18px; right: 150px; bottom: auto; width: 40px; height: 40px; z-index: 7; box-shadow: none; }
   .launcher svg { width: 20px; height: 20px; }
   /* The open panel keeps 16px from every edge. */
-  .panel {
-    inset: auto max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) auto;
-    width: min(26rem, calc(100% - 32px));
-  }
+  .panel { inset: auto max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) auto; width: min(26rem, calc(100% - 32px)); }
+}
+@media screen and (max-width: 760px) {
+  /* On a phone the panel spans the screen with a 16px inset; 100dvh keeps the input above the keyboard. */
+  .panel { width: auto; left: max(16px, env(safe-area-inset-left)); }
 }
 @media (forced-colors: active) {
   .launcher { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
