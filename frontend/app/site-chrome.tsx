@@ -37,7 +37,8 @@ export function SiteHeader(_: {
       </a>
       <button className="nav-menu" ref={menuButton} type="button"
         aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{t("Menu")}</button>
-      <nav id="main-navigation" aria-label={t("Main")}>
+      <div className="header-panel" id="main-navigation">
+      <nav aria-label={t("Main")}>
         {sections.map(([href, label]) => {
           const active = pathname === href || pathname.startsWith(href + "/") || pathname.startsWith(href + "-");
           return <a key={href} href={href}
@@ -48,6 +49,7 @@ export function SiteHeader(_: {
       <div className="header-controls">
         <LanguageControl />
         <ThemeControl />
+      </div>
       </div>
     </header>;
 }
