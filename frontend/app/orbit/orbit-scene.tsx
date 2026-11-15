@@ -42,7 +42,7 @@ export default function OrbitScene() {
           : <MoonGlobe home orbit={{ site, weekUtc: from + "T00:00:00Z", onSite: inspect }} />}</div>
       </div>
       <section className="orbit-panel" aria-label={t("Landing site comparison")}>
-        <div className="orbit-tabs" role="group" aria-label={t("Landing site")}>{sites.map(item =>
+        <div className="orbit-tabs tab-group" role="group" aria-label={t("Landing site")}>{sites.map(item =>
           <button type="button" key={item.id} aria-pressed={site === item} onClick={() => inspect(item.id)}>{item.name.split(" · ")[0]}</button>)}</div>
         <div className="orbit-reading" aria-live="polite" aria-atomic="true">
           <h2>{name}</h2>
@@ -51,7 +51,7 @@ export default function OrbitScene() {
           <p className="orbit-other">{other && reading && (other.bothHours === reading.bothHours
             ? t("{site} has the same visibility this week.", { site: otherName }) : t("{site} has {hours} h in the same week.", { site: otherName, hours: other.bothHours }))}</p>
         </div>
-        <div className="orbit-weeks" role="group" aria-label={t("Comparison week")}>
+        <div className="orbit-weeks tab-group" role="group" aria-label={t("Comparison week")}>
           <span>2026 · UTC</span>{weeks.map((item, i) =>
             <button type="button" key={item[0]} aria-pressed={i === week} onClick={() => setWeek(i)}>{t(labels[i])}</button>)}
         </div>

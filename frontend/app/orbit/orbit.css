@@ -8,8 +8,6 @@
 .orbit-bar { display:flex; align-items:center; gap:1rem; min-height:64px; border-bottom:1px solid var(--edge); color:var(--dim); }
 .orbit-brand { color:var(--ink); font-weight:700; text-decoration:none; letter-spacing:-.03em; }
 .orbit-bar>span { font-size: var(--fs-14); border-left:1px solid var(--edge); padding-left:1rem; }
-.orbit-bar .language-switch { margin-left:auto; }
-.orbit-bar select { color:var(--ink); background:#1e2630; }
 .orbit-layout { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); grid-template-areas:"scene title" "scene panel"; column-gap:6%; align-content:center; min-height:min(77svh,780px); padding:2rem 0; }
 .orbit-heading { grid-area:title; align-self:end; }
 .orbit-kicker { color:var(--gold); text-transform:uppercase; font-size: var(--fs-12); letter-spacing:.18em; font-weight:700; }
@@ -21,9 +19,6 @@
 .orbit-stage .site-pin button { width:max-content; border-radius:5px; min-height:40px; padding:0 .65rem; font: 600 0.875rem/1 var(--font-body); }
 .orbit-stage .site-pin button[aria-pressed=true] { outline:2px solid white; }
 .orbit-panel { grid-area:panel; align-self:start; }
-.orbit-tabs,.orbit-weeks { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; }
-.orbit-panel button { color:var(--ink); border:1px solid var(--edge); border-radius:6px; min-height:44px; padding:.3rem .82rem; }
-.orbit-panel button[aria-pressed=true] { color:#18140d; background:var(--gold); border-color:var(--gold); font-weight:650; }
 .orbit-reading { margin:1.1rem 0; }
 .orbit-reading h2 { font-size: var(--fs-16); color:var(--dim); }
 .orbit-value { color:var(--gold); font-size: var(--fs-56); line-height:1.06; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }
@@ -52,8 +47,7 @@
   .orbit-reading p,.orbit-heading p,.orbit-value small { color:black; }
 }
 
-.orbit-view-switch { display:block; min-height:44px; padding:.5rem .95rem; margin:0 auto 1.1rem; border:1px solid var(--edge); border-radius:2rem; background:#202630; color:var(--ink); }
+.orbit-view-switch { display:block; min-height:44px; padding:.5rem .95rem; margin:0 auto 1.1rem; border:1px solid var(--input-border); border-radius:10px; background:var(--surface-2); color:var(--text); font-size:var(--fs-14); font-weight:600; }
 .orbit-view-switch span { color:var(--gold); padding-inline-start:.35rem; }
-.orbit-tabs button[aria-pressed=true] { background:var(--ink); border-color:var(--ink); }
 @media(max-width:740px) { .orbit-view-switch { margin-bottom:.85rem; } }
 .orbit-run { color:var(--dim); font-size:var(--fs-14); white-space:nowrap; }

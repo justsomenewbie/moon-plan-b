@@ -63,7 +63,7 @@ function SurfaceCloseUp({ point, name }: { point: MapPoint | null; name: string 
   if (!point) return <p role="status">{t("Select a site with verified coordinates to view its surface.")}</p>;
   const url = lrocRegionalImageUrl(point, widthKm, relief);
   return <figure className="plan-regional-view">
-    <div className="plan-map-modes" role="group" aria-label={t("Surface layer")}>
+    <div className="plan-map-modes tab-group" role="group" aria-label={t("Surface layer")}>
       <button type="button" aria-pressed={!relief} onClick={() => setRelief(false)}>{t("Orbital image")}</button>
       <button type="button" aria-pressed={relief} onClick={() => setRelief(true)}>{t("Terrain relief")}</button>
     </div>
@@ -136,7 +136,7 @@ export default function SiteMap({ sites, leaders, column, criterion, initialSite
     <h4 id="plan-site-map-title">{t("Sites on the Moon")}</h4>
     <div className="plan-map-layout">
       <div>
-        {mapped.length > 0 && <div className="plan-map-modes" role="group" aria-label={t("Map view")}>
+        {mapped.length > 0 && <div className="plan-map-modes tab-group" role="group" aria-label={t("Map view")}>
           <button type="button" aria-pressed={view === "globe"} onClick={() => setView("globe")}>{t("3D globe")}</button>
           <button type="button" aria-pressed={view === "flat"} onClick={() => setView("flat")}>{t("Flat map")}</button>
           <button type="button" ref={surfaceButton} aria-pressed={view === "surface"} disabled={!point && !customPoint}

@@ -49,9 +49,7 @@
 .plan-regional-center, .plan-regional-loading { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .plan-regional-center { width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #111, inset 0 0 0 1px #111; }
 .plan-regional-view .plan-map-zoom { margin-block: .5rem; }
-.plan-map-modes { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .75rem; }
-.plan-map-modes button { min-height: 44px; padding: .3rem .85rem; border: 1px solid var(--input-border); border-radius: var(--radius-sm); }
-.plan-map-modes button[aria-pressed="true"] { border-color: currentColor; font-weight: 650; }
+.plan-map-modes { margin-bottom: .75rem; }
 #planner-lunar-globe .site-pin { width: 0; height: 0; border: 0; }
 #planner-lunar-globe .site-pin button {
   inset: 0 auto auto 0; transform: translate(-50%, -50%);
