@@ -1,6 +1,7 @@
 "use client";
 
 import { type KeyboardEvent, useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { guideObservation, nextGuideUpdate, selectedModelSample } from "../lib/guide-observation";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import snapshot from "../lib/odysseus-athena-weeks.json";
@@ -150,16 +151,27 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
       panel.hidePopover();
     }
   }
+  // On narrow screens the launcher lives in the header slot, so focus goes Menu → AI → content.
+  // Only one launcher is ever rendered: in the slot, or fixed at the bottom right on a desktop.
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const narrow = window.matchMedia("(max-width: 999px)");
+    const place = () => setHeaderSlot(narrow.matches ? document.getElementById("guide-launcher-slot") : null);
+    place();
+    narrow.addEventListener("change", place);
+    return () => narrow.removeEventListener("change", place);
+  }, []);
   // Two answers are written by the team; the last question goes to the language model.
   const suggestions = [...copy.questions.map(([question, answer]) => ({ question, answer })), { question: copy.liveQuestion }, { question: copy.dataQuestion }];
-  return <>
-    <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.open} title={copy.open}
+  const launcher = <button type="button" className={headerSlot ? styles.launcher + " " + styles.inHeader : styles.launcher} popoverTarget={id} aria-label={copy.open} title={copy.open}
       onKeyDown={dismissOnEscape}>
       <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="currentColor">
         <path d="M10 3.5l1.7 4.6a2 2 0 0 0 1.2 1.2L17.5 11l-4.6 1.7a2 2 0 0 0-1.2 1.2L10 18.5l-1.7-4.6a2 2 0 0 0-1.2-1.2L2.5 11l4.6-1.7a2 2 0 0 0 1.2-1.2z" />
         <path d="M18.5 14.5l.8 2.2a1 1 0 0 0 .6.6l2.1.7-2.1.8a1 1 0 0 0-.6.6l-.8 2.1-.8-2.1a1 1 0 0 0-.6-.6l-2.1-.8 2.1-.7a1 1 0 0 0 .6-.6z" />
       </svg>
-    </button>
+    </button>;
+  return <>
+    {headerSlot ? createPortal(launcher, headerSlot) : launcher}
     <aside id={id} popover="auto" onKeyDown={dismissOnEscape} onToggle={event => {
       const opening = event.newState === "open";
       setOpen(opening);

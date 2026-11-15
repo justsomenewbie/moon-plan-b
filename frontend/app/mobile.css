@@ -13,18 +13,16 @@
 @media screen and (min-width: 761px) { .mobile-fold > summary { display: none; } }
 @media print { .mobile-fold > summary { display: none; } }
 
-/* ===== Header: the AI guide button gets its own slot at the end of the bar ===== */
+/* ===== Header: the AI guide button gets its own slot at the end of the bar =====
+   The button is rendered inside the header's .guide-slot (after Menu in the DOM and in focus order),
+   so it is a normal flex item and needs no reserved margin or offsets. */
 @media screen and (max-width: 999px) {
-  /* Before, the button sat 150px from the right edge and covered the end of the brand name at 320px. */
-  button[popovertarget][class*="launcher"] { top: 16px; right: calc(var(--gutter) + 13px); width: 44px; height: 44px; }
-  body:has(button[popovertarget][class*="launcher"]) .nav-menu { margin-inline-end: 52px; }
+  button[popovertarget][class*="launcher"] { width: 44px; height: 44px; }
   .app-header .brand { min-height: 44px; }
 }
 @media screen and (max-width: 380px) {
   :root { --gutter: 16px; }
   .app-header { padding-inline: 10px; }
-  button[popovertarget][class*="launcher"] { right: calc(var(--gutter) + 11px); }
-  body:has(button[popovertarget][class*="launcher"]) .nav-menu { margin-inline-end: 50px; }
   .app-header .brand { gap: 5px; font-size: .9375rem; }
   .app-header .brand img { width: 24px; height: 24px; }
   .app-header .nav-menu { gap: .4em; padding: 0 .55rem; }

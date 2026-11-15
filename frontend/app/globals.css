@@ -594,3 +594,10 @@ select {
 .saved-comparison .lunar-figure { padding-top: 20px; }
 /* The run a number belongs to, shown right beside it. */
 .run-tag { color: var(--muted); font-family: var(--font-body); font-size: var(--fs-14); font-weight: 600; letter-spacing: 0; white-space: nowrap; }
+
+/* The AI guide button's place in the narrow header: its own cell after Menu, so it never sits on the brand. */
+.guide-slot { display: none; }
+@media (max-width: 999px) {
+  .guide-slot { display: inline-flex; flex-shrink: 0; margin: 0; }
+  .guide-slot:empty { display: none; }
+}

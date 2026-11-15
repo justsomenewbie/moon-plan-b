@@ -78,8 +78,10 @@
 .results span { display: block; color: var(--muted); }
 
 @media screen and (max-width: 999px) {
-  /* In the header bar, clear of the widest Menu label ("Danh mục"): it scrolls with the page, so it never covers a control. */
-  .launcher { position: absolute; top: 18px; right: 150px; bottom: auto; width: 40px; height: 40px; z-index: 7; box-shadow: none; }
+  /* On narrow screens the launcher is rendered inside the header slot, after Menu, as a normal flex item.
+     Until the page has moved it there, the fixed copy stays hidden so nothing floats over the content. */
+  .launcher { display: none; }
+  .launcher.inHeader { display: grid; position: static; width: 40px; height: 40px; box-shadow: none; transform: none; }
   .launcher svg { width: 20px; height: 20px; }
   /* The open panel keeps 16px from every edge. */
   .panel { inset: auto max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) auto; width: min(26rem, calc(100% - 32px)); }

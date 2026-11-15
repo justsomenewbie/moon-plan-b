@@ -37,6 +37,8 @@ export function SiteHeader(_: {
       </a>
       <button className="nav-menu" ref={menuButton} type="button"
         aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{t("Menu")}</button>
+      {/* On narrow screens the AI guide button is rendered here (astronaut-guide.tsx), after Menu in focus order. */}
+      <span className="guide-slot" id="guide-launcher-slot" />
       <div className="header-panel" id="main-navigation">
       <nav aria-label={t("Main")}>
         {sections.map(([href, label]) => {
