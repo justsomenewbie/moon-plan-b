@@ -109,7 +109,9 @@ export default function LocalSky({
   function moveOrbit(event: PointerEvent<SVGSVGElement>) {
     const start = drag.current;
     if (start?.id !== event.pointerId) return;
-    const degrees = start.orbit - 180 * (event.clientX - start.x) / start.width;
+    // Grab-and-turn: the near (southern) side of the sky follows the pointer.
+    // skyPoint puts a near-side point at x = sin(orbit), so dragging right must increase the orbit.
+    const degrees = start.orbit + 180 * (event.clientX - start.x) / start.width;
     setOrbit(((Math.round(degrees / 5) * 5) % 360 + 360) % 360);
   }
   function endOrbit(event: PointerEvent<SVGSVGElement>) {
