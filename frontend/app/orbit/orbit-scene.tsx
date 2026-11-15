@@ -31,6 +31,7 @@ export default function OrbitScene() {
   const inspect = (id: string) => { const next = sites.find(item => item.id === id); if (next) setSite(next); };
   return <section className="orbit-page" aria-labelledby="orbit-title">
     <SkyBackground />
+    <a className="skip-link" href="#orbit-title">{t("Skip to content")}</a>
     <SiteHeader />
     <div className="orbit-layout">
       <header className="orbit-heading"><p className="orbit-kicker">{t("Lunar south pole")}</p>

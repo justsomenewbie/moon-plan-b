@@ -24,6 +24,7 @@ export default function ThemeControl() {
       const now = new Date();
       const applied = localTheme(mode, now);
       document.documentElement.dataset.theme = applied;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", applied === "light" ? "#EEF1F6" : "#0B0F1A");
       setAppearance(applied);
       if (mode !== "auto") return;
       // Wake at the next local 06:00 or 18:00; one second late so the clock has passed the boundary.

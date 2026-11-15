@@ -18,10 +18,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#EEF1F6" },
-    { media: "(prefers-color-scheme: dark)", color: "#0B0F1A" },
-  ],
+  // One tag; theme-control.tsx keeps its content in step with the applied theme.
+  themeColor: "#0B0F1A",
 };
 
 const body = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-body", display: "swap" });

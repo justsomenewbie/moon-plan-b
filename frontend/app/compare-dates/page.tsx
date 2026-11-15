@@ -30,8 +30,9 @@ export default function DateComparisonPage() {
     return () => window.removeEventListener("popstate", restore);
   }, []);
   return <div className="app-shell"><SkyBackground />
+    <a className="skip-link" href="#workspace">{t("Skip to content")}</a>
     <SiteHeader />
-    <main id="workspace" className="terrain-result">
+    <main id="workspace" className="terrain-result" tabIndex={-1}>
       <h1>{t("Compare dates")}</h1>
       {empty ? <section className="card empty-card" aria-labelledby="dates-empty-title">
           <h2 id="dates-empty-title">{t("No dates selected yet")}</h2>
