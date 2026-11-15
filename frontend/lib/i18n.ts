@@ -488,6 +488,8 @@ export const vietnamese: Record<string, string> = {
   "Selection link": "Liên kết đến kết quả đang xem",
   "Only supplied windows are selectable. Requests include a bounded UTC range and desired resolution; the server supplies the observations.": "Chỉ chọn được các khoảng thời gian đã cung cấp. Yêu cầu gồm khoảng UTC có giới hạn và độ phân giải mong muốn; máy chủ cung cấp dữ liệu quan trắc.",
   "Reload current window": "Tải lại khoảng hiện tại",
+  "Turn background music on": "Bật nhạc nền",
+  "Turn background music off": "Tắt nhạc nền",
   "Primary": "Chính",
   "Alternative": "Đối chiếu",
   "Primary:": "Chính:",

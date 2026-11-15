@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LanguageControl, useLanguage } from "./language";
 import ThemeControl from "./theme-control";
+import MusicControl from "./music-control";
 
 export function SkyBackground() {
   return <>
@@ -51,6 +52,7 @@ export function SiteHeader(_: {
       <div className="header-controls">
         <LanguageControl />
         <ThemeControl />
+        <MusicControl />
       </div>
       </div>
     </header>;
