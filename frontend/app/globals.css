@@ -2,8 +2,8 @@
 
 @layer components {
 /* Dark is the base palette. .space-viewport re-declares it for an embedded space scene, whose overlaid labels stay light-on-dark in both themes. */
-:root, .space-viewport { color-scheme: dark; --bg: #0B0F1A; --surface: #121826; --surface-2: #1A2233; --text: #E8EAF0; --muted: #B4BBCB; --line: #2A3346; --input-border: #7A88A8; --sun: #F2C46D; --earth: #8FB4FF; --grid: #2A3346; --horizon: #A3ABBD; --below-horizon: #1A2233; --positive: #7FD1A0; --error-bg: #2A1A1F; --error-line: #FFB29F; --accent: #F2C46D; --control-text: #E8EAF0; --sun-fill: #F2C46D; --shadow-card: none; --header-bg: rgb(18 24 38 / .85); --button-text: #0B0F1A; --button-hover: #FFD98F; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23E8EAF0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
-:root[data-theme="light"] { color-scheme: light; --bg: #EEF1F6; --surface: #FFFFFF; --surface-2: #E6EAF1; --text: #141A26; --muted: #3F4859; --line: #D5DAE3; --input-border: #5A657B; --sun: #6B4400; --earth: #24489A; --grid: #D5DAE3; --horizon: #3F4859; --below-horizon: #E6EAF1; --positive: #145A33; --error-bg: #FAE8E4; --error-line: #A73825; --accent: #1B2654; --control-text: #1B2654; --sun-fill: #B7791F; --shadow-card: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04); --header-bg: #FFFFFF; --button-text: #FFFFFF; --button-hover: #24326E; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23141A26' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
+:root, .space-viewport { color-scheme: dark; --bg: #0B0F1A; --surface: #121826; --surface-2: #1A2233; --text: #E8EAF0; --muted: #B4BBCB; --line: #2A3346; --input-border: #7A88A8; --sun: #F2C46D; --earth: #8FB4FF; --grid: #2A3346; --horizon: #A3ABBD; --below-horizon: #1A2233; --positive: #7FD1A0; --error-bg: #2A1A1F; --error-line: #FFB29F; --accent: #F2C46D; --control-text: #E8EAF0; --sun-fill: #F2C46D; --shadow-card: none; --glass-fill: rgb(18 24 38 / .65); --glass-fill-strong: rgb(18 24 38 / .78); --glass-border: rgb(255 255 255 / .14); --glass-highlight: rgb(255 255 255 / .18); --glass-shadow: 0 8px 32px rgb(16 24 40 / .35); --glass-sheen: rgb(255 255 255 / .1); --glass-control: rgb(255 255 255 / .07); --glass-pill: rgb(255 255 255 / .16); --button-text: #0B0F1A; --button-hover: #FFD98F; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23E8EAF0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
+:root[data-theme="light"] { color-scheme: light; --bg: #EEF1F6; --surface: #FFFFFF; --surface-2: #E6EAF1; --text: #141A26; --muted: #3F4859; --line: #D5DAE3; --input-border: #5A657B; --sun: #6B4400; --earth: #24489A; --grid: #D5DAE3; --horizon: #3F4859; --below-horizon: #E6EAF1; --positive: #145A33; --error-bg: #FAE8E4; --error-line: #A73825; --accent: #1B2654; --control-text: #1B2654; --sun-fill: #B7791F; --shadow-card: 0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04); --glass-fill: rgb(255 255 255 / .7); --glass-fill-strong: rgb(255 255 255 / .8); --glass-border: rgb(255 255 255 / .55); --glass-highlight: rgb(255 255 255 / .6); --glass-shadow: 0 8px 32px rgb(16 24 40 / .12); --glass-sheen: rgb(255 255 255 / .35); --glass-control: rgb(255 255 255 / .6); --glass-pill: rgb(255 255 255 / .82); --button-text: #FFFFFF; --button-hover: #24326E; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23141A26' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E"); }
 :root { --page-max: 1320px; --gutter: 24px; --radius-control: 10px; --control-h: 48px; --control-h-compact: 44px; --fs-12: .75rem; --fs-14: .875rem; --fs-16: 1rem; --fs-20: 1.25rem; --fs-28: 1.75rem; --fs-40: 2.5rem; --fs-56: 3.5rem; --radius-sm: 6px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 104px; }
@@ -481,20 +481,35 @@ select {
 /* ===== Page container and header =====
    Header, content and footer share one width and gutter, so their edges line up on every page. */
 .app-shell { max-width: var(--page-max); padding: 0 var(--gutter); }
-/* The header is a floating rounded bar inside the page container. */
+/* The header is a floating rounded "liquid glass" bar: the sky shows through a blurred translucent fill.
+   The glass lives on ::before, so the bar itself is not a backdrop root and the mobile menu panel can blur the page too. */
 .app-header {
   position: sticky; top: 12px; z-index: 6; margin-top: 12px; min-height: 68px; padding: 0 20px; gap: 16px 32px; justify-content: flex-start;
-  border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-card);
+  border: 1px solid var(--glass-border); border-radius: 16px; background: none;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
 }
-@supports ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
-  .app-header { background: var(--header-bg); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.app-header::before, .header-panel::before {
+  content: ""; position: absolute; z-index: -1; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, var(--glass-sheen), transparent 40%), var(--glass-fill);
+  -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%);
+}
+.header-panel::before { content: none; }
+/* Without backdrop blur, or when the visitor asks for less transparency, the bar is the solid surface. */
+@supports not ((backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))) {
+  .app-header::before, .header-panel::before { background: var(--surface); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .app-header::before, .header-panel::before { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; color: var(--text); }
 .brand img { width: 40px; height: 40px; flex-shrink: 0; }
 .header-panel { display: contents; }
 .app-header nav { gap: 10px; justify-content: flex-start; }
 .app-header nav a { min-height: 40px; padding: 0 12px; border-radius: var(--radius-control); }
-.app-header nav a:hover:not(.active-link) { background: var(--surface-2); }
+.app-header nav a:hover:not(.active-link) { background: var(--glass-control); color: var(--text); }
+/* The current page is a more opaque glass pill with accent text and an accent underline. */
+.app-header nav a.active-link { background: var(--glass-pill); color: var(--accent); box-shadow: inset 0 -2px var(--accent); }
+.app-header :is(.segmented, .theme-disc, .theme-auto:not([aria-pressed="true"]), .nav-menu) { background-color: var(--glass-control); }
 .header-controls { display: flex; align-items: center; gap: 10px; margin-inline-start: auto; }
 @media (max-width: 760px) {
   :root { --gutter: 16px; }
@@ -505,8 +520,10 @@ select {
   /* The menu opens as its own panel below the bar, with the same surface, border and radius. */
   .header-panel {
     display: grid; gap: 12px; position: absolute; z-index: 7; top: calc(100% + 8px); left: -1px; right: -1px; padding: 12px;
-    border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / .18);
+    border: 1px solid var(--glass-border); border-radius: 12px; background: none;
+    box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
   }
+  .header-panel::before { content: ""; background: linear-gradient(135deg, var(--glass-sheen), transparent 40%), var(--glass-fill-strong); }
   .app-header[data-menu="closed"] .header-panel { display: none; }
   .app-header nav { width: auto; padding: 0; gap: 4px; }
   .header-controls { margin-inline-start: 0; }
@@ -526,3 +543,6 @@ select {
 :is(.theme-disc, .theme-auto):hover:not(:disabled, .theme-auto[aria-pressed="true"]) { background-color: var(--surface-2); border-color: var(--control-text); }
 .theme-auto[aria-pressed="true"] { background-color: var(--accent); border-color: var(--accent); color: var(--button-text); }
 @media print { .app-header { position: static; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; } .header-panel { display: none; } }
+@media print { .app-header::before, .header-panel::before { display: none; } }
+/* Nav text on the glass uses the full text colour: it must stay readable when the Moon globe scrolls behind the bar. */
+.app-header nav a:not(.active-link) { color: var(--text); }
