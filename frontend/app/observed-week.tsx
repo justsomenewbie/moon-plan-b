@@ -116,7 +116,7 @@ export default function ObservedWeek({ selection, onSelect, onPrint, children }:
           return <article key={week.startUtc + site.id}>
             <h3>{selectedWeek ? site.name : weekLabel(week)}</h3>
             <p className="muted">{selectedWeek ? weekLabel(week) : site.name}</p>
-            <p>{t("Time with both the Sun and Earth in view")}<br /><strong className="week-hours">{interval.duration_h} h</strong></p>
+            <p>{t("Time with both the Sun and Earth in view")}<br /><strong className="week-hours"><span className="run-tag">{t("Run B (archive)")} · </span>{interval.duration_h} h</strong></p>
             <WeekTrack week={week} site={site} />
             <p><time dateTime={interval.start}>{formatUtc(interval.start, locale)}</time> → <time dateTime={interval.end}>{formatUtc(interval.end, locale)}</time></p>
             <p className="muted">{t("Sun visible")} · {site.sunHours} h · {t("Earth visible")} · {site.earthHours} h</p>

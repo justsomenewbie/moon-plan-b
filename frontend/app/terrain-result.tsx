@@ -1,3 +1,4 @@
+import { sourceLink } from "../lib/display-format";
 import { useMemo, useState } from "react";
 import { pairLocation } from "../lib/globe-sites";
 import MoonGlobe from "./moon-globe";
@@ -105,7 +106,7 @@ export default function TerrainResult({ reducedMotion, result, view, onSelect, o
       <h3>{t("Data sources")}</h3>
       <p className="muted">{result.attribution}</p>
       {sources.length ? <ul className="source-list">{sources.map(source => <li key={source.id}>
-        {source.url ? <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a> : <span>{source.title}</span>}
+        {source.url ? <a href={sourceLink(source.url)} target="_blank" rel="noreferrer">{source.title}</a> : <span>{source.title}</span>}
         <p className="muted text-sm"><code>{source.id}</code></p>
         {source.sha256 && <code className="hash">SHA-256 {source.sha256}</code>}
       </li>)}</ul> : <p>{t("No source entries were supplied.")}</p>}

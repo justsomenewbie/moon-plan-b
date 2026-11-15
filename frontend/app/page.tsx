@@ -92,7 +92,7 @@ export default function Home() {
             {[
               ["Choose your dates", "Select “I have dates”. Start on November 14 and end on November 21. The last day counted is November 20."],
               ["Choose what to compare", "Select “Sun and Earth together” and press “Find sites” to rank sites by the hours when both are visible."],
-              ["Read the map and table", "Find Vikram’s gold diamond on the map. In its table row, “Both visible (h)” reads 162. That is how many of the week’s 168 hours both the Sun and Earth were visible. Select another dot to see that site’s hours."],
+              ["Read the map and table", "Find Vikram’s gold diamond on the map. In its table row, “Both visible (h)” reads 162. For this 168-hour week, run B2 predicts 162 hours with both the Sun and Earth in view from Vikram. Select another dot to see that site’s hours."],
             ].map(([title, instruction], index) => <li key={title}>
               <strong>{t(title)}</strong>
               <p>{t(instruction)}</p>

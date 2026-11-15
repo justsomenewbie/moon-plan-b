@@ -14,6 +14,7 @@ import { hasRetryDeadline, isMock } from "../../lib/api/client";
 import { useLanguage } from "../language";
 import { SiteFooter, SiteHeader, SkyBackground } from "../site-chrome";
 import B2CoordinateSource from "../b2-coordinate-source";
+import { runShortLabel } from "../../lib/display-format";
 import { usesSmoothSphere } from "../../lib/site-horizon";
 
 const files = Object.entries(manifest.files);
@@ -57,7 +58,7 @@ function LiveModelRuns() {
       </button></div>}
     {page && (page.runs.length ? <ul className="space-y-4">
       {page.runs.map(run => <li key={run.runId}>
-        <a className="break-words" href={"/plan?" + new URLSearchParams({ run_id: run.runId })}>{run.label}</a>
+        {runShortLabel(run.runId) && <><strong>{runShortLabel(run.runId)}</strong> · </>}<a className="break-words" href={"/plan?" + new URLSearchParams({ run_id: run.runId })}>{run.label}</a>
         {run.isDefault && <strong> · {vi ? "Mặc định" : "Default"}</strong>}
         {run.runId !== run.label && <code translate="no" className="run-id block">{run.runId}</code>}
         <p>{[run.provider, run.dem].filter(Boolean).join(" / ")}{(run.provider || run.dem) && " · "}

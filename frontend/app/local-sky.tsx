@@ -8,6 +8,8 @@ import { skyPoint } from "../lib/local-sky";
 import { analyzeScenarioClearance, clampClearanceDeg, computeLanderHud } from "../lib/mission-studio";
 import type { MissionOpState } from "../lib/mission-studio";
 import { useLanguage } from "./language";
+import { formatUtc } from "./observations";
+import { boundaryTime } from "../lib/display-format";
 import "./globe-comparison.css";
 
 const radius = 104;
@@ -78,6 +80,9 @@ export default function LocalSky({
 }) {
   const { t, locale } = useLanguage();
   const numbers = useMemo(() => new Intl.NumberFormat(locale, { maximumSignificantDigits: 4, useGrouping: false }), [locale]);
+  // A boundary that is not one of the scenario's own sample times was interpolated, so it is shown as an estimate.
+  const shownTime = (scenario: SkyScenario, utc: string) =>
+    boundaryTime(utc, scenario.samples.some(sample => Date.parse(sample.utc) === Date.parse(utc)), value => formatUtc(value, locale));
   const [openIntervals, setOpenIntervals] = useState<string | null>(null);
   const [orbit, setOrbit] = useState(0);
   const [overlay, setOverlay] = useState(false);
@@ -312,14 +317,15 @@ export default function LocalSky({
                   )}
                 </div>
                 <ul className="sr-only">{summary.segments.map((seg, idx) =>
-                  <li key={`${seg.startUtc}-${idx}-accessible`}>{t(opStateLabels[seg.state])} · {seg.startUtc} → {seg.endUtc} · {numbers.format(seg.durationHours)} h</li>)}</ul>
+                  <li key={`${seg.startUtc}-${idx}-accessible`}>{t(opStateLabels[seg.state])} · {shownTime(sc, seg.startUtc)} → {shownTime(sc, seg.endUtc)} · {numbers.format(seg.durationHours)} h</li>)}</ul>
                 {summary.segments.length > 0 && <details className="mission-intervals" onToggle={event => {
                   const open = event.currentTarget.open;
                   setOpenIntervals(current => open ? sc.id : current === sc.id ? null : current);
                 }} open={openIntervals === sc.id}>
                   <summary>{t("Read estimated intervals in UTC")}</summary>
+                  {openIntervals === sc.id && <p className="muted text-sm">{t("Crossing times are estimated between hourly samples.")}</p>}
                   {openIntervals === sc.id && <ul>{summary.segments.map(seg =>
-                    <li key={seg.startUtc}>{t(opStateLabels[seg.state])} · {seg.startUtc} → {seg.endUtc}</li>)}</ul>}
+                    <li key={seg.startUtc}>{t(opStateLabels[seg.state])} · {shownTime(sc, seg.startUtc)} → {shownTime(sc, seg.endUtc)}</li>)}</ul>}
                 </details>}
                 {summary.coverage === "complete" ? (
                   <dl className="mission-metrics-row">

@@ -1,3 +1,4 @@
+import { runShortLabel } from "../lib/display-format";
 import { usesSmoothSphere } from "../lib/site-horizon";
 import type { TerrainSummary } from "../lib/api/terrain-summary";
 import { clipEarthWindows, type EarthWindow } from "../lib/earth-windows";
@@ -113,7 +114,7 @@ export function SiteResult({ site, source, liveResult }: {
     </details>}
     {site.horizon && <SiteHorizonSource method={site.horizon.method} source={site.horizon.dem_source} />}
     {metrics ? <dl className="metadata mt-4">
-      <div><dt>{t("Total time with both visible")}</dt><dd><strong>{metrics.both_hours} h</strong> / {metrics.duration_h} h</dd></div>
+      <div><dt>{t("Total time with both visible")}</dt><dd>{runShortLabel(liveResult?.run.run_id) && <span className="run-tag">{runShortLabel(liveResult?.run.run_id)} · </span>}<strong>{metrics.both_hours} h</strong> / {metrics.duration_h} h</dd></div>
       <div><dt>{t("Longest joint window")}</dt><dd>{metrics.longest_both_h} h</dd></div>
       <div><dt>{t("Sun visible")}</dt><dd>{metrics.sun_hours} h</dd></div>
       <div><dt>{t("Earth visible")}</dt><dd>{metrics.earth_hours} h</dd></div>

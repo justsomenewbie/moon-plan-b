@@ -26,12 +26,12 @@ const sunlightText = {
   en: {
     layer: "Color site rings by sunlight", key: "Average sunlight on a Sun-facing panel",
     help: "The percentage compares the modelled sunlight at each site with full, unobstructed sunlight. The average includes dark hours in the selected UTC window.",
-    unavailable: "This result has no average sunlight values for the evaluated sites and times.", missing: "Unavailable",
+    unavailable: "Average sunlight on a Sun-facing panel is unavailable for this saved result.", missing: "Unavailable",
   },
   vi: {
     layer: "Tô màu vòng quanh địa điểm theo mức nắng", key: "Ánh sáng trung bình trên tấm pin luôn hướng về Mặt Trời",
     help: "Tỷ lệ cho biết mỗi địa điểm nhận được bao nhiêu ánh sáng theo mô hình so với khi Mặt Trời chiếu sáng hoàn toàn. Giá trị trung bình tính cả giờ tối trong khoảng UTC đã chọn.",
-    unavailable: "Kết quả này chưa có mức nắng trung bình cho các địa điểm và thời gian đã xét.", missing: "Chưa có dữ liệu",
+    unavailable: "Kết quả đã lưu này không có giá trị ánh sáng trung bình trên tấm pin hướng về Mặt Trời.", missing: "Chưa có dữ liệu",
   },
 };
 function sunlightColor(value: number) {

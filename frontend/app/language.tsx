@@ -29,8 +29,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = pathname === "/" ? translate(locale, "Moon Plan B — Sun & Earth comparison")
+    const title = pathname === "/" ? translate(locale, "Moon Plan B — Sun & Earth comparison")
       : translate(locale, pageTitles[pathname] ?? "Page not found") + " — Moon Plan B";
+    const apply = () => { if (document.title !== title) document.title = title; };
+    apply();
+    // The framework writes the page's English metadata title again after the stored language is restored,
+    // so keep the translated title in place whenever the <title> element changes.
+    const observer = new MutationObserver(apply);
+    observer.observe(document.head, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
   }, [locale, pathname]);
 
   function choose(value: string) {

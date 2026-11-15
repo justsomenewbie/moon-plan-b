@@ -584,3 +584,5 @@ select {
 }
 /* A1: the globe's 19px frame ring needs clearance above it at every width, not only on desktop. */
 .saved-comparison .lunar-figure { padding-top: 20px; }
+/* The run a number belongs to, shown right beside it. */
+.run-tag { color: var(--muted); font-family: var(--font-body); font-size: var(--fs-14); font-weight: 600; letter-spacing: 0; white-space: nowrap; }
