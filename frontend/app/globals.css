@@ -500,5 +500,24 @@ select {
   .app-header nav, .header-controls { flex-basis: 100%; margin-inline-start: 0; padding-bottom: 8px; }
   .app-header[data-menu="closed"] :is(nav, .header-controls) { display: none; }
 }
-/* The language control shows only the code, so it stays compact beside the theme dropdown. */
-.app-header .language-switch select { width: 70px; padding: 0 32px 0 12px; background-position: right 12px center; }
+/* Language menu button: flag and code, the same height, radius and chevron as the theme dropdown. */
+.language-switch { position: relative; }
+.language-button {
+  display: inline-flex; align-items: center; gap: 8px; min-height: var(--control-h-compact); padding: 0 34px 0 12px;
+  border: 1px solid var(--input-border); border-radius: var(--radius-control);
+  background: var(--surface) var(--chevron) right 14px center / 12px 12px no-repeat;
+  color: var(--text); font-size: var(--fs-14); font-weight: 600; white-space: nowrap; cursor: pointer;
+}
+.language-button:hover:not(:disabled) { border-color: var(--text); }
+.flag { display: block; flex-shrink: 0; width: 20px; height: 14px; border-radius: 2px; box-shadow: 0 0 0 1px var(--input-border); }
+.language-list {
+  position: absolute; z-index: 20; top: calc(100% + 6px); right: 0; min-width: 184px; margin: 0; padding: 4px; list-style: none;
+  border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--surface); color: var(--text);
+  box-shadow: 0 8px 24px rgb(0 0 0 / .18);
+}
+.language-list:focus-visible { outline-offset: 2px; }
+.language-list li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 7px; font-size: var(--fs-14); cursor: pointer; }
+.language-list li[data-active] { background: var(--surface-2); }
+.language-list li[aria-selected="true"] { font-weight: 600; }
+.language-list li[aria-selected="true"]::after { content: "✓"; margin-inline-start: auto; color: var(--control-text); }
+@media (max-width: 760px) { .language-list { right: auto; left: 0; } }
