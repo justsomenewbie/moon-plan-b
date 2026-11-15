@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseIsoUtc, parseIsoUtcCeil, precisionH, sampleIndex, snapDown, snapRange, snapUp, toIsoUtc } from '../src/lib/time.ts';
 import { ApiError, PROBLEM_CODES, problemBody, validationProblem } from '../src/lib/problem.ts';
+import { tooManyPointsHint } from '../src/lib/limit_hints.ts';
 import { FIELD_CASE, camelToSnake, fromWire, snakeToCamel, toWire } from '../src/lib/naming.ts';
 import { ConfigError, loadConfig } from '../src/config.ts';
 import { pruneComponents } from '../src/lib/openapi.ts';
@@ -65,6 +66,18 @@ describe('lib/problem', () => {
     expect(v.errors).toEqual([{ path: 'start', in: 'querystring', message: 'bad', code: 'invalid_format' }]);
     expect(validationProblem([{ instancePath: '/max_points', keyword: 'too_big' }], 'querystring', '/x').code).toBe('TOO_MANY_POINTS');
     expect(validationProblem([{ instancePath: '/site_ids', keyword: 'too_big' }], 'body', '/x').code).toBe('VALIDATION_ERROR');
+  });
+
+  it('TOO_MANY_POINTS hints name the limits of the route that was called', () => {
+    const h = (u: string) => tooManyPointsHint(u);
+    expect(h('/api/v1/dataset?max_points=20000')).toContain('max_points <= 10000 per site');
+    expect(h('/api/v1/sites/apollo11/export/series.csv?fields=a')).toContain('at most 24 fields');
+    expect(h('/api/v1/sites/apollo11/sky')).toBe('Use max_points <= 5000');
+    expect(h('/api/v1/mission/survival')).toBe('Use max_points <= 5000');
+    expect(h('/api/v1/compare')).toContain('include.series.max_points <= 5000 and at most 8 include.series.fields');
+    expect(h('/api/v1/sites/apollo11/series?max_points=9999')).toBe('Use max_points <= 5000 and at most 8 fields (see GET /api/v1/meta limits)');
+    const p = validationProblem([{ instancePath: '/max_points', keyword: 'too_big' }], 'querystring', '/api/v1/dataset', h('/api/v1/dataset'));
+    expect(p.hint).toBe(h('/api/v1/dataset'));
   });
 });
 

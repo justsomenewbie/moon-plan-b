@@ -172,6 +172,8 @@ export function validationProblem(
   issues: readonly ValidationIssueLike[],
   context: string | undefined,
   instance: string,
+  /** Route-specific TOO_MANY_POINTS hint (lib/limit_hints.ts); default = the /series limits. */
+  tooManyHint?: string,
 ): Problem {
   const where = (['querystring', 'params', 'body', 'headers'] as const).find((c) => c === context);
   const errors: ProblemFieldError[] = issues.map((i) => {
@@ -189,7 +191,7 @@ export function validationProblem(
   const code: ProblemCode = tooMany ? 'TOO_MANY_POINTS' : 'VALIDATION_ERROR';
   const summary = errors.map((e) => `${e.path || '(root)'}: ${e.message}`).join('; ');
   const extras: ApiErrorExtras = { errors };
-  if (tooMany) extras.hint = 'Use max_points <= 5000 and at most 8 fields (see GET /api/v1/meta limits)';
+  if (tooMany) extras.hint = tooManyHint ?? 'Use max_points <= 5000 and at most 8 fields (see GET /api/v1/meta limits)';
   return problemBody(code, instance, `${where ?? 'request'} validation failed: ${summary}`, extras);
 }
 
