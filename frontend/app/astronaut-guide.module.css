@@ -1,7 +1,7 @@
 .launcher, .panel {
   position: fixed;
-  right: max(.75rem, env(safe-area-inset-right));
-  bottom: max(.75rem, env(safe-area-inset-bottom));
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--line);
@@ -9,8 +9,9 @@
 
 .launcher {
   z-index: 5;
-  width: 60px;
-  height: 70px;
+  /* 48px wide keeps the 6:7 sprite frame and a full-size touch target. */
+  width: 48px;
+  height: 56px;
   padding: 0;
   border: 0;
   border-radius: .5rem;
