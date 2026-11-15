@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { LanguageControl, useLanguage } from "./language";
 import ThemeControl from "./theme-control";
 
@@ -9,29 +10,34 @@ export function SkyBackground() {
   </>;
 }
 
-export function SiteHeader({ comparisonHref, showSources = false }: {
+const sections = [
+  ["/compare", "Compare"], ["/plan", "Plan"], ["/orbit", "Orbit"], ["/data", "Data"], ["/api-docs", "API"],
+] as const;
+
+// One header for every page. comparisonHref keeps the current comparison selection in the Compare link.
+export function SiteHeader({ comparisonHref }: {
   comparisonHref?: string;
   showSources?: boolean;
 }) {
   const { t } = useLanguage();
+  const pathname = usePathname() ?? "";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
-  return <header className={comparisonHref ? "app-header" : "app-header home-header"}><a className="brand" href="/">Moon Plan B</a>
-      {!comparisonHref && <button className="home-menu" ref={menuButton} type="button"
-        aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{t("Menu")}</button>}
+  return <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
+      <button className="nav-menu" ref={menuButton} type="button"
+        aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{t("Menu")}</button>
       <nav id="main-navigation" aria-label={t("Main")} onKeyDown={event => {
         if (event.key === "Escape" && menuButton.current?.offsetWidth) {
           setMenuOpen(false);
           menuButton.current.focus();
         }
       }}>
-        {comparisonHref ? <a href={comparisonHref} className="active-link" aria-current="page">{t("Compare")}</a> : <>
-          <a href="#about" onClick={() => setMenuOpen(false)}>{t("About the project")}</a>
-          <a href="/compare#saved-model-source">{t("Sources & method")}</a>
-          <a href="#team" onClick={() => setMenuOpen(false)}>{t("Team members")}</a>
-        </>}
-        <a href="#resources" onClick={() => setMenuOpen(false)}>{t("Lunar resources")}</a>
-        {showSources && <a href="#sources">{t("Sources & method")}</a>}
+        {sections.map(([href, label]) => {
+          const active = pathname === href || pathname.startsWith(href + "/") || pathname.startsWith(href + "-");
+          return <a key={href} href={href === "/compare" && comparisonHref ? comparisonHref : href}
+            className={active ? "active-link" : undefined} aria-current={active ? "page" : undefined}
+            onClick={() => setMenuOpen(false)}>{t(label)}</a>;
+        })}
         <LanguageControl />
         <ThemeControl />
       </nav>

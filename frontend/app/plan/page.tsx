@@ -11,12 +11,11 @@ import { rankSavedMissionWindows, type MissionWindowRanking } from "../../lib/mi
 import type { TerrainSummary } from "../../lib/api/terrain-summary";
 import { archiveB2Run, rankArchiveB2, savedB2EarthWindows } from "../../lib/archive-b2";
 import { getSavedPlannerRanking, savedEarthWindows, savedJointWindows, savedPlannerRun, savedPlannerWindows } from "../../lib/saved-planner";
-import { useLanguage, LanguageControl } from "../language";
+import { useLanguage } from "../language";
 import MissionDateSearch from "../mission-date-search";
 import SavedLanding from "./saved-landing";
-import { SiteFooter, SkyBackground } from "../site-chrome";
+import { SiteFooter, SiteHeader, SkyBackground } from "../site-chrome";
 import { TimeRange } from "../terrain-site-result";
-import ThemeControl from "../theme-control";
 import AstronautGuide from "../astronaut-guide";
 import { savedResultFromUrl } from "../observed-week";
 import { pairLocation, type PairLocation } from "../../lib/globe-sites";
@@ -237,7 +236,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
             {row.missionWindow && <td><TimeRange start={row.missionWindow.start} end={row.missionWindow.end} /></td>}
           </tr>;
         })}</tbody></table></div>
-      <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code>{run.runId}</code></p>
+      <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code className="run-id">{run.runId}</code></p>
     </section>}
   </section>;
 }
@@ -300,7 +299,7 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
     <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Model results from the team API")} · {source === "live" ? <>
-      {t("Run ID")} <a href={"/api/v1/runs/" + encodeURIComponent(run.runId)}><code>{run.runId}</code></a> · <a href={"/api/v1/runs/" + encodeURIComponent(run.runId) + "/files/manifest.json"}>{t("Source file manifest (JSON)")}</a>
+      {t("Run ID")} <a href={"/api/v1/runs/" + encodeURIComponent(run.runId)}><code className="run-id">{run.runId}</code></a> · <a href={"/api/v1/runs/" + encodeURIComponent(run.runId) + "/files/manifest.json"}>{t("Source file manifest (JSON)")}</a>
     </> : <a href={source === "saved" ? "/data#bundled-data" : "/data#run-b2"}>{t("Browse data and all original files")}</a>}</p>
     {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <span className="block"><ApiProblemText error={catalog.error} /></span>{retryCatalog}</p>}
     <div className="flex flex-wrap gap-4 print:hidden">
@@ -340,7 +339,7 @@ export default function PlanPage() {
   }, []);
   return <div className="app-shell"><SkyBackground />
     <a className="skip-link" href="#plan-title">{t("Skip to content")}</a>
-    <header className="app-header"><a className="brand" href="/">Moon Plan B</a><nav aria-label={t("Main")}><a href="/data">{t("Data catalog")}</a><a href="/compare">{t("Compare")}</a><LanguageControl /><ThemeControl /></nav></header>
+    <SiteHeader />
     <main className="plan-main"><h1 id="plan-title" tabIndex={-1}>{t("Plan a lunar visit")}</h1>
       <p>{t("Choose dates to compare how many hours the Sun, Earth, or both are visible from each site. Choose a site to find dates that meet your visibility needs.")}</p>
       {seed && <Planner key={seed.toString()} seed={seed} />}</main>

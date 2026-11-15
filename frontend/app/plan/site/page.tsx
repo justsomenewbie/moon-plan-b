@@ -6,10 +6,9 @@ import { archiveB2Run, rankArchiveB2, savedB2EarthWindows } from "../../../lib/a
 import { getSavedPlannerRanking, savedEarthWindows, savedJointWindows, savedPlannerRun } from "../../../lib/saved-planner";
 import { plannerLink } from "../../../lib/planner-source";
 import { lrocSiteUrl } from "../../../lib/globe-sites";
-import { LanguageControl, useLanguage } from "../../language";
-import { SiteFooter, SkyBackground } from "../../site-chrome";
+import { useLanguage } from "../../language";
+import { SiteFooter, SiteHeader, SkyBackground } from "../../site-chrome";
 import { SiteHorizonSource, TimeRange, EarthSightTimes } from "../../terrain-site-result";
-import ThemeControl from "../../theme-control";
 import B2CoordinateSource from "../../b2-coordinate-source";
 
 const fields = ["source", "site", "from", "to", "priority"] as const;
@@ -89,7 +88,7 @@ function SiteReport() {
     <section className="space-y-3" aria-labelledby="site-sources">
       <h2 id="site-sources">{text("Model and source files", "Mô hình và tệp nguồn")}</h2>
       <SiteHorizonSource method={site.horizonMethod} source={site.demSource} />
-      <p>{t("Run ID")} · <code>{ranking.runId}</code><br/>{t("Model step")} · {ranking.stepSeconds / 3600} h</p>
+      <p>{t("Run ID")} · <code className="run-id">{ranking.runId}</code><br/>{t("Model step")} · {ranking.stepSeconds / 3600} h</p>
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         <a href={folder + "/catalog.json"}>{text("Original site catalog (JSON)", "Danh mục địa điểm gốc (JSON)")}</a>
         <a href={folder + "/manifest.json"}>{text("Source file manifest (JSON)", "Danh sách tệp nguồn và mã kiểm tra (JSON)")}</a>
@@ -103,9 +102,7 @@ export default function SitePage() {
   const { locale, t } = useLanguage();
   return <div className="app-shell"><SkyBackground />
     <a className="skip-link" href="#site-title">{t("Skip to content")}</a>
-    <header className="app-header"><a href="/" className="brand">Moon Plan B</a>
-      <nav aria-label={t("Main")}><a href="/data">{t("Data catalog")}</a><a href="/compare">{t("Compare")}</a><LanguageControl /><ThemeControl /></nav>
-    </header>
+    <SiteHeader />
     <main className="terrain-result mx-auto max-w-4xl space-y-6"><Suspense fallback={<p role="status">{locale === "vi" ? "Đang mở thông tin địa điểm…" : "Opening site details…"}</p>}><SiteReport /></Suspense></main>
     <SiteFooter />
   </div>;

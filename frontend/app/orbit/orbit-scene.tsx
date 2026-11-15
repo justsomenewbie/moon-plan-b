@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { archiveB2Run, rankArchiveB2 } from "../../lib/archive-b2";
 import { missionSites } from "../../lib/globe-sites";
-import { LanguageControl, useLanguage } from "../language";
+import { useLanguage } from "../language";
+import { SiteHeader } from "../site-chrome";
 import MoonGlobe from "../moon-globe";
 import SiteSky from "./site-sky";
 import "./orbit.css";
@@ -29,7 +30,7 @@ export default function OrbitScene() {
     from: from + "T00:00:00Z", to: to + "T00:00:00Z", resolutionSeconds: "3600" }) + "#terrain-observations";
   const inspect = (id: string) => { const next = sites.find(item => item.id === id); if (next) setSite(next); };
   return <section className="orbit-page" aria-labelledby="orbit-title">
-    <div className="orbit-bar"><a href="/" className="orbit-brand">Moon Plan B</a><span>{t(surface ? "At the landing site" : "Orbit view")}</span><LanguageControl /></div>
+    <SiteHeader />
     <div className="orbit-layout">
       <header className="orbit-heading"><p className="orbit-kicker">{t("Lunar south pole")}</p>
         <h1 id="orbit-title" tabIndex={-1}>{t("Where can we see both the Sun and Earth?")}</h1></header>

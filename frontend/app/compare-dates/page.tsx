@@ -4,17 +4,19 @@ import { useEffect, useState } from "react";
 import type { TerrainDateRequest } from "../../lib/api/terrain-dates";
 import { isMock } from "../../lib/api/client";
 import { readTerrainDateLink, terrainDatesHref } from "../../lib/terrain-date-link";
-import { LanguageControl, useLanguage } from "../language";
-import ThemeControl from "../theme-control";
+import { useLanguage } from "../language";
+import { SiteFooter, SiteHeader, SkyBackground } from "../site-chrome";
 import TerrainDates from "../terrain-dates";
 
 export default function DateComparisonPage() {
   const { t } = useLanguage();
   const [request, setRequest] = useState<TerrainDateRequest>();
   const [error, setError] = useState("");
+  const [empty, setEmpty] = useState(false);
   useEffect(() => {
     function restore() {
       try {
+        setEmpty(!window.location.search);
         if (isMock) throw new Error("This comparison requires a live team backend.");
         setRequest(readTerrainDateLink(new URLSearchParams(window.location.search)));
         setError("");
@@ -27,17 +29,23 @@ export default function DateComparisonPage() {
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
   }, []);
-  return <div className="app-shell">
-    <header className="app-header"><a href="/" className="brand">Moon Plan B</a>
-      <nav aria-label={t("Main")}><LanguageControl /><ThemeControl /></nav>
-    </header>
+  return <div className="app-shell"><SkyBackground />
+    <SiteHeader />
     <main id="workspace" className="terrain-result">
       <h1>{t("Compare dates")}</h1>
-      {error ? <p role="alert">{t(error)}</p> : request
+      {empty ? <section className="card empty-card" aria-labelledby="dates-empty-title">
+          <h2 id="dates-empty-title">{t("No dates selected yet")}</h2>
+          <p>{t("Pick one site and two UTC date ranges to see which period gives more Sun and Earth visibility.")}</p>
+          <div className="hero-actions">
+            <a className="button primary" href="/plan?mode=dates">{t("Find dates for my site")}</a>
+            <a className="button outline" href="/compare#workspace">{t("Open comparison tool")}</a>
+          </div>
+        </section> : error ? <p role="alert">{t(error)}</p> : request
         ? <TerrainDates key={terrainDatesHref(request)} initialRequest={request}
             onCompared={next => window.history.replaceState(window.history.state, "", terrainDatesHref(next))} />
         : <p role="status">{t("Loading dataset…")}</p>}
-      <a className="terrain-print" href="/compare#workspace">{t("Open the observation workspace")}</a>
+      {!empty && <a className="terrain-print" href="/compare#workspace">{t("Open the observation workspace")}</a>}
     </main>
+    <SiteFooter />
   </div>;
 }

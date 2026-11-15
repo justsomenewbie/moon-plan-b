@@ -4,6 +4,7 @@
   background:radial-gradient(ellipse at 28% 48%, #202735 0%, transparent 52%), #0c1016;
   padding:0 max(5vw,calc((100vw - 1320px)/2)); overflow-wrap:anywhere;
 }
+.orbit-page .app-header { background:transparent; backdrop-filter:none; position:static; }
 .orbit-bar { display:flex; align-items:center; gap:1rem; min-height:64px; border-bottom:1px solid var(--edge); color:var(--dim); }
 .orbit-brand { color:var(--ink); font-weight:700; text-decoration:none; letter-spacing:-.03em; }
 .orbit-bar>span { font-size: var(--fs-14); border-left:1px solid var(--edge); padding-left:1rem; }
