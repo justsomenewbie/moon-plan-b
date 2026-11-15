@@ -9,6 +9,12 @@ import MoonGlobe from "./moon-globe";
 
 const comparisonKeys = ["saved", "qa", "v", "mode", "a", "b", "sample", "duration", "h", "from", "to", "resolutionSeconds", "job", "run_id", "site_id", "site_ids", "view_site", "at"];
 
+// Team photos live in public/team as <file>.webp with a .jpg fallback.
+const team = [
+  ["Nguyen Trong Chung", "nguyen-trong-chung"], ["Nguyen Phuong Thao", "nguyen-phuong-thao"], ["Chu Hoang Lam", "chu-hoang-lam"],
+  ["Man Gia Minh", "man-gia-minh"], ["Nguyen Nhu Son", "nguyen-nhu-son"], ["Nguyen Thuy Trang", "nguyen-thuy-trang"],
+] as const;
+
 export default function Home() {
   const { t, locale } = useLanguage();
   const [savedResult, setSavedResult] = useState(() => savedResultFromUrl(new URLSearchParams()));
@@ -99,7 +105,13 @@ export default function Home() {
       </section>
       <section id="team" className="home-team" tabIndex={-1} aria-labelledby="team-title">
         <h2 id="team-title">{t("Team members")}</h2>
-        <ul>{["Nguyen Trong Chung", "Nguyen Thuy Trang", "Chu Hoang Lam", "Man Gia Minh", "Nguyen Nhu Son", "Nguyen Phuong Thao"].map(name => <li key={name}>{name}</li>)}</ul>
+        <ul>{team.map(([name, file]) => <li key={file}>
+          <div className="team-frame"><picture>
+            <source srcSet={`/team/${file}.webp`} type="image/webp" />
+            <img src={`/team/${file}.jpg`} width={172} height={172} loading="lazy" alt={`Photo of ${name}`} />
+          </picture></div>
+          <span>{name}</span>
+        </li>)}</ul>
       </section>
       <LunarResources />
     </main>
