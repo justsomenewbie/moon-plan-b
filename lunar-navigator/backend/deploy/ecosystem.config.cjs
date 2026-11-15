@@ -23,7 +23,9 @@ module.exports = {
       name: 'lunarnav-api',
       cwd: backendDir,
       script: 'dist/src/server.js',
-      node_args: [`--env-file=${envFile}`],
+      // The VPS has no IPv6 route and NASA hosts are ~300 ms away: try IPv4 first and give each address
+      // family 2 s, or Node's fetch reports ETIMEDOUT for PGDA while curl succeeds (custom-site capability).
+      node_args: [`--env-file=${envFile}`, '--dns-result-order=ipv4first', '--network-family-autoselection-attempt-timeout=2000'],
       exec_mode: 'fork',
       instances: 1,
       autorestart: true,
