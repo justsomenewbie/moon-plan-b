@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { POST } from "../app/guide/chat/route.ts";
-import { answerGuide, parseGuideRequest, parsePlan } from "../lib/guide-chat.ts";
+import { answerGuide, knowledge, knowledgeTopics, parseGuideRequest, parsePlan } from "../lib/guide-chat.ts";
 
 // These tests mock both transports and always start in local mode, even on configured hosts.
 delete process.env.OPENAI_API_KEY;
@@ -183,4 +183,27 @@ test("throttles concurrent and repeated local inference requests", async t => {
   }
   assert.equal(response?.status, 429);
   assert.ok(response?.headers.get("retry-after"));
+});
+
+test("project-knowledge topics parse and return their fixed text in English and Vietnamese", () => {
+  assert.equal(knowledgeTopics.length, 9);
+  for (const topic of knowledgeTopics) {
+    // The parser accepts each knowledge topic, with or without displayed rows.
+    for (const rowCount of [0, 2]) assert.equal(parsePlan({ topic, measure: "bothHours", rows: [] }, rowCount).topic, topic);
+    for (const locale of ["en", "vi"] as const) {
+      const question = locale === "en" ? "Tell me about the project." : "Hãy cho tôi biết về dự án.";
+      for (const context of [input.context, { kind: "unavailable", rows: [] }]) {
+        const reply = answerGuide(parseGuideRequest({ ...input, locale, question, context }), parsePlan({ topic, measure: "sunHours", rows: [] }, context.rows.length));
+        assert.equal(reply.answer, knowledge[locale][topic] + "\n" + knowledge[locale].source);
+        assert.equal(reply.action, null);
+      }
+    }
+    assert.notEqual(knowledge.en[topic], knowledge.vi[topic]);
+  }
+  assert.equal(knowledge.en.source, "Source: project documentation");
+  assert.equal(knowledge.vi.source, "Nguồn: tài liệu dự án");
+  // Fixed text only: the displayed rows never leak into a knowledge answer.
+  const reply = answerGuide(parseGuideRequest({ ...input, question: "What NASA data does this use?" }), { topic: "dataSources", measure: "bothHours", rows: [0] });
+  assert.doesNotMatch(reply.answer, /Odysseus|Athena|139|B_spice/);
+  assert.throws(() => parsePlan({ topic: "projectSecrets", measure: "bothHours", rows: [] }, 2));
 });

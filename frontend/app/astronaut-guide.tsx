@@ -20,6 +20,7 @@ const messages = {
     close: "Close AI guide",
     newChat: "New chat",
     liveQuestion: "Which site has the most hours with both Sun and Earth this week?",
+    dataQuestion: "What NASA data does this use?",
     greeting: "What can I help you explore?",
     suggested: "Browse suggested questions",
     measurementNote: "I don’t have live measurements from the Moon.",
@@ -45,6 +46,7 @@ const messages = {
     close: "Đóng trợ lý AI",
     newChat: "Trò chuyện mới",
     liveQuestion: "Tuần này địa điểm nào có nhiều giờ cùng thấy Mặt Trời và Trái Đất nhất?",
+    dataQuestion: "Dự án dùng dữ liệu NASA nào?",
     greeting: "Bạn muốn mình giúp tìm hiểu điều gì?",
     suggested: "Xem câu hỏi gợi ý",
     measurementNote: "Mình chưa có số liệu đo trực tiếp từ Mặt Trăng.",
@@ -145,7 +147,7 @@ export default function AstronautGuide({ planningSource, savedResult, terrain, c
     }
   }
   // Two answers are written by the team; the last question goes to the language model.
-  const suggestions = [...copy.questions.map(([question, answer]) => ({ question, answer })), { question: copy.liveQuestion }];
+  const suggestions = [...copy.questions.map(([question, answer]) => ({ question, answer })), { question: copy.liveQuestion }, { question: copy.dataQuestion }];
   return <>
     <button type="button" className={styles.launcher} popoverTarget={id} aria-label={copy.open} title={copy.open}
       onKeyDown={dismissOnEscape}>

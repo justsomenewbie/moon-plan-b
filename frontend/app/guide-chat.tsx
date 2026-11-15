@@ -172,13 +172,18 @@ function Conversation({ suggestions, context, actions, source, localScope, evide
     </div>}
     <div role="log" ref={log} className={styles.log} aria-label={labels.title} aria-live="polite">{turns.map((turn, i) => {
       const dest = turn.action && actions[turn.action];
+      // An answer that ends with its own "Source: …" line (project knowledge) shows that line instead of the run id.
+      const ownSource = turn.answer.match(/\n((?:Source|Nguồn): [^\n]+)$/);
+      const body = ownSource ? turn.answer.slice(0, ownSource.index) : turn.answer;
+      // The run id is the source only for answers that quote the displayed rows.
+      const source = ownSource ? ownSource[1] : !turn.canned && context.rows.some(row => turn.answer.includes(row.site)) ? sourceLine : "";
       return <Fragment key={i}>
         <p className={styles.user}><span className="sr-only">{labels.you}: </span>{turn.question}</p>
-        <div className={styles.guide}><span className="sr-only">{labels.guide}: </span>{formatAnswer(turn.answer, context.rows.map(row => row.site))}
+        <div className={styles.guide}><span className="sr-only">{labels.guide}: </span>{formatAnswer(body, ownSource ? [] : context.rows.map(row => row.site))}
           {turn.href && <a href={turn.href}>{turn.href.endsWith("#workspace") ? labels.openSummary : turn.href.startsWith("/compare?") ? labels.openObservations : labels.openPlanner}</a>}
           {turn.action && dest && (typeof dest === "string" ? <a href={dest} onClick={e => e.currentTarget.closest("aside")?.hidePopover()}>{labels.actions[turn.action]}</a>
             : <button type="button" onClick={e => { e.currentTarget.closest("aside")?.hidePopover(); dest(); }}>{labels.actions[turn.action]}</button>)}
-          {!turn.canned && sourceLine && <small className={styles.meta}>{sourceLine}</small>}
+          {source && <small className={styles.meta}>{source}</small>}
         </div>
       </Fragment>;
     })}

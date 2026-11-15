@@ -10,7 +10,10 @@ export type GuideRow = {
   sunHours: number | null; earthHours: number | null; bothHours: number | null;
 };
 type GuideRequest = { locale: Locale; question: string; previousQuestion?: string; context: { kind: Kind; rows: GuideRow[] } };
-const topics = ["hours", "mostHours", "fewestHours", "source", "compare", "compareSites", "compareDates", "import", "current", "visibility", "safety", "help", "unsupported"] as const;
+// Project-knowledge topics: the model only picks one; the app answers with fixed, reviewed text.
+export const knowledgeTopics = ["dataSources", "method", "planB", "validation", "limits", "pages", "runs", "team", "aiUse"] as const;
+type KnowledgeTopic = typeof knowledgeTopics[number];
+const topics = ["hours", "mostHours", "fewestHours", "source", "compare", "compareSites", "compareDates", "import", "current", "visibility", "safety", "help", ...knowledgeTopics, "unsupported"] as const;
 const measures = ["sunHours", "earthHours", "bothHours"] as const;
 type Topic = typeof topics[number];
 type Measure = typeof measures[number];
@@ -78,6 +81,9 @@ const instructions = [
   'Examples (question → JSON plan): "Which site has more visibility?" → {"topic":"mostHours","measure":"bothHours","rows":[]}; "How many hours of sunlight does Athena get?" → {"topic":"hours","measure":"sunHours","rows":[1]} when Athena is row 1.',
   '"Nguồn của số liệu này ở đâu?" or "Where did that number come from?" → {"topic":"source","measure":"bothHours","rows":[]}. "Odysseus có mấy giờ nắng?" → {"topic":"hours","measure":"sunHours","rows":[0]} when Odysseus is row 0.',
   '"Switch to date comparison" → {"topic":"compareDates","measure":"bothHours","rows":[]}; "Compare hours for these dates" → {"topic":"mostHours","measure":"bothHours","rows":[]}.',
+  "Questions about the project itself use a knowledge topic: dataSources for which NASA or other data it uses, method for how visibility is computed, planB for what Plan B means or what to do if a launch slips, validation for how results were checked or how accurate they are, limits for limitations and caveats, pages for what each page of the site does, runs for the difference between model runs B2 and A2, team for who made it or the challenge, aiUse for how AI was used. For these, measure is bothHours and rows is empty. Source stays for the provenance of a displayed number.",
+  'Examples: "What NASA data does this use?" or "Dự án dùng dữ liệu NASA nào?" → {"topic":"dataSources","measure":"bothHours","rows":[]}; "How do you calculate visibility?" or "Các bạn tính tầm nhìn như thế nào?" → method; "What is Plan B?" or "Plan B là gì?" → planB; "How was this validated?" or "Kết quả được kiểm chứng ra sao?" → validation; "What are the limitations?" or "Mô hình có hạn chế gì?" → limits.',
+  '"What does each page do?" or "Các trang dùng để làm gì?" → pages; "What is the difference between B2 and A2?" or "B2 và A2 khác nhau thế nào?" → runs; "Who made this?" or "Ai làm dự án này?" → team; "Did you use AI?" or "Dự án có dùng AI không?" → aiUse.',
   "Use sunHours for sunlight, earthHours for Earth in view, bothHours for concurrent visibility or unspecified visibility. rows is a list of indices relevant to the question. An empty array means all displayed rows. If a question specifies a site or period missing from all rows, use unsupported. Never infer observations or add output fields.",
 ].join("\n");
 
@@ -181,8 +187,39 @@ const fixed = {
   },
 };
 
+// Fixed project facts. Do not add numbers or claims here that the project documentation does not state.
+export const knowledge: Record<Locale, Record<KnowledgeTopic, string> & { source: string }> = {
+  en: {
+    dataSources: "Sun and Earth positions come from JPL Horizons, cross-checked with NAIF SPICE kernels. Terrain comes from NASA LOLA elevation models: NASA GSFC PGDA for the default run (B2) and NASA Moon Trek for the second run (A2). PGDA illumination maps and LROC QuickMap are used for validation.",
+    method: "For every hour of 2026–2030 the app computes where the Sun and Earth are in each site’s sky, and the terrain horizon around the site out to 150 km, including lunar curvature and a 2 m observer mast. The Moon has no atmosphere, so the horizon is the terrain itself. A body counts as visible when it is above that horizon.",
+    planB: "If a launch slips, the planner finds later landing dates at the same site that still give enough hours with the Sun, the Earth or both in view. Use “I have a site” on the Plan page.",
+    validation: "Horizons and SPICE agree to 0.002″ on Sun and Earth directions. All 30 permanently shadowed test pixels get 0% sun, as in NASA’s PGDA map. Well-lit sites differ from NASA PGDA illumination maps by a median of 3.9 percentage points. Eight cases were re-checked by hand in Horizons, QuickMap and Moon Trek.",
+    limits: "Times are hourly (about ±1 h). Accuracy depends on the elevation-model resolution. Five catalog sites outside elevation-model coverage use a smooth-sphere horizon, so their results are optimistic. Seeing the Sun or Earth does not by itself predict electrical power or radio link quality.",
+    pages: "Compare: two sites or dates side by side.\nPlan: rank all 23 sites for your dates, or find dates for one site.\nCompare dates: the same site at two times.\nOrbit: the week view in space.\nData: browse and download the model results (CSV/JSON).\nAPI: the public API reference.",
+    runs: "B2 (default) uses SPICE ephemerides and PGDA terrain. A2 uses Horizons and Moon Trek terrain. They are two independent pipelines that check each other; differences at a few rim sites come from the different elevation models.",
+    team: "Team Moon Plan B, Hanoi, Vietnam — NASA Space Apps Challenge 2026, challenge “Lunar Landing Site Navigator”. The team section on the home page lists the members.",
+    aiUse: "AI assistants helped write code and documentation: OpenAI Codex for the frontend, Anthropic Claude Code for the backend and data pipeline. This guide uses an OpenAI model only to understand the question. Every number shown comes from code run on NASA data, not from the AI.",
+    source: "Source: project documentation",
+  },
+  vi: {
+    dataSources: "Vị trí Mặt Trời và Trái Đất lấy từ JPL Horizons, đối chiếu với bộ kernel NAIF SPICE. Địa hình lấy từ các mô hình độ cao NASA LOLA: NASA GSFC PGDA cho lần chạy mặc định (B2) và NASA Moon Trek cho lần chạy thứ hai (A2). Bản đồ chiếu sáng PGDA và LROC QuickMap được dùng để kiểm chứng.",
+    method: "Với mỗi giờ trong giai đoạn 2026–2030, ứng dụng tính vị trí Mặt Trời và Trái Đất trên bầu trời của từng địa điểm, cùng đường chân trời địa hình quanh địa điểm trong bán kính 150 km, có tính độ cong Mặt Trăng và cột quan sát cao 2 m. Mặt Trăng không có khí quyển nên đường chân trời chính là địa hình. Một thiên thể được coi là nhìn thấy khi nằm trên đường chân trời đó.",
+    planB: "Nếu lịch phóng bị lùi, công cụ lập kế hoạch tìm các ngày hạ cánh muộn hơn tại cùng địa điểm mà vẫn đủ số giờ thấy Mặt Trời, Trái Đất hoặc cả hai. Hãy dùng “Tôi có địa điểm” trên trang Lập kế hoạch.",
+    validation: "Horizons và SPICE khớp nhau tới 0,002″ về hướng Mặt Trời và Trái Đất. Cả 30 điểm ảnh thử nghiệm nằm trong vùng tối vĩnh cửu đều có 0% nắng, giống bản đồ PGDA của NASA. Các địa điểm nhiều nắng lệch so với bản đồ chiếu sáng NASA PGDA với trung vị 3,9 điểm phần trăm. Tám trường hợp đã được kiểm tra lại thủ công bằng Horizons, QuickMap và Moon Trek.",
+    limits: "Thời gian tính theo từng giờ (sai số khoảng ±1 giờ). Độ chính xác phụ thuộc độ phân giải của mô hình độ cao. Năm địa điểm trong danh mục nằm ngoài vùng phủ của mô hình độ cao dùng đường chân trời mặt cầu trơn, nên kết quả của chúng lạc quan hơn thực tế. Việc nhìn thấy Mặt Trời hay Trái Đất tự nó chưa nói lên công suất điện hay chất lượng liên lạc vô tuyến.",
+    pages: "So sánh: hai địa điểm hoặc hai khoảng ngày cạnh nhau.\nLập kế hoạch: xếp hạng cả 23 địa điểm theo ngày của bạn, hoặc tìm ngày cho một địa điểm.\nSo sánh theo thời gian: cùng một địa điểm ở hai thời điểm.\nQuỹ đạo: góc nhìn cả tuần từ không gian.\nDữ liệu: xem và tải kết quả mô hình (CSV/JSON).\nAPI: tài liệu API công khai.",
+    runs: "B2 (mặc định) dùng lịch thiên văn SPICE và địa hình PGDA. A2 dùng Horizons và địa hình Moon Trek. Đây là hai quy trình độc lập kiểm tra lẫn nhau; khác biệt ở một vài địa điểm trên vành hố đến từ hai mô hình độ cao khác nhau.",
+    team: "Đội Moon Plan B, Hà Nội, Việt Nam — NASA Space Apps Challenge 2026, thử thách “Lunar Landing Site Navigator”. Mục thành viên trên trang chủ liệt kê các thành viên.",
+    aiUse: "Trợ lý AI hỗ trợ viết mã và tài liệu: OpenAI Codex cho phần giao diện, Anthropic Claude Code cho phần máy chủ và quy trình dữ liệu. Trợ lý này chỉ dùng một mô hình OpenAI để hiểu câu hỏi. Mọi con số hiển thị đều đến từ mã chạy trên dữ liệu NASA, không phải do AI tạo ra.",
+    source: "Nguồn: tài liệu dự án",
+  },
+};
+const isKnowledge = (topic: Topic): topic is KnowledgeTopic => (knowledgeTopics as readonly string[]).includes(topic);
+
 export function answerGuide(input: GuideRequest, plan: Plan): GuideReply {
   const copy = fixed[input.locale];
+  // Project knowledge is fixed text; the classifier's measure and rows are ignored for it.
+  if (isKnowledge(plan.topic)) return { answer: knowledge[input.locale][plan.topic] + "\n" + knowledge[input.locale].source, action: null };
   // Chat clients resolve planning against the team's current run. A direct request to
   // this displayed-summary endpoint must never substitute unrelated loaded dates.
   if (planningIntent(input.question)) return { answer: input.locale === "en"
