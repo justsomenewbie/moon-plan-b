@@ -5,6 +5,7 @@
  * Every route module under src/routes/ is an async plugin registered below with prefix /api/v1;
  * engineers change handlers inside their own route file, never this list (unless adding a group).
  */
+import { tooManyPointsHint } from './lib/limit_hints.ts';
 import Fastify, {
   type FastifyBaseLogger,
   type FastifyError,
@@ -100,7 +101,7 @@ const isSerializationError = (e: unknown): e is ResponseSerializationError =>
 /** Map any thrown error to a problem body (RFC 9457). */
 function toProblem(err: unknown, instance: string): { body: Problem; headers: Record<string, string> } {
   if (isApiError(err)) return { body: problemBody(err.code, instance, err.message, err.extras), headers: err.extras.headers ?? {} };
-  if (hasZodFastifySchemaValidationErrors(err)) return { body: validationProblem(err.validation, err.validationContext, instance), headers: {} };
+  if (hasZodFastifySchemaValidationErrors(err)) return { body: validationProblem(err.validation, err.validationContext, instance, tooManyPointsHint(instance)), headers: {} };
   if (isSerializationError(err)) {
     return { body: problemBody('INTERNAL', instance, 'response did not match the API contract (see server log)'), headers: {} };
   }

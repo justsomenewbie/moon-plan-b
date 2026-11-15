@@ -127,7 +127,11 @@ describe('GET /sites/{id}/series', () => {
     await problem(`${S}/series?start=2030-01-05T00:00:00Z&end=2030-01-04T00:00:00Z`, 422, 'OUT_OF_RANGE');
     const bad = await problem(`${S}/series?start=2030-02-30T00:00:00Z`, 400, 'VALIDATION_ERROR');
     expect(bad.errors?.[0]?.path).toBe('start');
-    await problem(`${S}/series?max_points=6000`, 400, 'TOO_MANY_POINTS');
+    const tooMany = await problem(`${S}/series?max_points=6000`, 400, 'TOO_MANY_POINTS');
+    expect(tooMany.hint).toBe('Use max_points <= 5000 and at most 8 fields (see GET /api/v1/meta limits)');
+    const csv = await problem(`${S}/export/series.csv?fields=${Array(25).fill('sun_el_deg').join(',')}`, 400, 'TOO_MANY_POINTS');
+    expect(csv.hint).toContain('at most 24 fields'); // the CSV export cap (all series fields)
+    expect(csv.hint).not.toContain('max_points');
     await problem(`${S}/series?fields=sun_az_deg,sun_el_deg,sun_dist_km,sun_semidiam_deg,horizon_el_sun_deg,sun_clearance_deg,sun_fraction,sun_visible,power_tracking`, 400, 'TOO_MANY_POINTS');
     await problem(`${S}/series?fields=nope`, 400, 'VALIDATION_ERROR');
     await problem(`${API}/sites/other_site/series`, 404, 'SITE_NOT_FOUND');

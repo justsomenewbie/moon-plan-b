@@ -378,7 +378,10 @@ describe('GET /dataset - errors', () => {
   });
 
   it('max_points above 10000 -> 400 TOO_MANY_POINTS (the app-wide code for point caps)', async () => {
-    expect((await problem('?max_points=20000', 400)).code).toBe('TOO_MANY_POINTS');
+    const p = await problem('?max_points=20000', 400);
+    expect(p.code).toBe('TOO_MANY_POINTS');
+    expect(p.hint).toContain('max_points <= 10000 per site'); // the /dataset cap, not the /series one
+    expect(p.hint).not.toContain('8 fields');
   });
 
   it('range outside the run / end <= start -> 422 OUT_OF_RANGE', async () => {
