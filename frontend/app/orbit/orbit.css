@@ -16,7 +16,7 @@
 .orbit-stage .lunar-frame { width:100%; max-width:540px; box-shadow:0 0 0 1px #373c45,0 0 0 10px #121720,0 0 0 11px #363b45; }
 .orbit-stage figcaption { color:var(--dim); margin:1.2rem auto 0; max-width:42ch; font-size: var(--fs-14); }
 .orbit-stage figcaption button { color:var(--ink); padding:.55rem; min-height:44px; text-decoration:underline; }
-.orbit-stage .site-pin button { width:max-content; border-radius:5px; min-height:40px; padding:0 .65rem; font: 600 0.875rem/1 var(--font-body); }
+.orbit-stage .site-pin button { width:max-content; border-radius:5px; min-height:44px; padding:0 .65rem; font: 600 0.875rem/1 var(--font-body); }
 .orbit-stage .site-pin button[aria-pressed=true] { outline:2px solid white; }
 .orbit-panel { grid-area:panel; align-self:start; }
 .orbit-reading { margin:1.1rem 0; }
