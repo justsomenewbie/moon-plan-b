@@ -271,7 +271,29 @@ export function skyPath(s: Scenario, body: "sun" | "earth"): string {
     return `${move ? "M" : "L"}${value.azimuthDeg},${90 - value.elevationDeg}`;
   }).join(" ");
 }
-export function chartPath(s: Pick<Scenario, "samples" | "sampleStepSeconds" | "startUtc" | "endUtc">, body: "sun" | "earth", width = 800, height = 240): string {
+export type ElevationScale = { min: number; max: number; ticks: number[] };
+export const fullElevationScale: ElevationScale = { min: -90, max: 90, ticks: [90, 45, 0, -45, -90] };
+
+// Chart y range fitted to the plotted elevations. It always contains 0° and the clearance angle, adds about
+// 15% padding, spans at least 6° and ends on round ticks. The data values themselves are untouched.
+export function elevationScale(scenarios: (Pick<Scenario, "samples"> | undefined)[], clearanceDeg = 0): ElevationScale {
+  let low = 0, high = Math.max(0, clearanceDeg);
+  for (const scenario of scenarios) for (const sample of scenario?.samples ?? []) for (const body of ["sun", "earth"] as const) {
+    const value = sample[body]?.elevationDeg;
+    if (typeof value === "number" && Number.isFinite(value)) { low = Math.min(low, value); high = Math.max(high, value); }
+  }
+  const padding = (high - low) * .15;
+  low -= padding; high += padding;
+  if (high - low < 6) { const extra = (6 - (high - low)) / 2; low -= extra; high += extra; }
+  const step = [1, 2, 5, 10, 15, 30, 45].find(size => (high - low) / size <= 6) ?? 45;
+  const min = Math.max(-90, Math.floor(low / step) * step), max = Math.min(90, Math.ceil(high / step) * step);
+  const ticks: number[] = [];
+  for (let value = max; value >= min; value -= step) ticks.push(value);
+  return { min, max, ticks };
+}
+export const elevationY = (scale: ElevationScale, elevationDeg: number, height: number) => (scale.max - elevationDeg) / (scale.max - scale.min) * height;
+
+export function chartPath(s: Pick<Scenario, "samples" | "sampleStepSeconds" | "startUtc" | "endUtc">, body: "sun" | "earth", width = 800, height = 240, scale: ElevationScale = fullElevationScale): string {
   let open = false;
   const start = Date.parse(s.startUtc), span = Date.parse(s.endUtc) - start;
   let previous = start;
@@ -281,7 +303,7 @@ export function chartPath(s: Pick<Scenario, "samples" | "sampleStepSeconds" | "s
     previous = time;
     if (sample[body] === null) { open = false; return ""; }
     const x = span > 0 ? (time - start) / span * width : width / 2;
-    const y = (90 - sample[body].elevationDeg) / 180 * height;
+    const y = elevationY(scale, sample[body].elevationDeg, height);
     const result = `${open ? "L" : "M"}${x.toFixed(2)},${y.toFixed(2)}`;
     open = true; return result;
   }).join(" ");

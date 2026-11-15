@@ -213,7 +213,7 @@ select option { background: var(--bg); color: var(--text); }
 .legend .sun::before { border-radius: 50%; }
 .plot-frame { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px 12px; margin: 24px 4px 18px 0; }
 .y-ticks { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; font: 0.75rem var(--font-mono); color: var(--muted); line-height: 1; }
-.plot-area { position: relative; height: clamp(200px, 17vw, 250px); min-width: 0; }
+.plot-area { position: relative; height: clamp(220px, 23vw, 300px); min-width: 0; }
 .timeline-svg, .plot-markers { display: block; width: 100%; height: 100%; overflow: visible; }
 .plot-markers { position: absolute; inset: 0; pointer-events: none; }
 .x-ticks { grid-column: 2; display: flex; justify-content: space-between; font: 0.75rem var(--font-mono); color: var(--muted); }
@@ -221,8 +221,20 @@ select option { background: var(--bg); color: var(--text); }
 .x-ticks > span:last-child { text-align: right; }
 .axis-label { font-size: var(--fs-12); fill: var(--muted); }
 .grid-line { stroke: var(--grid); stroke-width: 1; }
-.horizon-line { stroke: var(--horizon); stroke-width: 1; stroke-dasharray: 6 5; }
-.plot-line { stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.horizon-line { stroke: var(--horizon); stroke-width: 1.25; vector-effect: non-scaling-stroke; }
+.grid-line { vector-effect: non-scaling-stroke; }
+.y-ticks { font-variant-numeric: tabular-nums; }
+.horizon-label { position: absolute; right: 6px; transform: translateY(-115%); color: var(--muted); font-size: var(--fs-12); line-height: 1; pointer-events: none; white-space: nowrap; }
+.readout-guide { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.plot-tooltip {
+  position: absolute; top: 6px; z-index: 2; display: grid; gap: 2px; padding: 6px 10px; transform: translateX(10px);
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-card);
+  font-size: var(--fs-12); font-variant-numeric: tabular-nums; line-height: 1.35; white-space: nowrap; pointer-events: none; opacity: 0;
+}
+.plot-tooltip[data-side="left"] { transform: translateX(calc(-100% - 10px)); }
+.plot-area:hover .plot-tooltip { opacity: 1; }
+@media (hover: none) { .plot-tooltip { display: none; } }
+.plot-line { stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .find-match { text-align: left; margin-top: -12px; font-size: var(--fs-12); }
 .cursor-line { stroke: var(--text); stroke-width: 1.2; }
 .axis-caption { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; font-size: var(--fs-12); color: var(--muted); margin-top: -6px; }

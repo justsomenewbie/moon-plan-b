@@ -1,6 +1,6 @@
 import { memo, useMemo, useState } from "react";
-import { chartPath, durationHours, sampleAt } from "../lib/dataset";
-import type { Dataset, Mode, Scenario } from "../lib/dataset";
+import { chartPath, durationHours, elevationScale, elevationY, sampleAt } from "../lib/dataset";
+import type { Dataset, ElevationScale, Mode, Scenario } from "../lib/dataset";
 import type { SkyScenario } from "../lib/terrain-sky";
 import type { Locale } from "../lib/i18n";
 import { useLanguage } from "./language";
@@ -41,14 +41,45 @@ export const SiteAssessments = memo(function SiteAssessments({ data, scenarios, 
   </section>;
 });
 
-const SampleMarkers = memo(function SampleMarkers({ a, b }: { a: SkyScenario; b?: SkyScenario }) {
-  return <svg className="plot-markers" aria-hidden="true">{[a, b].map((s, i) => s ? s.samples.flatMap((sample) => (["sun", "earth"] as const).map((body) => {
-    const value = sample[body]; if (!value) return null;
-    const span = durationHours(s) * 3600000;
-    const x = span ? `${(Date.parse(sample.utc) - Date.parse(s.startUtc)) / span * 100}%` : "50%";
-    const y = `${(90 - value.elevationDeg) / 180 * 100}%`;
-    return body === "sun" ? <circle key={`${s.id}-${sample.utc}-${body}`} cx={x} cy={y} r="3.5" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" /> : <rect key={`${s.id}-${sample.utc}-${body}`} x={x} y={y} width="7" height="7" transform="translate(-3.5 -3.5)" className={body} fill={i ? "var(--bg)" : "currentColor"} stroke="currentColor" />;
-  })) : null)}</svg>;
+// The sample of a scenario nearest to an elapsed offset, if one lies within half a sample step.
+function nearestSample(s: SkyScenario, offset: number) {
+  const target = Date.parse(s.startUtc) + offset;
+  let best: SkyScenario["samples"][number] | undefined, distance = Infinity;
+  for (const sample of s.samples) {
+    const gap = Math.abs(Date.parse(sample.utc) - target);
+    if (gap < distance) { best = sample; distance = gap; }
+  }
+  return best && distance <= Math.max(s.sampleStepSeconds * 500, 1) ? best : undefined;
+}
+
+// One readout replaces the per-sample markers: a dot for each body at the cursor (or at the pointer while
+// hovering) and a small tooltip with the UTC time and both elevations. Sun is a circle, Earth a square.
+const Readout = memo(function Readout({ a, b, offset, hovering, scale, locale, labels }: {
+  a: SkyScenario; b?: SkyScenario; offset: number; hovering: boolean; scale: ElevationScale; locale: Locale; labels: { sun: string; earth: string };
+}) {
+  const span = durationHours(a) * 3600000;
+  const x = span ? `${Math.max(0, Math.min(1, offset / span)) * 100}%` : "50%";
+  const rows = [a, b].map(s => s ? nearestSample(s, offset) : undefined);
+  if (!rows.some(Boolean)) return null;
+  const y = (value: number) => `${elevationY(scale, value, 100)}%`;
+  const first = rows[0] ?? rows[1]!;
+  return <>
+    <svg className="plot-markers" aria-hidden="true">
+      {hovering && <line x1={x} x2={x} y1="0" y2="100%" className="readout-guide" />}
+      {rows.map((sample, i) => sample ? (["sun", "earth"] as const).map(body => {
+        const value = sample[body]; if (!value) return null;
+        return body === "sun"
+          ? <circle key={i + body} cx={x} cy={y(value.elevationDeg)} r="3" className={body} fill={i ? "var(--surface)" : "currentColor"} stroke="currentColor" />
+          : <rect key={i + body} x={x} y={y(value.elevationDeg)} width="6" height="6" transform="translate(-3 -3)" className={body} fill={i ? "var(--surface)" : "currentColor"} stroke="currentColor" />;
+      }) : null)}
+    </svg>
+    <div className="plot-tooltip" aria-hidden="true" data-side={span && offset / span > .5 ? "left" : "right"} style={{ left: x }}>
+      <strong>{formatUtc(first.utc, locale)}</strong>
+      {rows.map((sample, i) => sample ? <span key={i}>
+        <span className="sun">{labels.sun} {angle(sample.sun?.elevationDeg)}</span> · <span className="earth">{labels.earth} {angle(sample.earth?.elevationDeg)}</span>
+      </span> : null)}
+    </div>
+  </>;
 });
 
 type TimelineProps = { mode: Mode; offset: number; clearanceDeg?: number } & (
@@ -60,34 +91,43 @@ export function Timeline(props: TimelineProps) {
   const { a, b, mode, offset, clearanceDeg = 0 } = props;
   const { t, locale } = useLanguage();
   const width = 800, height = 240;
+  const [hover, setHover] = useState<number | null>(null);
+  // One scale for the lines, the readout dots, the gridlines and the clearance band.
+  const scale = useMemo(() => elevationScale([a, b], clearanceDeg), [a, b, clearanceDeg]);
+  const y = (value: number) => elevationY(scale, value, height);
   const span = durationHours(a) * 3600000;
   const cursor = span ? offset / span * width : width / 2;
   const dense = props.angularOnly && Math.max(a.samples.length, b?.samples.length ?? 0) > width;
   const lines = useMemo(() => [a, b].flatMap((s, i) => s ? (["sun", "earth"] as const).map(body => {
-    const d = span ? chartPath(s, body, width, height) : "";
+    const d = span ? chartPath(s, body, width, height, scale) : "";
     // A move followed by a zero-length stroke draws each measured point in a single SVG element.
     const dots = dense ? d.replace(/[ML](-?[\d.]+,-?[\d.]+)/g, "M$1h0") : undefined;
     return <g key={`${s.id}-${body}`} className={body}>
-      <path d={d} fill="none" className={`plot-line ${body}`} strokeDasharray={i ? "7 6" : undefined} opacity={i ? 0.65 : 1} />
+      <path d={d} fill="none" className={`plot-line ${body}`} strokeDasharray={i ? "4 4" : undefined} opacity={i ? 0.75 : 1} />
       {dots && <path d={dots} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap={body === "sun" ? "round" : "square"} vectorEffect="non-scaling-stroke" />}
     </g>;
-  }) : []), [a, b, dense, span]);
+  }) : []), [a, b, dense, span, scale]);
   return <div className="timeline">
     <div className="section-heading"><h2>{t("Sun & Earth, over time")}</h2><div className="legend"><span className="sun">{t("Sun")}</span><span className="earth">{t("Earth")}</span></div></div>
     <p className="muted text-sm">{t("Solid: primary. Dashed: alternative. Straight segments join supplied samples; they are not new observations.")}</p>
-    <div className="plot-frame"><div className="y-ticks" aria-hidden="true">{[90, 45, 0, -45, -90].map((v) => <span key={v}>{v}°</span>)}</div><div className="plot-area">
+    <div className="plot-frame"><div className="y-ticks" aria-hidden="true">{scale.ticks.map((v) => <span key={v}>{v}°</span>)}</div><div className="plot-area"
+      onPointerMove={span ? event => {
+        const box = event.currentTarget.getBoundingClientRect();
+        setHover(Math.max(0, Math.min(1, (event.clientX - box.left) / box.width)) * span);
+      } : undefined} onPointerLeave={() => setHover(null)}>
     <svg className="timeline-svg" viewBox="0 0 800 240" preserveAspectRatio="none" role="img" aria-labelledby="timeline-title timeline-desc">
       <title id="timeline-title">{t("Sun and Earth elevation above the ideal horizon")}</title>
-      <desc id="timeline-desc">{t("Elevation in degrees from minus 90 to 90.")}{" "}{mode === "dates" ? t("Dates are aligned by elapsed hours, with separate UTC timestamps below.") : t("Sites share the same absolute UTC window.")} {t("Missing observations break each line. Use the sample table for exact values.")}</desc>
-      {[-90, -45, 0, 45, 90].map((v) => <g key={v}>
-        <line x1="0" x2={width} y1={(90 - v) / 180 * height} y2={(90 - v) / 180 * height} className={v === 0 ? "horizon-line" : "grid-line"} />
+      <desc id="timeline-desc">{t("Elevation in degrees from {min} to {max}; the scale fits the plotted values.", { min: scale.min, max: scale.max })}{" "}{mode === "dates" ? t("Dates are aligned by elapsed hours, with separate UTC timestamps below.") : t("Sites share the same absolute UTC window.")} {t("Missing observations break each line. Use the sample table for exact values.")}</desc>
+      {scale.ticks.map((v) => <g key={v}>
+        <line x1="0" x2={width} y1={y(v)} y2={y(v)} className={v === 0 ? "horizon-line" : "grid-line"} />
       </g>)}
-      {clearanceDeg > 0 ? <rect x="0" y={(90 - clearanceDeg) / 180 * height} width={width} height={clearanceDeg / 180 * height} className="clearance-band" /> : null}
-      {clearanceDeg > 0 ? <line x1="0" x2={width} y1={(90 - clearanceDeg) / 180 * height} y2={(90 - clearanceDeg) / 180 * height} className="clearance-line" /> : null}
+      {clearanceDeg > 0 ? <rect x="0" y={y(clearanceDeg)} width={width} height={y(0) - y(clearanceDeg)} className="clearance-band" /> : null}
+      {clearanceDeg > 0 ? <line x1="0" x2={width} y1={y(clearanceDeg)} y2={y(clearanceDeg)} className="clearance-line" /> : null}
       {lines}
       {a.samples.length > 0 && offset >= 0 ? <line x1={cursor} x2={cursor} y1="0" y2={height} className="cursor-line" /> : null}
     </svg>
-    {!dense && <SampleMarkers a={a} b={b} />}</div>
+    <span className="horizon-label" aria-hidden="true" style={{ top: `${elevationY(scale, 0, 100)}%` }}>{t("0° ideal horizon")}</span>
+    {a.samples.length > 0 && <Readout a={a} b={b} offset={hover ?? Math.max(0, offset)} hovering={hover !== null} scale={scale} locale={locale} labels={{ sun: t("Sun"), earth: t("Earth") }} />}</div>
     <div className="x-ticks" aria-hidden="true">{(span ? [0, .25, .5, .75, 1] : [0]).map((v) => {
       const time = new Date(Date.parse(a.startUtc) + durationHours(a) * v * 3600000);
       return <span key={v}>{mode === "dates" ? `${Number((durationHours(a) * v).toFixed(2))} h` : <><span>{new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", { day: "2-digit", month: "short", timeZone: "UTC" }).format(time)}</span><span>{time.toISOString().slice(11, 16)}</span></>}</span>;

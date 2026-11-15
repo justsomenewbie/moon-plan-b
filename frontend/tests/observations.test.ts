@@ -88,8 +88,9 @@ test("timeline exposes producer-supplied golden windows without deriving replace
 test("timeline leaves a missing hourly observation blank and still plots a measured 0°", () => {
   const partial = readFileSync(new URL("../../qa/fixtures/partial.json", import.meta.url), "utf8");
   const { scenarios } = dataset.validateDataset(JSON.parse(partial));
-  const render = (site: string) => renderToStaticMarkup(createElement(compiled.exports.Timeline, {
-    a: scenarios.find(s => s.siteId === site)!, mode: "sites", offset: 0,
+  const hour = 3600000;
+  const render = (site: string, offset = 0) => renderToStaticMarkup(createElement(compiled.exports.Timeline, {
+    a: scenarios.find(s => s.siteId === site)!, mode: "sites", offset,
   }));
 
   // Basin omits 02:00 UTC. Both traces must stop at 01:00 and restart at 03:00.
@@ -99,13 +100,21 @@ test("timeline leaves a missing hourly observation blank and still plots a measu
   for (const path of paths) {
     assert.deepEqual(path.match(/[ML][\d.]+(?=,)/g), ["M0.00", "L200.00", "M600.00", "L800.00"]);
   }
-  assert.doesNotMatch(basin, /<(?:circle|rect)\b[^>]*\b(?:cx|x)="50%"/);
+  // The chart no longer draws a marker per sample: only the readout at the cursor, one mark per body.
+  assert.ok((basin.match(/<(?:circle|rect)\b/g) ?? []).length <= 2);
+  // With the cursor on the missing 02:00 sample there is no readout at all.
+  assert.doesNotMatch(render("basin", 2 * hour), /<(?:circle|rect)\b[^>]*\b(?:cx|x)="50%"/);
 
   // Ridge supplies a real 0° Sun at 01:00, then only Earth at 02:00.
-  const ridge = render("ridge");
-  assert.match(ridge, /<circle\b[^>]*cx="25%"[^>]*cy="50%"/);
-  assert.doesNotMatch(ridge, /<circle\b[^>]*cx="50%"/);
-  assert.match(ridge, /<rect\b[^>]*\bx="50%"/);
+  const ridgeScenario = scenarios.find(s => s.siteId === "ridge")!;
+  const zero = dataset.elevationY(dataset.elevationScale([ridgeScenario]), 0, 100) + "%";
+  const atOne = render("ridge", hour);
+  // The readout uses the same fitted scale as the lines, so a 0° Sun sits on the 0° gridline.
+  const sunDot = atOne.match(/<circle\b[^>]*>/)?.[0] ?? "";
+  assert.ok(sunDot.includes('cx="25%"') && sunDot.includes('cy="' + zero + '"'), sunDot);
+  const atTwo = render("ridge", 2 * hour);
+  assert.doesNotMatch(atTwo, /<circle\b/);
+  assert.match(atTwo, /<rect\b[^>]*\bx="50%"/);
 });
 
 test("polar skyplot keeps shape labels, cardinal directions and exact numeric readout", () => {
