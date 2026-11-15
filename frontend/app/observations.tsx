@@ -108,7 +108,10 @@ export function Timeline(props: TimelineProps) {
     </g>;
   }) : []), [a, b, dense, span, scale]);
   return <div className="timeline">
-    <div className="section-heading"><h2>{t("Sun & Earth, over time")}</h2><div className="legend"><span className="sun">{t("Sun")}</span><span className="earth">{t("Earth")}</span></div></div>
+    <div className="section-heading"><h2>{t("Sun & Earth, over time")}</h2><div className="legend"><span className="sun">{t("Sun")}</span><span className="earth">{t("Earth")}</span>
+      <span className="line-key">{t("Primary")}</span>
+      {b && <span className="line-key dashed">{t("Alternative")}</span>}
+      {clearanceDeg > 0 && <span className="line-key clearance">{t("{angle}° simulated uniform clearance", { angle: clearanceDeg })}</span>}</div></div>
     <p className="muted text-sm">{t("Solid: primary. Dashed: alternative. Straight segments join supplied samples; they are not new observations.")}</p>
     <div className="plot-frame"><div className="y-ticks" aria-hidden="true">{scale.ticks.map((v) => <span key={v}>{v}°</span>)}</div><div className="plot-area"
       onPointerMove={span ? event => {

@@ -219,6 +219,12 @@ select option { background: var(--bg); color: var(--text); }
 .legend { display: flex; gap: 24px; font-size: var(--fs-16); }
 .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; background: currentColor; vertical-align: middle; margin-right: 8px; }
 .legend .sun::before { border-radius: 50%; }
+.legend { flex-wrap: wrap; row-gap: 6px; }
+/* Line-style keys for the timeline: solid = primary, dashed = alternative, orange dashed = clearance threshold. */
+.legend .line-key { color: var(--text); }
+.legend .line-key::before { width: 24px; height: 0; background: none; border-top: 2px solid currentColor; border-radius: 0; }
+.legend .line-key.dashed::before { border-top-style: dashed; opacity: .75; }
+.legend .line-key.clearance::before { border-top: 2px dashed var(--sun-fill); }
 .plot-frame { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px 12px; margin: 24px 4px 18px 0; }
 .y-ticks { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; font: 0.75rem var(--font-mono); color: var(--muted); line-height: 1; }
 .plot-area { position: relative; height: clamp(220px, 23vw, 300px); min-width: 0; }
