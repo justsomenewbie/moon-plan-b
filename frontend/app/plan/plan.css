@@ -88,4 +88,4 @@
 .plan-subsolar circle + circle { fill: #ffe19a; stroke: none; }
 .plan-sun-direction { margin-block: 1rem; }
 .plan-sun-direction p { margin-block: .35rem; }
-.plan-bearing-arrow { display: inline-block; font-size: 1.2em; line-height: 1; }
+.plan-bearing-arrow { display: inline-block; font-size: var(--fs-20); line-height: 1; }

@@ -59,7 +59,7 @@ function LiveModelRuns() {
       {page.runs.map(run => <li key={run.runId}>
         <a className="break-words" href={"/plan?" + new URLSearchParams({ run_id: run.runId })}>{run.label}</a>
         {run.isDefault && <strong> · {vi ? "Mặc định" : "Default"}</strong>}
-        {run.runId !== run.label && <code className="run-id block">{run.runId}</code>}
+        {run.runId !== run.label && <code translate="no" className="run-id block">{run.runId}</code>}
         <p>{[run.provider, run.dem].filter(Boolean).join(" / ")}{(run.provider || run.dem) && " · "}
           {run.siteCount} {vi ? "địa điểm" : run.siteCount === 1 ? "site" : "sites"} · {vi ? "Bước mô hình" : "Model step"} {run.stepSeconds} s</p>
         <p><TimeRange start={run.start} end={run.end} /> · {vi ? "UTC, không gồm mốc cuối" : "UTC, end exclusive"}</p>
@@ -97,7 +97,7 @@ export default function DataPage() {
         <h2 id="b2-title">{text("Run B2 · hourly visibility for all 23 sites", "Lần chạy B2 · tầm nhìn theo giờ cho cả 23 địa điểm")}</h2>
         <p className="lead">{text("Compare sites or search landing times throughout five model years. The saved archive includes hourly Sun, Earth and joint visibility.", "So sánh địa điểm hoặc tìm giờ hạ cánh trong suốt 5 năm mô hình. Kho lưu trữ có trạng thái nhìn thấy Mặt Trời, Trái Đất và cả hai theo giờ.")}</p>
         <p><TimeRange start={archiveB2Run.start} end={archiveB2Run.end} /> · {text("end exclusive", "không gồm mốc cuối")}</p>
-        <p><code className="run-id">{archiveB2Run.runId}</code><br/><code className="hash">manifest.json · SHA-256 {archiveB2Run.manifestSha256}</code></p>
+        <p><code translate="no" className="run-id">{archiveB2Run.runId}</code><br/><code className="hash">manifest.json · SHA-256 {archiveB2Run.manifestSha256}</code></p>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           <a href="/plan?source=saved-b2&mode=sites">{text("Compare sites with run B2", "So sánh địa điểm với lần chạy B2")}</a>
           <a href="/plan?source=saved-b2&mode=dates">{text("Find landing hours with run B2", "Tìm giờ hạ cánh với lần chạy B2")}</a>
@@ -136,7 +136,7 @@ export default function DataPage() {
         <h2 id="bundled-data">{text("Earlier run B · bundled sources", "Lần chạy B trước đó · nguồn có sẵn")}</h2>
         <p>{text("Run B covers 23 catalog sites from 1 January 2026 through 31 December 2030, sampled every hour in UTC.",
           "Lần chạy B gồm 23 địa điểm, lấy mẫu mỗi giờ theo UTC từ ngày 1/1/2026 đến hết ngày 31/12/2030.")}</p>
-        <code className="run-id">{earlierCatalog.run_id}</code>
+        <code translate="no" className="run-id">{earlierCatalog.run_id}</code>
 
         <p>{text("The manifest lists the original files and their SHA-256 checksums. The saved site catalog includes names, coordinates, terrain methods and full-run summary values.",
           "Manifest liệt kê các tệp gốc và mã SHA-256 của từng tệp. Danh mục địa điểm lưu sẵn có tên, tọa độ, phương pháp mô hình địa hình và số liệu tổng hợp của cả lần chạy.")}</p>

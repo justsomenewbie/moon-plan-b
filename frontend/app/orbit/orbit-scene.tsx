@@ -47,7 +47,7 @@ export default function OrbitScene() {
         <div className="orbit-reading" aria-live="polite" aria-atomic="true">
           <h2>{name}</h2>
           <p className="orbit-value">{reading ? <>{reading.bothHours}<small> / 168 h</small></> : t("Unavailable")}</p>
-          <p>{t("with both the Sun and Earth in view")}</p>
+          <p>{t("with both the Sun and Earth in view")} · <span className="orbit-run">{t("Saved run B2")}</span></p>
           <p className="orbit-other">{other && reading && (other.bothHours === reading.bothHours
             ? t("{site} has the same visibility this week.", { site: otherName }) : t("{site} has {hours} h in the same week.", { site: otherName, hours: other.bothHours }))}</p>
         </div>

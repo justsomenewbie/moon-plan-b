@@ -88,7 +88,7 @@ function SiteReport() {
     <section className="space-y-3" aria-labelledby="site-sources">
       <h2 id="site-sources">{text("Model and source files", "Mô hình và tệp nguồn")}</h2>
       <SiteHorizonSource method={site.horizonMethod} source={site.demSource} />
-      <p>{t("Run ID")} · <code className="run-id">{ranking.runId}</code><br/>{t("Model step")} · {ranking.stepSeconds / 3600} h</p>
+      <p>{t("Run ID")} · <code translate="no" className="run-id">{ranking.runId}</code><br/>{t("Model step")} · {ranking.stepSeconds / 3600} h</p>
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         <a href={folder + "/catalog.json"}>{text("Original site catalog (JSON)", "Danh mục địa điểm gốc (JSON)")}</a>
         <a href={folder + "/manifest.json"}>{text("Source file manifest (JSON)", "Danh sách tệp nguồn và mã kiểm tra (JSON)")}</a>

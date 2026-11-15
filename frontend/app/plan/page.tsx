@@ -236,7 +236,7 @@ function CatalogSearch({ run, first, last, priority, source, initialSite, runIds
             {row.missionWindow && <td><TimeRange start={row.missionWindow.start} end={row.missionWindow.end} /></td>}
           </tr>;
         })}</tbody></table></div>
-      <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code className="run-id">{run.runId}</code></p>
+      <p className="muted text-sm">{t("Visibility alone does not measure solar power or radio signal strength.")} · {t("Run ID")} <code translate="no" className="run-id">{run.runId}</code></p>
     </section>}
   </section>;
 }
@@ -298,9 +298,11 @@ function Planner({ seed }: { seed: URLSearchParams }) {
   const fullPeriod = edited?.mode === mode && fullModelPeriodLink(edited.params, source, run);
   return <>
     <p className="plan-coverage"><strong>{t("{count} sites · model coverage (UTC, end exclusive)", {count:run.sites.length})}</strong><br/><TimeRange start={run.start} end={run.end} /> · {t("Model step")} {run.stepSeconds / 3600} h</p>
+    <details className="model-info"><summary>{t("Model info")}</summary>
     <p className="plan-source">{t(source === "saved" ? "Saved run B" : source === "saved-b2" ? "Saved run B2" : "Model results from the team API")} · {source === "live" ? <>
-      {t("Run ID")} <a href={"/api/v1/runs/" + encodeURIComponent(run.runId)}><code className="run-id">{run.runId}</code></a> · <a href={"/api/v1/runs/" + encodeURIComponent(run.runId) + "/files/manifest.json"}>{t("Source file manifest (JSON)")}</a>
+      {t("Run ID")} <a href={"/api/v1/runs/" + encodeURIComponent(run.runId)}><code translate="no" className="run-id">{run.runId}</code></a> · <a href={"/api/v1/runs/" + encodeURIComponent(run.runId) + "/files/manifest.json"}>{t("Source file manifest (JSON)")}</a>
     </> : <a href={source === "saved" ? "/data#bundled-data" : "/data#run-b2"}>{t("Browse data and all original files")}</a>}</p>
+    </details>
     {!isMock && !forced && catalog.isError && <p role="status">{t("The team API could not load the catalog. Showing the verified saved run.")} <span className="block"><ApiProblemText error={catalog.error} /></span>{retryCatalog}</p>}
     <div className="flex flex-wrap gap-4 print:hidden">
       {source !== "saved-b2" && <a href={sourceLink("saved-b2")}>{t("Open saved run B2")}</a>}

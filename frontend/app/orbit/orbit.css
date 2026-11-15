@@ -27,7 +27,7 @@
 .orbit-reading { margin:1.1rem 0; }
 .orbit-reading h2 { font-size: var(--fs-16); color:var(--dim); }
 .orbit-value { color:var(--gold); font-size: var(--fs-56); line-height:1.06; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }
-.orbit-value small { font-size:.36em; color:var(--dim); }
+.orbit-value small { font-size:var(--fs-20); color:var(--dim); }
 .orbit-other,.orbit-weeks>span { color:var(--dim); font-size: var(--fs-14); }
 .orbit-other { margin-top:.25rem; }
 .orbit-weeks>span { flex-basis:100%; }
@@ -56,3 +56,4 @@
 .orbit-view-switch span { color:var(--gold); padding-inline-start:.35rem; }
 .orbit-tabs button[aria-pressed=true] { background:var(--ink); border-color:var(--ink); }
 @media(max-width:740px) { .orbit-view-switch { margin-bottom:.85rem; } }
+.orbit-run { color:var(--dim); font-size:var(--fs-14); white-space:nowrap; }

@@ -14,8 +14,8 @@ const sections = [
   ["/compare", "Compare"], ["/plan", "Plan"], ["/orbit", "Orbit"], ["/data", "Data"], ["/api-docs", "API"],
 ] as const;
 
-// One header for every page. comparisonHref keeps the current comparison selection in the Compare link.
-export function SiteHeader({ comparisonHref }: {
+// One header with the same links on every page.
+export function SiteHeader(_: {
   comparisonHref?: string;
   showSources?: boolean;
 }) {
@@ -23,7 +23,7 @@ export function SiteHeader({ comparisonHref }: {
   const pathname = usePathname() ?? "";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
-  return <header className="app-header"><a className="brand" href="/">Moon Plan B</a>
+  return <header className="app-header"><a className="brand" href="/" aria-current={pathname === "/" ? "page" : undefined}>Moon Plan B</a>
       <button className="nav-menu" ref={menuButton} type="button"
         aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{t("Menu")}</button>
       <nav id="main-navigation" aria-label={t("Main")} onKeyDown={event => {
@@ -34,7 +34,7 @@ export function SiteHeader({ comparisonHref }: {
       }}>
         {sections.map(([href, label]) => {
           const active = pathname === href || pathname.startsWith(href + "/") || pathname.startsWith(href + "-");
-          return <a key={href} href={href === "/compare" && comparisonHref ? comparisonHref : href}
+          return <a key={href} href={href}
             className={active ? "active-link" : undefined} aria-current={active ? "page" : undefined}
             onClick={() => setMenuOpen(false)}>{t(label)}</a>;
         })}

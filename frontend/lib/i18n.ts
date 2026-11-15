@@ -229,6 +229,7 @@ export const vietnamese: Record<string, string> = {
   "Main": "Điều hướng chính",
   "Menu": "Danh mục",
   "Plan": "Lập kế hoạch",
+  "Model info": "Thông tin mô hình",
   "Orbit": "Quỹ đạo",
   "Data": "Dữ liệu",
   "Page not found": "Không tìm thấy trang",

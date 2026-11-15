@@ -16,14 +16,17 @@ button:disabled, input:disabled, select:disabled { cursor: not-allowed; opacity:
 a { color: inherit; text-underline-offset: 3px; }
 /* Links inside content read as links; classes such as .button keep their own look. */
 :where(main, section, .app-footer, dialog) a:where(:not(.button, .brand)) { color: var(--earth); text-decoration: underline; text-decoration-thickness: 1px; }
+/* Stand-alone links get a 24px-plus hit area; links inside a sentence keep the line height. */
+:where(main, section, .app-footer) a:where(:not(.button, .brand, p a, li a, td a, dd a)) { padding-block: 6px; }
+input:where([type=checkbox], [type=radio]) { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--earth); }
 a:hover { color: var(--sun); }
 button:hover:not(:disabled) { border-color: var(--sun); }
 :focus-visible { outline: 3px solid var(--earth); outline-offset: 4px; }
 h1, h2, h3, p { margin: 0; }
 h1 { margin-bottom: 16px; }
-:where(main) h2 { margin: 40px 0 12px; }
-:where(main) h3 { margin: 24px 0 8px; }
-:where(main) :is(h2, h3):first-child, :where(.section-heading, .local-sky-heading, summary) :is(h2, h3) { margin-top: 0; }
+:where(main, section) h2 { margin: 40px 0 12px; }
+:where(main, section) h3 { margin: 24px 0 8px; }
+:where(main, section) :is(h2, h3):first-child, :where(.section-heading, .local-sky-heading, summary) :is(h2, h3) { margin-top: 0; }
 :where(.section-heading, .local-sky-heading, summary) :is(h2, h3) { margin-bottom: 0; }
 p + p { margin-top: 12px; }
 :where(main) p { max-width: 65ch; }
@@ -31,14 +34,15 @@ h1, h2, h3, .brand { font-family: var(--font-heading), var(--font-body), system-
 h1 { font-size: var(--fs-40); line-height: 1.12; letter-spacing: -.03em; }
 h2 { font-size: var(--fs-28); line-height: 1.2; letter-spacing: -.02em; }
 h3 { font-size: var(--fs-20); line-height: 1.35; }
-code, kbd, samp, pre { font-family: var(--font-mono), Consolas, monospace; font-size: .9em; }
+code, kbd, samp, pre { font-family: var(--font-mono), Consolas, monospace; font-size: 1em; }
+small, sub, sup { font-size: var(--fs-12); }
 @media (max-width: 760px) { h1 { font-size: var(--fs-28); } h2 { font-size: var(--fs-20); } h3 { font-size: var(--fs-16); } .intro h1 { font-size: var(--fs-40); } }
 .app-shell { max-width: 1280px; margin: auto; padding: 0 32px; }
 .app-header { min-height: 64px; display: flex; justify-content: space-between; align-items: center; gap: 24px; border-bottom: 1px solid var(--line); }
 @media screen and (min-width: 761px) { .app-header { position: sticky; top: 0; z-index: 4; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(10px); } }
 .brand { font-size: var(--fs-20); letter-spacing: -.02em; text-decoration: none; white-space: nowrap; }
 .app-header nav { display: flex; align-items: center; gap: 8px 24px; flex-wrap: wrap; justify-content: flex-end; }
-.app-header nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; font-size: var(--fs-14); font-weight: 500; color: var(--muted); }
+.app-header nav a { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 44px; text-decoration: none; font-size: var(--fs-14); font-weight: 500; color: var(--muted); }
 .app-header nav a:hover { color: var(--text); }
 .nav-menu { display: none; }
 .app-header nav a.active-link { color: var(--text); box-shadow: inset 0 -2px var(--sun); }
@@ -72,7 +76,7 @@ code, kbd, samp, pre { font-family: var(--font-mono), Consolas, monospace; font-
 .import-dialog li { margin: 8px 0; }
 .import-dialog details { margin-block: .75rem; }
 .import-dialog summary { padding-block: .5rem; }
-.import-dialog code { font-size: .85em; overflow-wrap: anywhere; }
+.import-dialog code { overflow-wrap: anywhere; }
 .import-actions { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .import-picker { position: relative; }
 .import-picker input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
@@ -310,11 +314,19 @@ summary { min-height: 32px; font-size: var(--fs-16); font-weight: 600; }
 .footer-directory h2 { color: var(--text); font-size: var(--fs-14); }
 .footer-directory a { display: flex; align-items: center; width: fit-content; min-height: 44px; font-size: var(--fs-14); overflow-wrap: anywhere; }
 .app-footer > p a { display: inline-block; padding-block: 12px; }
-.sky-appearance input { width: 20px; height: 20px; accent-color: var(--earth); }
+.sky-appearance input { width: 24px; height: 24px; accent-color: var(--earth); }
 /* Run IDs stay on one line; a narrow screen scrolls the token instead of splitting it. */
 .run-id { display: inline-block; max-width: 100%; overflow-x: auto; white-space: nowrap; vertical-align: bottom; font-size: var(--fs-12); }
 /* Leave room for the fixed guide button so it never covers the last controls. */
-@media screen and (max-width: 760px) { body { padding-bottom: 80px; } }
+@media screen and (max-width: 760px) {
+  body { padding-bottom: 88px; }
+  /* 16px form text stops iOS from zooming the page on focus. */
+  input, select, textarea { font-size: var(--fs-16) !important; }
+}
+.model-info { margin: 12px 0; }
+.model-info summary { display: flex; align-items: center; gap: 8px; width: fit-content; min-height: 44px; color: var(--muted); font-size: var(--fs-14); }
+.model-info summary::before { content: "▸"; }
+.model-info[open] summary::before { content: "▾"; }
 .error-state { border-left: 3px solid var(--error-line); background: var(--error-bg); padding: 20px; margin-top: 24px; }
 .error-state h2 { font-size: var(--fs-20); margin-bottom: 8px; }
 .coverage-notice { border-left: 2px solid var(--sun); padding-left: 12px; color: var(--sun); font-size: var(--fs-14); margin-bottom: 20px; }
@@ -404,3 +416,8 @@ summary { min-height: 32px; font-size: var(--fs-16); font-weight: 600; }
   .workspace { display: block; } .intro { padding: 18px 0; } h1 { font-size: 26pt; } h2 { font-size: 18pt; } .source-columns { gap: 24px; } .detail-row { grid-template-columns: 1fr 1.4fr; } .sky { border-right: 1px solid #aaa; } .sample-table { max-height: none; overflow: visible; } .sample-table thead { position: static; } .table-scroll { overflow: visible; } .timeline-svg { max-height: 280px; } .below-horizon { fill: #eee; } .window-labels, .detail-row, tr { break-inside: avoid; } .source-list a::after { content: " (" attr(href) ")"; overflow-wrap: anywhere; font-size: 9pt; }
 }
 }
+
+/* Unlayered so they outrank Tailwind's space-y utilities, which zero the top margin of stacked children. */
+:where(main, section) :is(h2, h3):not(:first-child) { margin-top: 24px; }
+:where(main, section) h2:not(:first-child) { margin-top: 40px; }
+:where(.section-heading, .local-sky-heading, summary) :is(h2, h3):not(:first-child) { margin-top: 0; }

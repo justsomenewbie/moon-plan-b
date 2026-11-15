@@ -1,13 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import "./night-sky.css";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "Moon Plan B — Sun & Earth comparison",
+  title: { default: "Moon Plan B — Sun & Earth comparison", template: "%s — Moon Plan B" },
   description: "Explore versioned Sun and Earth observations above a lunar horizon. Compare landing sites and dates using the archived terrain model or explore labeled practice data.",
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F6F7FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0F1A" },
+  ],
 };
 
 const body = Inter({ subsets: ["latin", "vietnamese"], variable: "--font-body", display: "swap" });

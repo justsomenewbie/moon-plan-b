@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Data catalog — Moon Plan B" };
+export const metadata: Metadata = { title: "Data catalog" };
 
 export default function Layout({ children }: { children: React.ReactNode }) { return children; }
