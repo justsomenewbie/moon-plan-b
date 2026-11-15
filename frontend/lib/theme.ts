@@ -24,3 +24,16 @@ export function nextThemeBoundary(date: Date): Date {
 export function savedTheme(value: string | null): ThemeMode {
   return value === "light" || value === "dark" ? value : "auto";
 }
+
+// Only "auto" follows the clock; an explicit choice is never changed by a timer or a tab becoming visible.
+export const followsClock = (mode: ThemeMode) => mode === "auto";
+
+// The sun/moon button always makes an explicit choice: the opposite of what is showing. This turns Auto off.
+export function toggleAppearance(appearance: "light" | "dark"): ThemeMode {
+  return appearance === "light" ? "dark" : "light";
+}
+
+// The Auto button is a toggle: on from an explicit choice, and off again keeping the theme that is showing.
+export function toggleAuto(mode: ThemeMode, appearance: "light" | "dark"): ThemeMode {
+  return mode === "auto" ? appearance : "auto";
+}
