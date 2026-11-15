@@ -15,7 +15,7 @@ const structuredData = JSON.stringify({
   alternateName: "Lunar Navigator",
   url: "https://lunavigator.com/",
   image: "https://lunavigator.com/brand/og-image.png",
-  description: "Compare lunar south-pole landing sites and dates by the hours the Sun and Earth are both above the local horizon, using NASA LRO terrain and JPL Horizons data.",
+  description: "Compare lunar south-pole landing sites and dates by the hours the Sun and Earth are both above the local horizon, using NASA LRO terrain and ephemerides, including JPL Horizons for A2 and SPICE for the default B2 run.",
   applicationCategory: "EducationalApplication",
   operatingSystem: "Any",
   browserRequirements: "Requires JavaScript and a modern web browser.",

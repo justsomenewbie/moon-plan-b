@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 export const siteUrl = "https://lunavigator.com";
 export const siteName = "Moon Plan B";
-export const siteDescription = "Compare lunar south-pole landing sites and dates by the hours the Sun and Earth are both above the local horizon, using NASA LRO terrain and JPL Horizons data.";
+export const siteDescription = "Compare lunar south-pole landing sites and dates by the hours the Sun and Earth are both above the local horizon, using NASA LRO terrain and ephemerides, including JPL Horizons for A2 and SPICE for the default B2 run.";
 /** Routes listed in the sitemap, in menu order. */
 export const publicRoutes = ["/", "/compare", "/plan", "/compare-dates", "/orbit", "/data", "/api-docs"] as const;
 

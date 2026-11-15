@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   applicationName: siteName,
   // The home page's canonical, Open Graph and Twitter tags; every route layout replaces them with its own.
   ...pageMetadata("/", siteDescription),
-  keywords: ["Moon", "lunar south pole", "landing site", "Sun visibility", "Earth visibility", "LRO", "JPL Horizons", "NASA Space Apps"],
+  keywords: ["Moon", "lunar south pole", "landing site", "Sun visibility", "Earth visibility", "LRO", "JPL Horizons", "NAIF SPICE", "NASA Space Apps"],
   robots: { index: true, follow: true },
   icons: {
     icon: [
