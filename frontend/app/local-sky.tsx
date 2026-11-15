@@ -7,6 +7,7 @@ import type { SkyScenario } from "../lib/terrain-sky";
 import { skyPoint } from "../lib/local-sky";
 import { analyzeScenarioClearance, clampClearanceDeg, computeLanderHud } from "../lib/mission-studio";
 import type { MissionOpState } from "../lib/mission-studio";
+import MobileFold from "./mobile-fold";
 import { useLanguage } from "./language";
 import { formatUtc } from "./observations";
 import { boundaryTime } from "../lib/display-format";
@@ -225,6 +226,7 @@ export default function LocalSky({
         <h3 id="mission-studio-title">{t("Explore a hypothetical horizon")}</h3>
         <span className="mono clearance-badge">θ_mask = {clearanceDeg.toFixed(1)}°</span>
       </div>
+      <MobileFold summary={t("Hypothetical elevation threshold")}>
       <p className="muted text-xs">
         {t("The ribbon estimates when each body’s elevation is strictly above the selected angle. It assumes elevation changes linearly between adjacent valid samples. Hatched spans lack data. The timeline bands show the original intervals supplied with the dataset.")}
       </p>
@@ -443,6 +445,7 @@ export default function LocalSky({
           </div>
         </div>
       </div>
+      </MobileFold>
     </div>
   </section>;
 }

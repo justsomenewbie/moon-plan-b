@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import "./night-sky.css";
+import "./mobile.css";
 import Providers from "./providers";
 
 export const metadata: Metadata = {

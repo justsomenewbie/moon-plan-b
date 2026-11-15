@@ -9,6 +9,7 @@ import { RunSourceLinks, SiteResult, TimeRange } from "./terrain-site-result";
 import TerrainDates from "./terrain-dates";
 import TerrainPair, { type DisplayedPair } from "./terrain-pair";
 import AlternativeDates from "./alternative-dates";
+import MobileFold from "./mobile-fold";
 import { ComparisonDownload, RunDownloads } from "./terrain-downloads";
 
 export default function TerrainResult({ reducedMotion, result, view, onSelect, onPrint, liveWindow, printingPair, replayPair, onDisplayedPair }: {
@@ -73,6 +74,7 @@ export default function TerrainResult({ reducedMotion, result, view, onSelect, o
     <section id="sources" className="sources-section" aria-labelledby="terrain-sources" tabIndex={-1}>
       <h2 id="terrain-sources">{t("Sources & method")}</h2>
       <p className="muted text-sm">{t("Supplied scientific text, source names and technical diagnostics remain in their original language.")}</p>
+      <MobileFold summary={t("Model") + " · " + t("Source run") + " · " + t("Data sources")}>
       <div className="source-columns">
         <div>
           <h3>{t("Model")}</h3>
@@ -110,6 +112,7 @@ export default function TerrainResult({ reducedMotion, result, view, onSelect, o
         <p className="muted text-sm"><code>{source.id}</code></p>
         {source.sha256 && <code className="hash">SHA-256 {source.sha256}</code>}
       </li>)}</ul> : <p>{t("No source entries were supplied.")}</p>}
+      </MobileFold>
     </section>
   </main>;
 }
