@@ -541,7 +541,9 @@ select {
 .header-controls { display: flex; align-items: center; gap: 10px; margin-inline-start: auto; }
 @media (max-width: 760px) { :root { --gutter: 16px; } }
 @media (max-width: 999px) {
-  .app-header { position: relative; top: auto; margin-top: 8px; min-height: 60px; padding: 8px 12px; gap: 8px 16px; border-radius: 12px; }
+  html { scroll-padding-top: 84px; } /* in-page anchors land below the pinned header */
+  /* Phones/tablets keep the floating bar pinned while the page scrolls (a sticky element still anchors the menu panel). */
+  .app-header { position: sticky; top: calc(8px + env(safe-area-inset-top, 0px)); z-index: 6; margin-top: 8px; min-height: 60px; padding: 8px 12px; gap: 8px 16px; border-radius: 12px; }
   .brand { gap: 6px; font-size: var(--fs-16); }
   .brand img { width: 28px; height: 28px; }
   .nav-menu { margin-inline-start: auto; }
