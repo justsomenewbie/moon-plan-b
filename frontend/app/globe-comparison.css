@@ -18,7 +18,7 @@
   border-radius: 50% 50% 0 50%;
   background: #302714;
   color: #ffe08a;
-  font: bold 14px/1 monospace;
+  font: bold 0.875rem/1 var(--font-mono);
 }
 .site-pin[data-pin="1"] button {
   top: 50%;
@@ -52,7 +52,7 @@
 .sky-ray [aria-pressed="true"] .sky-marker-hit, .sky-ray [role="button"]:focus-visible .sky-marker-hit { stroke: currentColor; stroke-width: 1.5px; }
 .sky-info [data-selected] { border-inline-start: 2px solid currentColor; padding-inline-start: 6px; }
 .sky-selected-label { font-size: .8em; }
-.sky-ray text { fill: currentColor; font: bold 9px monospace; paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
+.sky-ray text { fill: currentColor; font: bold 0.75rem var(--font-mono); paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
 .sky-clearance-ring, .clearance-ring { fill: none; stroke: var(--sun); stroke-width: 1.25; opacity: .85; }
 .clearance-line { stroke: var(--sun); stroke-width: 1.2; stroke-dasharray: 4 3; opacity: .85; }
 .clearance-band { fill: var(--sun); opacity: .1; }
@@ -77,14 +77,14 @@
   border-radius: 4px;
   background: var(--bg);
   color: var(--sun);
-  font-size: .82rem;
+  font-size: var(--fs-14);
 }
 .clearance-caveat {
   margin-top: 8px;
   padding-left: 9px;
   border-left: 2px solid var(--sun);
   color: var(--text);
-  font-size: .78rem;
+  font-size: var(--fs-12);
 }
 .clearance-controls {
   margin: 12px 0;
@@ -103,7 +103,7 @@
   border-radius: 4px;
   background: var(--bg);
   color: var(--text);
-  font-size: .78rem;
+  font-size: var(--fs-12);
 }
 .preset-pill[aria-pressed="true"] {
   border-color: var(--sun);
@@ -134,14 +134,14 @@
 }
 .mission-card-head h4, .lander-hud-card h4 {
   margin: 0;
-  font-size: .95rem;
+  font-size: var(--fs-16);
   font-weight: 600;
 }
 .battery-picker {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: .78rem;
+  font-size: var(--fs-12);
   color: var(--muted);
 }
 .battery-picker select {
@@ -151,13 +151,13 @@
   border-radius: 4px;
   background: var(--surface);
   color: var(--text);
-  font-size: .78rem;
+  font-size: var(--fs-12);
 }
 .state-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 12px;
-  font-size: .72rem;
+  font-size: var(--fs-12);
   color: var(--muted);
   margin-bottom: 10px;
 }
@@ -194,12 +194,12 @@
   justify-content: space-between;
   align-items: center;
   gap: 6px;
-  font-size: .82rem;
+  font-size: var(--fs-14);
 }
 .battery-badge {
   padding: 2px 7px;
   border-radius: 4px;
-  font-size: .72rem;
+  font-size: var(--fs-12);
   font-weight: 600;
   border: 1px solid var(--line);
 }
@@ -219,7 +219,7 @@
   border-left: 1px dashed var(--muted);
   border-right: 1px dashed var(--muted);
 }
-.mission-intervals { font-size: .78rem; overflow-wrap: anywhere; }
+.mission-intervals { font-size: var(--fs-12); overflow-wrap: anywhere; }
 .mission-intervals summary { cursor: pointer; }
 .ribbon-seg {
   position: absolute;
@@ -228,7 +228,7 @@
 }
 .ribbon-empty {
   display: block;
-  font-size: .68rem;
+  font-size: var(--fs-12);
   line-height: 14px;
   width: fit-content;
   margin: 0 auto;
@@ -242,7 +242,7 @@
   grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
   gap: 6px;
   margin: 2px 0 0;
-  font-size: .72rem;
+  font-size: var(--fs-12);
 }
 .mission-metrics-row div {
   padding: 4px 6px;
@@ -252,7 +252,7 @@
   min-width: 0;
 }
 .mission-metrics-row dt { color: var(--muted); overflow-wrap: anywhere; }
-.mission-metrics-row dd { margin: 2px 0 0; font: 600 .78rem monospace; }
+.mission-metrics-row dd { margin: 2px 0 0; font: 600 0.75rem var(--font-mono); }
 
 .lander-hud-body {
   display: grid;
@@ -271,7 +271,7 @@
 .lander-side-svg { display: block; width: 100%; max-width: 180px; margin: 0 auto; }
 .hud-clearance-band { fill: var(--sun); opacity: .12; }
 .hud-horizon-line { stroke: var(--horizon); stroke-width: 1.25; stroke-dasharray: 4 3; }
-.hud-side-label { fill: var(--muted); font: 8px monospace; paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
+.hud-side-label { fill: var(--muted); font: 0.75rem var(--font-mono); paint-order: stroke; stroke: var(--bg); stroke-width: 2px; }
 .hud-compass-ring { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
 .hud-inner-ring { fill: none; stroke: var(--grid); stroke-width: .9; }
 .hud-shadow-ray { stroke: var(--grid); opacity: .65; }
@@ -286,13 +286,13 @@
   margin: 0;
   display: grid;
   gap: 6px;
-  font-size: .75rem;
+  font-size: var(--fs-12);
 }
 .hud-readouts div {
   border-bottom: 1px solid var(--line);
   padding-bottom: 4px;
 }
-.hud-readouts dt { color: var(--muted); font-size: .7rem; }
+.hud-readouts dt { color: var(--muted); font-size: var(--fs-12); }
 .hud-readouts dd { margin: 1px 0 0; overflow-wrap: anywhere; }
 
 @media (max-width: 960px) {
@@ -332,7 +332,7 @@
   position: absolute; transform: translate(-50%, -50%); pointer-events: none;
   display: grid; place-items: center; width: 1.45rem; height: 1.45rem;
   border: 1px solid #f3ce79; border-radius: 50%; color: #ffe19a;
-  background: #252016; font-size: 1rem; line-height: 1;
+  background: #252016; font-size: var(--fs-16); line-height: 1;
 }
 
 .globe-view-slot { min-width: 0; }
@@ -387,9 +387,9 @@ body:has(.globe-view:modal) { overflow: hidden; }
   justify-content: space-between;
   gap: 12px;
 }
-.globe-full-bar strong { font-size: 1rem; min-width: 0; overflow-wrap: anywhere; }
+.globe-full-bar strong { font-size: var(--fs-16); min-width: 0; overflow-wrap: anywhere; }
 .globe-view:modal .globe-full-footer { display: grid; justify-items: center; gap: .3rem; text-align: center; }
-.globe-full-footer p { font-size: .85rem; color: #cbd4df; }
+.globe-full-footer p { font-size: var(--fs-14); color: #cbd4df; }
 .globe-full-footer .text-button { color: inherit; }
 .globe-full-footer output { align-self: center; min-width: 4ch; font-variant-numeric: tabular-nums; }
 .globe-view:modal button { border-color: #758394; }

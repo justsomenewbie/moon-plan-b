@@ -1,5 +1,4 @@
 .plan-main { max-width: 74rem; margin: 2.5rem auto; min-height: 55vh; }
-.plan-main h1 { font-size: clamp(2.3rem, 5vw, 4rem); }
 .plan-main h2, .plan-results h3 { margin: 1.25rem 0 .65rem; }
 .plan-main .mode-switch { margin: 1.8rem 0; flex-wrap: wrap; }
 .plan-coverage, .plan-main .request-fields, .plan-results { margin: 1rem 0; }
@@ -29,14 +28,14 @@
 .hero-actions a:not(.button) { align-self: center; text-decoration: underline; }
 
 .plan-site-map { margin: 1rem 0; padding: clamp(.75rem, 2vw, 1.25rem); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
-.plan-site-map h4 { margin-bottom: .75rem; font-size: 1.15rem; font-weight: 700; }
+.plan-site-map h4 { margin-bottom: .75rem; font-size: var(--fs-20); font-weight: 700; }
 .plan-map-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 1.25rem; }
 .plan-map-surface { display: block; width: 100%; aspect-ratio: 2; border-radius: 4px; background: #1a1e25; }
 .plan-map-point { cursor: pointer; }
 .map-leader { fill: #ffce50; stroke: #191911; stroke-width: 2; }
 .map-other { fill: #d4e9ff; stroke: #18354d; stroke-width: 2; }
 .map-legend, .plan-map-zoom { display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; }
-.map-legend, .plan-site-map figcaption { margin-top: .5rem; font-size: .85rem; }
+.map-legend, .plan-site-map figcaption { margin-top: .5rem; font-size: var(--fs-14); }
 .map-legend b { color: var(--sun); }
 .map-legend span + span b { color: var(--earth); }
 .plan-map-inspector { display: grid; align-content: start; gap: .6rem; min-width: 0; overflow-wrap: anywhere; }
@@ -72,7 +71,7 @@
 .plan-sun-layer { margin-block: .6rem .9rem; }
 .plan-sun-layer label { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; cursor: pointer; }
 .plan-sun-layer input { width: 1.1rem; height: 1.1rem; }
-.plan-sun-legend { font-size: .88rem; }
+.plan-sun-legend { font-size: var(--fs-14); }
 .plan-sun-legend ul { display: flex; flex-wrap: wrap; gap: .4rem .85rem; margin-top: .3rem; }
 .plan-sun-legend li { display: inline-flex; align-items: center; gap: .35rem; }
 .plan-sun-legend i, #planner-lunar-globe .plan-pin-sun-ring {

@@ -4,7 +4,7 @@
 .label select, .body textarea { display: block; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: .35rem; padding: .45rem; margin-block: .3rem .55rem; width: 100%; }
 .body textarea { resize: vertical; }
 .body .scope { border: 0; }
-.scope summary, .notice, .turn, .body [role=status] { font-size: .88rem; }
+.scope summary, .notice, .turn, .body [role=status] { font-size: var(--fs-14); }
 .scope ul { list-style: none; padding: 0; margin: 0 0 .65rem; }
 .scope li + li { margin-top: .4rem; }
 .turn { padding: .4rem 0; border-bottom: 1px solid var(--line); }
