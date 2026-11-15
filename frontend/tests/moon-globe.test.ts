@@ -3,7 +3,8 @@ import test from "node:test";
 import { comparisonLocation, diskPosition, missionSites, pairLocation, pairCenter } from "../lib/globe-sites.ts";
 import type { GlobeSite } from "../lib/globe-sites.ts";
 import { plannerSunAt, sunBearing } from "../lib/planner-sunlight.ts";
-import { drawGlobe, globeCenter, globePointAt, globeCenterForAnchor } from "../lib/moon-globe.ts";
+import { drawGlobe, globeCenter, globePointAt, globeCenterForAnchor, sunDirection } from "../lib/moon-globe.ts";
+import { canvasPixels, frameScheduler, globeUniforms, viewStore } from "../lib/moon-globe-gl.ts";
 
 // Red encodes longitude columns, green latitude rows. Angles are independent of fixture observations.
 const texture = { width: 4, height: 2, data: new Uint8ClampedArray(
@@ -186,4 +187,70 @@ test("solar azimuth uses local east and north, handles west longitude and omits 
   for (const site of [sun, { latitude: -sun.latitude, longitude: sun.longitude - 180 }, { latitude: 90, longitude: 0 }])
     assert.equal(sunBearing(site, sun), undefined);
   assert.equal(sunBearing({ latitude: 0, longitude: -179 }, { latitude: 0, longitude: 179 }), 270);
+});
+test("WebGL uniforms carry drawGlobe's per-frame constants: disk radius, pixel-center origin and sun axes", () => {
+  const close = (a: readonly number[], b: readonly number[]) => a.every((value, i) => Math.abs(value - b[i]) < 1e-12);
+  const reference = globeUniforms(15, -58, 2, 390, 390);
+  assert.equal(reference.radius, 390);
+  assert.deepEqual(reference.half, [195, 195]);
+  assert.equal(reference.lit, 0);
+  assert.ok(Math.abs(reference.lon - 15 * Math.PI / 180) < 1e-15);
+  assert.ok(close([reference.sinLat, reference.cosLat], [Math.sin(-58 * Math.PI / 180), Math.cos(-58 * Math.PI / 180)]));
+  // Camera axes: east right, north up, toward the viewer.
+  assert.ok(close(globeUniforms(40, 0, 1, 8, 8, { longitude: 40, latitude: 0 }).sun, [0, 0, 1]));
+  assert.ok(close(globeUniforms(40, 0, 1, 8, 8, { longitude: 130, latitude: 0 }).sun, [1, 0, 0]));
+  assert.ok(close(globeUniforms(40, 0, 1, 8, 8, { longitude: 0, latitude: 90 }).sun, [0, 1, 0]));
+  const sun = { longitude: 126.617658, latitude: -1.557279 };
+  assert.deepEqual(globeUniforms(-170, 60, 1, 8, 8, sun).sun, sunDirection(-170, 60, sun));
+  assert.equal(globeUniforms(-170, 60, 1, 8, 8, sun).lit, 1);
+  // A shader pixel at gl_FragCoord (col + 0.5, height - row - 0.5) reaches the CPU disk coordinates.
+  const { half, radius } = globeUniforms(0, 0, 1, 7, 5);
+  for (const [col, row] of [[0, 0], [3, 2], [6, 4]]) {
+    assert.ok(close([(col + 0.5 - half[0]) / radius, (5 - row - 0.5 - half[1]) / radius],
+      [(col + 0.5 - 7 / 2) / 2.5, (5 / 2 - row - 0.5) / 2.5]));
+  }
+});
+
+test("canvas pixels follow CSS size times device pixel ratio within the renderer's limits", () => {
+  assert.equal(canvasPixels(260, 1.5, 384, 1536), 390);
+  assert.equal(canvasPixels(260, 1, 384, 1536), 384);
+  assert.equal(canvasPixels(900, 2, 384, 1536), 1536);
+  assert.equal(canvasPixels(500, 1.5, 384, 896), 750);
+  assert.equal(canvasPixels(0, 2, 384, 896), 384);
+  assert.equal(canvasPixels(NaN, NaN, 384, 896), 384);
+});
+
+test("pointer moves coalesce into one animation frame, and a flush draws at once", () => {
+  const queued = new Map<number, () => void>();
+  let next = 0, draws = 0;
+  const frames = frameScheduler(() => { draws++; }, run => { queued.set(++next, run); return next; }, id => { queued.delete(id); });
+  for (let move = 0; move < 120; move++) frames.request();
+  assert.equal(queued.size, 1);
+  for (const [id, run] of [...queued]) { queued.delete(id); run(); }
+  assert.equal(draws, 1);
+  frames.request();
+  frames.flush();
+  assert.equal(draws, 2);
+  assert.equal(queued.size, 0);
+  frames.flush();
+  frames.request();
+  frames.cancel();
+  assert.equal(queued.size, 0);
+  assert.equal(draws, 2);
+});
+
+test("the live view store notifies subscribers only for a new view", () => {
+  const first = { center: { longitude: 15, latitude: -58 }, zoom: 1 };
+  const store = viewStore(first);
+  let calls = 0;
+  const stop = store.subscribe(() => { calls++; });
+  store.set(first);
+  assert.equal(calls, 0);
+  const moved = { ...first, zoom: 2 };
+  store.set(moved);
+  assert.equal(store.get(), moved);
+  assert.equal(calls, 1);
+  stop();
+  store.set(first);
+  assert.equal(calls, 1);
 });

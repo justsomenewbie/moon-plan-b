@@ -55,19 +55,22 @@ export function globeCenterForAnchor(anchor: MapPoint, position: DiskPoint, zoom
   return nearest;
 }
 
+// The subsolar normal in camera east, north and forward axes, or undefined for the fixed reference lighting.
+export function sunDirection(longitude: number, latitude: number, subsolar?: MapPoint): [number, number, number] | undefined {
+  if (!subsolar) return undefined;
+  const lat = latitude * Math.PI / 180, sinLat = Math.sin(lat), cosLat = Math.cos(lat);
+  const phi = subsolar.latitude * Math.PI / 180, delta = subsolar.longitude * Math.PI / 180 - longitude * Math.PI / 180;
+  const projected = Math.cos(phi) * Math.cos(delta);
+  return [Math.cos(phi) * Math.sin(delta), Math.sin(phi) * cosLat - projected * sinLat, Math.sin(phi) * sinLat + projected * cosLat];
+}
+
 // Inverse orthographic projection of a north-up, zero-meridian-centered color map.
+// The WebGL renderer in moon-globe-gl.ts ports this function; keep the two in step.
 export function drawGlobe(texture: Raster, frame: Raster, longitude: number, latitude: number, zoom = 1, subsolar?: MapPoint) {
   const lon = longitude * Math.PI / 180, lat = latitude * Math.PI / 180;
   const sinLat = Math.sin(lat), cosLat = Math.cos(lat);
   // Transform the subsolar normal to camera east, north and forward axes once per frame.
-  let sunX = 0, sunY = 0, sunZ = 0;
-  if (subsolar) {
-    const phi = subsolar.latitude * Math.PI / 180, delta = subsolar.longitude * Math.PI / 180 - lon;
-    const projected = Math.cos(phi) * Math.cos(delta);
-    sunX = Math.cos(phi) * Math.sin(delta);
-    sunY = Math.sin(phi) * cosLat - projected * sinLat;
-    sunZ = Math.sin(phi) * sinLat + projected * cosLat;
-  }
+  const [sunX, sunY, sunZ] = sunDirection(longitude, latitude, subsolar) ?? [0, 0, 0];
   const { width: w, height: h, data: pixels } = texture;
   const radius = zoom * Math.min(frame.width, frame.height) / 2;
   for (let row = 0; row < frame.height; row++) {
