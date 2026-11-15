@@ -88,7 +88,7 @@ export default function DataPage() {
   return <div className="app-shell"><SkyBackground />
     <a className="skip-link" href="#data-title">{t("Skip to content")}</a>
     <SiteHeader />
-    <main className="data-main terrain-result mx-auto max-w-4xl space-y-8">
+    <main className="data-main terrain-result space-y-8">
       <div>
         <h1 id="data-title" tabIndex={-1}>{text("Lunar data catalog", "Danh mục dữ liệu Mặt Trăng")}</h1>
       </div>

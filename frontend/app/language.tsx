@@ -48,6 +48,6 @@ export function LanguageControl() {
   const { locale, ready, choose, t } = useLanguage();
   return <label className="language-switch"><span className="sr-only">{t("Language")}</span>
     <select aria-label={t("Language")} value={locale} disabled={!ready} onChange={event => choose(event.target.value)}>
-      <option value="en" lang="en">English</option><option value="vi" lang="vi">Tiếng Việt</option>
+      <option value="en" lang="en" aria-label="English">EN</option><option value="vi" lang="vi" aria-label="Tiếng Việt">VI</option>
     </select></label>;
 }

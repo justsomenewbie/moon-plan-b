@@ -1,4 +1,4 @@
-.plan-main { max-width: 74rem; margin: 2.5rem auto; min-height: 55vh; }
+.plan-main { margin: 2.5rem 0; min-height: 55vh; }
 .plan-main .mode-switch { margin: 1.8rem 0; flex-wrap: wrap; }
 .plan-coverage, .plan-main .request-fields, .plan-results { margin: 1rem 0; }
 .plan-main .table-scroll { margin: 1rem 0; overflow-x: auto; }

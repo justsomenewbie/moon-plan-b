@@ -135,5 +135,6 @@
 
 @media screen and (max-width: 760px) {
   /* In the header row and scrolling with the page: nothing on a phone is ever under it. */
-  .launcher { position: absolute; top: 4px; right: 148px; bottom: auto; }
+  /* Clear of the widest Menu label ("Danh mục"), between the brand and the Menu button. */
+  .launcher { position: absolute; top: 9px; right: 133px; bottom: auto; width: 40px; height: 47px; }
 }

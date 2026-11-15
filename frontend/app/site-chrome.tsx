@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LanguageControl, useLanguage } from "./language";
 import ThemeControl from "./theme-control";
@@ -14,7 +15,7 @@ const sections = [
   ["/compare", "Compare"], ["/plan", "Plan"], ["/orbit", "Orbit"], ["/data", "Data"], ["/api-docs", "API"],
 ] as const;
 
-// One header with the same links on every page.
+// One header with the same logo, links and controls on every page.
 export function SiteHeader(_: {
   comparisonHref?: string;
   showSources?: boolean;
@@ -23,24 +24,31 @@ export function SiteHeader(_: {
   const pathname = usePathname() ?? "";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
-  return <header className="app-header"><a className="brand" href="/" aria-current={pathname === "/" ? "page" : undefined}>Moon Plan B</a>
+  return <header className="app-header" data-menu={menuOpen ? "open" : "closed"} onKeyDown={event => {
+      if (event.key === "Escape" && menuOpen && menuButton.current?.offsetWidth) {
+        setMenuOpen(false);
+        menuButton.current.focus();
+      }
+    }}>
+      {/* The wordmark names the link; the team logo beside it is decorative. */}
+      <a className="brand" href="/" aria-current={pathname === "/" ? "page" : undefined}>
+        <Image src="/brand/logo-256.png" width={40} height={40} alt="" priority />
+        <span>Moon Plan B</span>
+      </a>
       <button className="nav-menu" ref={menuButton} type="button"
         aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{t("Menu")}</button>
-      <nav id="main-navigation" aria-label={t("Main")} onKeyDown={event => {
-        if (event.key === "Escape" && menuButton.current?.offsetWidth) {
-          setMenuOpen(false);
-          menuButton.current.focus();
-        }
-      }}>
+      <nav id="main-navigation" aria-label={t("Main")}>
         {sections.map(([href, label]) => {
           const active = pathname === href || pathname.startsWith(href + "/") || pathname.startsWith(href + "-");
           return <a key={href} href={href}
             className={active ? "active-link" : undefined} aria-current={active ? "page" : undefined}
             onClick={() => setMenuOpen(false)}>{t(label)}</a>;
         })}
+      </nav>
+      <div className="header-controls">
         <LanguageControl />
         <ThemeControl />
-      </nav>
+      </div>
     </header>;
 }
 

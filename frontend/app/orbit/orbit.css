@@ -2,7 +2,7 @@
   --ink:#f4f2ea; --dim:#bfbdba; --gold:#ffd07c; --edge:#57554d;
   min-height:100svh; color:var(--ink); color-scheme:dark;
   background:radial-gradient(ellipse at 28% 48%, #202735 0%, transparent 52%), #0c1016;
-  padding:0 max(5vw,calc((100vw - 1320px)/2)); overflow-wrap:anywhere;
+  padding:0 max(var(--gutter),calc((100vw - var(--page-max))/2 + var(--gutter))); overflow-wrap:anywhere;
 }
 .orbit-page .app-header { background:transparent; backdrop-filter:none; position:static; }
 .orbit-bar { display:flex; align-items:center; gap:1rem; min-height:64px; border-bottom:1px solid var(--edge); color:var(--dim); }
@@ -31,7 +31,6 @@
 .orbit-method summary { width:fit-content; min-height:44px; padding:.45rem 0; color:var(--ink); }
 .orbit-method p { max-width:72ch; margin:0 0 .65rem; }
 @media(max-width:740px) {
-  .orbit-page { padding-inline:5vw; }
   .orbit-bar { min-height:50px; }
   .orbit-layout { grid-template-columns:1fr; grid-template-areas:"title" "scene" "panel"; min-height:auto; gap:1rem; padding:1rem 0; }
   .orbit-heading h1 { max-width:24ch; font-size: var(--fs-28); margin:.24rem 0 0; }

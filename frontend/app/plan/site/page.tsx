@@ -103,7 +103,7 @@ export default function SitePage() {
   return <div className="app-shell"><SkyBackground />
     <a className="skip-link" href="#site-title">{t("Skip to content")}</a>
     <SiteHeader />
-    <main className="terrain-result mx-auto max-w-4xl space-y-6"><Suspense fallback={<p role="status">{locale === "vi" ? "Đang mở thông tin địa điểm…" : "Opening site details…"}</p>}><SiteReport /></Suspense></main>
+    <main className="terrain-result space-y-6"><Suspense fallback={<p role="status">{locale === "vi" ? "Đang mở thông tin địa điểm…" : "Opening site details…"}</p>}><SiteReport /></Suspense></main>
     <SiteFooter />
   </div>;
 }

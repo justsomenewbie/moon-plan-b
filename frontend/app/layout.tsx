@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   title: { default: "Moon Plan B — Sun & Earth comparison", template: "%s — Moon Plan B" },
   description: "Explore versioned Sun and Earth observations above a lunar horizon. Compare landing sites and dates using the archived terrain model or explore labeled practice data.",
   robots: { index: false, follow: false },
+  icons: {
+    icon: [
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/logo-256.png", sizes: "256x256", type: "image/png" },
+    ],
+    apple: "/brand/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
