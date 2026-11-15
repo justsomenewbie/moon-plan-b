@@ -314,6 +314,7 @@ summary { min-height: 32px; font-size: var(--fs-16); font-weight: 600; }
 .footer-directory h2 { color: var(--text); font-size: var(--fs-14); }
 .footer-directory a { display: flex; align-items: center; width: fit-content; min-height: 44px; font-size: var(--fs-14); overflow-wrap: anywhere; }
 .app-footer > p a { display: inline-block; padding-block: 12px; }
+.footer-copyright { flex-basis: 100%; margin: 0; color: var(--muted); font-size: var(--fs-12); }
 .sky-appearance input { width: 24px; height: 24px; accent-color: var(--earth); }
 /* Run IDs stay on one line; a narrow screen scrolls the token instead of splitting it. */
 .run-id { display: inline-block; max-width: 100%; overflow-x: auto; white-space: nowrap; vertical-align: bottom; font-size: var(--fs-12); }

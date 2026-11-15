@@ -4,7 +4,7 @@ import { useState } from "react";
 import { archiveB2Run, rankArchiveB2 } from "../../lib/archive-b2";
 import { missionSites } from "../../lib/globe-sites";
 import { useLanguage } from "../language";
-import { SiteHeader } from "../site-chrome";
+import { SiteFooter, SiteHeader } from "../site-chrome";
 import MoonGlobe from "../moon-globe";
 import SiteSky from "./site-sky";
 import "./orbit.css";
@@ -65,5 +65,6 @@ export default function OrbitScene() {
       <p>{t("Source run")}: <code>{archiveB2Run.runId}</code></p>
       <a href="/compare?saved=2026-11-14T00%3A00%3A00Z#observed-week">{t("Earlier example · run B")}</a>
     </details>
+    <SiteFooter />
   </section>;
 }

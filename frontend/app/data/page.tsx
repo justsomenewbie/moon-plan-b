@@ -167,5 +167,6 @@ export default function DataPage() {
         <a href="/compare">{t("Open the observation workspace")}</a>
       </nav>
     </main>
+    <SiteFooter />
   </div>;
 }
